@@ -83,7 +83,8 @@ struct CreateTableScreen: View {
         } else {
             Screen {
                 TopBar("اختر اللعبة", onBack: { navigate(.menu) })
-                MButton("بلوت", .primary) { picked = "baloot" }
+                Spacer().frame(height: 28)
+                GameTile(name: "بلوت", image: "baloot_table") { picked = "baloot" }
                 Note("الدومينو والجاكارو واللودو تُضاف قريباً لهذه النسخة.")
             }
         }
@@ -121,5 +122,28 @@ struct JoinTableScreen: View {
         }
         .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { rows = list } } }
         .onDisappear { reg?.remove(); reg = nil }
+    }
+}
+
+/// مربع لعبة عريض: اسمها على اليمين وصورتها على اليسار، ويُقرأ زراً واحداً باسم اللعبة
+struct GameTile: View {
+    let name: String
+    let image: String
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(name).font(.system(size: 30, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
+                if let path = Bundle.main.path(forResource: image, ofType: "png", inDirectory: "Media"), let img = UIImage(contentsOfFile: path) {
+                    Image(uiImage: img).resizable().scaledToFit().frame(height: 128)
+                }
+            }
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, minHeight: 150)
+        }
+        .buttonStyle(RaisedStyle(base: Palette.gold, fg: Palette.green900))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(name)
+        .accessibilityAddTraits(.isButton)
     }
 }

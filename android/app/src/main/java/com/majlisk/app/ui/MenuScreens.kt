@@ -7,6 +7,14 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -82,7 +90,8 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
     if (picked == null) {
         Screen {
             TopBar("اختر اللعبة", onBack = { navigate(Route.Menu) })
-            PrimaryButton("بلوت", { picked = "baloot" })
+            Spacer(Modifier.height(28.dp))
+            GameTile("بلوت", com.majlisk.app.R.drawable.baloot_table) { picked = "baloot" }
             Note("الدومينو والجاكارو واللودو تُضاف قريباً لهذه النسخة.")
         }
         return
@@ -143,5 +152,23 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                 fill = true,
             )
         }
+    }
+}
+
+/** مربع لعبة عريض: اسمها على اليمين وصورتها على اليسار، ويُقرأ زراً واحداً باسم اللعبة */
+@Composable
+fun GameTile(name: String, image: Int, onClick: () -> Unit) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+    Row(
+        Modifier.fillMaxWidth().height(150.dp)
+            .shadow(10.dp, shape)
+            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0xFFE2C45E), Palette.gold, Color(0xFFAE8E2D))), shape)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = name }
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(name, color = Palette.green900, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(image), contentDescription = null, modifier = Modifier.height(128.dp))
     }
 }
