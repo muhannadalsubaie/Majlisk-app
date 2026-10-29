@@ -1,6 +1,21 @@
 package com.majlisk.app.ui
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.material3.ripple
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.lerp
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.widthIn
@@ -44,7 +59,8 @@ import androidx.compose.ui.window.DialogProperties
 /** شاشة كاملة قابلة للتمرير بخلفية التطبيق */
 @Composable
 fun Screen(modifier: Modifier = Modifier, scroll: Boolean = true, content: @Composable ColumnScope.() -> Unit) {
-    Box(Modifier.fillMaxSize().background(Palette.green900)) {
+    // خلفية بعمق: أفتح قليلاً في الوسط وأغمق عند الأطراف
+    Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Palette.green800, Palette.green900), radius = 1400f))) {
         val m = Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 12.dp)
         Column(
             (if (scroll) m.verticalScroll(rememberScrollState()) else m).then(modifier),
@@ -82,68 +98,82 @@ fun TopBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable Row
     }
 }
 
+/**
+ * زر بارز ثلاثي الأبعاد: تدرّج لوني من الأعلى للأسفل وظل تحته، وينضغط للداخل عند اللمس.
+ * كل أزرار التطبيق تُبنى منه، فتغيير شكلها يكون هنا فقط.
+ */
 @Composable
-fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, description: String? = null) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = modifier.fillMaxWidth().heightIn(min = 52.dp).describe(description),
-        shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Palette.gold, contentColor = Palette.green900),
-    ) { Text(text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge) }
+fun RaisedButton(
+    text: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    base: Color = Palette.gold,
+    content: Color = Palette.green900,
+    border: Color? = null,
+    enabled: Boolean = true,
+    description: String? = null,
+    minHeight: Dp = 52.dp,
+    padding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
+    fontSize: TextUnit = 18.sp,
+) {
+    val interaction = remember { MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val shape = RoundedCornerShape(14.dp)
+    Box(
+        modifier
+            .heightIn(min = minHeight)
+            .graphicsLayer {
+                val k = if (pressed) 0.96f else 1f
+                scaleX = k; scaleY = k
+                translationY = if (pressed) 2.dp.toPx() else 0f
+                alpha = if (enabled) 1f else 0.5f
+            }
+            .shadow(if (pressed || !enabled) 1.dp else 6.dp, shape, ambientColor = Color.Black, spotColor = Color.Black)
+            .background(Brush.verticalGradient(listOf(lerp(base, Color.White, 0.22f), base, lerp(base, Color.Black, 0.18f))), shape)
+            .then(if (border != null) Modifier.border(1.dp, border, shape) else Modifier)
+            .clickable(interaction, ripple(), enabled = enabled, role = Role.Button, onClick = onClick)
+            .describe(description)
+            .padding(padding),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(text, color = content, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+    }
 }
 
 @Composable
-fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, description: String? = null, fill: Boolean = false) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = (if (fill) modifier.fillMaxWidth() else modifier).heightIn(min = 48.dp).describe(description),
-        shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Palette.green700, contentColor = Palette.text),
-        border = BorderStroke(1.dp, Palette.gold),
-    ) { Text(text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge) }
-}
+fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, description: String? = null) =
+    RaisedButton(text, onClick, modifier.fillMaxWidth(), enabled = enabled, description = description)
+
+@Composable
+fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, description: String? = null, fill: Boolean = false) =
+    RaisedButton(
+        text, onClick, if (fill) modifier.fillMaxWidth() else modifier,
+        base = Palette.green700, content = Palette.text, border = Palette.gold, enabled = enabled, description = description, minHeight = 48.dp,
+    )
 
 /** زر الرجوع: صغير في كل الشاشات والقوائم (مع مساحة لمس كافية) */
 @Composable
-fun BackButton(onClick: () -> Unit, text: String = "رجوع") {
-    Button(
-        onClick = onClick,
-        modifier = Modifier.heightIn(min = 40.dp),
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Palette.green700, contentColor = Palette.text),
-        border = BorderStroke(1.dp, Palette.gold),
-    ) { Text(text, fontSize = 14.sp) }
-}
+fun BackButton(onClick: () -> Unit, text: String = "رجوع") =
+    RaisedButton(
+        text, onClick, base = Palette.green700, content = Palette.text, border = Palette.gold,
+        minHeight = 40.dp, padding = PaddingValues(horizontal = 14.dp, vertical = 6.dp), fontSize = 14.sp,
+    )
 
 /** زر صغير (المزايدة، وأزرار صفوف المقاعد) */
 @Composable
-fun SmallButton(text: String, onClick: () -> Unit, primary: Boolean = false, enabled: Boolean = true, description: String? = null) {
-    Button(
-        onClick = onClick,
-        enabled = enabled,
-        modifier = Modifier.heightIn(min = 44.dp).widthIn(min = 64.dp).describe(description),
-        shape = RoundedCornerShape(14.dp),
-        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 8.dp),
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (primary) Palette.gold else Palette.green700,
-            contentColor = if (primary) Palette.green900 else Palette.text,
-        ),
-        border = if (primary) null else BorderStroke(1.dp, Palette.gold),
-    ) { Text(text, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) }
-}
+fun SmallButton(text: String, onClick: () -> Unit, primary: Boolean = false, enabled: Boolean = true, description: String? = null) =
+    RaisedButton(
+        text, onClick, Modifier.widthIn(min = 64.dp),
+        base = if (primary) Palette.gold else Palette.green700,
+        content = if (primary) Palette.green900 else Palette.text,
+        border = if (primary) null else Palette.gold,
+        enabled = enabled, description = description,
+        minHeight = 44.dp, padding = PaddingValues(horizontal = 14.dp, vertical = 8.dp), fontSize = 15.sp,
+    )
 
 @Composable
-fun DangerButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, fill: Boolean = true) {
-    Button(
-        onClick = onClick,
-        modifier = (if (fill) modifier.fillMaxWidth() else modifier).heightIn(min = 48.dp),
-        shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Palette.danger, contentColor = androidx.compose.ui.graphics.Color.White),
-    ) { Text(text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge) }
-}
+fun DangerButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, fill: Boolean = true) =
+    RaisedButton(text, onClick, if (fill) modifier.fillMaxWidth() else modifier, base = Palette.danger, content = Color.White, minHeight = 48.dp)
 
 /** وصف مختلف عن النص الظاهر (مثل "دعوة صديق للمقعد 2") */
 fun Modifier.describe(description: String?): Modifier =

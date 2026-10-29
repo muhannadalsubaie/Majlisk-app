@@ -36,6 +36,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.sp
@@ -308,7 +309,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
             FlowRow(
-                Modifier.fillMaxWidth(),
+                Modifier.fillMaxWidth().padding(top = 6.dp),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -326,7 +327,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
 @Composable
 private fun ScoreBox(label: String, value: Int, mine: Boolean, modifier: Modifier) {
     Column(
-        modifier.background(Palette.green800, RoundedCornerShape(14.dp))
+        modifier.shadow(6.dp, RoundedCornerShape(14.dp))
+            .background(Brush.verticalGradient(listOf(Palette.green700, Palette.green800)), RoundedCornerShape(14.dp))
             .border(1.dp, if (mine) Palette.gold else Palette.green700, RoundedCornerShape(14.dp))
             .padding(horizontal = 4.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
@@ -371,11 +373,16 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, partner: Boolean = f
  */
 @Composable
 private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, me: Int, text: BalootText, reads: Map<SwipeDir, () -> Unit>) {
+    // طاولة ثلاثية الأبعاد: مائلة كأنك جالس عليها، بإطار خشب ومفرش أخضر
     Box(
         Modifier.widthIn(max = 300.dp).fillMaxWidth().aspectRatio(1f)
+            .graphicsLayer { rotationX = 28f; cameraDistance = 14f * density }
+            .shadow(14.dp, androidx.compose.foundation.shape.CircleShape)
+            .background(Brush.radialGradient(listOf(Color(0xFF8A5A2B), Color(0xFF5C3A1A), Color(0xFF3B2410))), androidx.compose.foundation.shape.CircleShape)
+            .padding(10.dp)
             .clip(androidx.compose.foundation.shape.CircleShape)
-            .background(Color(0xFF0B241B))
-            .border(1.dp, Color(0x33D4AF37), androidx.compose.foundation.shape.CircleShape)
+            .background(Brush.radialGradient(listOf(Color(0xFF1E6B4A), Color(0xFF145036), Color(0xFF0B241B))))
+            .border(1.dp, Color(0x55D4AF37), androidx.compose.foundation.shape.CircleShape)
             .clickable { reads.getValue(SwipeDir.Left)() }
             .semantics(mergeDescendants = true) {
                 contentDescription = if (shownTrick.isEmpty()) "وسط الطاولة: لا توجد أوراق" else "وسط الطاولة: ${text.trick()}"
@@ -418,7 +425,11 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
 /** ورقة بحجم أوراق الطاولة: خلفية بيضاء وزوايا وظل */
 @Composable
 private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84.dp)) {
-    CardFace(card, modifier.shadow(6.dp, RoundedCornerShape(6.dp)).clip(RoundedCornerShape(6.dp)).background(Color.White))
+    // سُمك الورقة: حافة رمادية تحتها، وظل أعمق
+    Box(modifier.shadow(8.dp, RoundedCornerShape(6.dp))) {
+        Box(Modifier.matchParentSize().absoluteOffset(y = 1.5.dp).background(Color(0xFFB9B4A6), RoundedCornerShape(6.dp)))
+        CardFace(card, Modifier.matchParentSize().clip(RoundedCornerShape(6.dp)).background(Color.White).border(0.5.dp, Color(0xFFCFC9B8), RoundedCornerShape(6.dp)))
+    }
 }
 
 /** ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك */
@@ -426,6 +437,8 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
 private fun HandCard(card: Card, legal: Boolean, modifier: Modifier, onPlay: () -> Unit) {
     Box(
         modifier
+            // الأوراق المسموح لعبها مرفوعة قليلاً
+            .graphicsLayer { translationY = if (legal) -6.dp.toPx() else 0f }
             .alpha(if (legal) 1f else 0.45f)
             .then(if (legal) Modifier.border(2.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
             .clickable { if (legal) onPlay() }
