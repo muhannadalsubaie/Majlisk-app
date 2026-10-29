@@ -90,6 +90,12 @@ private const val TRICK_HOLD_MS = 1200L
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val conn = remember(tableId) { TableConnection(tableId).also { it.start() } }
     DisposableEffect(conn) { onDispose { conn.stop(); Voice.dispose() } }
+    // الشاشة لا تنطفئ ما دمت في الطاولة (انطفاؤها يقطع الاتصال والمحادثة الصوتية)
+    val window = (androidx.compose.ui.platform.LocalContext.current as? android.app.Activity)?.window
+    DisposableEffect(window) {
+        window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+        onDispose { window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+    }
     // العودة للتطبيق (بعد مكالمة أو تطبيق آخر): نعيد الاتصال فوراً
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     DisposableEffect(lifecycle) {

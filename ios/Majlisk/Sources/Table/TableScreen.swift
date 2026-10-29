@@ -43,11 +43,13 @@ struct TableScreen: View {
             }
         }
         .onAppear {
+            // الشاشة لا تنطفئ ما دمت في الطاولة (انطفاؤها يقطع الاتصال والمحادثة الصوتية)
+            UIApplication.shared.isIdleTimerDisabled = true
             conn.start()
             // كل من يدخل الطاولة ينضم للمحادثة الصوتية مستمعاً، وميكروفونه مقفل حتى يفتحه بنفسه
             Voice.shared.join(tableId, uid: uid, mode: .auto)
         }
-        .onDisappear { conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
         .onReceive(NotificationCenter.default.publisher(for: .appForeground)) { _ in conn.reconnectNow(); Voice.shared.onForeground() }
         .onChange(of: conn.view?.voice ?? []) { list in Voice.shared.sync(list) }
     }
