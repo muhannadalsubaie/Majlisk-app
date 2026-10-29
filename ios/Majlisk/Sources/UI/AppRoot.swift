@@ -86,16 +86,16 @@ struct SplashScreen: View {
 /// حقل اسم المستخدم مع فحص فوري للصيغة والتوفر (القرار النهائي في الخادم)
 struct UsernameField: View {
     @Binding var name: String
-    @State private var hint = "اسم فريد يظهر للاعبين — حروف عربية أو إنجليزية أو أرقام أو _"
+    @State private var hint = ""
     @State private var ok = false
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Field(label: "اسم المستخدم", text: $name)
-            Text(hint).font(.system(size: 15)).foregroundColor(ok ? Palette.online : Palette.textDim)
+            if !hint.isEmpty { Text(hint).font(.system(size: 15)).foregroundColor(ok ? Palette.online : Palette.textDim) }
         }
         .task(id: name) {
             ok = false
-            if name.trimmingCharacters(in: .whitespaces).isEmpty { hint = "اسم فريد يظهر للاعبين — حروف عربية أو إنجليزية أو أرقام أو _"; return }
+            if name.trimmingCharacters(in: .whitespaces).isEmpty { hint = ""; return }
             if let invalid = Usernames.validate(name) { hint = Usernames.errors[invalid] ?? ""; announceHint(); return }
             hint = "جارٍ التحقق…"
             try? await Task.sleep(nanoseconds: 450_000_000)
@@ -147,7 +147,6 @@ struct AuthScreen: View {
                     done()
                 }
             }
-            Note("بالتسجيل أنت توافق على سياسة الخصوصية.")
             MButton("سياسة الخصوصية") { UIApplication.shared.open(URL(string: Api.site + "/privacy.html")!) }
             MButton("الدخول بحساب Apple", enabled: !busy) { run { try await AuthService.apple(); Announcer.announce("تم تسجيل الدخول"); done() } }
             MButton("الدخول بحساب Google", enabled: !busy) { run { try await AuthService.google(); Announcer.announce("تم تسجيل الدخول"); done() } }
@@ -174,7 +173,6 @@ struct ChooseUsernameScreen: View {
         Screen {
             HStack { Spacer(); Logo(size: 100); Spacer() }
             Title("اختر اسم المستخدم")
-            Note("هذا الاسم يظهر لكل اللاعبين ولا يمكن لأحد غيرك استخدامه.")
             UsernameField(name: $name)
             if !error.isEmpty { Text(error).foregroundColor(Palette.goldSoft) }
             MButton("تأكيد", .primary, enabled: !busy) {

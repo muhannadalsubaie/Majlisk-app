@@ -93,15 +93,13 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
             TopBar("اختر اللعبة", onBack = { navigate(Route.Menu) })
             Spacer(Modifier.height(28.dp))
             GameTile("بلوت", com.majlisk.app.R.drawable.baloot_table) { picked = "baloot" }
-            Note("الدومينو والجاكارو واللودو تُضاف قريباً لهذه النسخة.")
         }
         return
     }
     Screen {
         TopBar("طاولة ${gameTitle(picked!!, "classic")}", onBack = { picked = null })
         val balance = if (profile?.unlimited == true) "لا محدود" else "${profile?.coins ?: "…"} عملة"
-        Note("رصيدك: $balance. إنشاء الطاولة بعملتين، وكل روبوت تضيفه بعملة.")
-        SwitchRow("طاولة خاصة", isPrivate, { isPrivate = it }, "الطاولة الخاصة تظهر في القائمة مقفلة، ولا يدخلها إلا من تدعوه.")
+        SwitchRow("طاولة خاصة", isPrivate, { isPrivate = it })
         if (error.isNotEmpty()) Text(error, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive })
         PrimaryButton("إنشاء الطاولة (2 🪙)", {
             busy = true; error = ""
@@ -128,7 +126,6 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     }
     Screen {
         TopBar("الطاولات النشطة", onBack = { navigate(Route.Menu) })
-        Note("الانضمام بعملة واحدة. إن كانت المقاعد ممتلئة تدخل مشاهداً.")
         when {
             rows == null -> Text("جارٍ التحميل…", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             rows!!.isEmpty() -> Text("لا توجد طاولات الآن — أنشئ طاولة جديدة.", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })

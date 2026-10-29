@@ -41,16 +41,10 @@ fun VoiceButton(tableId: String, uid: String) {
         s.muted -> "الميكروفون مغلق"
         else -> "الميكروفون مفتوح"
     }
-    val hint = when {
-        s.busy -> ""
-        !s.joined -> "اضغط مطولاً للعودة إليها"
-        s.muted -> "اضغط لفتحه، أو مطولاً للخروج من المحادثة"
-        else -> "اضغط لإغلاقه، أو مطولاً للخروج من المحادثة"
-    }
     val toggleMute = {
         if (!s.busy) {
             // خرجت بنفسك: الضغطة العادية لا تعيدك، العودة بالضغط المطول فقط
-            if (!s.joined) Announcer.announce("أنت خارج المحادثة الصوتية. اضغط مطولاً للعودة إليها")
+            if (!s.joined) Announcer.announce("أنت خارج المحادثة الصوتية")
             else Voice.setMuted(!s.muted)
         }
     }
@@ -69,10 +63,10 @@ fun VoiceButton(tableId: String, uid: String) {
             .border(borderWidth, Palette.gold, RoundedCornerShape(20.dp))
             .combinedClickable(onClick = toggleMute, onLongClick = toggleJoin)
             .semantics {
-                contentDescription = if (hint.isNotEmpty()) "$status، $hint" else status
+                contentDescription = status
                 role = Role.Button
-                onClick(label = if (s.muted) "فتح الميكروفون" else "إغلاق الميكروفون") { toggleMute(); true }
-                onLongClick(label = if (s.joined) "الخروج من المحادثة" else "العودة للمحادثة") { toggleJoin(); true }
+                onClick { toggleMute(); true }
+                onLongClick { toggleJoin(); true }
             }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     )

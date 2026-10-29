@@ -61,9 +61,7 @@ struct CreateTableScreen: View {
         if let game = picked {
             Screen {
                 TopBar("طاولة \(gameTitle(game, "classic"))", onBack: { picked = nil })
-                let balance = profile?.unlimited == true ? "لا محدود" : "\(profile?.coins.map(String.init) ?? "…") عملة"
-                Note("رصيدك: \(balance). إنشاء الطاولة بعملتين، وكل روبوت تضيفه بعملة.")
-                SwitchRow(label: "طاولة خاصة", isOn: isPrivate, onChange: { isPrivate = $0 }, description: "الطاولة الخاصة تظهر في القائمة مقفلة، ولا يدخلها إلا من تدعوه.")
+                SwitchRow(label: "طاولة خاصة", isOn: isPrivate, onChange: { isPrivate = $0 })
                 if !error.isEmpty { Text(error).foregroundColor(Palette.goldSoft) }
                 MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy) {
                     busy = true; error = ""
@@ -85,7 +83,6 @@ struct CreateTableScreen: View {
                 TopBar("اختر اللعبة", onBack: { navigate(.menu) })
                 Spacer().frame(height: 28)
                 GameTile(name: "بلوت", image: "baloot_table") { picked = "baloot" }
-                Note("الدومينو والجاكارو واللودو تُضاف قريباً لهذه النسخة.")
             }
         }
     }
@@ -103,7 +100,6 @@ struct JoinTableScreen: View {
     var body: some View {
         Screen {
             TopBar("الطاولات النشطة", onBack: { navigate(.menu) })
-            Note("الانضمام بعملة واحدة. إن كانت المقاعد ممتلئة تدخل مشاهداً.")
             if rows == nil { BodyText("جارٍ التحميل…") }
             else if rows!.isEmpty { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
             ForEach(rows ?? []) { r in

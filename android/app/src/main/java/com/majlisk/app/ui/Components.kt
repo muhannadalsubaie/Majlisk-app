@@ -211,7 +211,6 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, desc
                 ),
             )
         }
-        if (description != null) Note(description)
     }
 }
 

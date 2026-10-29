@@ -116,10 +116,10 @@ fun Field(label: String, value: String, onChange: (String) -> Unit, password: Bo
 /** حقل اسم المستخدم مع فحص فوري للصيغة والتوفر (القرار النهائي في الخادم) */
 @Composable
 fun UsernameField(value: String, onChange: (String) -> Unit) {
-    var hint by remember { mutableStateOf("اسم فريد يظهر للاعبين — حروف عربية أو إنجليزية أو أرقام أو _") }
+    var hint by remember { mutableStateOf("") }
     var color by remember { mutableStateOf(Palette.textDim) }
     LaunchedEffect(value) {
-        if (value.isBlank()) { hint = "اسم فريد يظهر للاعبين — حروف عربية أو إنجليزية أو أرقام أو _"; color = Palette.textDim; return@LaunchedEffect }
+        if (value.isBlank()) { hint = ""; color = Palette.textDim; return@LaunchedEffect }
         val invalid = Usernames.validate(value)
         if (invalid != null) { hint = Usernames.ERRORS.getValue(invalid); color = Palette.goldSoft; return@LaunchedEffect }
         hint = "جارٍ التحقق…"; color = Palette.textDim
@@ -130,7 +130,7 @@ fun UsernameField(value: String, onChange: (String) -> Unit) {
         }
     }
     Field("اسم المستخدم", value, onChange)
-    Text(hint, color = color, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+    if (hint.isNotEmpty()) Text(hint, color = color, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
 }
 
 @Composable
@@ -173,7 +173,6 @@ fun AuthScreen(done: () -> Unit) {
                 done()
             }
         }, enabled = !busy)
-        Note("بالتسجيل أنت توافق على سياسة الخصوصية.")
         SecondaryButton("سياسة الخصوصية", { AuthService.openUrl(context, "${Api.BASE.removeSuffix("/api")}/privacy.html") }, fill = true)
         SecondaryButton("الدخول بحساب Google", { run { AuthService.google(); Announcer.announce("تم تسجيل الدخول"); done() } }, enabled = !busy, fill = true)
         SecondaryButton("الدخول بحساب Apple", { run { AuthService.apple(); Announcer.announce("تم تسجيل الدخول"); done() } }, enabled = !busy, fill = true)
@@ -198,7 +197,6 @@ fun ChooseUsernameScreen() {
     Screen {
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Logo(100) }
         Title("اختر اسم المستخدم")
-        Text("هذا الاسم يظهر لكل اللاعبين ولا يمكن لأحد غيرك استخدامه.", color = Palette.textDim, textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth())
         UsernameField(name) { name = it }
         if (error.isNotEmpty()) Text(error, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive })
         PrimaryButton("تأكيد", {

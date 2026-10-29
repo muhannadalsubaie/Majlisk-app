@@ -66,8 +66,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
     when (val p = page) {
         Page.Main -> MajliskDialog("القائمة", onClose) {
             if (isOwner) {
-                SwitchRow("طاولة خاصة", v.isPrivate, { conn.send("setPrivate", "isPrivate" to it) },
-                    if (v.isPrivate) "تظهر مقفلة في قائمة الطاولات، والدخول بالدعوة فقط." else "عامة: تظهر في قائمة الطاولات ويدخلها أي لاعب.")
+                SwitchRow("طاولة خاصة", v.isPrivate, { conn.send("setPrivate", "isPrivate" to it) })
             } else Note(if (v.isPrivate) "طاولة خاصة: الدخول بالدعوة فقط" else "طاولة عامة")
             SecondaryButton("اللاعبون", { page = Page.Players }, fill = true)
             if (isOwner) SecondaryButton("دعوة صديق", { page = Page.Invite }, fill = true)
@@ -110,7 +109,6 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 if (canManage(s.uid)) SecondaryButton("${s.username} (مشاهد)${if (s.uid in v.voiceBlocked) "، مكتوم" else ""}", { page = Page.Member(s.uid) }, fill = true)
                 else Body("${s.username}${if (s.uid == uid) " (أنت)" else ""}")
             }
-            Note(if (isOwner) "اضغط على أي شخص لإضافته صديقاً، أو لكتمه أو طرده أو حظره." else "اضغط على أي شخص لإضافته صديقاً.")
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }
         is Page.Member -> {
@@ -139,7 +137,6 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                         SecondaryButton(if (blocked) "إلغاء الكتم في المحادثة الصوتية" else "كتم في المحادثة الصوتية", {
                             conn.send("voiceBlock", "uid" to u, "blocked" to !blocked); page = Page.Players
                         }, fill = true)
-                        if (!blocked) Note("يبقى مكتوماً حتى تلغي الكتم، أو يغادر الطاولة ويعود.")
                         DangerButton("طرد من الطاولة", { page = Page.Confirm(false, u) })
                         DangerButton("حظر من الطاولة", { page = Page.Confirm(true, u) })
                         if (seat >= 0 && v.seats.getOrNull(seat)?.away == true) {

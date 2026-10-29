@@ -63,7 +63,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
         when (tab) {
             0 -> {
                 if (friends == null) Body("جارٍ التحميل…")
-                else if (friends!!.isEmpty()) Note("لا يوجد أصدقاء بعد — اضغط \"إضافة صديق\" في الأعلى وأضفه باسم المستخدم.")
+                else if (friends!!.isEmpty()) Note("لا يوجد أصدقاء بعد.")
                 friends?.sortedByDescending { it.online }?.forEach { f ->
                     ItemRow {
                         Text("${if (f.online) "🟢" else "⚪"} ${f.username}، ${if (f.online) "متصل" else "غير متصل"}", color = Palette.text, modifier = Modifier.weight(1f))
@@ -86,7 +86,6 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
                 }
             }
             else -> {
-                Note("من حظرتهم لا يستطيعون دخول أي طاولة تملكها.")
                 if (bans == null) Body("جارٍ التحميل…")
                 else if (bans!!.isEmpty()) Note("لا يوجد محظورون.")
                 bans?.forEach { b ->

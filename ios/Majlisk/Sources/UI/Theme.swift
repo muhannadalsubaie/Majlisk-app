@@ -169,7 +169,6 @@ struct SwitchRow: View {
                 Text(label).font(.system(size: 18)).foregroundColor(Palette.text)
             }
             .tint(Palette.gold)
-            if let description { Note(description).accessibilityHidden(true) }
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .frame(minHeight: 56)
@@ -177,7 +176,6 @@ struct SwitchRow: View {
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(isOn ? Palette.gold : Palette.green700, lineWidth: 1))
         .accessibilityElement(children: .combine)
-        .accessibilityHint(description ?? "")
     }
 }
 

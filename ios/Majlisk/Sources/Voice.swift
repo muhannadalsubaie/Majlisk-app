@@ -86,7 +86,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 members = members.filter { $0.uid != uid } + [VoiceMember(uid: uid, username: "", sessionId: sessionId!, muted: true, mic: false, blocked: false)]
                 update(joined: true, muted: true, busy: false)
                 autoRetries = 0
-                if mode != .rejoin { Announcer.announce("أنت في المحادثة الصوتية تسمع الآخرين، والميكروفون مغلق. اضغط زر الميكروفون لفتحه") }
+                if mode != .rejoin { Announcer.announce("أنت في المحادثة الصوتية، والميكروفون مغلق") }
             } catch {
                 cleanup()
                 let code = (error as? ApiError)?.code

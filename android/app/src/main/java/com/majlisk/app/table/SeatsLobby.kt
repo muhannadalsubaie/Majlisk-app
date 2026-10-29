@@ -82,7 +82,6 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     when (val p = panel) {
         is SeatPanel.Invite -> InviteFriendsDialog(v.id, seat = p.seat, title = "دعوة صديق للمقعد ${p.seat + 1}") { panel = null }
         is SeatPanel.Add -> MajliskDialog("إضافة لاعب في المقعد ${p.seat + 1}", { panel = null }) {
-            Note("اختر من الموجودين في الطاولة، أو أضف روبوتاً.")
             val list = candidates(p.seat).filter { it.first.isNotEmpty() }
             list.forEach { (u, label) -> SecondaryButton(label, { conn.send("replace", "seat" to p.seat, "uid" to u); panel = null }, fill = true) }
             if (list.isEmpty()) Body("لا يوجد أحد آخر في الطاولة.")
@@ -90,7 +89,6 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             SecondaryButton("رجوع", { panel = null }, fill = true)
         }
         is SeatPanel.Change -> MajliskDialog("المقعد ${p.seat + 1}: ${occupantLabel(v, p.seat)}", { panel = null }) {
-            Note("اختر من يجلس في هذا المقعد. إن كان جالساً في مقعد آخر يتبادلان.")
             val list = candidates(p.seat).filter { it.first.isNotEmpty() }
             list.forEach { (u, label) -> SecondaryButton(label, { conn.send("replace", "seat" to p.seat, "uid" to u); panel = null }, fill = true) }
             if (list.isEmpty()) Body("لا يوجد أحد آخر في الطاولة.")
@@ -118,7 +116,6 @@ fun InviteFriendsDialog(tableId: String, seat: Int?, title: String, onClose: () 
         }
     }
     MajliskDialog(title, onClose) {
-        Note(if (seat != null) "كل دعوة بعملة (1 🪙)، ويدخل صديقك مجاناً ويجلس في هذا المقعد." else "كل دعوة بعملة (1 🪙)، ويدخل صديقك مجاناً.")
         if (friends == null) Body("جارٍ التحميل…")
         else if (friends!!.isEmpty()) Body("لا يوجد أصدقاء بعد. أضفهم من شاشة الأصدقاء، أو أضف روبوتاً.")
         friends?.sortedByDescending { it.online }?.forEach { f ->

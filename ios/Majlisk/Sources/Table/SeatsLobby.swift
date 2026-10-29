@@ -63,7 +63,6 @@ struct SeatsLobby: View {
                 InviteFriendsSheet(tableId: v.id, seat: seat, title: "دعوة صديق للمقعد \(seat + 1)") { panel = nil }
             case .add(let seat):
                 Sheet(title: "إضافة لاعب في المقعد \(seat + 1)") {
-                    Note("اختر من الموجودين في الطاولة، أو أضف روبوتاً.")
                     let list = candidates(seat)
                     ForEach(list) { c in MButton(c.label) { conn.send("replace", ["seat": seat, "uid": c.id]); panel = nil } }
                     if list.isEmpty { BodyText("لا يوجد أحد آخر في الطاولة.") }
@@ -72,7 +71,6 @@ struct SeatsLobby: View {
                 }
             case .change(let seat):
                 Sheet(title: "المقعد \(seat + 1): \(occupantLabel(v, seat))") {
-                    Note("اختر من يجلس في هذا المقعد. إن كان جالساً في مقعد آخر يتبادلان.")
                     let list = candidates(seat)
                     ForEach(list) { c in MButton(c.label) { conn.send("replace", ["seat": seat, "uid": c.id]); panel = nil } }
                     if list.isEmpty { BodyText("لا يوجد أحد آخر في الطاولة.") }
@@ -98,7 +96,6 @@ struct InviteFriendsSheet: View {
 
     var body: some View {
         Sheet(title: title) {
-            Note(seat != nil ? "كل دعوة بعملة (1 🪙)، ويدخل صديقك مجاناً ويجلس في هذا المقعد." : "كل دعوة بعملة (1 🪙)، ويدخل صديقك مجاناً.")
             if friends == nil { BodyText("جارٍ التحميل…") }
             else if friends!.isEmpty { BodyText("لا يوجد أصدقاء بعد. أضفهم من شاشة الأصدقاء، أو أضف روبوتاً.") }
             ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
@@ -187,7 +184,6 @@ struct VoiceButton: View {
 
     var body: some View {
         let status = voice.busy ? "جارٍ الاتصال بالمحادثة الصوتية" : !voice.joined ? "أنت خارج المحادثة الصوتية" : voice.muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
-        let hint = voice.busy ? "" : !voice.joined ? "اضغط مطولاً للعودة إليها" : voice.muted ? "اضغط لفتحه، أو مطولاً للخروج من المحادثة" : "اضغط لإغلاقه، أو مطولاً للخروج من المحادثة"
         // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
         let on = voice.joined && !voice.muted
         Text("🎤 \(status)")
@@ -203,7 +199,6 @@ struct VoiceButton: View {
             .onLongPressGesture(perform: toggleJoin)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(status)
-            .accessibilityHint(hint)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { toggleMute() }
             .accessibilityAction(named: Text(voice.joined ? "الخروج من المحادثة الصوتية" : "العودة للمحادثة الصوتية")) { toggleJoin() }
@@ -212,7 +207,7 @@ struct VoiceButton: View {
     private func toggleMute() {
         guard !voice.busy else { return }
         // خرجت بنفسك: الضغطة العادية لا تعيدك، العودة بالضغط المطول فقط
-        if !voice.joined { Announcer.announce("أنت خارج المحادثة الصوتية. اضغط مطولاً للعودة إليها"); return }
+        if !voice.joined { Announcer.announce("أنت خارج المحادثة الصوتية"); return }
         Voice.shared.setMuted(!voice.muted)
     }
 

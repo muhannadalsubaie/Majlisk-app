@@ -13,10 +13,8 @@ struct SettingsScreen: View {
         Screen {
             TopBar("الإعدادات", onBack: onBack)
             SectionTitle("الصوت")
-            SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 },
-                      description: "يكتم مؤثرات اللعبة (التوزيع، رمي الورق، القطع، المشاريع). VoiceOver له إعداداته في الجهاز.")
-            SwitchRow(label: "نغمة دورك", isOn: chime, onChange: { chime = $0; Prefs.turnChime = $0 },
-                      description: "نغمة قصيرة عندما يأتي دورك. تكون أخفض تلقائياً مع VoiceOver.")
+            SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
+            SwitchRow(label: "نغمة دورك", isOn: chime, onChange: { chime = $0; Prefs.turnChime = $0 })
             if !embedded {
                 SectionTitle("الحساب")
                 MButton("تسجيل الخروج") { Session.shared.signOut() }
@@ -69,7 +67,6 @@ struct ShopScreen: View {
                     }
                 }
             }
-            Note("يتم الدفع عبر App Store، وتُضاف العملات فور تأكيد المتجر. العملات للاستخدام داخل اللعبة فقط.")
         }
         .task { packs = await Store.loadPacks() }
     }

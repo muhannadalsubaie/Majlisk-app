@@ -42,8 +42,7 @@ struct TableMenu: View {
         case .main:
             Sheet(title: "القائمة") {
                 if isOwner {
-                    SwitchRow(label: "طاولة خاصة", isOn: view.isPrivate, onChange: { conn.send("setPrivate", ["isPrivate": $0]) },
-                              description: view.isPrivate ? "تظهر مقفلة في قائمة الطاولات، والدخول بالدعوة فقط." : "عامة: تظهر في قائمة الطاولات ويدخلها أي لاعب.")
+                    SwitchRow(label: "طاولة خاصة", isOn: view.isPrivate, onChange: { conn.send("setPrivate", ["isPrivate": $0]) })
                 } else { Note(view.isPrivate ? "طاولة خاصة: الدخول بالدعوة فقط" : "طاولة عامة") }
                 MButton("اللاعبون") { page = .players }
                 if isOwner { MButton("دعوة صديق") { page = .invite } }
@@ -87,7 +86,6 @@ struct TableMenu: View {
                     if canManage(s.uid) { MButton("\(s.username) (مشاهد)\(view.voiceBlocked.contains(s.uid) ? "، مكتوم" : "")") { page = .member(s.uid) } }
                     else { BodyText("\(s.username)\(s.uid == uid ? " (أنت)" : "")") }
                 }
-                Note(isOwner ? "اضغط على أي شخص لإضافته صديقاً، أو لكتمه أو طرده أو حظره." : "اضغط على أي شخص لإضافته صديقاً.")
                 MButton("رجوع") { page = .main }
             }
         case .member(let u):
@@ -115,7 +113,6 @@ struct TableMenu: View {
                         MButton(blocked ? "إلغاء الكتم في المحادثة الصوتية" : "كتم في المحادثة الصوتية") {
                             conn.send("voiceBlock", ["uid": u, "blocked": !blocked]); page = .players
                         }
-                        if !blocked { Note("يبقى مكتوماً حتى تلغي الكتم، أو يغادر الطاولة ويعود.") }
                         MButton("طرد من الطاولة", .danger) { page = .confirm(ban: false, uid: u) }
                         MButton("حظر من الطاولة", .danger) { page = .confirm(ban: true, uid: u) }
                         if seat >= 0 && view.seat(seat)?.away == true {

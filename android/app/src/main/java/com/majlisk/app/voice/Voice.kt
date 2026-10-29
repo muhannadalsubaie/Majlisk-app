@@ -108,7 +108,7 @@ object Voice {
                     set { State(joined = true, muted = true, busy = false) }
                     audio(true)
                     autoRetries = 0
-                    if (mode != Mode.Rejoin) Announcer.announce("أنت في المحادثة الصوتية تسمع الآخرين، والميكروفون مغلق. اضغط زر الميكروفون لفتحه")
+                    if (mode != Mode.Rejoin) Announcer.announce("أنت في المحادثة الصوتية، والميكروفون مغلق")
                 } catch (e: Exception) {
                     cleanup()
                     val code = (e as? ApiError)?.code

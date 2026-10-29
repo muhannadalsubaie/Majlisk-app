@@ -39,10 +39,8 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
     val body = @Composable {
         TopBar("الإعدادات", onBack = onBack)
         SectionTitle("الصوت")
-        SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it },
-            "يكتم مؤثرات اللعبة (التوزيع، رمي الورق، القطع، المشاريع). قارئ الشاشة له إعداداته في الجهاز.")
-        SwitchRow("نغمة دورك", chime, { chime = it; Prefs.turnChime = it },
-            "نغمة قصيرة عندما يأتي دورك. تكون أخفض تلقائياً مع قارئ الشاشة.")
+        SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
+        SwitchRow("نغمة دورك", chime, { chime = it; Prefs.turnChime = it })
         if (!embedded) {
             SectionTitle("الحساب")
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)
@@ -102,6 +100,5 @@ fun ShopScreen(profile: Profile?, navigate: (Route) -> Unit) {
                 }, primary = true, enabled = busy.isEmpty(), description = "شراء $spoken")
             }
         }
-        Note("يتم الدفع عبر Google Play، وتُضاف العملات فور تأكيد المتجر. العملات للاستخدام داخل اللعبة فقط.")
     }
 }

@@ -449,7 +449,7 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modi
                 contentDescription = card.label
                 role = Role.Button
                 if (!legal) disabled()
-                onClick(label = "لعب الورقة") { if (legal) onPlay(); true }
+                onClick { if (legal) onPlay(); true }
             },
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }

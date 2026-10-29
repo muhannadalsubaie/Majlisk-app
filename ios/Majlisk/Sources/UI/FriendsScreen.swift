@@ -31,7 +31,7 @@ struct FriendsScreen: View {
             switch tab {
             case 0:
                 if friends == nil { BodyText("جارٍ التحميل…") }
-                else if friends!.isEmpty { Note("لا يوجد أصدقاء بعد — اضغط \"إضافة صديق\" في الأعلى وأضفه باسم المستخدم.") }
+                else if friends!.isEmpty { Note("لا يوجد أصدقاء بعد.") }
                 ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
                     ItemRow {
                         Text("\(f.online ? "🟢" : "⚪") \(f.username)، \(f.online ? "متصل" : "غير متصل")").frame(maxWidth: .infinity, alignment: .leading)
@@ -56,7 +56,6 @@ struct FriendsScreen: View {
                     }
                 }
             default:
-                Note("من حظرتهم لا يستطيعون دخول أي طاولة تملكها.")
                 if bans == nil { BodyText("جارٍ التحميل…") }
                 else if bans!.isEmpty { Note("لا يوجد محظورون.") }
                 ForEach(bans ?? []) { b in
