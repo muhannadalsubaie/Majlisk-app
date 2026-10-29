@@ -1,4 +1,6 @@
-# بناء تطبيق الآيفون (Swift) على ماك سحابي ورفعه إلى TestFlight مع كل تعديل.
+# بناء تطبيق الآيفون (Swift) على ماك سحابي.
+# مع كل تعديل: يُبنى فقط للتأكد أن الكود سليم، بلا رفع.
+# الرفع إلى TestFlight يدوي فقط (Actions ← iOS ← Run workflow ← upload = true)، حين يطلبه صاحب التطبيق.
 # المستودع عام، فبناء الماك مجاني في GitHub.
 # الأسرار: APPLE_TEAM_ID، ASC_KEY_ID، ASC_ISSUER_ID، ASC_KEY_P8 (مفتاح App Store Connect بصلاحية Admin).
 # مشروع Xcode يُولَّد من ios/project.yml بأداة XcodeGen.
@@ -10,6 +12,11 @@ on:
       - ios/**
       - .github/workflows/ios.yml
   workflow_dispatch:
+    inputs:
+      upload:
+        description: رفع النسخة إلى TestFlight
+        type: boolean
+        default: false
 
 concurrency: ios-build
 
@@ -19,6 +26,7 @@ jobs:
     runs-on: macos-15-intel
     env:
       HAS_KEYS: ${{ secrets.ASC_KEY_P8 != '' && secrets.APPLE_TEAM_ID != '' }}
+      UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.upload }}
     steps:
       - uses: actions/checkout@v4
       # Apple لا تقبل الرفع إلا بـ Xcode 26: نختار أحدث Xcode 26 مثبت
@@ -35,16 +43,16 @@ jobs:
       - name: Resolve packages
         working-directory: ios
         run: xcodebuild -resolvePackageDependencies -project Majlisk.xcodeproj -scheme Majlisk | tail -n 20
-      - name: Build for simulator (no Apple keys)
-        if: env.HAS_KEYS != 'true'
+      - name: Build for simulator (check only, no upload)
+        if: env.UPLOAD != 'true'
         working-directory: ios
         run: |
           set -o pipefail
           xcodebuild -project Majlisk.xcodeproj -scheme Majlisk -configuration Debug \
             -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO build 2>&1 | grep -E "error:|warning: unre|BUILD" | head -n 80
+            CODE_SIGNING_ALLOWED=NO build 2>&1 | tee $RUNNER_TEMP/build.log | grep -E "error:|BUILD" | head -n 80
       - name: Archive and upload to TestFlight
-        if: env.HAS_KEYS == 'true'
+        if: env.HAS_KEYS == 'true' && env.UPLOAD == 'true'
         working-directory: ios
         env:
           TEAM: ${{ secrets.APPLE_TEAM_ID }}
