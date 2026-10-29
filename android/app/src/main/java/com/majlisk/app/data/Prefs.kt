@@ -12,6 +12,10 @@ object Prefs {
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }
 
+    var music: Boolean
+        get() = sp.getBoolean("music", true)
+        set(v) { sp.edit().putBoolean("music", v).apply() }
+
     var turnChime: Boolean
         get() = sp.getBoolean("turnChime", true)
         set(v) { sp.edit().putBoolean("turnChime", v).apply() }

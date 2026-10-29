@@ -37,6 +37,10 @@ enum Prefs {
         get { UserDefaults.standard.bool(forKey: "muted") }
         set { UserDefaults.standard.set(newValue, forKey: "muted") }
     }
+    static var music: Bool {
+        get { UserDefaults.standard.object(forKey: "music") as? Bool ?? true }
+        set { UserDefaults.standard.set(newValue, forKey: "music") }
+    }
     static var turnChime: Bool {
         get { UserDefaults.standard.object(forKey: "turnChime") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "turnChime") }

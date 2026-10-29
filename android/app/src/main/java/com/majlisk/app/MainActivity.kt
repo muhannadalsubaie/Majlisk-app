@@ -54,6 +54,16 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun onStart() {
+        super.onStart()
+        com.majlisk.app.data.MenuMusic.setForeground(true)
+    }
+
+    override fun onStop() {
+        com.majlisk.app.data.MenuMusic.setForeground(false)
+        super.onStop()
+    }
+
     override fun onDestroy() {
         if (current === this) current = null
         super.onDestroy()

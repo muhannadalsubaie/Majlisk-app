@@ -16,9 +16,11 @@ struct AppRoot: View {
 
     var body: some View {
         content
+            // موسيقى القائمة في كل الشاشات إلا الطاولة
+            .onChange(of: route) { r in MenuMusic.shared.setWanted(r != .table) }
             .onChange(of: session.uid) { uid in if uid == nil && route != .splash { route = .auth } }
             .onChange(of: signedIn) { on in if on { hub.start(); Store.recover() } else { hub.stop() } }
-            .onAppear { if signedIn { hub.start(); Store.recover() } }
+            .onAppear { MenuMusic.shared.setWanted(route != .table); if signedIn { hub.start(); Store.recover() } }
             .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
                 if let invite = pendingInvite {
                     Sheet(title: "دعوة لطاولة") {
