@@ -22,3 +22,14 @@ for (const b of builds.data) {
   const d = details[b.relationships?.buildBetaDetail?.data?.id] ?? {};
   console.log(`build ${b.attributes.version} · ${b.attributes.processingState} · uploaded ${b.attributes.uploadedDate} · expired ${b.attributes.expired} · internal ${d.internalBuildState} · external ${d.externalBuildState}`);
 }
+
+// رفعات لم تصبح نسخاً (رفضتها Apple أثناء المعالجة) وسببها
+try {
+  const ups = await api(`buildUploads?filter[app]=${app.id}&limit=6&sort=-uploadedDate`);
+  for (const u of ups.data) console.log('upload', JSON.stringify(u.attributes));
+} catch (e) {
+  try {
+    const ups = await api(`apps/${app.id}/buildUploads?limit=6`);
+    for (const u of ups.data) console.log('upload', JSON.stringify(u.attributes));
+  } catch (e2) { console.log('buildUploads unavailable:', e2.message.slice(0, 300)); }
+}
