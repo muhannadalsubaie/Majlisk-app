@@ -139,7 +139,6 @@ struct HistoryView: View {
 
     private func lines(_ r: HandRecord, _ n: Int) -> String {
         let level = r.gahwa ? "قهوة" : LEVELS[r.level] ?? ""
-        let winner = r.kaboot ?? (r.buyerFailed ? 1 - r.buyerTeam : r.buyerTeam)
         let tm = { (x: Int) in r.teams[safe: x] ?? "" }
         let p = r.projects ?? []
         let projects = (p[safe: 0] ?? 0) != 0 || (p[safe: 1] ?? 0) != 0 ? "\(tm(0)) \(p[0])، \(tm(1)) \(p[1])" : "لا توجد"
@@ -149,7 +148,6 @@ struct HistoryView: View {
             "الأبناط: \(tm(0)) \(r.abnat[safe: 0] ?? 0)، \(tm(1)) \(r.abnat[safe: 1] ?? 0).",
             "المشاريع: \(projects).",
             "النقاط: \(tm(0)) \(r.points[safe: 0] ?? 0)، \(tm(1)) \(r.points[safe: 1] ?? 0).",
-            "الخاسر: \(tm(1 - winner))\(r.buyerFailed && r.kaboot == nil ? " (خسر المشتري)" : "").",
         ].joined(separator: "\n")
     }
 

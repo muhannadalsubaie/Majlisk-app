@@ -30,7 +30,6 @@ fun HistoryDialog(history: List<HandRecord>, onClose: () -> Unit) {
             Text("المباراة $match: ${teams.getOrElse(0) { "" }} $t0، ${teams.getOrElse(1) { "" }} $t1", color = Palette.goldSoft, modifier = Modifier.semantics { heading() })
             hands.forEachIndexed { i, r ->
                 val level = if (r.gahwa) "قهوة" else LEVELS[r.level].orEmpty()
-                val winner = r.kaboot ?: if (r.buyerFailed) 1 - r.buyerTeam else r.buyerTeam
                 val tm = { x: Int -> r.teams.getOrElse(x) { "" } }
                 val projects = r.projects?.takeIf { it.getOrElse(0) { 0 } != 0 || it.getOrElse(1) { 0 } != 0 }
                     ?.let { "${tm(0)} ${it[0]}، ${tm(1)} ${it[1]}" } ?: "لا توجد"
@@ -40,7 +39,6 @@ fun HistoryDialog(history: List<HandRecord>, onClose: () -> Unit) {
                     "الأبناط: ${tm(0)} ${r.abnat.getOrElse(0) { 0 }}، ${tm(1)} ${r.abnat.getOrElse(1) { 0 }}.",
                     "المشاريع: $projects.",
                     "النقاط: ${tm(0)} ${r.points.getOrElse(0) { 0 }}، ${tm(1)} ${r.points.getOrElse(1) { 0 }}.",
-                    "الخاسر: ${tm(1 - winner)}${if (r.buyerFailed && r.kaboot == null) " (خسر المشتري)" else ""}.",
                 )
                 Text(lines.joinToString("\n"), color = Palette.text, modifier = Modifier.fillMaxWidth().background(Palette.green900, RoundedCornerShape(10.dp)).padding(10.dp))
             }
