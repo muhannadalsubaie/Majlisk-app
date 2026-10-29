@@ -152,47 +152,49 @@ struct BalootBoard: View {
                 Text(g.outcomeWinner == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر").font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
             }
 
-            // أزرار المزايدة
-            if !g.actions.bids.isEmpty {
-                FlowLayout(spacing: 8) {
-                    ForEach(g.actions.bids) { b in
-                        SmallButton(b.label, primary: b.type != "pass") { bidSound(b); act(["type": "bid", "bid": b.raw]) }
-                    }
-                }
-                .accessibilityElement(children: .contain).accessibilityLabel("المزايدة")
-            }
-            // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
-            if g.actions.doubleLabel != nil || g.actions.canPassDouble {
-                HStack(spacing: 8) {
-                    if let label = g.actions.doubleLabel {
-                        MButton(label, .primary) {
-                            if label == "قهوة" { Sounds.shared.gahwa() } else { Sounds.shared.double(g.doubling.level + 1) }
-                            act(["type": "double"])
-                        }
-                    }
-                    if g.actions.canPassDouble { MButton("تمرير") { act(["type": "doublePass"]) } }
-                }
-            }
-            if g.actions.chooseLock {
-                HStack(spacing: 8) {
-                    MButton("مقفل", .primary) { act(["type": "doubleLock", "locked": true]) }
-                    MButton("مفتوح", .primary) { act(["type": "doubleLock", "locked": false]) }
-                }
-            }
             if g.phase == "matchOver" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
 
-            // يد اللاعب
-            if mySeat != nil {
-                Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
-                // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
-                FlowLayout(spacing: 4) {
-                    ForEach(sortHand(g.myHand), id: \.self) { c in
-                        HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
+            // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
+            VStack(spacing: 4) {
+                // أزرار المزايدة
+                if !g.actions.bids.isEmpty {
+                    FlowLayout(spacing: 8) {
+                        ForEach(g.actions.bids) { b in
+                            SmallButton(b.label, primary: b.type != "pass") { bidSound(b); act(["type": "bid", "bid": b.raw]) }
+                        }
+                    }
+                    .accessibilityElement(children: .contain).accessibilityLabel("المزايدة")
+                }
+                // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
+                if g.actions.doubleLabel != nil || g.actions.canPassDouble {
+                    HStack(spacing: 8) {
+                        if let label = g.actions.doubleLabel {
+                            MButton(label, .primary) {
+                                if label == "قهوة" { Sounds.shared.gahwa() } else { Sounds.shared.double(g.doubling.level + 1) }
+                                act(["type": "double"])
+                            }
+                        }
+                        if g.actions.canPassDouble { MButton("تمرير") { act(["type": "doublePass"]) } }
                     }
                 }
-                .padding(.top, 12)
-            } else {
-                Note("أنت تشاهد هذه الطاولة.")
+                if g.actions.chooseLock {
+                    HStack(spacing: 8) {
+                        MButton("مقفل", .primary) { act(["type": "doubleLock", "locked": true]) }
+                        MButton("مفتوح", .primary) { act(["type": "doubleLock", "locked": false]) }
+                    }
+                }
+                // يد اللاعب
+                if mySeat != nil {
+                    Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                    // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
+                    FlowLayout(spacing: 4) {
+                        ForEach(sortHand(g.myHand), id: \.self) { c in
+                            HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
+                        }
+                    }
+                } else {
+                    Note("أنت تشاهد هذه الطاولة.")
+                }
             }
         }
         .onAppear { Gestures.shared.handler = { read($0) }; prevGame = g; wasMyTurn = g.myTurn }

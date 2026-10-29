@@ -270,43 +270,45 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                 style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         }
 
-        // أزرار المزايدة
-        if (g.actions.bids.isNotEmpty()) {
-            FlowRow(
-                Modifier.fillMaxWidth().semantics { contentDescription = "المزايدة" },
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                g.actions.bids.forEach { b ->
-                    com.majlisk.app.ui.SmallButton(b.label, { bidSound(b); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
-                }
-            }
-        }
-        // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
-        if (g.actions.doubleLabel != null || g.actions.canPassDouble) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                g.actions.doubleLabel?.let { label ->
-                    PrimaryButton(label, {
-                        if (label == "قهوة") Sounds.gahwa() else Sounds.double(g.doubling.level + 1)
-                        act(jsonOf("type" to "double"))
-                    }, modifier = Modifier.weight(1f))
-                }
-                if (g.actions.canPassDouble) SecondaryButton("تمرير", { act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
-            }
-        }
-        if (g.actions.chooseLock) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PrimaryButton("مقفل", { act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))
-                PrimaryButton("مفتوح", { act(jsonOf("type" to "doubleLock", "locked" to false)) }, modifier = Modifier.weight(1f))
-            }
-        }
         if (g.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
+        // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
+        Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // أزرار المزايدة
+            if (g.actions.bids.isNotEmpty()) {
+                FlowRow(
+                    Modifier.fillMaxWidth().semantics { contentDescription = "المزايدة" },
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    g.actions.bids.forEach { b ->
+                        com.majlisk.app.ui.SmallButton(b.label, { bidSound(b); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
+                    }
+                }
+            }
+            // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
+            if (g.actions.doubleLabel != null || g.actions.canPassDouble) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    g.actions.doubleLabel?.let { label ->
+                        PrimaryButton(label, {
+                            if (label == "قهوة") Sounds.gahwa() else Sounds.double(g.doubling.level + 1)
+                            act(jsonOf("type" to "double"))
+                        }, modifier = Modifier.weight(1f))
+                    }
+                    if (g.actions.canPassDouble) SecondaryButton("تمرير", { act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
+                }
+            }
+            if (g.actions.chooseLock) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PrimaryButton("مقفل", { act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))
+                    PrimaryButton("مفتوح", { act(jsonOf("type" to "doubleLock", "locked" to false)) }, modifier = Modifier.weight(1f))
+                }
+            }
         // يد اللاعب
         if (mySeat != null) {
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
             FlowRow(
-                Modifier.fillMaxWidth().padding(top = 12.dp),
+                Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
@@ -316,6 +318,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
             }
         } else {
             Note("أنت تشاهد هذه الطاولة.")
+        }
         }
     }
 }
