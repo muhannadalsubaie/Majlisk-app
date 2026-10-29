@@ -6,6 +6,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberUpdatedState
 import com.majlisk.app.a11y.Announcer
 import kotlin.math.abs
 
@@ -26,6 +27,8 @@ fun swipeDir(dx: Float, dy: Float, min: Float): SwipeDir? = when {
 @Composable
 fun Modifier.twoFingerSwipes(onSwipe: (SwipeDir) -> Unit): Modifier {
     val min = with(LocalDensity.current) { 40f * density }
+    // آخر نسخة من القراءات (حالة اللعب الحالية)، لا النسخة وقت أول رسم للشاشة
+    val latest = rememberUpdatedState(onSwipe)
     return this.pointerInput(Unit) {
         awaitPointerEventScope {
             var start: Offset? = null
@@ -45,7 +48,7 @@ fun Modifier.twoFingerSwipes(onSwipe: (SwipeDir) -> Unit): Modifier {
                     val s = start
                     start = null
                     if (s != null && System.currentTimeMillis() - startTime < 1200) {
-                        swipeDir(last.x - s.x, last.y - s.y, min)?.let(onSwipe)
+                        swipeDir(last.x - s.x, last.y - s.y, min)?.let { latest.value(it) }
                     }
                 }
             }

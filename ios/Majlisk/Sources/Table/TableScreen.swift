@@ -105,6 +105,8 @@ struct BalootBoard: View {
     private func act(_ a: JSON) { conn.send(["type": "action", "action": a]) }
 
     private func read(_ dir: SwipeDir) -> Bool {
+        // نقرأ من آخر حالة وصلت من الخادم وقت الإيماءة نفسها، فلا تُقرأ حالة قديمة
+        let text = conn.view.flatMap { v in v.game.map { BalootText(view: v, g: $0, shownTrick: $0.trick) } } ?? self.text
         switch dir {
         case .left: Announcer.announceNow(text.trick())
         case .right: Announcer.announceNow(text.contract())

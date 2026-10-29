@@ -16,7 +16,8 @@ class BalootText(private val view: TableView, private val g: GameView, private v
 
     /** الأوراق الموجودة على الطاولة الآن ومن لعب كل ورقة، بالترتيب */
     fun trick(): String = when {
-        shownTrick.isNotEmpty() -> shownTrick.joinToString("، ") { "${name(it.seat)}: ${it.card.label}" }
+        // القراءة دائماً للأكلة الحالية (لا الأكلة السابقة الظاهرة لحظة على الشاشة)
+        g.trick.isNotEmpty() -> g.trick.joinToString("، ") { "${name(it.seat)}: ${it.card.label}" }
         (g.phase == "bidding" || g.phase == "doubling") && g.qaba != null -> "ورقة الأرض: ${g.qaba.label}"
         else -> "لا توجد أوراق على الطاولة"
     }
