@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Majlisk" parent="android:Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@color/green_900</item>
+        <item name="android:statusBarColor">@color/green_900</item>
+        <item name="android:navigationBarColor">@color/green_900</item>
+    </style>
+    <color name="green_900">#0D2B20</color>
+</resources>
