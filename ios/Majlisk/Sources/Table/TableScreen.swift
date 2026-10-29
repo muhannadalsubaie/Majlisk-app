@@ -221,8 +221,12 @@ struct BalootBoard: View {
     /// وفي دوّار VoiceOver (الإجراءات): القراءات الثلاث
     private var trickArea: some View {
         ZStack {
-            Circle().fill(Color(red: 0x0B / 255, green: 0x24 / 255, blue: 0x1B / 255))
-            Circle().stroke(Palette.gold.opacity(0.2), lineWidth: 1)
+            // طاولة ثلاثية الأبعاد: إطار خشب ومفرش أخضر
+            Circle().fill(RadialGradient(colors: [Color(red: 0.54, green: 0.35, blue: 0.17), Color(red: 0.36, green: 0.23, blue: 0.10), Color(red: 0.23, green: 0.14, blue: 0.06)], center: .center, startRadius: 0, endRadius: 160))
+                .shadow(color: .black.opacity(0.6), radius: 12, y: 8)
+            Circle().fill(RadialGradient(colors: [Color(red: 0.12, green: 0.42, blue: 0.29), Color(red: 0.08, green: 0.31, blue: 0.21), Color(red: 0.04, green: 0.14, blue: 0.11)], center: .center, startRadius: 0, endRadius: 150))
+                .padding(10)
+            Circle().stroke(Palette.gold.opacity(0.33), lineWidth: 1).padding(10)
             if (g.phase == "bidding" || g.phase == "doubling"), let q = g.qaba {
                 VStack(spacing: 4) {
                     Text("ورقة الأرض").font(.system(size: 14)).foregroundColor(Palette.textDim)
@@ -242,6 +246,8 @@ struct BalootBoard: View {
         }
         .environment(\.layoutDirection, .leftToRight)
         .animation(.easeOut(duration: 0.35), value: shownTrick.count)
+        // مائلة كأنك جالس عليها
+        .rotation3DEffect(.degrees(28), axis: (x: 1, y: 0, z: 0), perspective: 0.6)
         .contentShape(Circle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(shownTrick.isEmpty ? "وسط الطاولة: لا توجد أوراق" : "وسط الطاولة: \(text.trick())")
@@ -313,9 +319,10 @@ private struct ScoreBox: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 8)
-        .background(Palette.green800)
+        .background(LinearGradient(colors: [Palette.green700, Palette.green800], startPoint: .top, endPoint: .bottom))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(mine ? Palette.gold : Palette.green700, lineWidth: 1))
+        .shadow(color: .black.opacity(0.45), radius: 5, y: 4)
     }
 }
 
@@ -344,11 +351,14 @@ private struct PlayerTag: View {
 private struct TableCard: View {
     let card: Card
     var body: some View {
+        // سُمك الورقة: حافة رمادية تحتها، وظل أعمق
         CardFace(card: card)
             .frame(width: 58, height: 84)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            .shadow(color: .black.opacity(0.7), radius: 5, y: 3)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(white: 0.8), lineWidth: 0.5))
+            .background(RoundedRectangle(cornerRadius: 6).fill(Color(red: 0.73, green: 0.71, blue: 0.65)).offset(y: 1.5))
+            .shadow(color: .black.opacity(0.7), radius: 6, y: 4)
     }
 }
 
@@ -360,6 +370,8 @@ private struct HandCard: View {
     var body: some View {
         TableCard(card: card)
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 2))
+            // الأوراق المسموح لعبها مرفوعة قليلاً
+            .offset(y: legal ? -6 : 0)
             .opacity(legal ? 1 : 0.45)
             .contentShape(Rectangle())
             .onTapGesture { if legal { play() } }

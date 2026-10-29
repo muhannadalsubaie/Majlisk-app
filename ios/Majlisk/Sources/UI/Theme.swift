@@ -16,6 +16,27 @@ enum Palette {
 
 enum ButtonKind { case primary, secondary, danger }
 
+/// زر بارز ثلاثي الأبعاد: تدرّج لوني من الأعلى للأسفل وظل تحته، وينضغط للداخل عند اللمس.
+/// كل أزرار التطبيق تستخدمه، فتغيير شكلها يكون هنا فقط.
+struct RaisedStyle: ButtonStyle {
+    let base: Color
+    let fg: Color
+    var border: Color?
+    func makeBody(configuration: Configuration) -> some View {
+        let pressed = configuration.isPressed
+        configuration.label
+            .foregroundColor(fg)
+            .background(base)
+            .overlay(LinearGradient(colors: [.white.opacity(0.22), .clear, .black.opacity(0.18)], startPoint: .top, endPoint: .bottom).allowsHitTesting(false))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(border ?? .clear, lineWidth: 1))
+            .shadow(color: .black.opacity(0.5), radius: pressed ? 1 : 5, y: pressed ? 1 : 4)
+            .scaleEffect(pressed ? 0.96 : 1)
+            .offset(y: pressed ? 2 : 0)
+            .animation(.easeOut(duration: 0.1), value: pressed)
+    }
+}
+
 /// زر التطبيق: كبير وسهل اللمس، ونصه هو ما يُقرأ
 struct MButton: View {
     let title: String
@@ -36,12 +57,12 @@ struct MButton: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: fill ? .infinity : nil, minHeight: 50)
                 .padding(.horizontal, 14)
-                .foregroundColor(kind == .primary ? Palette.green900 : kind == .danger ? .white : Palette.text)
-                .background(kind == .primary ? Palette.gold : kind == .danger ? Palette.danger : Palette.green700)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(kind == .secondary ? Palette.gold : .clear, lineWidth: 1))
-                .opacity(enabled ? 1 : 0.5)
         }
+        .buttonStyle(RaisedStyle(
+            base: kind == .primary ? Palette.gold : kind == .danger ? Palette.danger : Palette.green700,
+            fg: kind == .primary ? Palette.green900 : kind == .danger ? .white : Palette.text,
+            border: kind == .secondary ? Palette.gold : nil))
+        .opacity(enabled ? 1 : 0.5)
         .disabled(!enabled)
         .accessibilityLabel(label ?? title)
     }
@@ -63,12 +84,9 @@ struct SmallButton: View {
                 .font(.system(size: 15, weight: .bold))
                 .frame(minWidth: 64, minHeight: 42)
                 .padding(.horizontal, 12)
-                .foregroundColor(primary ? Palette.green900 : Palette.text)
-                .background(primary ? Palette.gold : Palette.green700)
-                .clipShape(RoundedRectangle(cornerRadius: 14))
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(primary ? .clear : Palette.gold, lineWidth: 1))
-                .opacity(enabled ? 1 : 0.5)
         }
+        .buttonStyle(RaisedStyle(base: primary ? Palette.gold : Palette.green700, fg: primary ? Palette.green900 : Palette.text, border: primary ? nil : Palette.gold))
+        .opacity(enabled ? 1 : 0.5)
         .disabled(!enabled)
         .accessibilityLabel(label ?? title)
     }
@@ -80,7 +98,8 @@ struct Screen<Content: View>: View {
     @ViewBuilder let content: () -> Content
     var body: some View {
         ZStack {
-            Palette.green900.ignoresSafeArea()
+            // خلفية بعمق: أفتح قليلاً في الوسط وأغمق عند الأطراف
+            RadialGradient(colors: [Palette.green800, Palette.green900], center: .center, startRadius: 0, endRadius: 600).ignoresSafeArea()
             if scroll {
                 ScrollView { VStack(alignment: .leading, spacing: 14) { content() }.padding(16) }
             } else {
