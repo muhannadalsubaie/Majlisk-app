@@ -66,6 +66,7 @@ targets:
               - UISceneConfigurationName: Default Configuration
                 UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
         NSMicrophoneUsageDescription: يُستخدم الميكروفون فقط عندما تفتحه بنفسك للتحدث مع اللاعبين في المحادثة الصوتية للطاولة.
+        NSCameraUsageDescription: مجلسك لا يستخدم الكاميرا. مكتبة المحادثة الصوتية تحتوي دعماً للفيديو لا يعمل في التطبيق.
         GADApplicationIdentifier: ca-app-pub-4779146366215281~7557127551
         SKAdNetworkItems:
           - SKAdNetworkIdentifier: cstr6suwn9.skadnetwork
