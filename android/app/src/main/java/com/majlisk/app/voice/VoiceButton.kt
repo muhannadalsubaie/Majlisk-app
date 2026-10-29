@@ -2,6 +2,9 @@ package com.majlisk.app.voice
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
@@ -52,13 +55,18 @@ fun VoiceButton(tableId: String, uid: String) {
         }
     }
     val toggleJoin = { if (!s.busy) { if (s.joined) Voice.leave() else Voice.join(tableId, uid) } }
-    val bg = when { !s.joined -> Palette.green800; s.muted -> Palette.green700; else -> Palette.gold }
+    // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
+    val bg = if (s.joined && !s.muted) Palette.gold else Palette.green700
+    val fg = when { !s.joined -> Palette.textDim; s.muted -> Palette.gold; else -> Palette.green900 }
+    val borderWidth = if (s.joined && s.muted) 2.dp else 1.dp
     Text(
         "🎤 $status",
-        color = if (s.joined && !s.muted) Palette.green900 else Palette.text,
-        textAlign = TextAlign.Center,
-        modifier = Modifier.fillMaxWidth().heightIn(min = 52.dp)
-            .background(bg, RoundedCornerShape(26.dp))
+        color = fg,
+        fontSize = 13.sp,
+        lineHeight = 17.sp,
+        modifier = Modifier.widthIn(max = 200.dp).heightIn(min = 40.dp)
+            .background(bg, RoundedCornerShape(20.dp))
+            .border(borderWidth, Palette.gold, RoundedCornerShape(20.dp))
             .combinedClickable(onClick = toggleMute, onLongClick = toggleJoin)
             .semantics {
                 contentDescription = if (hint.isNotEmpty()) "$status، $hint" else status
@@ -66,7 +74,6 @@ fun VoiceButton(tableId: String, uid: String) {
                 onClick(label = if (s.muted) "فتح الميكروفون" else "إغلاق الميكروفون") { toggleMute(); true }
                 onLongClick(label = if (s.joined) "الخروج من المحادثة" else "العودة للمحادثة") { toggleJoin(); true }
             }
-            .padding(14.dp)
-            .wrapContentHeight(),
+            .padding(horizontal = 12.dp, vertical = 10.dp),
     )
 }

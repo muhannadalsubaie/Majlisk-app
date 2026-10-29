@@ -96,10 +96,10 @@ fun ShopScreen(profile: Profile?, navigate: (Route) -> Unit) {
                     Text("$base عملة", color = Palette.text, fontWeight = FontWeight.Bold)
                     if (p.bonus > 0) Text("+ ${p.bonus} هدية", color = Palette.goldSoft)
                 }
-                SecondaryButton(if (busy == p.id) "جارٍ…" else p.price, {
+                SmallButton(if (busy == p.id) "جارٍ…" else p.price, {
                     busy = p.id
                     scope.launch { Billing.buy(p.id); busy = "" }
-                }, enabled = busy.isEmpty(), description = "شراء $spoken")
+                }, primary = true, enabled = busy.isEmpty(), description = "شراء $spoken")
             }
         }
         Note("يتم الدفع عبر Google Play، وتُضاف العملات فور تأكيد المتجر. العملات للاستخدام داخل اللعبة فقط.")

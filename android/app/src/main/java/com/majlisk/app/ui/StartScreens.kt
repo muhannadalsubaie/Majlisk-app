@@ -21,6 +21,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.foundation.border
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -46,7 +49,15 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun Logo(size: Int) {
-    Image(painterResource(R.drawable.logo), contentDescription = null, modifier = Modifier.size(size.dp))
+    // شعار التطبيق: زوايا دائرية وظل وإطار ذهبي خفيف (كالتطبيق الحالي)
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(22)
+    Image(
+        painterResource(R.drawable.logo), contentDescription = null,
+        modifier = Modifier.size(size.dp)
+            .shadow(12.dp, shape)
+            .clip(shape)
+            .border(1.dp, androidx.compose.ui.graphics.Color(0x55D4AF37), shape),
+    )
 }
 
 /** شاشة البداية: ننتظر Firebase يتذكر الحساب ثم نذهب للقائمة أو الدخول */
@@ -90,8 +101,10 @@ fun Field(label: String, value: String, onChange: (String) -> Unit, password: Bo
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = if (password) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = when { password -> KeyboardType.Password; email -> KeyboardType.Email; else -> KeyboardType.Text }),
+            shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.textDim,
+                focusedContainerColor = Palette.green800, unfocusedContainerColor = Palette.green800,
+                focusedBorderColor = Palette.goldSoft, unfocusedBorderColor = Palette.green700,
                 focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim,
                 focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, cursorColor = Palette.gold,
             ),

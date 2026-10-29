@@ -24,6 +24,7 @@ import com.majlisk.app.ui.Palette
 import com.majlisk.app.ui.PrimaryButton
 import com.majlisk.app.ui.SecondaryButton
 import com.majlisk.app.ui.SectionTitle
+import com.majlisk.app.ui.SmallButton
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -58,12 +59,10 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
                 Text("المقعد ${i + 1}: ${occupantLabel(v, i)}", color = Palette.text, modifier = Modifier.weight(1f))
                 if (isOwner) {
                     if (v.seats.getOrNull(i) == null) {
-                        Column {
-                            SecondaryButton("دعوة صديق", { panel = SeatPanel.Invite(i) }, description = "دعوة صديق للمقعد ${i + 1}")
-                            SecondaryButton("إضافة لاعب", { panel = SeatPanel.Add(i) }, description = "إضافة لاعب في المقعد ${i + 1}")
-                        }
+                        SmallButton("دعوة صديق", { panel = SeatPanel.Invite(i) }, description = "دعوة صديق للمقعد ${i + 1}")
+                        SmallButton("إضافة لاعب", { panel = SeatPanel.Add(i) }, description = "إضافة لاعب في المقعد ${i + 1}")
                     } else {
-                        SecondaryButton("تغيير", { panel = SeatPanel.Change(i) }, description = "تغيير المقعد ${i + 1}")
+                        SmallButton("تغيير", { panel = SeatPanel.Change(i) }, description = "تغيير المقعد ${i + 1}")
                     }
                 }
             }
@@ -125,7 +124,7 @@ fun InviteFriendsDialog(tableId: String, seat: Int?, title: String, onClose: () 
         friends?.sortedByDescending { it.online }?.forEach { f ->
             ItemRow {
                 Text("${f.username}، ${if (f.online) "متصل" else "غير متصل"}", color = Palette.text, modifier = Modifier.weight(1f))
-                if (f.online) SecondaryButton("دعوة", {
+                if (f.online) SmallButton("دعوة", {
                     busy = f.uid
                     scope.launch {
                         runCatching { Social.inviteFriend(tableId, f.uid, seat) }

@@ -1,6 +1,10 @@
 package com.majlisk.app.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -44,7 +48,7 @@ fun Screen(modifier: Modifier = Modifier, scroll: Boolean = true, content: @Comp
         val m = Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 12.dp)
         Column(
             (if (scroll) m.verticalScroll(rememberScrollState()) else m).then(modifier),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
             content = content,
         )
     }
@@ -57,7 +61,7 @@ fun Title(text: String, modifier: Modifier = Modifier, focus: Boolean = true) {
     Text(
         text,
         style = androidx.compose.material3.MaterialTheme.typography.headlineMedium,
-        color = Palette.text,
+        color = Palette.gold,
         modifier = modifier.semantics { heading() }.focusRequester(req),
     )
     if (focus) LaunchedEffect(text) { runCatching { req.requestFocus() } }
@@ -65,7 +69,7 @@ fun Title(text: String, modifier: Modifier = Modifier, focus: Boolean = true) {
 
 @Composable
 fun SectionTitle(text: String) {
-    Text(text, style = androidx.compose.material3.MaterialTheme.typography.titleLarge, color = Palette.goldSoft, modifier = Modifier.semantics { heading() })
+    Text(text, style = androidx.compose.material3.MaterialTheme.typography.titleLarge, color = Palette.gold, modifier = Modifier.semantics { heading() })
 }
 
 /** شريط أعلى الشاشة: العنوان، وزر الرجوع في نهاية الصف */
@@ -74,7 +78,7 @@ fun TopBar(title: String, onBack: (() -> Unit)? = null, actions: @Composable Row
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Box(Modifier.weight(1f)) { Title(title) }
         actions()
-        if (onBack != null) SecondaryButton("رجوع", onBack)
+        if (onBack != null) BackButton(onBack)
     }
 }
 
@@ -97,7 +101,38 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
         modifier = (if (fill) modifier.fillMaxWidth() else modifier).heightIn(min = 48.dp).describe(description),
         shape = RoundedCornerShape(14.dp),
         colors = ButtonDefaults.buttonColors(containerColor = Palette.green700, contentColor = Palette.text),
+        border = BorderStroke(1.dp, Palette.gold),
     ) { Text(text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge) }
+}
+
+/** زر الرجوع: صغير في كل الشاشات والقوائم (مع مساحة لمس كافية) */
+@Composable
+fun BackButton(onClick: () -> Unit, text: String = "رجوع") {
+    Button(
+        onClick = onClick,
+        modifier = Modifier.heightIn(min = 40.dp),
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 6.dp),
+        colors = ButtonDefaults.buttonColors(containerColor = Palette.green700, contentColor = Palette.text),
+        border = BorderStroke(1.dp, Palette.gold),
+    ) { Text(text, fontSize = 14.sp) }
+}
+
+/** زر صغير (المزايدة، وأزرار صفوف المقاعد) */
+@Composable
+fun SmallButton(text: String, onClick: () -> Unit, primary: Boolean = false, enabled: Boolean = true, description: String? = null) {
+    Button(
+        onClick = onClick,
+        enabled = enabled,
+        modifier = Modifier.heightIn(min = 44.dp).widthIn(min = 64.dp).describe(description),
+        shape = RoundedCornerShape(14.dp),
+        contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 14.dp, vertical = 8.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (primary) Palette.gold else Palette.green700,
+            contentColor = if (primary) Palette.green900 else Palette.text,
+        ),
+        border = if (primary) null else BorderStroke(1.dp, Palette.gold),
+    ) { Text(text, fontSize = 15.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) }
 }
 
 @Composable
@@ -106,7 +141,7 @@ fun DangerButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
         onClick = onClick,
         modifier = (if (fill) modifier.fillMaxWidth() else modifier).heightIn(min = 48.dp),
         shape = RoundedCornerShape(14.dp),
-        colors = ButtonDefaults.buttonColors(containerColor = Palette.danger, contentColor = Palette.text),
+        colors = ButtonDefaults.buttonColors(containerColor = Palette.danger, contentColor = androidx.compose.ui.graphics.Color.White),
     ) { Text(text, style = androidx.compose.material3.MaterialTheme.typography.labelLarge) }
 }
 
@@ -116,7 +151,7 @@ fun Modifier.describe(description: String?): Modifier =
 
 @Composable
 fun Note(text: String, modifier: Modifier = Modifier) {
-    Text(text, color = Palette.textDim, style = androidx.compose.material3.MaterialTheme.typography.bodyMedium, modifier = modifier)
+    Text(text, color = Palette.textDim, fontSize = 14.sp, modifier = modifier)
 }
 
 @Composable
@@ -129,15 +164,21 @@ fun Body(text: String, modifier: Modifier = Modifier) {
 fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, description: String? = null) {
     Column(
         Modifier.fillMaxWidth()
+            .background(Palette.green800, RoundedCornerShape(14.dp))
+            .border(1.dp, if (checked) Palette.gold else Palette.green700, RoundedCornerShape(14.dp))
             .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
             .semantics(mergeDescendants = true) { stateDescription = if (checked) "مفعّل" else "متوقف" }
-            .padding(vertical = 6.dp),
+            .heightIn(min = 56.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(label, color = Palette.text, style = androidx.compose.material3.MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
             Switch(
                 checked = checked, onCheckedChange = null,
-                colors = SwitchDefaults.colors(checkedThumbColor = Palette.green900, checkedTrackColor = Palette.gold),
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = Palette.green900, checkedTrackColor = Palette.gold, checkedBorderColor = Palette.gold,
+                    uncheckedThumbColor = Palette.textDim, uncheckedTrackColor = Palette.green700, uncheckedBorderColor = Palette.green700,
+                ),
             )
         }
         if (description != null) Note(description)
@@ -148,7 +189,7 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, desc
 @Composable
 fun ItemRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> Unit) {
     Row(
-        modifier.fillMaxWidth().background(Palette.green800, RoundedCornerShape(12.dp)).padding(10.dp),
+        modifier.fillMaxWidth().heightIn(min = 52.dp).background(Palette.green800, RoundedCornerShape(14.dp)).padding(horizontal = 14.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         content = content,
@@ -160,13 +201,14 @@ fun ItemRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> U
 fun MajliskDialog(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(
-            Modifier.padding(16.dp).fillMaxWidth()
-                .background(Palette.green800, RoundedCornerShape(18.dp))
+            Modifier.padding(16.dp).widthIn(max = 420.dp).fillMaxWidth()
+                .background(Palette.green800, RoundedCornerShape(14.dp))
+                .border(1.dp, Palette.gold, RoundedCornerShape(14.dp))
                 .verticalScroll(rememberScrollState())
                 .padding(16.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Title(title)
+            Text(title, color = Palette.gold, fontSize = 21.sp, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold, modifier = Modifier.semantics { heading() })
             content()
         }
     }

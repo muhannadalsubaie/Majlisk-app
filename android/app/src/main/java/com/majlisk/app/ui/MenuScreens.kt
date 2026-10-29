@@ -39,7 +39,7 @@ fun CoinsBadge(profile: Profile?) {
         profile?.coins == null -> "الرصيد غير متاح بعد"
         else -> "رصيدك ${profile?.coins} عملة"
     }
-    Text(text, color = Palette.goldSoft, style = androidx.compose.material3.MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = spoken })
+    Text(text, color = Palette.gold, style = androidx.compose.material3.MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = spoken })
 }
 
 @Composable

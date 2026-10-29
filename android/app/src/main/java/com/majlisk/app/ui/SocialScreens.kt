@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.Friend
 import com.majlisk.app.data.HubState
@@ -47,13 +48,17 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
 
     Screen {
         TopBar("الأصدقاء", onBack = { navigate(Route.Menu) }) {
-            SecondaryButton("إضافة صديق", { adding = true })
+            SmallButton("إضافة صديق", { adding = true })
         }
         if (message.isNotEmpty()) Text(message, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-        TabRow(selectedTabIndex = tab, containerColor = Palette.green800, contentColor = Palette.text) {
-            Tab(tab == 0, { tab = 0 }, text = { Text("الأصدقاء${friends?.let { " (${it.size})" } ?: ""}") })
-            Tab(tab == 1, { tab = 1 }, text = { Text("طلبات الصداقة${if (hub.requests.isNotEmpty()) " ${hub.requests.size}" else ""}") })
-            Tab(tab == 2, { tab = 2 }, text = { Text("المحظورون") })
+        // تبويبات بخط ذهبي تحت المختار (كالتطبيق الحالي)
+        TabRow(
+            selectedTabIndex = tab, containerColor = Palette.green900, contentColor = Palette.gold,
+            indicator = { pos -> androidx.compose.material3.TabRowDefaults.SecondaryIndicator(androidx.compose.material3.TabRowDefaults.run { Modifier.tabIndicatorOffset(pos[tab]) }, color = Palette.gold, height = 3.dp) },
+        ) {
+            listOf("الأصدقاء${friends?.let { " (${it.size})" } ?: ""}", "طلبات الصداقة${if (hub.requests.isNotEmpty()) " ${hub.requests.size}" else ""}", "المحظورون").forEachIndexed { i, label ->
+                Tab(tab == i, { tab = i }, selectedContentColor = Palette.gold, unselectedContentColor = Palette.textDim, text = { Text(label, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold) })
+            }
         }
         when (tab) {
             0 -> {
@@ -62,7 +67,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
                 friends?.sortedByDescending { it.online }?.forEach { f ->
                     ItemRow {
                         Text("${if (f.online) "🟢" else "⚪"} ${f.username}، ${if (f.online) "متصل" else "غير متصل"}", color = Palette.text, modifier = Modifier.weight(1f))
-                        SecondaryButton("حذف", { toRemove = f }, description = "حذف ${f.username} من الأصدقاء")
+                        SmallButton("حذف", { toRemove = f }, description = "حذف ${f.username} من الأصدقاء")
                     }
                 }
             }
@@ -71,10 +76,10 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
                 hub.requests.forEach { r ->
                     ItemRow {
                         Text(r.username, color = Palette.text, modifier = Modifier.weight(1f))
-                        SecondaryButton("قبول", {
+                        SmallButton("قبول", {
                             scope.launch { runCatching { Social.respondFriend(r.uid, true) }.onSuccess { say("أصبحت أنت و${r.username} أصدقاء"); refreshKey++ }.onFailure { say(Social.error(it)) } }
                         }, description = "قبول طلب ${r.username}")
-                        SecondaryButton("رفض", {
+                        SmallButton("رفض", {
                             scope.launch { runCatching { Social.respondFriend(r.uid, false) }.onSuccess { say("رُفض طلب ${r.username}") }.onFailure { say(Social.error(it)) } }
                         }, description = "رفض طلب ${r.username}")
                     }
@@ -87,7 +92,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
                 bans?.forEach { b ->
                     ItemRow {
                         Text(b.username, color = Palette.text, modifier = Modifier.weight(1f))
-                        SecondaryButton("رفع الحظر", {
+                        SmallButton("رفع الحظر", {
                             scope.launch {
                                 runCatching { Social.unban(b.uid) }
                                     .onSuccess { bans = bans?.filter { it.uid != b.uid }; Announcer.announce("رُفع الحظر عن ${b.username}") }

@@ -100,7 +100,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                     else Text(seatLabel(i), color = Palette.text, modifier = Modifier.weight(1f))
                     val s = v.seats.getOrNull(i)
                     if (isOwner && i != v.mySeat && !canManage(u) && (s == null || s.isBot)) {
-                        SecondaryButton("استبدال", { page = Page.Replace(i) }, description = "استبدال ${s?.username ?: "المقعد الفارغ"}")
+                        com.majlisk.app.ui.SmallButton("استبدال", { page = Page.Replace(i) }, description = "استبدال ${s?.username ?: "المقعد الفارغ"}")
                     }
                 }
             }

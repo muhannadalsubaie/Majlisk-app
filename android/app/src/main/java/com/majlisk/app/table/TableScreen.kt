@@ -33,6 +33,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.runtime.key
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
@@ -132,10 +142,10 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val leave = { conn.send("leave"); exit() }
 
     Box(Modifier.fillMaxSize()) {
-        Screen {
+        Screen(Modifier.padding(bottom = 80.dp)) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                SecondaryButton("القائمة", { menuOpen = true })
-                if (v.kind == "baloot") SecondaryButton("السجل", { historyOpen = true })
+                com.majlisk.app.ui.BackButton({ menuOpen = true }, "القائمة")
+                if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
                 Text(
                     "طاولة ${gameTitle(v.kind, v.variant)}",
                     color = Palette.textDim,
@@ -152,8 +162,9 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                 }
                 v.game != null -> BalootBoard(v, v.game, uid, conn)
             }
-            VoiceButton(v.id, uid)
         }
+        // زر الميكروفون عائم أسفل يسار الشاشة (كالتطبيق الحالي)
+        Box(Modifier.align(Alignment.BottomEnd).safeDrawingPadding().padding(16.dp)) { VoiceButton(v.id, uid) }
     }
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
@@ -222,50 +233,36 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         val us = g.scores.getOrElse(myTeam) { 0 }
         val them = g.scores.getOrElse(1 - myTeam) { 0 }
         Row(
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = "النقاط: لنا $us، لهم $them. الفوز عند 152" },
-            horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
+            Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)
+                .semantics(mergeDescendants = true) { contentDescription = "النقاط: لنا $us، لهم $them. الفوز عند 152" },
+            horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
-            ScoreBox("لنا", us)
-            Text("152", color = Palette.textDim)
-            ScoreBox("لهم", them)
+            ScoreBox("لنا", us, mine = true, modifier = Modifier.weight(1f).fillMaxHeight())
+            Text("152", color = Palette.textDim, fontSize = 13.sp,
+                modifier = Modifier.dashedPill().padding(horizontal = 10.dp, vertical = 4.dp))
+            ScoreBox("لهم", them, mine = false, modifier = Modifier.weight(1f).fillMaxHeight())
         }
-        text.statusLine()?.let { Text(it, color = Palette.goldSoft, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
+        text.statusLine()?.let { Text(it, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
 
-        // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً
+        // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
         val seatOf = { r: Int -> (me + r) % 4 }
-        PlayerTag(v, g, seatOf(2), partner = true, modifier = Modifier.align(Alignment.CenterHorizontally))
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            PlayerTag(v, g, seatOf(1), modifier = Modifier.weight(0.8f))
-            // وسط الطاولة: الوصول له يقرأ كل الأوراق ومن لعبها، والنقر مرتين يعيد قراءتها.
-            // وفي قائمة إجراءات TalkBack: القراءات الثلاث
-            Box(
-                Modifier.weight(3f).widthIn(max = 300.dp).aspectRatio(1f)
-                    .background(Palette.green800, RoundedCornerShape(18.dp))
-                    .clickable { reads.getValue(SwipeDir.Left)() }
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = if (shownTrick.isEmpty()) "وسط الطاولة: لا توجد أوراق" else "وسط الطاولة: ${text.trick()}"
-                        customActions = listOf(
-                            CustomAccessibilityAction("أوراق الطاولة") { reads.getValue(SwipeDir.Left)(); true },
-                            CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
-                            CustomAccessibilityAction("المشاريع") { reads.getValue(SwipeDir.Up)(); true },
-                            CustomAccessibilityAction("دور مين") { reads.getValue(SwipeDir.Down)(); true },
-                        )
-                    },
-            ) {
-                if ((g.phase == "bidding" || g.phase == "doubling") && g.qaba != null) {
-                    Column(Modifier.align(Alignment.Center), horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("ورقة الأرض", color = Palette.textDim)
-                        CardFace(g.qaba, Modifier.width(70.dp))
-                    }
-                }
-                shownTrick.forEach { p ->
-                    val rel = (p.seat - me + 4) % 4
-                    // الأوراق تنزل من جهة لاعبها (في RTL: Start = يمين الشاشة)
-                    val align = when (rel) { 0 -> Alignment.BottomCenter; 1 -> Alignment.CenterStart; 2 -> Alignment.TopCenter; else -> Alignment.CenterEnd }
-                    CardFace(p.card, Modifier.align(align).padding(8.dp).width(62.dp))
-                }
+        Column(
+            Modifier.fillMaxWidth()
+                .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0x661B4D39), Color.Transparent)), RoundedCornerShape(24.dp))
+                .padding(vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                Box(Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(2), partner = true, modifier = Modifier.weight(3f))
+                Box(Modifier.weight(0.8f))
             }
-            PlayerTag(v, g, seatOf(3), modifier = Modifier.weight(0.8f))
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                PlayerTag(v, g, seatOf(1), modifier = Modifier.weight(0.8f))
+                Box(Modifier.weight(3f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
+                PlayerTag(v, g, seatOf(3), modifier = Modifier.weight(0.8f))
+            }
         }
 
         if (g.phase == "matchOver" && g.outcomeStatus == "won") {
@@ -275,41 +272,47 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
 
         // أزرار المزايدة
         if (g.actions.bids.isNotEmpty()) {
-            FlowRow(Modifier.fillMaxWidth().semantics { contentDescription = "المزايدة" }, horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            FlowRow(
+                Modifier.fillMaxWidth().semantics { contentDescription = "المزايدة" },
+                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
                 g.actions.bids.forEach { b ->
-                    val click = { bidSound(b); act(jsonOf("type" to "bid", "bid" to b.raw)) }
-                    if (b.type == "pass") SecondaryButton(b.label, click) else BidButton(b.label, click)
+                    com.majlisk.app.ui.SmallButton(b.label, { bidSound(b); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
                 }
             }
         }
         // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
         if (g.actions.doubleLabel != null || g.actions.canPassDouble) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 g.actions.doubleLabel?.let { label ->
-                    BidButton(label, {
+                    PrimaryButton(label, {
                         if (label == "قهوة") Sounds.gahwa() else Sounds.double(g.doubling.level + 1)
                         act(jsonOf("type" to "double"))
-                    })
+                    }, modifier = Modifier.weight(1f))
                 }
-                if (g.actions.canPassDouble) SecondaryButton("تمرير", { act(jsonOf("type" to "doublePass")) })
+                if (g.actions.canPassDouble) SecondaryButton("تمرير", { act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
             }
         }
         if (g.actions.chooseLock) {
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                BidButton("مقفل", { act(jsonOf("type" to "doubleLock", "locked" to true)) })
-                BidButton("مفتوح", { act(jsonOf("type" to "doubleLock", "locked" to false)) })
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                PrimaryButton("مقفل", { act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))
+                PrimaryButton("مفتوح", { act(jsonOf("type" to "doubleLock", "locked" to false)) }, modifier = Modifier.weight(1f))
             }
         }
         if (g.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
         // يد اللاعب
         if (mySeat != null) {
-            Text("أوراقك", color = Palette.textDim, modifier = Modifier.semantics { heading() })
-            val hand = sortHand(g.myHand)
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                hand.forEach { c -> HandCard(c, legal = g.actions.legal.contains(c), modifier = Modifier.weight(1f)) { act(jsonOf("type" to "play", "card" to c.toJson())) } }
-                // أماكن فارغة حتى لا تكبر الأوراق كثيراً حين تقل
-                repeat((8 - hand.size).coerceAtLeast(0)) { Box(Modifier.weight(1f)) }
+            Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
+            // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
+            FlowRow(
+                Modifier.fillMaxWidth().padding(top = 12.dp),
+                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+            ) {
+                sortHand(g.myHand).forEach { c ->
+                    HandCard(c, legal = g.actions.legal.contains(c), modifier = Modifier.size(58.dp, 84.dp)) { act(jsonOf("type" to "play", "card" to c.toJson())) }
+                }
             }
         } else {
             Note("أنت تشاهد هذه الطاولة.")
@@ -318,14 +321,24 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
 }
 
 @Composable
-private fun ScoreBox(label: String, value: Int) {
+private fun ScoreBox(label: String, value: Int, mine: Boolean, modifier: Modifier) {
     Column(
-        Modifier.background(Palette.green800, RoundedCornerShape(12.dp)).padding(horizontal = 18.dp, vertical = 6.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier.background(Palette.green800, RoundedCornerShape(14.dp))
+            .border(1.dp, if (mine) Palette.gold else Palette.green700, RoundedCornerShape(14.dp))
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
-        Text(label, color = Palette.textDim)
-        Text("$value", color = Palette.text, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge)
+        Text(label, color = Palette.textDim, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text("$value", color = Palette.gold, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 30.sp)
     }
+}
+
+/** حد متقطع حول هدف النقاط */
+private fun Modifier.dashedPill(): Modifier = drawBehind {
+    drawRoundRect(
+        color = Palette.green700, cornerRadius = androidx.compose.ui.geometry.CornerRadius(size.height / 2),
+        style = androidx.compose.ui.graphics.drawscope.Stroke(width = 1.dp.toPx(), pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(6f, 4f))),
+    )
 }
 
 @Composable
@@ -338,27 +351,71 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, partner: Boolean = f
         if (s?.away == true) append(" (انقطع الاتصال)")
         if (partner) append(" (شريكك)")
     }
-    Text(
-        label,
-        color = Palette.text,
-        textAlign = TextAlign.Center,
-        modifier = modifier
-            .then(if (turn) Modifier.border(2.dp, Palette.gold, RoundedCornerShape(10.dp)) else Modifier)
-            .padding(6.dp),
-    )
+    Box(
+        modifier
+            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
+            .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
+            .padding(horizontal = 4.dp, vertical = 8.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
+    }
 }
 
+/**
+ * وسط الطاولة: الأوراق تتكدّس فوق بعض، كل ورقة مزاحة ومائلة قليلاً باتجاه من رماها، والأخيرة في الأعلى.
+ * الوصول لها يقرأ كل الأوراق ومن لعبها، والنقر مرتين يعيد قراءتها، وفي قائمة إجراءات TalkBack القراءات الأربع.
+ */
 @Composable
-private fun BidButton(text: String, onClick: () -> Unit) = PrimaryButtonCompact(text, onClick)
+private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, me: Int, text: BalootText, reads: Map<SwipeDir, () -> Unit>) {
+    Box(
+        Modifier.widthIn(max = 300.dp).fillMaxWidth().aspectRatio(1f)
+            .clip(androidx.compose.foundation.shape.CircleShape)
+            .background(Color(0xFF0B241B))
+            .border(1.dp, Color(0x33D4AF37), androidx.compose.foundation.shape.CircleShape)
+            .clickable { reads.getValue(SwipeDir.Left)() }
+            .semantics(mergeDescendants = true) {
+                contentDescription = if (shownTrick.isEmpty()) "وسط الطاولة: لا توجد أوراق" else "وسط الطاولة: ${text.trick()}"
+                customActions = listOf(
+                    CustomAccessibilityAction("أوراق الطاولة") { reads.getValue(SwipeDir.Left)(); true },
+                    CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
+                    CustomAccessibilityAction("المشاريع") { reads.getValue(SwipeDir.Up)(); true },
+                    CustomAccessibilityAction("دور مين") { reads.getValue(SwipeDir.Down)(); true },
+                )
+            },
+        contentAlignment = Alignment.Center,
+    ) {
+        if ((g.phase == "bidding" || g.phase == "doubling") && g.qaba != null) {
+            Column(Modifier.absoluteOffset(y = 6.dp - 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                Text("ورقة الأرض", color = Palette.textDim, fontSize = 14.sp)
+                CardFaceBox(g.qaba)
+            }
+        }
+        shownTrick.forEach { p ->
+            // الإزاحة والميل والجهة: نفس قيم التطبيق الحالي (يمين الشاشة = اللاعب التالي)
+            val (dx, dy, rot) = when ((p.seat - me + 4) % 4) {
+                0 -> Triple(0, 38, 3f)
+                1 -> Triple(36, 0, 9f)
+                2 -> Triple(0, -38, -4f)
+                else -> Triple(-36, 0, -9f)
+            }
+            key(g.trickNo, p.seat) {
+                val anim = remember { androidx.compose.animation.core.Animatable(0f) }
+                LaunchedEffect(Unit) { anim.animateTo(1f, androidx.compose.animation.core.tween(350)) }
+                val f = 1f - anim.value
+                Box(
+                    Modifier.absoluteOffset((dx + dx * 1.5f * f).dp, (dy + dy * 1.5f * f).dp)
+                        .graphicsLayer { rotationZ = rot; alpha = anim.value; scaleX = 0.85f + 0.15f * anim.value; scaleY = scaleX },
+                ) { CardFaceBox(p.card) }
+            }
+        }
+    }
+}
 
+/** ورقة بحجم أوراق الطاولة: خلفية بيضاء وزوايا وظل */
 @Composable
-private fun PrimaryButtonCompact(text: String, onClick: () -> Unit) {
-    androidx.compose.material3.Button(
-        onClick = onClick,
-        shape = RoundedCornerShape(14.dp),
-        colors = androidx.compose.material3.ButtonDefaults.buttonColors(containerColor = Palette.gold, contentColor = Palette.green900),
-        modifier = Modifier.height(48.dp),
-    ) { Text(text, style = MaterialTheme.typography.labelLarge) }
+private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84.dp)) {
+    CardFace(card, modifier.shadow(6.dp, RoundedCornerShape(6.dp)).clip(RoundedCornerShape(6.dp)).background(Color.White))
 }
 
 /** ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك */
@@ -366,8 +423,8 @@ private fun PrimaryButtonCompact(text: String, onClick: () -> Unit) {
 private fun HandCard(card: Card, legal: Boolean, modifier: Modifier, onPlay: () -> Unit) {
     Box(
         modifier
-            .aspectRatio(0.69f)
-            .alpha(if (legal) 1f else 0.55f)
+            .alpha(if (legal) 1f else 0.45f)
+            .then(if (legal) Modifier.border(2.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
             .clickable { if (legal) onPlay() }
             .semantics(mergeDescendants = true) {
                 contentDescription = card.label
@@ -375,7 +432,7 @@ private fun HandCard(card: Card, legal: Boolean, modifier: Modifier, onPlay: () 
                 if (!legal) disabled()
                 onClick(label = "لعب الورقة") { if (legal) onPlay(); true }
             },
-    ) { CardFace(card, Modifier.fillMaxSize()) }
+    ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }
 
 /** صاحب المزايدة يسمع صوتها فوراً عند الضغط (ولا يتكرر حين يصل التحديث من الخادم) */
