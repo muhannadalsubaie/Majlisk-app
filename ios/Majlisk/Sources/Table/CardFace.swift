@@ -5,7 +5,7 @@ enum CardImages {
     private static var cache: [String: UIImage] = [:]
     static func get(_ card: Card) -> UIImage? {
         if let img = cache[card.image] { return img }
-        guard let path = Bundle.main.path(forResource: card.image, ofType: "webp", inDirectory: "Resources/cards"),
+        guard let path = Bundle.main.path(forResource: card.image, ofType: "webp", inDirectory: "Media/cards"),
               let img = UIImage(contentsOfFile: path) else { return nil }
         cache[card.image] = img
         return img

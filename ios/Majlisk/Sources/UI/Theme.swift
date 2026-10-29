@@ -225,7 +225,7 @@ struct Field: View {
 struct Logo: View {
     let size: CGFloat
     var body: some View {
-        if let img = UIImage(contentsOfFile: Bundle.main.path(forResource: "logo", ofType: "png", inDirectory: "Resources") ?? "") {
+        if let img = UIImage(contentsOfFile: Bundle.main.path(forResource: "logo", ofType: "png", inDirectory: "Media") ?? "") {
             // زوايا دائرية وظل وإطار ذهبي خفيف (كالتطبيق الحالي)
             Image(uiImage: img).resizable().scaledToFit().frame(width: size, height: size)
                 .clipShape(RoundedRectangle(cornerRadius: size * 0.22))

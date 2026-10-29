@@ -19,7 +19,7 @@ final class Sounds {
         // يمتزج مع صوت VoiceOver والمحادثة دون أن يوقفهما
         try? AVAudioSession.sharedInstance().setCategory(.playback, options: [.mixWithOthers])
         for f in files {
-            if let url = Bundle.main.url(forResource: f, withExtension: "mp3", subdirectory: "Resources/sounds")
+            if let url = Bundle.main.url(forResource: f, withExtension: "mp3", subdirectory: "Media/sounds")
                 ?? Bundle.main.url(forResource: f, withExtension: "mp3", subdirectory: "sounds"),
                let d = try? Data(contentsOf: url) { data[f] = d }
         }
