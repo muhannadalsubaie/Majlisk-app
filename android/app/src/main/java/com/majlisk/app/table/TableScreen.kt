@@ -307,14 +307,15 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         // يد اللاعب
         if (mySeat != null) {
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
-            FlowRow(
-                Modifier.fillMaxWidth().padding(top = 6.dp),
-                horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-            ) {
-                sortHand(g.myHand).forEach { c ->
-                    HandCard(c, legal = g.actions.legal.contains(c), modifier = Modifier.size(58.dp, 84.dp)) { act(jsonOf("type" to "play", "card" to c.toJson())) }
+            // أوراقك على شكل مروحة: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
+            val hand = sortHand(g.myHand)
+            Box(Modifier.fillMaxWidth().height(118.dp).padding(top = 4.dp)) {
+                hand.forEachIndexed { i, c ->
+                    val k = i - (hand.size - 1) / 2f
+                    HandCard(
+                        c, legal = g.actions.legal.contains(c), fanX = k * 33f, fanAngle = k * 4f,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp).size(64.dp, 92.dp),
+                    ) { act(jsonOf("type" to "play", "card" to c.toJson())) }
                 }
             }
         } else {
@@ -376,7 +377,7 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
     // طاولة ثلاثية الأبعاد: مائلة كأنك جالس عليها، بإطار خشب ومفرش أخضر
     Box(
         Modifier.widthIn(max = 300.dp).fillMaxWidth().aspectRatio(1f)
-            .graphicsLayer { rotationX = 28f; cameraDistance = 14f * density }
+            .graphicsLayer { rotationX = 40f; cameraDistance = 12f * density }
             .shadow(14.dp, androidx.compose.foundation.shape.CircleShape)
             .background(Brush.radialGradient(listOf(Color(0xFF8A5A2B), Color(0xFF5C3A1A), Color(0xFF3B2410))), androidx.compose.foundation.shape.CircleShape)
             .padding(10.dp)
@@ -434,11 +435,16 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
 
 /** ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك */
 @Composable
-private fun HandCard(card: Card, legal: Boolean, modifier: Modifier, onPlay: () -> Unit) {
+private fun HandCard(card: Card, legal: Boolean, fanX: Float, fanAngle: Float, modifier: Modifier, onPlay: () -> Unit) {
     Box(
         modifier
-            // الأوراق المسموح لعبها مرفوعة قليلاً
-            .graphicsLayer { translationY = if (legal) -6.dp.toPx() else 0f }
+            // مكانها في المروحة، والأوراق المسموح لعبها مرفوعة قليلاً
+            .graphicsLayer {
+                translationX = fanX.dp.toPx()
+                translationY = if (legal) -10.dp.toPx() else 0f
+                rotationZ = fanAngle
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2f)
+            }
             .alpha(if (legal) 1f else 0.45f)
             .then(if (legal) Modifier.border(2.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
             .clickable { if (legal) onPlay() }

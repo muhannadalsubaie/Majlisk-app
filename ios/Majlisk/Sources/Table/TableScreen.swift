@@ -187,12 +187,19 @@ struct BalootBoard: View {
                 if mySeat != nil {
                     Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
-                    FlowLayout(spacing: 4) {
-                        ForEach(sortHand(g.myHand), id: \.self) { c in
+                    // أوراقك على شكل مروحة: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
+                    let hand = sortHand(g.myHand)
+                    ZStack(alignment: .bottom) {
+                        ForEach(hand, id: \.self) { c in
+                            let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
                             HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
+                                .rotationEffect(.degrees(Double(k) * 4), anchor: UnitPoint(x: 0.5, y: 2))
+                                .offset(x: k * 33)
                         }
                     }
-                    .padding(.top, 6)
+                    .padding(.bottom, 6)
+                    .frame(maxWidth: .infinity, minHeight: 118, alignment: .bottom)
+                    .environment(\.layoutDirection, .leftToRight)
                 } else {
                     Note("أنت تشاهد هذه الطاولة.")
                 }
@@ -248,7 +255,7 @@ struct BalootBoard: View {
         .environment(\.layoutDirection, .leftToRight)
         .animation(.easeOut(duration: 0.35), value: shownTrick.count)
         // مائلة كأنك جالس عليها
-        .rotation3DEffect(.degrees(28), axis: (x: 1, y: 0, z: 0), perspective: 0.6)
+        .rotation3DEffect(.degrees(40), axis: (x: 1, y: 0, z: 0), perspective: 0.65)
         .contentShape(Circle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(shownTrick.isEmpty ? "وسط الطاولة: لا توجد أوراق" : "وسط الطاولة: \(text.trick())")
@@ -351,10 +358,12 @@ private struct PlayerTag: View {
 /// ورقة بحجم أوراق الطاولة: خلفية بيضاء وزوايا وظل
 private struct TableCard: View {
     let card: Card
+    var width: CGFloat = 58
+    var height: CGFloat = 84
     var body: some View {
         // سُمك الورقة: حافة رمادية تحتها، وظل أعمق
         CardFace(card: card)
-            .frame(width: 58, height: 84)
+            .frame(width: width, height: height)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 6))
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(white: 0.8), lineWidth: 0.5))
@@ -369,10 +378,10 @@ private struct HandCard: View {
     let legal: Bool
     let play: () -> Void
     var body: some View {
-        TableCard(card: card)
+        TableCard(card: card, width: 64, height: 92)
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 2))
             // الأوراق المسموح لعبها مرفوعة قليلاً
-            .offset(y: legal ? -6 : 0)
+            .offset(y: legal ? -10 : 0)
             .opacity(legal ? 1 : 0.45)
             .contentShape(Rectangle())
             .onTapGesture { if legal { play() } }
