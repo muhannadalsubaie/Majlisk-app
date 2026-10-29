@@ -217,7 +217,9 @@ final class TableConnection: ObservableObject {
             if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async { self.view = parsed; self.version += 1 } }
         case "events":
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
-            for e in msg.strs("events") { Announcer.announce(e) }
+            // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتسبق ما تأخر من قبلها فلا تتراكم القراءة
+            let events = msg.strs("events").filter { !$0.isEmpty }
+            if !events.isEmpty { Announcer.announceNow(events.joined(separator: "، ")) }
         case "error": Announcer.announce(msg.str("message"))
         case "kicked":
             stopped = true

@@ -257,7 +257,7 @@ struct BalootBoard: View {
         .rotation3DEffect(.degrees(40), axis: (x: 1, y: 0, z: 0), perspective: 0.65)
         .contentShape(Circle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(shownTrick.isEmpty ? "وسط الطاولة: لا توجد أوراق" : "وسط الطاولة: \(text.trick())")
+        .accessibilityLabel("وسط الطاولة: \(text.trick())")
         .accessibilityAddTraits(.isButton)
         .onTapGesture { _ = read(.left) }
         .accessibilityAction(named: "أوراق الطاولة") { _ = read(.left) }

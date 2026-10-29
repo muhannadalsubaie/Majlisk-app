@@ -13,7 +13,9 @@ struct BalootText {
 
     /// الأوراق الموجودة على الطاولة الآن ومن لعب كل ورقة، بالترتيب
     func trick() -> String {
-        shownTrick.isEmpty ? "لا توجد أوراق على الطاولة" : shownTrick.map { "\(name($0.seat)): \($0.card.label)" }.joined(separator: "، ")
+        if !shownTrick.isEmpty { return shownTrick.map { "\(name($0.seat)): \($0.card.label)" }.joined(separator: "، ") }
+        if (g.phase == "bidding" || g.phase == "doubling"), let q = g.qaba { return "ورقة الأرض: \(q.label)" }
+        return "لا توجد أوراق على الطاولة"
     }
 
     /// نوع اللعب: من اشترى، وعلى ماذا، والدبل

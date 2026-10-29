@@ -15,9 +15,11 @@ class BalootText(private val view: TableView, private val g: GameView, private v
     private fun teamWord(s: Int) = if (mySeat == null) "فريق ${name(s)}" else if (teamOf(s) == teamOf(me)) "فريقك" else "الخصم"
 
     /** الأوراق الموجودة على الطاولة الآن ومن لعب كل ورقة، بالترتيب */
-    fun trick(): String =
-        if (shownTrick.isEmpty()) "لا توجد أوراق على الطاولة"
-        else shownTrick.joinToString("، ") { "${name(it.seat)}: ${it.card.label}" }
+    fun trick(): String = when {
+        shownTrick.isNotEmpty() -> shownTrick.joinToString("، ") { "${name(it.seat)}: ${it.card.label}" }
+        (g.phase == "bidding" || g.phase == "doubling") && g.qaba != null -> "ورقة الأرض: ${g.qaba.label}"
+        else -> "لا توجد أوراق على الطاولة"
+    }
 
     /** نوع اللعب: من اشترى، وعلى ماذا، والدبل */
     fun contract(): String {

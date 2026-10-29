@@ -386,7 +386,7 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
             .border(1.dp, Color(0x55D4AF37), androidx.compose.foundation.shape.CircleShape)
             .clickable { reads.getValue(SwipeDir.Left)() }
             .semantics(mergeDescendants = true) {
-                contentDescription = if (shownTrick.isEmpty()) "وسط الطاولة: لا توجد أوراق" else "وسط الطاولة: ${text.trick()}"
+                contentDescription = "وسط الطاولة: ${text.trick()}"
                 customActions = listOf(
                     CustomAccessibilityAction("أوراق الطاولة") { reads.getValue(SwipeDir.Left)(); true },
                     CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
