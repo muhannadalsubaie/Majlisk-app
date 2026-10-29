@@ -192,6 +192,7 @@ struct BalootBoard: View {
                             HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
                         }
                     }
+                    .padding(.top, 6)
                 } else {
                     Note("أنت تشاهد هذه الطاولة.")
                 }
