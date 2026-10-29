@@ -20,7 +20,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         RTCInitializeSSL()
         // الصوت من مكبر الجهاز (لا السماعة الصغيرة)، ويمتزج مع VoiceOver
         let cfg = RTCAudioSessionConfiguration.webRTC()
-        cfg.categoryOptions = [.defaultToSpeaker, .allowBluetooth, .mixWithOthers]
+        cfg.categoryOptions = [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers]
         RTCAudioSessionConfiguration.setWebRTC(cfg)
         return RTCPeerConnectionFactory(encoderFactory: RTCDefaultVideoEncoderFactory(), decoderFactory: RTCDefaultVideoDecoderFactory())
     }()
@@ -259,7 +259,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             try? s.setCategory(.playback, options: [.mixWithOthers])
             return
         }
-        try? s.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetooth, .mixWithOthers])
+        try? s.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
         try? s.setActive(true)
     }
 

@@ -71,6 +71,17 @@ targets:
           - SKAdNetworkIdentifier: cstr6suwn9.skadnetwork
         CFBundleURLTypes:
           - CFBundleURLSchemes: [com.googleusercontent.apps.152865871542-7er1soqd2mo3mg91f2v5e819hqnhjsgi]
+    # ملفات موارد المكتبات (مثل Firebase_FirebaseCore.bundle) تُنسخ بلا توقيع فيرفض التوقيع النهائي:
+    # نوقّعها بنفس هوية التطبيق قبل توقيعه
+    postBuildScripts:
+      - name: Sign package resource bundles
+        basedOnDependencyAnalysis: false
+        script: |
+          if [ -n "$EXPANDED_CODE_SIGN_IDENTITY" ] && [ "$CODE_SIGNING_ALLOWED" != "NO" ]; then
+            find "$TARGET_BUILD_DIR/$WRAPPER_NAME" -maxdepth 1 -name "*.bundle" -type d | while read -r b; do
+              /usr/bin/codesign --force --sign "$EXPANDED_CODE_SIGN_IDENTITY" --timestamp=none "$b"
+            done
+          fi
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.majlisk.app
