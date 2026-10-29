@@ -187,18 +187,17 @@ struct BalootBoard: View {
                 if mySeat != nil {
                     Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
-                    // أوراقك على شكل مروحة: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
+                    // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)
                     ZStack(alignment: .bottom) {
                         ForEach(hand, id: \.self) { c in
                             let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
                             HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
-                                .rotationEffect(.degrees(Double(k) * 4), anchor: UnitPoint(x: 0.5, y: 2))
-                                .offset(x: k * 33)
+                                .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
                         }
                     }
                     .padding(.bottom, 6)
-                    .frame(maxWidth: .infinity, minHeight: 118, alignment: .bottom)
+                    .frame(maxWidth: .infinity, minHeight: 132, alignment: .bottom)
                     .environment(\.layoutDirection, .leftToRight)
                 } else {
                     Note("أنت تشاهد هذه الطاولة.")
@@ -378,11 +377,9 @@ private struct HandCard: View {
     let legal: Bool
     let play: () -> Void
     var body: some View {
-        TableCard(card: card, width: 64, height: 92)
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 2))
-            // الأوراق المسموح لعبها مرفوعة قليلاً
-            .offset(y: legal ? -10 : 0)
-            .opacity(legal ? 1 : 0.45)
+        TableCard(card: card, width: 66, height: 96)
+            // المسموح لعبها بإطار ذهبي فقط، فيبقى شكل المروحة واحداً
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 3))
             .contentShape(Rectangle())
             .onTapGesture { if legal { play() } }
             .accessibilityElement(children: .ignore)

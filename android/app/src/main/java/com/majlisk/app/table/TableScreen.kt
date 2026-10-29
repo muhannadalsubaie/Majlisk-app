@@ -307,14 +307,14 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         // يد اللاعب
         if (mySeat != null) {
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            // أوراقك على شكل مروحة: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
+            // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             val hand = sortHand(g.myHand)
-            Box(Modifier.fillMaxWidth().height(118.dp).padding(top = 4.dp)) {
+            Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp)) {
                 hand.forEachIndexed { i, c ->
                     val k = i - (hand.size - 1) / 2f
                     HandCard(
-                        c, legal = g.actions.legal.contains(c), fanX = k * 33f, fanAngle = k * 4f,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 6.dp).size(64.dp, 92.dp),
+                        c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f,
+                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp),
                     ) { act(jsonOf("type" to "play", "card" to c.toJson())) }
                 }
             }
@@ -435,18 +435,15 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
 
 /** ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك */
 @Composable
-private fun HandCard(card: Card, legal: Boolean, fanX: Float, fanAngle: Float, modifier: Modifier, onPlay: () -> Unit) {
+private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modifier, onPlay: () -> Unit) {
     Box(
         modifier
-            // مكانها في المروحة، والأوراق المسموح لعبها مرفوعة قليلاً
+            // مكانها في المروحة (تدور حول نقطة تحت اليد)، والمسموح لعبها بإطار ذهبي فقط فيبقى شكل المروحة واحداً
             .graphicsLayer {
-                translationX = fanX.dp.toPx()
-                translationY = if (legal) -10.dp.toPx() else 0f
                 rotationZ = fanAngle
-                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2f)
+                transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2.6f)
             }
-            .alpha(if (legal) 1f else 0.45f)
-            .then(if (legal) Modifier.border(2.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
+            .then(if (legal) Modifier.border(3.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
             .clickable { if (legal) onPlay() }
             .semantics(mergeDescendants = true) {
                 contentDescription = card.label
