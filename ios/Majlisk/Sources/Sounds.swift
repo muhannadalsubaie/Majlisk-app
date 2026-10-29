@@ -57,9 +57,21 @@ final class Sounds {
 
     func collect() { play("slide7", gain: 0.8, vary: false) }
 
+    /// نغمة الدور جاهزة مسبقاً (بلا تأخير تحضير عند أول تشغيل)
+    private lazy var turnPlayer: AVAudioPlayer? = {
+        guard let d = data["turn"], let p = try? AVAudioPlayer(data: d) else { return nil }
+        p.prepareToPlay()
+        return p
+    }()
+
     func turn(soft: Bool) {
-        guard Prefs.turnChime else { return }
-        play("turn", gain: soft ? 0.35 : 0.7, vary: false)
+        guard Prefs.turnChime, !Prefs.muted else { return }
+        DispatchQueue.main.async { [weak self] in
+            guard let p = self?.turnPlayer else { return }
+            p.volume = soft ? 0.35 : 0.7
+            p.currentTime = 0
+            p.play()
+        }
     }
 
     func handEnd(_ result: String, kaboot: Bool) {

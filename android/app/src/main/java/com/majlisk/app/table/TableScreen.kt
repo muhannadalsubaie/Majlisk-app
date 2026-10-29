@@ -216,7 +216,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
     // إعلان "دورك" مرة واحدة عند بداية الدور
     var wasMyTurn by remember { mutableStateOf(false) }
     LaunchedEffect(g.myTurn) {
-        if (g.myTurn && !wasMyTurn) { Announcer.announce("دورك"); Sounds.turn(Announcer.readerOn) }
+        // النغمة أولاً (فورية)، ثم الإعلان
+        if (g.myTurn && !wasMyTurn) { Sounds.turn(Announcer.readerOn); Announcer.announce("دورك") }
         wasMyTurn = g.myTurn
     }
 
