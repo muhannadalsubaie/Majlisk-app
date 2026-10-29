@@ -18,7 +18,8 @@ on:
         type: boolean
         default: false
 
-concurrency: ios-build
+# فحص البناء (مع كل تعديل) والرفع (يدوي) في مجموعتين منفصلتين، فلا يلغي تعديلٌ جديد رفعاً ينتظر دوره
+concurrency: ios-${{ github.event_name }}
 
 jobs:
   build:
