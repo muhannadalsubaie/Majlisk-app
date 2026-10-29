@@ -56,6 +56,17 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         return lines.joinToString(". ")
     }
 
+    /** دور مين الآن، وفي أي مرحلة */
+    fun turn(): String {
+        if (g.phase == "matchOver") return "انتهت المباراة"
+        val who = if (g.turn == mySeat) "دورك" else "دور ${name(g.turn)}"
+        return when (g.phase) {
+            "bidding" -> "$who في المزايدة"
+            "doubling" -> if (g.myTurn) "دورك تقرر الدبل" else "بانتظار قرار الدبل"
+            else -> "$who في اللعب"
+        }
+    }
+
     fun statusLine(): String? {
         val c = g.contract ?: return null
         val mode = if (c.mode == "sun") "صن" else "حكم ${SUIT_NAMES[c.trump]} ${SUIT_SYMBOLS[c.trump]}"

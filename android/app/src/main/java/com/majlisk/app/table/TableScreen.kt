@@ -214,6 +214,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         SwipeDir.Left to { Announcer.announceNow(text.trick()) },
         SwipeDir.Right to { Announcer.announceNow(text.contract()) },
         SwipeDir.Up to { Announcer.announceNow(text.projects()) },
+        SwipeDir.Down to { Announcer.announceNow(text.turn()) },
     )
 
     Column(Modifier.fillMaxWidth().twoFingerSwipes { reads[it]?.invoke() }, verticalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -247,6 +248,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                             CustomAccessibilityAction("أوراق الطاولة") { reads.getValue(SwipeDir.Left)(); true },
                             CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
                             CustomAccessibilityAction("المشاريع") { reads.getValue(SwipeDir.Up)(); true },
+                            CustomAccessibilityAction("دور مين") { reads.getValue(SwipeDir.Down)(); true },
                         )
                     },
             ) {

@@ -107,7 +107,7 @@ struct BalootBoard: View {
         case .left: Announcer.announceNow(text.trick())
         case .right: Announcer.announceNow(text.contract())
         case .up: Announcer.announceNow(text.projects())
-        case .down: return false
+        case .down: Announcer.announceNow(text.turn())
         }
         return true
     }
@@ -128,17 +128,6 @@ struct BalootBoard: View {
             .accessibilityLabel("النقاط: لنا \(us)، لهم \(them). الفوز عند 152")
 
             if let line = text.statusLine() { Text(line).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
-
-            // أزرار القراءة السريعة: نفس قراءات إيماءة الثلاث أصابع، تظهر مع VoiceOver
-            if Announcer.readerOn {
-                HStack(spacing: 6) {
-                    MButton("أوراق الطاولة") { _ = read(.left) }
-                    MButton("نوع اللعب") { _ = read(.right) }
-                    MButton("المشاريع") { _ = read(.up) }
-                }
-                .accessibilityElement(children: .contain)
-                .accessibilityLabel("قراءة سريعة")
-            }
 
             // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً
             PlayerTag(v: v, g: g, seat: (me + 2) % 4, partner: true)
@@ -241,6 +230,7 @@ struct BalootBoard: View {
         .accessibilityAction(named: "أوراق الطاولة") { _ = read(.left) }
         .accessibilityAction(named: "نوع اللعب") { _ = read(.right) }
         .accessibilityAction(named: "المشاريع") { _ = read(.up) }
+        .accessibilityAction(named: "دور مين") { _ = read(.down) }
     }
 
     /// صاحب المزايدة يسمع صوتها فوراً عند الضغط (ولا يتكرر حين يصل التحديث من الخادم)

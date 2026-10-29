@@ -49,6 +49,17 @@ struct BalootText {
         return lines.joined(separator: ". ")
     }
 
+    /// دور مين الآن، وفي أي مرحلة
+    func turn() -> String {
+        if g.phase == "matchOver" { return "انتهت المباراة" }
+        let who = g.turn == mySeat ? "دورك" : "دور \(name(g.turn))"
+        switch g.phase {
+        case "bidding": return "\(who) في المزايدة"
+        case "doubling": return g.myTurn ? "دورك تقرر الدبل" : "بانتظار قرار الدبل"
+        default: return "\(who) في اللعب"
+        }
+    }
+
     func statusLine() -> String? {
         guard let c = g.contract else { return nil }
         let mode = c.mode == "sun" ? "صن" : "حكم \(SUIT_NAMES[c.trump ?? ""] ?? "") \(SUIT_SYMBOLS[c.trump ?? ""] ?? "")"
