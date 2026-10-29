@@ -37,7 +37,7 @@ struct AppRoot: View {
             ChooseUsernameScreen()
         } else {
             switch route {
-            case .splash: SplashScreen { route = session.uid != nil ? .menu : .auth }
+            case .splash: SplashScreen(done: afterSplash)
             case .auth: AuthScreen { route = .menu }
             case .menu: MainMenuScreen(profile: session.profile) { route = $0 }
             case .createTable: CreateTableScreen(profile: session.profile, navigate: { route = $0 }, openTable: open)
@@ -53,6 +53,16 @@ struct AppRoot: View {
     }
 
     private func open(_ id: String) { tableId = id; route = .table }
+
+    /// بعد البداية: لو أُغلق التطبيق وأنت في طاولة قبل أقل من دقيقة نرجعك لها
+    private func afterSplash() {
+        guard session.uid != nil else { route = .auth; return }
+        guard let last = Prefs.lastTable, Date().timeIntervalSince1970 - Prefs.lastTableAt < 60 else { route = .menu; return }
+        Task { @MainActor in
+            let member = (try? await Api.get("/tables/\(last)/member"))?.bool("member") ?? false
+            if member { open(last) } else { route = .menu }
+        }
+    }
 
     private func answer(_ invite: TableInvite, accept: Bool) {
         busyInvite = true

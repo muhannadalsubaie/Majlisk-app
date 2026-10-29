@@ -49,7 +49,15 @@ struct TableScreen: View {
             // كل من يدخل الطاولة ينضم للمحادثة الصوتية مستمعاً، وميكروفونه مقفل حتى يفتحه بنفسه
             Voice.shared.join(tableId, uid: uid, mode: .auto)
         }
-        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
+        .task {
+            // نبضة كل ١٠ ثوانٍ: لو أُغلق التطبيق ورجعت خلال دقيقة يرجعك لنفس الطاولة
+            while !Task.isCancelled {
+                Prefs.lastTable = tableId
+                Prefs.lastTableAt = Date().timeIntervalSince1970
+                try? await Task.sleep(nanoseconds: 10_000_000_000)
+            }
+        }
+        .onDisappear { Prefs.lastTable = nil; UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
         .onReceive(NotificationCenter.default.publisher(for: .appForeground)) { _ in conn.reconnectNow(); Voice.shared.onForeground() }
         .onChange(of: conn.view?.voice ?? []) { list in Voice.shared.sync(list) }
     }
@@ -70,10 +78,10 @@ struct TableScreen: View {
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
             }
-            Color.clear.frame(height: 70)
+            // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب VoiceOver
+            // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
+            HStack { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
         }
-        // زر الميكروفون عائم أسفل يسار الشاشة (كالتطبيق الحالي؛ في الاتجاه العربي trailing = اليسار)
-        .overlay(alignment: .bottomTrailing) { VoiceButton(tableId: v.id, uid: uid).padding(16) }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
         .sheet(isPresented: $menuOpen) {
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false })
@@ -123,16 +131,19 @@ struct BalootBoard: View {
             // النقاط: جملة واحدة كاملة لـ VoiceOver
             let us = g.scores[safe: myTeam] ?? 0
             let them = g.scores[safe: 1 - myTeam] ?? 0
+            // المشاهد: بدل "لنا ولهم" أسماء كل فريق
+            let usLabel = mySeat == nil ? "\(text.name(0)) و\(text.name(2))" : "لنا"
+            let themLabel = mySeat == nil ? "\(text.name(1)) و\(text.name(3))" : "لهم"
             HStack(spacing: 10) {
-                ScoreBox(label: "لنا", value: us, mine: true)
+                ScoreBox(label: usLabel, value: us, mine: mySeat != nil)
                 Text("152").font(.system(size: 13)).foregroundColor(Palette.textDim)
                     .padding(.horizontal, 10).padding(.vertical, 4)
                     .overlay(Capsule().stroke(Palette.green700, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
-                ScoreBox(label: "لهم", value: them, mine: false)
+                ScoreBox(label: themLabel, value: them, mine: false)
             }
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("النقاط: لنا \(us)، لهم \(them). الفوز عند 152")
+            .accessibilityLabel("النقاط: \(usLabel) \(us)، \(themLabel) \(them). الفوز عند 152")
 
             if let line = text.statusLine() { Text(line).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
 
@@ -178,7 +189,7 @@ struct BalootBoard: View {
                                 act(["type": "double"])
                             }
                         }
-                        if g.actions.canPassDouble { MButton("تمرير") { act(["type": "doublePass"]) } }
+                        if g.actions.canPassDouble { MButton("بس") { act(["type": "doublePass"]) } }
                     }
                 }
                 if g.actions.chooseLock {
@@ -203,8 +214,6 @@ struct BalootBoard: View {
                     .padding(.bottom, 6)
                     .frame(maxWidth: .infinity, minHeight: 132, alignment: .bottom)
                     .environment(\.layoutDirection, .leftToRight)
-                } else {
-                    Note("أنت تشاهد هذه الطاولة.")
                 }
             }
         }

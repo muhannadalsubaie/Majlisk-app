@@ -134,6 +134,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                         })
                     }
                     if (isOwner) {
+                        SecondaryButton("تعيينه مالكاً للطاولة", { conn.send("setOwner", "uid" to u); onClose() }, fill = true)
                         SecondaryButton(if (blocked) "إلغاء الكتم في المحادثة الصوتية" else "كتم في المحادثة الصوتية", {
                             conn.send("voiceBlock", "uid" to u, "blocked" to !blocked); page = Page.Players
                         }, fill = true)

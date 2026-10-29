@@ -16,6 +16,14 @@ object Prefs {
         get() = sp.getBoolean("music", true)
         set(v) { sp.edit().putBoolean("music", v).apply() }
 
+    /** آخر طاولة كنت فيها ومتى (للرجوع لها تلقائياً إن أُغلق التطبيق وفُتح خلال دقيقة) */
+    var lastTable: String?
+        get() = sp.getString("lastTable", null)
+        set(v) { sp.edit().putString("lastTable", v).apply() }
+    var lastTableAt: Long
+        get() = sp.getLong("lastTableAt", 0)
+        set(v) { sp.edit().putLong("lastTableAt", v).apply() }
+
     var turnChime: Boolean
         get() = sp.getBoolean("turnChime", true)
         set(v) { sp.edit().putBoolean("turnChime", v).apply() }

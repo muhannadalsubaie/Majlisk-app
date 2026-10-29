@@ -15,6 +15,8 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     @Published private(set) var joined = false
     @Published private(set) var muted = true
     @Published private(set) var busy = false
+    /// إعادة اتصال صامتة بعد انقطاع — الزر يبقى على حاله (لا يظهر "خارج المحادثة")
+    @Published private(set) var reconnecting = false
 
     private lazy var factory: RTCPeerConnectionFactory = {
         RTCInitializeSSL()
@@ -85,13 +87,16 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 sessionId = r.str("sessionId")
                 members = members.filter { $0.uid != uid } + [VoiceMember(uid: uid, username: "", sessionId: sessionId!, muted: true, mic: false, blocked: false)]
                 update(joined: true, muted: true, busy: false)
+                DispatchQueue.main.async { self.reconnecting = false }
                 autoRetries = 0
                 if mode != .rejoin { Announcer.announce("أنت في المحادثة الصوتية، والميكروفون مغلق") }
             } catch {
                 cleanup()
                 let code = (error as? ApiError)?.code
                 // الانضمام التلقائي يفشل بصمت، ويعيد المحاولة بعد قليل إن كان الخطأ عابراً
-                if mode != .manual && code != "voice-not-configured" && code != "voice-limit" && autoRetries < 3 {
+                let retry = mode != .manual && code != "voice-not-configured" && code != "voice-limit" && autoRetries < 3
+                if !retry { DispatchQueue.main.async { self.reconnecting = false } }
+                if retry {
                     autoRetries += 1
                     let wait = UInt64(5_000_000_000 * autoRetries)
                     Task { try? await Task.sleep(nanoseconds: wait); if !self.isJoined && self.tableId == id { self.join(id, uid: uid, mode: mode) } }
@@ -234,6 +239,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     private func rejoin() {
         guard !rejoining, !leaving, let id = tableId else { return }
         rejoining = true
+        DispatchQueue.main.async { self.reconnecting = true }
         queue.run { [self] in
             cleanup()
             join(id, uid: myUid, mode: .rejoin)

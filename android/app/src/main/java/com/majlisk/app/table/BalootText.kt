@@ -43,20 +43,16 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         return parts.joinToString("، ")
     }
 
-    /** المشاريع المعلنة ومن أعلنها (وأوراقها بعد الأكلة الأولى) */
+    /** المشاريع: من عنده مشروع فقط، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب */
     fun projects(): String {
         val lines = g.declared.map { d ->
             val who = if (d.seat == mySeat) "أنت" else name(d.seat)
-            val items = d.kinds.mapIndexed { i, k -> d.cards?.getOrNull(i)?.let { "$k: $it" } ?: k }
-            "$who: ${items.joinToString("، و")}${if (d.cancelled) "، ملغى" else ""}"
+            val cards = d.cards
+            if (cards != null) "$who: " + d.kinds.mapIndexed { i, k -> cards.getOrNull(i)?.let { "$k: $it" } ?: k }.joinToString("، و")
+            else if (d.seat == mySeat) "عندك مشروع" else "$who عنده مشروع"
         }.toMutableList()
         g.balootSeat?.let { lines += "${if (it == mySeat) "أنت" else name(it)}: بلوت" }
-        if (lines.isEmpty()) return "لا توجد مشاريع معلنة"
-        val w = g.projectsWinningTeam
-        if (w != null && g.declared.isNotEmpty()) {
-            lines += "المشاريع المحتسبة لـ${if (mySeat == null) "فريق ${name(w)}" else if (w == teamOf(me)) "فريقك" else "الخصم"}"
-        }
-        return lines.joinToString(". ")
+        return if (lines.isEmpty()) "لا توجد مشاريع معلنة" else lines.joinToString(". ")
     }
 
     /** دور مين الآن، وفي أي مرحلة */

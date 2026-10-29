@@ -14,6 +14,8 @@ import com.majlisk.app.MainActivity
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.Billing
 import com.majlisk.app.data.Hub
+import com.majlisk.app.data.Prefs
+import com.majlisk.app.net.Api
 import com.majlisk.app.data.Session
 import com.majlisk.app.data.Social
 import com.majlisk.app.table.TableScreen
@@ -59,7 +61,17 @@ fun AppRoot() {
     when {
         needsUsername -> ChooseUsernameScreen()
         else -> when (screen) {
-            Route.Splash -> SplashScreen { screen = if (user != null) Route.Menu else Route.Auth }
+            Route.Splash -> SplashScreen {
+                if (user == null) { screen = Route.Auth; return@SplashScreen }
+                // أُغلق التطبيق وأنت في طاولة قبل أقل من دقيقة: نرجعك لها إن كنت ما زلت فيها
+                val last = Prefs.lastTable
+                if (last != null && System.currentTimeMillis() - Prefs.lastTableAt < 60_000) {
+                    scope.launch {
+                        val member = runCatching { Api.get("/tables/$last/member").optBoolean("member") }.getOrDefault(false)
+                        if (member) openTable(last) else screen = Route.Menu
+                    }
+                } else screen = Route.Menu
+            }
             Route.Auth -> AuthScreen { screen = Route.Menu }
             Route.Menu -> MainMenuScreen(profile, navigate)
             Route.CreateTable -> CreateTableScreen(profile, navigate, openTable)
@@ -67,7 +79,7 @@ fun AppRoot() {
             Route.Friends -> FriendsScreen(hub, navigate)
             Route.Settings -> SettingsScreen(onBack = { screen = Route.Menu }, embedded = false)
             Route.Shop -> ShopScreen(profile, navigate)
-            Route.Table -> tableId?.let { id -> TableScreen(id, user?.uid.orEmpty()) { screen = Route.Menu } } ?: run { screen = Route.Menu }
+            Route.Table -> tableId?.let { id -> TableScreen(id, user?.uid.orEmpty()) { Prefs.lastTable = null; screen = Route.Menu } } ?: run { screen = Route.Menu }
         }
     }
 

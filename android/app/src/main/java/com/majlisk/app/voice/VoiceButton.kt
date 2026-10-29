@@ -34,7 +34,9 @@ import com.majlisk.app.ui.Palette
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun VoiceButton(tableId: String, uid: String) {
-    val s by Voice.state.collectAsState()
+    val raw by Voice.state.collectAsState()
+    // أثناء إعادة الاتصال الصامتة يبقى الزر على حاله: في المحادثة والميكروفون مغلق
+    val s = if (raw.reconnecting) raw.copy(joined = true, muted = true, busy = false) else raw
     val status = when {
         s.busy -> "جارٍ الاتصال بالمحادثة الصوتية"
         !s.joined -> "أنت خارج المحادثة الصوتية"

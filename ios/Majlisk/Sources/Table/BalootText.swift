@@ -38,18 +38,17 @@ struct BalootText {
     }
 
     /// المشاريع المعلنة ومن أعلنها (وأوراقها بعد الأكلة الأولى)
+    /// المشاريع: من عنده مشروع فقط، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب
     func projects() -> String {
         var lines = g.declared.map { d -> String in
             let who = d.seat == mySeat ? "أنت" : name(d.seat)
-            let items = d.kinds.enumerated().map { i, k in d.cards?[safe: i].map { "\(k): \($0)" } ?? k }
-            return "\(who): \(items.joined(separator: "، و"))\(d.cancelled ? "، ملغى" : "")"
+            if let cards = d.cards {
+                return "\(who): " + d.kinds.enumerated().map { i, k in cards[safe: i].map { "\(k): \($0)" } ?? k }.joined(separator: "، و")
+            }
+            return d.seat == mySeat ? "عندك مشروع" : "\(who) عنده مشروع"
         }
         if let b = g.balootSeat { lines.append("\(b == mySeat ? "أنت" : name(b)): بلوت") }
-        if lines.isEmpty { return "لا توجد مشاريع معلنة" }
-        if let w = g.projectsWinningTeam, !g.declared.isEmpty {
-            lines.append("المشاريع المحتسبة لـ\(mySeat == nil ? "فريق \(name(w))" : w == teamOf(me) ? "فريقك" : "الخصم")")
-        }
-        return lines.joined(separator: ". ")
+        return lines.isEmpty ? "لا توجد مشاريع معلنة" : lines.joined(separator: ". ")
     }
 
     /// دور مين الآن، وفي أي مرحلة

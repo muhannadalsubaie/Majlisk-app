@@ -46,7 +46,8 @@ import kotlin.coroutines.resumeWithException
  */
 object Voice {
     enum class Mode { Manual, Auto, Rejoin }
-    data class State(val joined: Boolean = false, val muted: Boolean = true, val busy: Boolean = false)
+    /** reconnecting: إعادة اتصال صامتة بعد انقطاع — الزر يبقى على حاله (لا يظهر "خارج المحادثة") */
+    data class State(val joined: Boolean = false, val muted: Boolean = true, val busy: Boolean = false, val reconnecting: Boolean = false)
 
     private val _state = MutableStateFlow(State())
     val state: StateFlow<State> = _state
@@ -113,7 +114,9 @@ object Voice {
                     cleanup()
                     val code = (e as? ApiError)?.code
                     // الانضمام التلقائي يفشل بصمت، ويعيد المحاولة بعد قليل إن كان الخطأ عابراً
-                    if (mode != Mode.Manual && code != "voice-not-configured" && code != "voice-limit" && autoRetries < 3) {
+                    val retry = mode != Mode.Manual && code != "voice-not-configured" && code != "voice-limit" && autoRetries < 3
+                    if (!retry) set { copy(reconnecting = false) }
+                    if (retry) {
                         autoRetries++
                         val wait = 5000L * autoRetries
                         Session.scope.launch { delay(wait); if (!_state.value.joined && tableId == id) join(id, uid, mode) }
@@ -265,6 +268,7 @@ object Voice {
         if (rejoining || leaving) return
         val id = tableId ?: return
         rejoining = true
+        set { copy(reconnecting = true) }
         Session.scope.launch {
             lock.withLock { cleanup() }
             join(id, myUid, Mode.Rejoin)
@@ -286,7 +290,7 @@ object Voice {
         sessionId = null
         audio(false)
         background(on = false, withMic = false)
-        set { State() }
+        set { State(reconnecting = reconnecting) }
     }
 
     // ───── الصوت في الجهاز ─────

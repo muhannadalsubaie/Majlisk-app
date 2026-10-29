@@ -110,6 +110,7 @@ struct TableMenu: View {
                     default: EmptyView()
                     }
                     if isOwner {
+                        MButton("تعيينه مالكاً للطاولة") { conn.send("setOwner", ["uid": u]); onClose() }
                         MButton(blocked ? "إلغاء الكتم في المحادثة الصوتية" : "كتم في المحادثة الصوتية") {
                             conn.send("voiceBlock", ["uid": u, "blocked": !blocked]); page = .players
                         }

@@ -181,18 +181,21 @@ struct VoiceButton: View {
     @ObservedObject private var voice = Voice.shared
 
     var body: some View {
-        let status = voice.busy ? "جارٍ الاتصال بالمحادثة الصوتية" : !voice.joined ? "أنت خارج المحادثة الصوتية" : voice.muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
+        // أثناء إعادة الاتصال الصامتة يبقى الزر على حاله: في المحادثة والميكروفون مغلق
+        let joined = voice.joined || voice.reconnecting
+        let muted = voice.muted || voice.reconnecting
+        let status = voice.busy && !voice.reconnecting ? "جارٍ الاتصال بالمحادثة الصوتية" : !joined ? "أنت خارج المحادثة الصوتية" : muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
         // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
-        let on = voice.joined && !voice.muted
+        let on = joined && !muted
         Text("🎤 \(status)")
             .font(.system(size: 13, weight: .bold))
             .lineLimit(2)
             .padding(.horizontal, 12).padding(.vertical, 6)
             .frame(maxWidth: 200, minHeight: 40)
-            .foregroundColor(!voice.joined ? Palette.textDim : voice.muted ? Palette.gold : Palette.green900)
+            .foregroundColor(!joined ? Palette.textDim : muted ? Palette.gold : Palette.green900)
             .background(on ? Palette.gold : Palette.green700)
             .clipShape(RoundedRectangle(cornerRadius: 20))
-            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Palette.gold, lineWidth: voice.joined && voice.muted ? 2 : 1))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Palette.gold, lineWidth: joined && muted ? 2 : 1))
             .onTapGesture(perform: toggleMute)
             .onLongPressGesture(perform: toggleJoin)
             .accessibilityElement(children: .ignore)

@@ -41,6 +41,15 @@ enum Prefs {
         get { UserDefaults.standard.object(forKey: "music") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "music") }
     }
+    /// آخر طاولة كنت فيها ووقت آخر نبضة؛ لو أُغلق التطبيق ورجعت خلال دقيقة ترجع لها
+    static var lastTable: String? {
+        get { UserDefaults.standard.string(forKey: "lastTable") }
+        set { UserDefaults.standard.set(newValue, forKey: "lastTable") }
+    }
+    static var lastTableAt: Double {
+        get { UserDefaults.standard.double(forKey: "lastTableAt") }
+        set { UserDefaults.standard.set(newValue, forKey: "lastTableAt") }
+    }
     static var turnChime: Bool {
         get { UserDefaults.standard.object(forKey: "turnChime") as? Bool ?? true }
         set { UserDefaults.standard.set(newValue, forKey: "turnChime") }

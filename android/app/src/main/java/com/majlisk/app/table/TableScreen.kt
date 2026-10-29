@@ -104,6 +104,14 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
         onDispose { lifecycle.removeObserver(obs) }
     }
 
+    // نحفظ أنك في هذه الطاولة (كل 10 ثوانٍ): إن أُغلق التطبيق وفُتح خلال دقيقة يرجعك لها
+    LaunchedEffect(tableId) {
+        while (true) {
+            com.majlisk.app.data.Prefs.lastTable = tableId
+            com.majlisk.app.data.Prefs.lastTableAt = System.currentTimeMillis()
+            kotlinx.coroutines.delay(10_000)
+        }
+    }
     val view by conn.view.collectAsState()
     val connected by conn.connected.collectAsState()
     val closed by conn.closed.collectAsState()
@@ -149,7 +157,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val leave = { conn.send("leave"); exit() }
 
     Box(Modifier.fillMaxSize()) {
-        Screen(Modifier.padding(bottom = 80.dp)) {
+        Screen {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 com.majlisk.app.ui.BackButton({ menuOpen = true }, "القائمة")
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
@@ -169,9 +177,10 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                 }
                 v.game != null -> BalootBoard(v, v.game, uid, conn)
             }
+            // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب قارئ الشاشة
+            // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { VoiceButton(v.id, uid) }
         }
-        // زر الميكروفون عائم أسفل يسار الشاشة (كالتطبيق الحالي)
-        Box(Modifier.align(Alignment.BottomEnd).safeDrawingPadding().padding(16.dp)) { VoiceButton(v.id, uid) }
     }
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
@@ -240,15 +249,19 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         // النقاط: جملة واحدة كاملة لقارئ الشاشة
         val us = g.scores.getOrElse(myTeam) { 0 }
         val them = g.scores.getOrElse(1 - myTeam) { 0 }
+        // المشاهد: بدل "لنا ولهم" أسماء كل فريق
+        val teamName = { t: Int -> "${text.name(t)} و${text.name(t + 2)}" }
+        val usLabel = if (mySeat == null) teamName(0) else "لنا"
+        val themLabel = if (mySeat == null) teamName(1) else "لهم"
         Row(
             Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)
-                .semantics(mergeDescendants = true) { contentDescription = "النقاط: لنا $us، لهم $them. الفوز عند 152" },
+                .semantics(mergeDescendants = true) { contentDescription = "النقاط: $usLabel $us، $themLabel $them. الفوز عند 152" },
             horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
-            ScoreBox("لنا", us, mine = true, modifier = Modifier.weight(1f).fillMaxHeight())
+            ScoreBox(usLabel, us, mine = mySeat != null, modifier = Modifier.weight(1f).fillMaxHeight())
             Text("152", color = Palette.textDim, fontSize = 13.sp,
                 modifier = Modifier.dashedPill().padding(horizontal = 10.dp, vertical = 4.dp))
-            ScoreBox("لهم", them, mine = false, modifier = Modifier.weight(1f).fillMaxHeight())
+            ScoreBox(themLabel, them, mine = false, modifier = Modifier.weight(1f).fillMaxHeight())
         }
         text.statusLine()?.let { Text(it, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
 
@@ -302,7 +315,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                             act(jsonOf("type" to "double"))
                         }, modifier = Modifier.weight(1f))
                     }
-                    if (g.actions.canPassDouble) SecondaryButton("تمرير", { act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
+                    if (g.actions.canPassDouble) SecondaryButton("بس", { act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
                 }
             }
             if (g.actions.chooseLock) {
@@ -325,8 +338,6 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                     ) { act(jsonOf("type" to "play", "card" to c.toJson())) }
                 }
             }
-        } else {
-            Note("أنت تشاهد هذه الطاولة.")
         }
         }
     }
@@ -341,7 +352,7 @@ private fun ScoreBox(label: String, value: Int, mine: Boolean, modifier: Modifie
             .padding(horizontal = 4.dp, vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
-        Text(label, color = Palette.textDim, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(label, color = Palette.textDim, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
         Text("$value", color = Palette.gold, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 30.sp)
     }
 }
