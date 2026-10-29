@@ -88,7 +88,6 @@ enum Ads {
     private static var started = false
     private static var current: RewardedAd?
 
-    @MainActor
     static func watch() {
         Task { @MainActor in
             guard let status = try? await Api.post("/ads/status") else { Announcer.announce("تعذّر عرض الإعلان الآن، حاول بعد قليل"); return }

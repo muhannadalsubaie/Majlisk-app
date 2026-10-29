@@ -190,7 +190,7 @@ func authMessage(_ e: Error) -> String {
     ]
     if let api = e as? ApiError { return errors[api.code] ?? Usernames.errors[api.code] ?? "حدث خطأ، حاول مرة أخرى" }
     let ns = e as NSError
-    if ns.domain == AuthErrorDomain, let code = AuthErrorCode.Code(rawValue: ns.code) {
+    if ns.domain == "FIRAuthErrorDomain", let code = AuthErrorCode(rawValue: ns.code) {
         switch code {
         case .invalidCredential, .wrongPassword, .userNotFound: return "البريد أو كلمة المرور غير صحيحة"
         case .invalidEmail: return "البريد الإلكتروني غير صالح"

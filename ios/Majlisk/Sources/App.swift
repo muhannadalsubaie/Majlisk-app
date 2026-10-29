@@ -67,7 +67,7 @@ extension Notification.Name {
 }
 
 /// الشاشة الحالية (للإعلانات وتسجيل الدخول التي تحتاج من يعرضها)
-@MainActor func topViewController() -> UIViewController? {
+func topViewController() -> UIViewController? {
     let scene = UIApplication.shared.connectedScenes.first as? UIWindowScene
     var vc = scene?.windows.first(where: { $0.isKeyWindow })?.rootViewController
     while let presented = vc?.presentedViewController { vc = presented }
