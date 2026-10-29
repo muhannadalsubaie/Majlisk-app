@@ -24,9 +24,9 @@ struct SettingsScreen: View {
                 MButton("سياسة الخصوصية") { UIApplication.shared.open(URL(string: Api.site + "/privacy.html")!) }
             }
             // رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
-            Note("صور الكروت: SVG-cards لديفيد بيلو (David Bellot)، رخصة LGPL-2.1.")
-            MButton("مصدر صور الكروت") { UIApplication.shared.open(URL(string: "https://github.com/htdebeer/SVG-cards")!) }
-            MButton("رخصة صور الكروت") { UIApplication.shared.open(URL(string: Api.site + "/cards/LICENSE-svg-cards.txt")!) }
+            Note("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0.")
+            MButton("مصدر صور الكروت") { UIApplication.shared.open(URL(string: "https://github.com/richardschneider/cardsJS/tree/master/cards")!) }
+            MButton("رخصة صور الكروت") { UIApplication.shared.open(URL(string: "https://www.gnu.org/licenses/lgpl-3.0.html")!) }
             Note("المؤثرات الصوتية: Kenney، رخصة CC0")
         }
         .confirm("حذف الحساب", isPresented: $confirmDelete,

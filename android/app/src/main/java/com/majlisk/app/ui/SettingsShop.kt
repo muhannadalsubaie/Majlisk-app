@@ -50,9 +50,9 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
             SecondaryButton("سياسة الخصوصية", { AuthService.openUrl(context, "$site/privacy.html") }, fill = true)
         }
         // رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
-        Note("صور الكروت: SVG-cards لديفيد بيلو (David Bellot)، رخصة LGPL-2.1.")
-        SecondaryButton("مصدر صور الكروت", { AuthService.openUrl(context, "https://github.com/htdebeer/SVG-cards") }, fill = true)
-        SecondaryButton("رخصة صور الكروت", { AuthService.openUrl(context, "$site/cards/LICENSE-svg-cards.txt") }, fill = true)
+        Note("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0.")
+        SecondaryButton("مصدر صور الكروت", { AuthService.openUrl(context, "https://github.com/richardschneider/cardsJS/tree/master/cards") }, fill = true)
+        SecondaryButton("رخصة صور الكروت", { AuthService.openUrl(context, "https://www.gnu.org/licenses/lgpl-3.0.html") }, fill = true)
         Note("المؤثرات الصوتية: Kenney، رخصة CC0")
     }
     if (embedded) Column { body() } else Screen { body() }
