@@ -177,6 +177,9 @@ final class TableConnection: ObservableObject {
                     let ws = URLSession.shared.webSocketTask(with: Api.wsURL("/tables/\(self.tableId)/ws", token: token))
                     self.ws = ws
                     ws.resume()
+                    // نبضة كل 25 ثانية: الاتصال الصامت يقطعه الخادم بعد قليل (فيخرج صاحبه من المحادثة الصوتية)
+                    let ping = Task { while !Task.isCancelled { try? await Task.sleep(nanoseconds: 25_000_000_000); ws.sendPing { _ in } } }
+                    defer { ping.cancel() }
                     while !self.stopped {
                         guard let msg = try? await ws.receive() else { break }
                         if !self.connected { await MainActor.run { self.connected = true } }
