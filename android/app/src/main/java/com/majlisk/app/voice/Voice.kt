@@ -186,6 +186,7 @@ object Voice {
                     r.optString("sessionId").takeIf { it.isNotEmpty() }?.let { sessionId = it }
                     conn.setRemoteAwait(parseDesc(r.getJSONObject("answer"))!!)
                     set { copy(muted = false, busy = false) }
+                    MainActivity.current?.requestNotificationsOnce()
                     background(on = true, withMic = true)
                     Announcer.announce("الميكروفون مفتوح")
                 } catch (e: Exception) {

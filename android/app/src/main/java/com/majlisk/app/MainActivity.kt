@@ -20,6 +20,18 @@ class MainActivity : ComponentActivity() {
     private var micResult: CompletableDeferred<Boolean>? = null
     private val micPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { micResult?.complete(it) }
 
+    private val notifyPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { }
+
+    /** إذن الإشعارات (Android 13+): يُطلب مرة واحدة عند فتح الميكروفون، حتى يظهر إشعار المحادثة في الخلفية */
+    fun requestNotificationsOnce() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("majlisk", MODE_PRIVATE)
+        if (prefs.getBoolean("askedNotify", false)) return
+        prefs.edit().putBoolean("askedNotify", true).apply()
+        notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
     /** إذن الميكروفون: يُطلب أول مرة يفتح فيها اللاعب الميكروفون بنفسه */
     suspend fun requestMicPermission(): Boolean {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED) return true
