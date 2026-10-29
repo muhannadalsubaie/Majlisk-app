@@ -34,7 +34,17 @@ object Announcer {
         }
     }
 
-    /** يُقرأ الآن (ردّ إيماءة أو زر قراءة سريعة) */
-    fun announceNow(text: String) = announce(text)
+    /**
+     * يُقرأ الآن: يقطع ما يقرؤه TalkBack (إعلان قديم تأخر) ويقرأ الجديد مباشرة.
+     * لأحداث اللعب وردود الإيماءات، فلا تتراكم القراءة خلف اللعب.
+     */
+    fun announceNow(text: String) {
+        if (text.isBlank()) return
+        main.post {
+            runCatching { manager?.takeIf { it.isEnabled }?.interrupt() }
+            @Suppress("DEPRECATION")
+            view.get()?.announceForAccessibility(text)
+        }
+    }
 
 }
