@@ -42,12 +42,10 @@ struct SeatsLobby: View {
                         Text("المقعد \(i + 1): \(occupantLabel(v, i))").frame(maxWidth: .infinity, alignment: .leading)
                         if isOwner {
                             if v.seat(i) == nil {
-                                VStack(spacing: 6) {
-                                    MButton("دعوة صديق", fill: false, label: "دعوة صديق للمقعد \(i + 1)") { panel = .invite(i) }
-                                    MButton("إضافة لاعب", fill: false, label: "إضافة لاعب في المقعد \(i + 1)") { panel = .add(i) }
-                                }
+                                SmallButton("دعوة صديق", label: "دعوة صديق للمقعد \(i + 1)") { panel = .invite(i) }
+                                SmallButton("إضافة لاعب", label: "إضافة لاعب في المقعد \(i + 1)") { panel = .add(i) }
                             } else {
-                                MButton("تغيير", fill: false, label: "تغيير المقعد \(i + 1)") { panel = .change(i) }
+                                SmallButton("تغيير", label: "تغيير المقعد \(i + 1)") { panel = .change(i) }
                             }
                         }
                     }
@@ -107,7 +105,7 @@ struct InviteFriendsSheet: View {
                 ItemRow {
                     Text("\(f.username)، \(f.online ? "متصل" : "غير متصل")").frame(maxWidth: .infinity, alignment: .leading)
                     if f.online {
-                        MButton("دعوة", fill: false, enabled: busy != f.uid, label: "دعوة \(f.username)") {
+                        SmallButton("دعوة", enabled: busy != f.uid, label: "دعوة \(f.username)") {
                             busy = f.uid
                             Task { @MainActor in
                                 do {
@@ -190,12 +188,17 @@ struct VoiceButton: View {
     var body: some View {
         let status = voice.busy ? "جارٍ الاتصال بالمحادثة الصوتية" : !voice.joined ? "أنت خارج المحادثة الصوتية" : voice.muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
         let hint = voice.busy ? "" : !voice.joined ? "اضغط مطولاً للعودة إليها" : voice.muted ? "اضغط لفتحه، أو مطولاً للخروج من المحادثة" : "اضغط لإغلاقه، أو مطولاً للخروج من المحادثة"
+        // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
+        let on = voice.joined && !voice.muted
         Text("🎤 \(status)")
-            .font(.system(size: 18, weight: .bold))
-            .frame(maxWidth: .infinity, minHeight: 52)
-            .foregroundColor(voice.joined && !voice.muted ? Palette.green900 : Palette.text)
-            .background(!voice.joined ? Palette.green800 : voice.muted ? Palette.green700 : Palette.gold)
-            .clipShape(Capsule())
+            .font(.system(size: 13, weight: .bold))
+            .lineLimit(2)
+            .padding(.horizontal, 12).padding(.vertical, 6)
+            .frame(maxWidth: 200, minHeight: 40)
+            .foregroundColor(!voice.joined ? Palette.textDim : voice.muted ? Palette.gold : Palette.green900)
+            .background(on ? Palette.gold : Palette.green700)
+            .clipShape(RoundedRectangle(cornerRadius: 20))
+            .overlay(RoundedRectangle(cornerRadius: 20).stroke(Palette.gold, lineWidth: voice.joined && voice.muted ? 2 : 1))
             .onTapGesture(perform: toggleMute)
             .onLongPressGesture(perform: toggleJoin)
             .accessibilityElement(children: .ignore)

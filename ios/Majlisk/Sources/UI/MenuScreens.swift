@@ -7,7 +7,7 @@ struct CoinsBadge: View {
         let unlimited = profile?.unlimited == true
         let coins = profile?.coins
         Text(unlimited ? "🪙 ∞" : "🪙 \(coins.map(String.init) ?? "…")")
-            .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft)
+            .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.gold)
             .accessibilityLabel(unlimited ? "رصيدك عملات لا محدودة، حساب المطوّر" : coins == nil ? "الرصيد غير متاح بعد" : "رصيدك \(coins!) عملة")
     }
 }

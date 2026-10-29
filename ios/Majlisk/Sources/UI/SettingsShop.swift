@@ -63,7 +63,7 @@ struct ShopScreen: View {
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityHidden(true)
-                    MButton(busy == p.id ? "جارٍ…" : p.price, fill: false, enabled: busy.isEmpty, label: "شراء \(spoken)") {
+                    SmallButton(busy == p.id ? "جارٍ…" : p.price, primary: true, enabled: busy.isEmpty, label: "شراء \(spoken)") {
                         busy = p.id
                         Task { @MainActor in await Store.buy(p.id); busy = "" }
                     }

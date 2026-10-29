@@ -77,7 +77,7 @@ struct TableMenu: View {
                         else { Text(seatLabel(i)).frame(maxWidth: .infinity, alignment: .leading) }
                         let s = view.seat(i)
                         if isOwner && i != view.mySeat && !canManage(u) && (s == nil || s!.isBot) {
-                            MButton("استبدال", fill: false, label: "استبدال \(s?.username ?? "المقعد الفارغ")") { page = .replace(i) }
+                            SmallButton("استبدال", label: "استبدال \(s?.username ?? "المقعد الفارغ")") { page = .replace(i) }
                         }
                     }
                 }

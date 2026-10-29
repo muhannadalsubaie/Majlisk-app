@@ -19,7 +19,7 @@ struct FriendsScreen: View {
     var body: some View {
         Screen {
             TopBar(title: "الأصدقاء", onBack: { navigate(.menu) }) {
-                MButton("إضافة صديق", fill: false) { adding = true }
+                SmallButton("إضافة صديق") { adding = true }
             }
             if !message.isEmpty { Text(message).foregroundColor(Palette.goldSoft) }
             Picker("القائمة", selection: $tab) {
@@ -35,7 +35,7 @@ struct FriendsScreen: View {
                 ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
                     ItemRow {
                         Text("\(f.online ? "🟢" : "⚪") \(f.username)، \(f.online ? "متصل" : "غير متصل")").frame(maxWidth: .infinity, alignment: .leading)
-                        MButton("حذف", fill: false, label: "حذف \(f.username) من الأصدقاء") { toRemove = f }
+                        SmallButton("حذف", label: "حذف \(f.username) من الأصدقاء") { toRemove = f }
                     }
                 }
             case 1:
@@ -43,12 +43,12 @@ struct FriendsScreen: View {
                 ForEach(hub.requests) { r in
                     ItemRow {
                         Text(r.username).frame(maxWidth: .infinity, alignment: .leading)
-                        MButton("قبول", fill: false, label: "قبول طلب \(r.username)") {
+                        SmallButton("قبول", label: "قبول طلب \(r.username)") {
                             Task { @MainActor in
                                 do { try await Social.respondFriend(r.uid, accept: true); say("أصبحت أنت و\(r.username) أصدقاء"); refresh() } catch { say(Social.error(error)) }
                             }
                         }
-                        MButton("رفض", fill: false, label: "رفض طلب \(r.username)") {
+                        SmallButton("رفض", label: "رفض طلب \(r.username)") {
                             Task { @MainActor in
                                 do { try await Social.respondFriend(r.uid, accept: false); say("رُفض طلب \(r.username)") } catch { say(Social.error(error)) }
                             }
@@ -62,7 +62,7 @@ struct FriendsScreen: View {
                 ForEach(bans ?? []) { b in
                     ItemRow {
                         Text(b.username).frame(maxWidth: .infinity, alignment: .leading)
-                        MButton("رفع الحظر", fill: false, label: "رفع الحظر عن \(b.username)") {
+                        SmallButton("رفع الحظر", label: "رفع الحظر عن \(b.username)") {
                             Task { @MainActor in
                                 do { try await Social.unban(b.uid); bans?.removeAll { $0.uid == b.uid }; Announcer.announce("رُفع الحظر عن \(b.username)") }
                                 catch { Announcer.announce(Social.error(error)) }

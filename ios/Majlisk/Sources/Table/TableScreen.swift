@@ -55,8 +55,8 @@ struct TableScreen: View {
     @ViewBuilder private func table(_ v: TableView) -> some View {
         Screen {
             HStack(spacing: 8) {
-                MButton("القائمة", fill: false) { menuOpen = true }
-                if v.kind == "baloot" { MButton("السجل", fill: false) { historyOpen = true } }
+                SmallButton("القائمة") { menuOpen = true }
+                if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
                 Text("طاولة \(gameTitle(v.kind, v.variant))").foregroundColor(Palette.textDim)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
@@ -68,8 +68,10 @@ struct TableScreen: View {
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
             }
-            VoiceButton(tableId: v.id, uid: uid)
+            Color.clear.frame(height: 70)
         }
+        // زر الميكروفون عائم أسفل يسار الشاشة (كالتطبيق الحالي؛ في الاتجاه العربي trailing = اليسار)
+        .overlay(alignment: .bottomTrailing) { VoiceButton(tableId: v.id, uid: uid).padding(16) }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
         .sheet(isPresented: $menuOpen) {
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false })
@@ -117,25 +119,34 @@ struct BalootBoard: View {
             // النقاط: جملة واحدة كاملة لـ VoiceOver
             let us = g.scores[safe: myTeam] ?? 0
             let them = g.scores[safe: 1 - myTeam] ?? 0
-            HStack {
-                ScoreBox(label: "لنا", value: us)
-                Spacer()
-                Text("152").foregroundColor(Palette.textDim)
-                Spacer()
-                ScoreBox(label: "لهم", value: them)
+            HStack(spacing: 10) {
+                ScoreBox(label: "لنا", value: us, mine: true)
+                Text("152").font(.system(size: 13)).foregroundColor(Palette.textDim)
+                    .padding(.horizontal, 10).padding(.vertical, 4)
+                    .overlay(Capsule().stroke(Palette.green700, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
+                ScoreBox(label: "لهم", value: them, mine: false)
             }
+            .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("النقاط: لنا \(us)، لهم \(them). الفوز عند 152")
 
-            if let line = text.statusLine() { Text(line).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+            if let line = text.statusLine() { Text(line).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
 
-            // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً
-            PlayerTag(v: v, g: g, seat: (me + 2) % 4, partner: true)
-            HStack(spacing: 4) {
-                PlayerTag(v: v, g: g, seat: (me + 1) % 4).frame(maxWidth: 80)
-                trickArea.frame(maxWidth: 300).aspectRatio(1, contentMode: .fit)
-                PlayerTag(v: v, g: g, seat: (me + 3) % 4).frame(maxWidth: 80)
+            // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
+            GeometryReader { geo in
+                let unit = geo.size.width / 4.6
+                VStack(spacing: 6) {
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, partner: true).frame(width: unit * 3)
+                    HStack(spacing: 6) {
+                        PlayerTag(v: v, g: g, seat: (me + 1) % 4).frame(width: unit * 0.8)
+                        trickArea.frame(width: min(unit * 3, 300), height: min(unit * 3, 300))
+                        PlayerTag(v: v, g: g, seat: (me + 3) % 4).frame(width: unit * 0.8)
+                    }
+                }
+                .frame(maxWidth: .infinity)
             }
+            .frame(height: min(UIScreen.main.bounds.width - 32, 400) / 4.6 * 3 + 70)
+            .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
 
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
                 Text(g.outcomeWinner == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر").font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
@@ -143,9 +154,9 @@ struct BalootBoard: View {
 
             // أزرار المزايدة
             if !g.actions.bids.isEmpty {
-                LazyVGrid(columns: [GridItem(.adaptive(minimum: 100), spacing: 8)], spacing: 8) {
+                FlowLayout(spacing: 8) {
                     ForEach(g.actions.bids) { b in
-                        MButton(b.label, b.type == "pass" ? .secondary : .primary) { bidSound(b); act(["type": "bid", "bid": b.raw]) }
+                        SmallButton(b.label, primary: b.type != "pass") { bidSound(b); act(["type": "bid", "bid": b.raw]) }
                     }
                 }
                 .accessibilityElement(children: .contain).accessibilityLabel("المزايدة")
@@ -172,15 +183,14 @@ struct BalootBoard: View {
 
             // يد اللاعب
             if mySeat != nil {
-                Text("أوراقك").foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader).frame(maxWidth: .infinity, alignment: .leading)
-                let hand = sortHand(g.myHand)
-                HStack(spacing: 3) {
-                    ForEach(hand, id: \.self) { c in
+                Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
+                FlowLayout(spacing: 4) {
+                    ForEach(sortHand(g.myHand), id: \.self) { c in
                         HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
                     }
-                    // أماكن فارغة حتى لا تكبر الأوراق كثيراً حين تقل
-                    ForEach(0..<max(0, 8 - hand.count), id: \.self) { _ in Color.clear.aspectRatio(0.69, contentMode: .fit) }
                 }
+                .padding(.top, 12)
             } else {
                 Note("أنت تشاهد هذه الطاولة.")
             }
@@ -209,20 +219,28 @@ struct BalootBoard: View {
     /// وفي دوّار VoiceOver (الإجراءات): القراءات الثلاث
     private var trickArea: some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 18).fill(Palette.green800)
+            Circle().fill(Color(red: 0x0B / 255, green: 0x24 / 255, blue: 0x1B / 255))
+            Circle().stroke(Palette.gold.opacity(0.2), lineWidth: 1)
             if (g.phase == "bidding" || g.phase == "doubling"), let q = g.qaba {
-                VStack {
-                    Text("ورقة الأرض").foregroundColor(Palette.textDim)
-                    CardFace(card: q).frame(width: 70)
+                VStack(spacing: 4) {
+                    Text("ورقة الأرض").font(.system(size: 14)).foregroundColor(Palette.textDim)
+                    TableCard(card: q)
                 }
+                .offset(y: -4)
             }
+            // الأوراق تتكدّس فوق بعض، كل ورقة مزاحة ومائلة قليلاً باتجاه من رماها (نفس قيم التطبيق الحالي)
             ForEach(shownTrick, id: \.seat) { p in
                 let rel = (p.seat - me + 4) % 4
-                // الأوراق تنزل من جهة لاعبها (في RTL: leading = يمين الشاشة)
-                let align: Alignment = rel == 0 ? .bottom : rel == 1 ? .leading : rel == 2 ? .top : .trailing
-                CardFace(card: p.card).frame(width: 62).padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: align)
+                let place: (CGFloat, CGFloat, Double) = rel == 0 ? (0, 38, 3) : rel == 1 ? (36, 0, 9) : rel == 2 ? (0, -38, -4) : (-36, 0, -9)
+                TableCard(card: p.card)
+                    .rotationEffect(.degrees(place.2))
+                    .offset(x: place.0, y: place.1)
+                    .transition(.asymmetric(insertion: .offset(x: place.0 * 1.5, y: place.1 * 1.5).combined(with: .opacity).combined(with: .scale(scale: 0.85)), removal: .opacity))
             }
         }
+        .environment(\.layoutDirection, .leftToRight)
+        .animation(.easeOut(duration: 0.35), value: shownTrick.count)
+        .contentShape(Circle())
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(shownTrick.isEmpty ? "وسط الطاولة: لا توجد أوراق" : "وسط الطاولة: \(text.trick())")
         .accessibilityAddTraits(.isButton)
@@ -285,13 +303,17 @@ struct BalootBoard: View {
 private struct ScoreBox: View {
     let label: String
     let value: Int
+    let mine: Bool
     var body: some View {
-        VStack {
-            Text(label).foregroundColor(Palette.textDim)
-            Text("\(value)").font(.system(size: 22, weight: .bold))
+        VStack(spacing: 2) {
+            Text(label).font(.system(size: 14, weight: .semibold)).foregroundColor(Palette.textDim)
+            Text("\(value)").font(.system(size: 30, weight: .bold)).foregroundColor(Palette.gold)
         }
-        .padding(.horizontal, 18).padding(.vertical, 6)
-        .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 12))
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .padding(.vertical, 8)
+        .background(Palette.green800)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(mine ? Palette.gold : Palette.green700, lineWidth: 1))
     }
 }
 
@@ -305,10 +327,26 @@ private struct PlayerTag: View {
         let turn = g.turn == seat && g.phase != "matchOver"
         let label = (s?.username ?? "مقعد \(seat + 1)") + (s?.isBot == true ? " (روبوت)" : "") + (s?.away == true ? " (انقطع الاتصال)" : "") + (partner ? " (شريكك)" : "")
         Text(label)
+            .font(.system(size: 14, weight: .bold))
             .multilineTextAlignment(.center)
-            .font(.system(size: 15))
-            .padding(6)
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 2))
+            .minimumScaleFactor(0.7)
+            .padding(.horizontal, 4).padding(.vertical, 8)
+            .frame(maxWidth: .infinity)
+            .background(turn ? Palette.gold.opacity(0.08) : .clear)
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+    }
+}
+
+/// ورقة بحجم أوراق الطاولة: خلفية بيضاء وزوايا وظل
+private struct TableCard: View {
+    let card: Card
+    var body: some View {
+        CardFace(card: card)
+            .frame(width: 58, height: 84)
+            .background(Color.white)
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            .shadow(color: .black.opacity(0.7), radius: 5, y: 3)
     }
 }
 
@@ -318,9 +356,9 @@ private struct HandCard: View {
     let legal: Bool
     let play: () -> Void
     var body: some View {
-        CardFace(card: card)
-            .aspectRatio(0.69, contentMode: .fit)
-            .opacity(legal ? 1 : 0.55)
+        TableCard(card: card)
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 2))
+            .opacity(legal ? 1 : 0.45)
             .contentShape(Rectangle())
             .onTapGesture { if legal { play() } }
             .accessibilityElement(children: .ignore)
@@ -328,5 +366,45 @@ private struct HandCard: View {
             .accessibilityValue(legal ? "" : "غير متاحة")
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { if legal { play() } }
+    }
+}
+
+/// صفوف تلتف للسطر التالي وتتوسط (للأوراق وأزرار المزايدة)
+struct FlowLayout: Layout {
+    var spacing: CGFloat = 8
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let width = proposal.width ?? .infinity
+        var rows: [CGFloat] = [0], heights: [CGFloat] = [0]
+        for v in subviews {
+            let sz = v.sizeThatFits(.unspecified)
+            if rows[rows.count - 1] > 0 && rows[rows.count - 1] + spacing + sz.width > width { rows.append(0); heights.append(0) }
+            rows[rows.count - 1] += (rows[rows.count - 1] > 0 ? spacing : 0) + sz.width
+            heights[heights.count - 1] = max(heights[heights.count - 1], sz.height)
+        }
+        return CGSize(width: proposal.width ?? (rows.max() ?? 0), height: heights.reduce(0, +) + spacing * CGFloat(max(0, heights.count - 1)))
+    }
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        var lines: [[LayoutSubviews.Element]] = [[]]
+        var lineWidth: CGFloat = 0
+        for v in subviews {
+            let w = v.sizeThatFits(.unspecified).width
+            if !lines[lines.count - 1].isEmpty && lineWidth + spacing + w > bounds.width { lines.append([]); lineWidth = 0 }
+            lineWidth += (lines[lines.count - 1].isEmpty ? 0 : spacing) + w
+            lines[lines.count - 1].append(v)
+        }
+        var y = bounds.minY
+        for line in lines {
+            let sizes = line.map { $0.sizeThatFits(.unspecified) }
+            let total = sizes.map(\.width).reduce(0, +) + spacing * CGFloat(max(0, line.count - 1))
+            let h = sizes.map(\.height).max() ?? 0
+            // من اليمين لليسار (الاتجاه العربي)، والسطر في المنتصف
+            var x = bounds.midX + total / 2
+            for (v, sz) in zip(line, sizes) {
+                x -= sz.width
+                v.place(at: CGPoint(x: x, y: y), proposal: ProposedViewSize(sz))
+                x -= spacing
+            }
+            y += h + spacing
+        }
     }
 }

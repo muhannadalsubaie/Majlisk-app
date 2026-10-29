@@ -36,9 +36,37 @@ struct MButton: View {
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: fill ? .infinity : nil, minHeight: 50)
                 .padding(.horizontal, 14)
-                .foregroundColor(kind == .primary ? Palette.green900 : Palette.text)
+                .foregroundColor(kind == .primary ? Palette.green900 : kind == .danger ? .white : Palette.text)
                 .background(kind == .primary ? Palette.gold : kind == .danger ? Palette.danger : Palette.green700)
                 .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(kind == .secondary ? Palette.gold : .clear, lineWidth: 1))
+                .opacity(enabled ? 1 : 0.5)
+        }
+        .disabled(!enabled)
+        .accessibilityLabel(label ?? title)
+    }
+}
+
+/// زر صغير: الرجوع، والمزايدة، وأزرار الصفوف (مع مساحة لمس كافية)
+struct SmallButton: View {
+    let title: String
+    var primary = false
+    var enabled = true
+    var label: String? = nil
+    let action: () -> Void
+    init(_ title: String, primary: Bool = false, enabled: Bool = true, label: String? = nil, action: @escaping () -> Void) {
+        self.title = title; self.primary = primary; self.enabled = enabled; self.label = label; self.action = action
+    }
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 15, weight: .bold))
+                .frame(minWidth: 64, minHeight: 42)
+                .padding(.horizontal, 12)
+                .foregroundColor(primary ? Palette.green900 : Palette.text)
+                .background(primary ? Palette.gold : Palette.green700)
+                .clipShape(RoundedRectangle(cornerRadius: 14))
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(primary ? .clear : Palette.gold, lineWidth: 1))
                 .opacity(enabled ? 1 : 0.5)
         }
         .disabled(!enabled)
@@ -54,9 +82,9 @@ struct Screen<Content: View>: View {
         ZStack {
             Palette.green900.ignoresSafeArea()
             if scroll {
-                ScrollView { VStack(alignment: .leading, spacing: 12) { content() }.padding(16) }
+                ScrollView { VStack(alignment: .leading, spacing: 14) { content() }.padding(16) }
             } else {
-                VStack(alignment: .leading, spacing: 12) { content() }.padding(16)
+                VStack(alignment: .leading, spacing: 14) { content() }.padding(16)
             }
         }
         .foregroundColor(Palette.text)
@@ -68,7 +96,7 @@ struct Title: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(text).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.text).accessibilityAddTraits(.isHeader)
+        Text(text).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -76,14 +104,14 @@ struct SectionTitle: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(text).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+        Text(text).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
     }
 }
 
 struct Note: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View { Text(text).font(.system(size: 16)).foregroundColor(Palette.textDim).fixedSize(horizontal: false, vertical: true) }
+    var body: some View { Text(text).font(.system(size: 14)).foregroundColor(Palette.textDim).fixedSize(horizontal: false, vertical: true) }
 }
 
 struct BodyText: View {
@@ -101,7 +129,7 @@ struct TopBar<Actions: View>: View {
         HStack(spacing: 8) {
             Title(title).frame(maxWidth: .infinity, alignment: .leading)
             actions()
-            if let onBack { MButton("رجوع", fill: false, action: onBack) }
+            if let onBack { SmallButton("رجوع", action: onBack) }
         }
     }
 }
@@ -124,6 +152,11 @@ struct SwitchRow: View {
             .tint(Palette.gold)
             if let description { Note(description).accessibilityHidden(true) }
         }
+        .padding(.horizontal, 16).padding(.vertical, 12)
+        .frame(minHeight: 56)
+        .background(Palette.green800)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(isOn ? Palette.gold : Palette.green700, lineWidth: 1))
         .accessibilityElement(children: .combine)
         .accessibilityHint(description ?? "")
     }
@@ -134,10 +167,10 @@ struct ItemRow<Content: View>: View {
     @ViewBuilder let content: () -> Content
     var body: some View {
         HStack(spacing: 8) { content() }
-            .padding(10)
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 14).padding(.vertical, 10)
+            .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
             .background(Palette.green800)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
     }
 }
 
@@ -149,8 +182,8 @@ struct Sheet<Content: View>: View {
         ZStack {
             Palette.green800.ignoresSafeArea()
             ScrollView {
-                VStack(alignment: .leading, spacing: 10) {
-                    Title(title)
+                VStack(alignment: .leading, spacing: 12) {
+                    Text(title).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
                     content()
                 }.padding(16)
             }
@@ -181,7 +214,8 @@ struct Field: View {
             .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
             .padding(12)
             .background(Palette.green800)
-            .clipShape(RoundedRectangle(cornerRadius: 12))
+            .clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.green700, lineWidth: 1))
             .foregroundColor(Palette.text)
             .accessibilityLabel(label)
         }
@@ -192,7 +226,12 @@ struct Logo: View {
     let size: CGFloat
     var body: some View {
         if let img = UIImage(contentsOfFile: Bundle.main.path(forResource: "logo", ofType: "png", inDirectory: "Resources") ?? "") {
-            Image(uiImage: img).resizable().scaledToFit().frame(width: size, height: size).accessibilityHidden(true)
+            // زوايا دائرية وظل وإطار ذهبي خفيف (كالتطبيق الحالي)
+            Image(uiImage: img).resizable().scaledToFit().frame(width: size, height: size)
+                .clipShape(RoundedRectangle(cornerRadius: size * 0.22))
+                .overlay(RoundedRectangle(cornerRadius: size * 0.22).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
+                .shadow(color: .black.opacity(0.5), radius: 12, y: 6)
+                .accessibilityHidden(true)
         }
     }
 }
