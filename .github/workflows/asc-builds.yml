@@ -1,0 +1,20 @@
+# حالة النسخ في App Store Connect (قراءة فقط): Actions ← ASC builds ← Run workflow
+name: ASC builds
+
+on:
+  workflow_dispatch:
+
+jobs:
+  status:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Builds
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          KEY=$RUNNER_TEMP/k.p8; printf '%s' "$KEY_P8" > $KEY
+          KEY=$KEY node .github/scripts/asc-builds.mjs | tee -a $GITHUB_STEP_SUMMARY
