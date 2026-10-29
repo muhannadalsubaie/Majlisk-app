@@ -88,7 +88,7 @@ struct CreateTableScreen: View {
     }
 }
 
-private let STATUS = ["waiting": "بانتظار اللاعبين", "playing": "جارية", "finished": "بانتظار مباراة جديدة"]
+private let STATUS = ["waiting": "في الانتظار", "playing": "قيد اللعب", "finished": "في الانتظار"]
 
 struct JoinTableScreen: View {
     let navigate: (Route) -> Void
@@ -105,7 +105,7 @@ struct JoinTableScreen: View {
             ForEach(rows ?? []) { r in
                 let game = gameTitle(r.kind, r.variant)
                 let soon = r.kind != "baloot"
-                let spoken = "\(game)، طاولة \(r.ownerName)، \(r.isPrivate ? "مقفلة، " : "")\(r.players) من 4 لاعبين، \(r.people) حاضرين، \(STATUS[r.status] ?? "")\(soon ? "، قريباً في هذه النسخة" : "")"
+                let spoken = "طاولة \(r.ownerName)، \(r.isPrivate ? "مقفلة، " : "")عدد اللاعبين \(r.players) من 4، \(STATUS[r.status] ?? "")\(soon ? "، \(game) قريباً في هذه النسخة" : "")"
                 MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · \(r.players)/4 · \(STATUS[r.status] ?? "")",
                         enabled: !r.isPrivate && !soon && busy != r.id, label: spoken) {
                     busy = r.id
@@ -116,8 +116,16 @@ struct JoinTableScreen: View {
                 }
             }
         }
-        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { rows = list } } }
+        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list) } } }
         .onDisappear { reg?.remove(); reg = nil }
+    }
+
+    /// ترتيب ثابت، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ، حتى لا يعيد VoiceOver قراءة الطاولة المحددة
+    private func update(_ list: [TableRow]) {
+        let pos = Dictionary(uniqueKeysWithValues: (rows ?? []).enumerated().map { ($1.id, $0) })
+        let sorted = list.enumerated().sorted { (pos[$0.element.id] ?? Int.max, $0.offset) < (pos[$1.element.id] ?? Int.max, $1.offset) }.map(\.element)
+        let sig = { (l: [TableRow]) in l.map { "\($0.id)|\($0.ownerName)|\($0.isPrivate)|\($0.players)|\($0.status)" } }
+        if rows == nil || sig(sorted) != sig(rows!) { rows = sorted }
     }
 }
 

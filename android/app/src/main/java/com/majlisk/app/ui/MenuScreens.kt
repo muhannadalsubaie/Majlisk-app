@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
@@ -113,7 +114,7 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
     }
 }
 
-private val STATUS = mapOf("waiting" to "بانتظار اللاعبين", "playing" to "جارية", "finished" to "بانتظار مباراة جديدة")
+private val STATUS = mapOf("waiting" to "في الانتظار", "playing" to "قيد اللعب", "finished" to "في الانتظار")
 
 @Composable
 fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
@@ -121,7 +122,14 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     var busy by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     DisposableEffect(Unit) {
-        val reg = Tables.listen { rows = it }
+        // ترتيب ثابت (الطاولة لا تتحرك من مكانها كل حركة لعب)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ،
+        // حتى لا يعيد قارئ الشاشة قراءة الطاولة المحددة كل شوي
+        val reg = Tables.listen { new ->
+            val old = rows
+            val pos = old.orEmpty().withIndex().associate { it.value.id to it.index }
+            val sorted = new.sortedBy { pos[it.id] ?: Int.MAX_VALUE }
+            if (old == null || sorted.map { it.copy(people = 0) } != old.map { it.copy(people = 0) }) rows = sorted
+        }
         onDispose { reg.remove() }
     }
     Screen {
@@ -130,10 +138,10 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
             rows == null -> Text("جارٍ التحميل…", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
             rows!!.isEmpty() -> Text("لا توجد طاولات الآن — أنشئ طاولة جديدة.", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
         }
-        rows?.forEach { r ->
+        rows?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
             val soon = r.kind != "baloot"
-            val spoken = "$game، طاولة ${r.ownerName}، ${if (r.isPrivate) "مقفلة، " else ""}${r.players} من 4 لاعبين، ${r.people} حاضرين، ${STATUS[r.status].orEmpty()}${if (soon) "، قريباً في هذه النسخة" else ""}"
+            val spoken = "طاولة ${r.ownerName}، ${if (r.isPrivate) "مقفلة، " else ""}عدد اللاعبين ${r.players} من 4، ${STATUS[r.status].orEmpty()}${if (soon) "، $game قريباً في هذه النسخة" else ""}"
             SecondaryButton(
                 "${if (r.isPrivate) "🔒 " else ""}طاولة ${r.ownerName} · $game · ${r.players}/4 · ${STATUS[r.status].orEmpty()}",
                 {
@@ -149,7 +157,7 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                 description = spoken,
                 fill = true,
             )
-        }
+        } }
     }
 }
 
@@ -166,7 +174,8 @@ fun GameTile(name: String, image: Int, onClick: () -> Unit) {
             .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(name, color = Palette.green900, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+        // النص مخفي عن قارئ الشاشة حتى لا يُقرأ الاسم مرتين
+        Text(name, color = Palette.green900, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).clearAndSetSemantics {})
         androidx.compose.foundation.Image(androidx.compose.ui.res.painterResource(image), contentDescription = null, modifier = Modifier.height(128.dp))
     }
 }
