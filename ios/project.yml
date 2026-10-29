@@ -1,0 +1,84 @@
+# مشروع Xcode يُولَّد من هذا الملف بأداة XcodeGen (في GitHub Actions)، فلا نحفظ ملف المشروع نفسه.
+name: Majlisk
+options:
+  bundleIdPrefix: com.majlisk
+  deploymentTarget:
+    iOS: "16.0"
+  developmentLanguage: ar
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 11.15.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 8.0.0
+  WebRTC:
+    url: https://github.com/stasel/WebRTC
+    from: 125.0.0
+  GoogleMobileAds:
+    url: https://github.com/googleads/swift-package-manager-google-mobile-ads
+    from: 12.6.0
+targets:
+  Majlisk:
+    type: application
+    platform: iOS
+    sources:
+      - path: Majlisk/Sources
+      - path: Majlisk/Resources
+        type: folder
+        buildPhase: resources
+      - path: Majlisk/Assets.xcassets
+      - path: Majlisk/GoogleService-Info.plist
+        buildPhase: resources
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+      - package: WebRTC
+        product: WebRTC
+      - package: GoogleMobileAds
+        product: GoogleMobileAds
+    entitlements:
+      path: Majlisk/Majlisk.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
+    info:
+      path: Majlisk/Info.plist
+      properties:
+        CFBundleDisplayName: مجلسك
+        CFBundleShortVersionString: "2.0"
+        CFBundleVersion: "$(CURRENT_PROJECT_VERSION)"
+        CFBundleDevelopmentRegion: ar
+        LSRequiresIPhoneOS: true
+        ITSAppUsesNonExemptEncryption: false
+        UILaunchScreen:
+          UIColorName: LaunchBackground
+        UIRequiresFullScreen: true
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        UIBackgroundModes: [audio]
+        UIApplicationSceneManifest:
+          UIApplicationSupportsMultipleScenes: false
+          UISceneConfigurations:
+            UIWindowSceneSessionRoleApplication:
+              - UISceneConfigurationName: Default Configuration
+                UISceneDelegateClassName: $(PRODUCT_MODULE_NAME).SceneDelegate
+        NSMicrophoneUsageDescription: يُستخدم الميكروفون فقط عندما تفتحه بنفسك للتحدث مع اللاعبين في المحادثة الصوتية للطاولة.
+        GADApplicationIdentifier: ca-app-pub-4779146366215281~7557127551
+        SKAdNetworkItems:
+          - SKAdNetworkIdentifier: cstr6suwn9.skadnetwork
+        CFBundleURLTypes:
+          - CFBundleURLSchemes: [com.googleusercontent.apps.152865871542-7er1soqd2mo3mg91f2v5e819hqnhjsgi]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.majlisk.app
+        PRODUCT_NAME: Majlisk
+        TARGETED_DEVICE_FAMILY: "1"
+        SWIFT_VERSION: "5.0"
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "2.0"
+        ENABLE_USER_SCRIPT_SANDBOXING: NO
+        OTHER_LDFLAGS: [-ObjC]
