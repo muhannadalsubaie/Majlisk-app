@@ -17,11 +17,12 @@ import okhttp3.WebSocketListener
 import org.json.JSONObject
 
 /** tableId: الطاولة اللي فيها الصديق المتصل الآن (إن وُجدت) */
-data class Friend(val uid: String, val username: String, val online: Boolean = false, val tableId: String? = null, val tablePrivate: Boolean = false)
+data class Friend(val uid: String, val username: String, val online: Boolean = false, val tableId: String? = null, val tablePrivate: Boolean = false, val tableGame: String = "")
 data class TableInvite(val tableId: String, val code: String, val fromUid: String, val fromName: String)
 data class HubState(val friends: List<Friend> = emptyList(), val requests: List<Friend> = emptyList(), val invites: List<TableInvite> = emptyList())
 
-private fun friends(o: JSONObject, key: String) = o.optJSONArray(key).objects().map { Friend(it.optString("uid"), it.optString("username"), it.optBoolean("online"), it.optString("tableId").ifEmpty { null }, it.optBoolean("tablePrivate")) }
+private fun friends(o: JSONObject, key: String) = o.optJSONArray(key).objects().map { Friend(it.optString("uid"), it.optString("username"), it.optBoolean("online"), it.optString("tableId").ifEmpty { null }, it.optBoolean("tablePrivate"),
+    if (it.has("tableKind")) gameTitle(it.optString("tableKind"), it.optString("tableVariant")) else "") }
 private fun invites(o: JSONObject) = o.optJSONArray("invites").objects().map {
     TableInvite(it.optString("tableId"), it.optString("code"), it.optString("fromUid"), it.optString("fromName"))
 }

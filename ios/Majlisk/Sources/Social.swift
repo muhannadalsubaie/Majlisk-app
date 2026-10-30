@@ -2,12 +2,13 @@ import Foundation
 import FirebaseFirestore
 
 /// tableId: الطاولة اللي فيها الصديق المتصل الآن (إن وُجدت)
-struct Friend: Identifiable, Equatable { let uid: String; let username: String; var online = false; var tableId: String? = nil; var tablePrivate = false; var id: String { uid } }
+struct Friend: Identifiable, Equatable { let uid: String; let username: String; var online = false; var tableId: String? = nil; var tablePrivate = false; var tableGame = ""; var id: String { uid } }
 struct TableInvite: Equatable { let tableId: String; let code: String; let fromUid: String; let fromName: String }
 struct HubState: Equatable { var friends: [Friend] = []; var requests: [Friend] = []; var invites: [TableInvite] = [] }
 
 private func friends(_ o: JSON, _ key: String) -> [Friend] { o.objs(key).map { Friend(uid: $0.str("uid"), username: $0.str("username"), online: $0.bool("online"),
-                                                                                   tableId: $0.str("tableId").isEmpty ? nil : $0.str("tableId"), tablePrivate: $0.bool("tablePrivate")) } }
+                                                                                   tableId: $0.str("tableId").isEmpty ? nil : $0.str("tableId"), tablePrivate: $0.bool("tablePrivate"),
+                                                                                   tableGame: $0.str("tableKind").isEmpty ? "" : gameTitle($0.str("tableKind"), $0.str("tableVariant"))) } }
 private func invites(_ o: JSON) -> [TableInvite] {
     o.objs("invites").map { TableInvite(tableId: $0.str("tableId"), code: $0.str("code"), fromUid: $0.str("fromUid"), fromName: $0.str("fromName")) }
 }

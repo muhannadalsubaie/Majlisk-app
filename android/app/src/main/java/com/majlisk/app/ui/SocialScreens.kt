@@ -89,7 +89,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                 else if (friends!!.isEmpty()) Note("لا يوجد أصدقاء بعد.")
                 friends?.sortedByDescending { it.online }?.forEach { f ->
                     // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
-                    val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة" else "متصل"
+                    val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة ${f.tableGame}".trimEnd() else "متصل"
                     ItemRow(
                         Modifier.combinedClickable(
                             onClickLabel = "فتح ملفه", onClick = { profileOf = f },
@@ -152,7 +152,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
         }
     }
     profileOf?.let { f ->
-        val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة${if (f.tablePrivate) " مقفلة" else ""}" else "متصل"
+        val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة ${f.tableGame}${if (f.tablePrivate) " مقفلة" else ""}".replace("  ", " ") else "متصل"
         MajliskDialog(f.username, { profileOf = null }) {
             Body(status)
             if (f.online && f.tableId != null && !f.tablePrivate) PrimaryButton("دخول طاولته", { joinFriend(f) }, enabled = !joining)

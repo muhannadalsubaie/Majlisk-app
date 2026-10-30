@@ -19,7 +19,9 @@ struct FriendsScreen: View {
     private func say(_ t: String) { message = t; Announcer.announce(t) }
     private func refresh() { refreshKey += 1 }
 
-    private func status(_ f: Friend) -> String { !f.online ? "غير متصل" : f.tableId != nil ? "متصل، في طاولة" : "متصل" }
+    private func status(_ f: Friend) -> String {
+        !f.online ? "غير متصل" : f.tableId != nil ? "متصل، في طاولة \(f.tableGame)".trimmingCharacters(in: .whitespaces) : "متصل"
+    }
 
     /// الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
     private func joinFriend(_ f: Friend) {
@@ -122,7 +124,7 @@ struct FriendsScreen: View {
         }
         .sheet(item: $profileOf) { f in
             Sheet(title: f.username) {
-                BodyText(f.online && f.tableId != nil && f.tablePrivate ? "متصل، في طاولة مقفلة" : status(f))
+                BodyText(f.online && f.tableId != nil && f.tablePrivate ? "\(status(f)) مقفلة" : status(f))
                 if f.online && f.tableId != nil && !f.tablePrivate {
                     MButton("دخول طاولته", .primary, enabled: !joining) { joinFriend(f) }
                 }
