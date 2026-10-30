@@ -117,8 +117,8 @@ object Sounds {
     }
     fun baloot() { play("collide", gain = 0.7f); play("chips2", at = 0.15, gain = 0.7f) }
 
-    fun hokm() { if (once("hokm")) play("bid", gain = 0.9f, vary = false) }
-    fun sun() { if (once("sun")) play("bid", gain = 0.9f, vary = false) }
+    fun hokm() { if (once("hokm")) play("bid", gain = 0.8f, vary = false) }
+    fun sun() { if (once("sun")) play("bid", gain = 0.8f, vary = false) }
     fun confirmHokm() { if (once("confirm")) play("bid", gain = 0.7f, vary = false) }
 
     /** دبل/ثري/فور: الصوت يتكرر بعدد مستواه */

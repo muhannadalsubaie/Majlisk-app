@@ -107,8 +107,8 @@ final class Sounds {
         else { play("proj-sira", gain: 0.8, vary: false) }
     }
     func baloot() { play("collide", gain: 0.7); play("chips2", at: 0.15, gain: 0.7) }
-    func hokm() { if once("hokm") { play("bid", gain: 0.9, vary: false) } }
-    func sun() { if once("sun") { play("bid", gain: 0.9, vary: false) } }
+    func hokm() { if once("hokm") { play("bid", gain: 0.8, vary: false) } }
+    func sun() { if once("sun") { play("bid", gain: 0.8, vary: false) } }
     func confirmHokm() { if once("confirm") { play("bid", gain: 0.7, vary: false) } }
     /// دبل/ثري/فور: الصوت يتكرر بعدد مستواه
     func double(_ level: Int) {
