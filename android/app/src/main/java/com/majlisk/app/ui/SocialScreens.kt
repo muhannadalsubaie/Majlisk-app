@@ -34,21 +34,21 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
     var tab by remember { mutableStateOf(0) }
     var friends by remember { mutableStateOf<List<Friend>?>(null) }
     var bans by remember { mutableStateOf<List<Friend>?>(null) }
-    var message by remember { mutableStateOf("") }
     var adding by remember { mutableStateOf(false) }
     var toRemove by remember { mutableStateOf<Friend?>(null) }
     var profileOf by remember { mutableStateOf<Friend?>(null) }
     var joining by remember { mutableStateOf(false) }
     var refreshKey by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
-    val say: (String) -> Unit = { message = it; Announcer.announce(it) }
+    // نتيجة ضغطتك تُقرأ فقط، بلا سطر مكتوب فوق الشاشة
+    val say: (String) -> Unit = { Announcer.announce(it) }
     // الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
     val joinFriend: (Friend) -> Unit = join@{ f ->
         val id = f.tableId
         when {
             joining -> return@join
-            !f.online || id == null -> say("${f.username} مو في طاولة الحين")
-            f.tablePrivate -> say("طاولة ${f.username} مقفلة، تحتاج دعوة منه")
+            // ما هو في طاولة، أو طاولته مقفلة: الضغط المطوّل لا يسوي شي (بلا تلميحات)
+            !f.online || id == null || f.tablePrivate -> Unit
             else -> {
                 joining = true
                 scope.launch {
@@ -75,7 +75,6 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
         TopBar("الأصدقاء", onBack = { navigate(Route.Menu) }) {
             SmallButton("إضافة صديق", { adding = true })
         }
-        if (message.isNotEmpty()) Text(message, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
         // تبويبات بخط ذهبي تحت المختار (كالتطبيق الحالي)
         TabRow(
             selectedTabIndex = tab, containerColor = Palette.green900, contentColor = Palette.gold,
@@ -91,7 +90,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                 else if (friends!!.isEmpty()) Note("لا يوجد أصدقاء بعد.")
                 friends?.sortedByDescending { it.online }?.forEach { f ->
                     // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
-                    val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة ${f.tableGame}".trimEnd() else "متصل"
+                    val status = friendStatus(f)
                     ItemRow(
                         Modifier.combinedClickable(
                             onClickLabel = "فتح ملفه", onClick = { profileOf = f },
@@ -154,7 +153,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
         }
     }
     profileOf?.let { f ->
-        val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة ${f.tableGame}${if (f.tablePrivate) " مقفلة" else ""}".replace("  ", " ") else "متصل"
+        val status = friendStatus(f)
         MajliskDialog(f.username, { profileOf = null }) {
             Body(status)
             if (f.online && f.tableId != null && !f.tablePrivate) PrimaryButton("دخول طاولته", { joinFriend(f) }, enabled = !joining)
@@ -168,4 +167,11 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
             scope.launch { runCatching { Social.removeFriend(f.uid) }; refreshKey++ }
         }, onCancel = { toRemove = null })
     }
+}
+
+/** حالة الصديق: غير متصل، أو متصل في الرئيسية، أو متصل في طاولة (واسم اللعبة، ومقفلة إن كانت) */
+private fun friendStatus(f: Friend): String = when {
+    !f.online -> "غير متصل"
+    f.tableId != null -> listOf("متصل، في طاولة", f.tableGame, if (f.tablePrivate) "مقفلة" else "").filter { it.isNotEmpty() }.joinToString(" ")
+    else -> "متصل، في الرئيسية"
 }

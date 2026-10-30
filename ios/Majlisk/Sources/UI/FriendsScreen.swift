@@ -9,7 +9,6 @@ struct FriendsScreen: View {
     @State private var tab = 0
     @State private var friends: [Friend]?
     @State private var bans: [Friend]?
-    @State private var message = ""
     @State private var adding = false
     @State private var newName = ""
     @State private var toRemove: Friend?
@@ -17,18 +16,22 @@ struct FriendsScreen: View {
     @State private var joining = false
     @State private var refreshKey = 0
 
-    private func say(_ t: String) { message = t; Announcer.announce(t) }
+    /// نتيجة ضغطتك تُقرأ فقط، بلا سطر مكتوب فوق الشاشة
+    private func say(_ t: String) { Announcer.announce(t) }
     private func refresh() { refreshKey += 1 }
 
+    /// حالة الصديق: غير متصل، أو متصل في الرئيسية، أو متصل في طاولة (واسم اللعبة، ومقفلة إن كانت)
     private func status(_ f: Friend) -> String {
-        !f.online ? "غير متصل" : f.tableId != nil ? "متصل، في طاولة \(f.tableGame)".trimmingCharacters(in: .whitespaces) : "متصل"
+        if !f.online { return "غير متصل" }
+        if f.tableId == nil { return "متصل، في الرئيسية" }
+        return ["متصل، في طاولة", f.tableGame, f.tablePrivate ? "مقفلة" : ""].filter { !$0.isEmpty }.joined(separator: " ")
     }
 
     /// الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
     private func joinFriend(_ f: Friend) {
         if joining { return }
-        guard f.online, let id = f.tableId else { say("\(f.username) مو في طاولة الحين"); return }
-        if f.tablePrivate { say("طاولة \(f.username) مقفلة، تحتاج دعوة منه"); return }
+        // ما هو في طاولة، أو طاولته مقفلة: الضغط المطوّل لا يسوي شي (بلا تلميحات)
+        guard f.online, let id = f.tableId, !f.tablePrivate else { return }
         joining = true
         Task { @MainActor in
             do { try await Tables.join(id); profileOf = nil; openTable(id) } catch { say(Tables.error(error, "تعذّر الانضمام")) }
@@ -41,7 +44,6 @@ struct FriendsScreen: View {
             TopBar(title: "الأصدقاء", onBack: { navigate(.menu) }) {
                 SmallButton("إضافة صديق") { adding = true }
             }
-            if !message.isEmpty { Text(message).foregroundColor(Palette.goldSoft) }
             Picker("القائمة", selection: $tab) {
                 Text("الأصدقاء\(friends.map { " (\($0.count))" } ?? "")").tag(0)
                 Text("طلبات الصداقة\(hub.requests.isEmpty ? "" : " \(hub.requests.count)")").tag(1)
@@ -125,7 +127,7 @@ struct FriendsScreen: View {
         }
         .sheet(item: $profileOf) { f in
             Sheet(title: f.username) {
-                BodyText(f.online && f.tableId != nil && f.tablePrivate ? "\(status(f)) مقفلة" : status(f))
+                BodyText(status(f))
                 if f.online && f.tableId != nil && !f.tablePrivate {
                     MButton("دخول طاولته", .primary, enabled: !joining) { joinFriend(f) }
                 }
