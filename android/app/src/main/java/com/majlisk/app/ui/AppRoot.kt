@@ -77,7 +77,7 @@ fun AppRoot() {
             Route.Menu -> MainMenuScreen(profile, navigate)
             Route.CreateTable -> CreateTableScreen(profile, navigate, openTable)
             Route.JoinTable -> JoinTableScreen(navigate, openTable)
-            Route.Friends -> FriendsScreen(hub, navigate)
+            Route.Friends -> FriendsScreen(hub, navigate, openTable)
             Route.Settings -> SettingsScreen(onBack = { screen = Route.Menu }, embedded = false)
             Route.Shop -> ShopScreen(profile, navigate)
             Route.Table -> tableId?.let { id -> TableScreen(id, user?.uid.orEmpty()) { Prefs.lastTable = null; screen = Route.Menu } } ?: run { screen = Route.Menu }

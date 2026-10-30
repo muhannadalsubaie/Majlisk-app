@@ -13,7 +13,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.semantics.LiveRegionMode
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -26,16 +28,37 @@ import kotlinx.coroutines.launch
 
 /** الأصدقاء: تبويب للقائمة مع حالة الاتصال، وتبويب للطلبات الواردة، وتبويب للمحظورين */
 @Composable
-fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
+fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     var tab by remember { mutableStateOf(0) }
     var friends by remember { mutableStateOf<List<Friend>?>(null) }
     var bans by remember { mutableStateOf<List<Friend>?>(null) }
     var message by remember { mutableStateOf("") }
     var adding by remember { mutableStateOf(false) }
     var toRemove by remember { mutableStateOf<Friend?>(null) }
+    var profileOf by remember { mutableStateOf<Friend?>(null) }
+    var joining by remember { mutableStateOf(false) }
     var refreshKey by remember { mutableStateOf(0) }
     val scope = rememberCoroutineScope()
     val say: (String) -> Unit = { message = it; Announcer.announce(it) }
+    // الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
+    val joinFriend: (Friend) -> Unit = join@{ f ->
+        val id = f.tableId
+        when {
+            joining -> return@join
+            !f.online || id == null -> say("${f.username} مو في طاولة الحين")
+            f.tablePrivate -> say("طاولة ${f.username} مقفلة، تحتاج دعوة منه")
+            else -> {
+                joining = true
+                scope.launch {
+                    runCatching { com.majlisk.app.data.Tables.join(id) }
+                        .onSuccess { profileOf = null; openTable(id) }
+                        .onFailure { say(com.majlisk.app.data.Tables.error(it, "تعذّر الانضمام")) }
+                    joining = false
+                }
+            }
+        }
+    }
 
     // تحديث القائمة عند أي تغيير في المركز، وكل 20 ثانية لحالة الاتصال
     LaunchedEffect(hub.friends.size, refreshKey) {
@@ -65,9 +88,16 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
                 if (friends == null) Body("جارٍ التحميل…")
                 else if (friends!!.isEmpty()) Note("لا يوجد أصدقاء بعد.")
                 friends?.sortedByDescending { it.online }?.forEach { f ->
-                    ItemRow {
-                        Text("${if (f.online) "🟢" else "⚪"} ${f.username}، ${if (f.online) "متصل" else "غير متصل"}", color = Palette.text, modifier = Modifier.weight(1f))
-                        SmallButton("حذف", { toRemove = f }, description = "حذف ${f.username} من الأصدقاء")
+                    // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
+                    val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة" else "متصل"
+                    ItemRow(
+                        Modifier.combinedClickable(
+                            onClickLabel = "فتح ملفه", onClick = { profileOf = f },
+                            onLongClickLabel = if (f.tableId != null) "دخول طاولته" else null,
+                            onLongClick = { joinFriend(f) },
+                        ).semantics(mergeDescendants = true) { contentDescription = "${f.username}، $status" },
+                    ) {
+                        Text("${if (f.online) "🟢" else "⚪"} ${f.username}، $status", color = Palette.text, modifier = Modifier.weight(1f))
                     }
                 }
             }
@@ -119,6 +149,15 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit) {
                 }
             }, enabled = !busy && name.isNotBlank())
             SecondaryButton("إلغاء", { adding = false }, fill = true)
+        }
+    }
+    profileOf?.let { f ->
+        val status = if (!f.online) "غير متصل" else if (f.tableId != null) "متصل، في طاولة${if (f.tablePrivate) " مقفلة" else ""}" else "متصل"
+        MajliskDialog(f.username, { profileOf = null }) {
+            Body(status)
+            if (f.online && f.tableId != null && !f.tablePrivate) PrimaryButton("دخول طاولته", { joinFriend(f) }, enabled = !joining)
+            DangerButton("حذف من الأصدقاء", { profileOf = null; toRemove = f })
+            SecondaryButton("رجوع", { profileOf = null }, fill = true)
         }
     }
     toRemove?.let { f ->

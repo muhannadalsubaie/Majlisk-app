@@ -4,6 +4,7 @@ import SwiftUI
 struct FriendsScreen: View {
     let hub: HubState
     let navigate: (Route) -> Void
+    let openTable: (String) -> Void
     @State private var tab = 0
     @State private var friends: [Friend]?
     @State private var bans: [Friend]?
@@ -11,10 +12,26 @@ struct FriendsScreen: View {
     @State private var adding = false
     @State private var newName = ""
     @State private var toRemove: Friend?
+    @State private var profileOf: Friend?
+    @State private var joining = false
     @State private var refreshKey = 0
 
     private func say(_ t: String) { message = t; Announcer.announce(t) }
     private func refresh() { refreshKey += 1 }
+
+    private func status(_ f: Friend) -> String { !f.online ? "غير متصل" : f.tableId != nil ? "متصل، في طاولة" : "متصل" }
+
+    /// الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
+    private func joinFriend(_ f: Friend) {
+        if joining { return }
+        guard f.online, let id = f.tableId else { say("\(f.username) مو في طاولة الحين"); return }
+        if f.tablePrivate { say("طاولة \(f.username) مقفلة، تحتاج دعوة منه"); return }
+        joining = true
+        Task { @MainActor in
+            do { try await Tables.join(id); profileOf = nil; openTable(id) } catch { say(Tables.error(error, "تعذّر الانضمام")) }
+            joining = false
+        }
+    }
 
     var body: some View {
         Screen {
@@ -33,10 +50,18 @@ struct FriendsScreen: View {
                 if friends == nil { BodyText("جارٍ التحميل…") }
                 else if friends!.isEmpty { Note("لا يوجد أصدقاء بعد.") }
                 ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
+                    // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
                     ItemRow {
-                        Text("\(f.online ? "🟢" : "⚪") \(f.username)، \(f.online ? "متصل" : "غير متصل")").frame(maxWidth: .infinity, alignment: .leading)
-                        SmallButton("حذف", label: "حذف \(f.username) من الأصدقاء") { toRemove = f }
+                        Text("\(f.online ? "🟢" : "⚪") \(f.username)، \(status(f))").frame(maxWidth: .infinity, alignment: .leading)
                     }
+                    .contentShape(Rectangle())
+                    .onTapGesture { profileOf = f }
+                    .onLongPressGesture { joinFriend(f) }
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(f.username)، \(status(f))")
+                    .accessibilityAddTraits(.isButton)
+                    .accessibilityAction { profileOf = f }
+                    .accessibilityAction(named: "دخول طاولته") { joinFriend(f) }
                 }
             case 1:
                 if hub.requests.isEmpty { Note("لا توجد طلبات صداقة.") }
@@ -93,6 +118,19 @@ struct FriendsScreen: View {
                     }
                 }
                 MButton("إلغاء") { adding = false }
+            }
+        }
+        .sheet(item: $profileOf) { f in
+            Sheet(title: f.username) {
+                BodyText(f.online && f.tableId != nil && f.tablePrivate ? "متصل، في طاولة مقفلة" : status(f))
+                if f.online && f.tableId != nil && !f.tablePrivate {
+                    MButton("دخول طاولته", .primary, enabled: !joining) { joinFriend(f) }
+                }
+                MButton("حذف من الأصدقاء", .danger) {
+                    profileOf = nil
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { toRemove = f }
+                }
+                MButton("رجوع") { profileOf = nil }
             }
         }
         .confirm("حذف صديق", isPresented: Binding(get: { toRemove != nil }, set: { if !$0 { toRemove = nil } }),
