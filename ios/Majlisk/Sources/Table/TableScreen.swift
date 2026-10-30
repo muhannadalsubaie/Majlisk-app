@@ -363,7 +363,7 @@ final class GameSoundTracker {
             let trump = g.contract?.mode == "hokm" ? g.contract?.trump : nil
             if let trump, card.suit == trump && lead.suit != trump { s.cut() } else { s.card() }
         }
-        if g.declared.count > prev.declared.count { s.project() }
+        if g.declared.count > prev.declared.count { s.project(g.declared.dropFirst(prev.declared.count).flatMap(\.kinds)) }
         if g.balootSeat != nil && prev.balootSeat == nil { s.baloot() }
         // نهاية الصكة (بعد صوت سحب الأكلة الأخيرة)، ثم نهاية المباراة
         if let r = g.lastHand, prev.lastHand == nil {
