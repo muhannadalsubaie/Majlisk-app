@@ -1,4 +1,5 @@
 import Foundation
+import Network
 import FirebaseFirestore
 
 /// tableId: الطاولة اللي فيها الصديق المتصل الآن (إن وُجدت)
@@ -178,6 +179,7 @@ final class TableConnection: ObservableObject {
 
     func start() {
         guard loop == nil else { return }
+        pathMonitor.start(queue: .global(qos: .utility))
         loop = Task { [weak self] in
             var retry = 0
             while let self, !self.stopped {
@@ -185,14 +187,22 @@ final class TableConnection: ObservableObject {
                     let ws = URLSession.shared.webSocketTask(with: Api.wsURL("/tables/\(self.tableId)/ws", token: token))
                     self.ws = ws
                     ws.resume()
-                    // نبضة كل 10 ثوانٍ: إذا انقطع نتك بلا إغلاق للاتصال يعرف الخادم خلال ثوانٍ ويعلن انقطاعك
-                    let ping = Task { while !Task.isCancelled { try? await Task.sleep(nanoseconds: 10_000_000_000); try? await ws.send(.string("ping")) } }
+                    // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
+                    self.lastHeard = Date()
+                    let ping = Task { [weak self] in
+                        while !Task.isCancelled {
+                            try? await Task.sleep(nanoseconds: 3_000_000_000)
+                            if let self, Date().timeIntervalSince(self.lastHeard) > 8 { ws.cancel(with: .goingAway, reason: nil); break }
+                            try? await ws.send(.string("ping"))
+                        }
+                    }
                     defer { ping.cancel() }
                     while !self.stopped {
                         guard let msg = try? await ws.receive() else { break }
+                        self.lastHeard = Date()
                         if !self.connected { await MainActor.run { self.connected = true } }
                         retry = 0
-                        if case .string(let text) = msg { self.handle(text) }
+                        if case .string(let text) = msg, text != "pong" { self.handle(text) }
                     }
                     await MainActor.run { self.connected = false }
                 }
@@ -220,6 +230,20 @@ final class TableConnection: ObservableObject {
 
     /// العودة للتطبيق: نعيد الاتصال فوراً بدل انتظار المحاولة التالية
     func reconnectNow() { if !connected { resumeWake() } }
+
+    private var lastHeard = Date()
+    /// رجع النت (أو تغيّرت الشبكة): نعيد الاتصال فوراً، فيُعلن رجوعك للبقية على طول
+    private lazy var pathMonitor: NWPathMonitor = {
+        let m = NWPathMonitor()
+        m.pathUpdateHandler = { [weak self] path in
+            guard let self, path.status == .satisfied else { return }
+            DispatchQueue.main.async {
+                if self.connected && Date().timeIntervalSince(self.lastHeard) > 3.5 { self.ws?.cancel(with: .goingAway, reason: nil) }
+                self.reconnectNow()
+            }
+        }
+        return m
+    }()
 
     private func handle(_ text: String) {
         guard let data = text.data(using: .utf8), let msg = (try? JSONSerialization.jsonObject(with: data)) as? JSON else { return }
@@ -259,6 +283,7 @@ final class TableConnection: ObservableObject {
 
     func stop() {
         stopped = true
+        pathMonitor.cancel()
         ws?.cancel(with: .goingAway, reason: nil)
         loop?.cancel()
         resumeWake()

@@ -122,12 +122,19 @@ class TableConnection(val tableId: String) {
                     val done = CompletableDeferred<Unit>()
                     ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/tables/$tableId/ws", token)).build(), object : WebSocketListener() {
                         override fun onOpen(webSocket: WebSocket, response: Response) { _connected.value = true; retry = 0 }
-                        override fun onMessage(webSocket: WebSocket, text: String) { handle(text) }
+                        override fun onMessage(webSocket: WebSocket, text: String) { lastHeard = System.currentTimeMillis(); if (text != "pong") handle(text) }
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
                     })
-                    // نبضة كل 10 ثوانٍ: إذا انقطع نتك بلا إغلاق للاتصال يعرف الخادم خلال ثوانٍ ويعلن انقطاعك
-                    val beat = scope.launch { while (true) { delay(10_000); ws?.send("ping") } }
+                    // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
+                    lastHeard = System.currentTimeMillis()
+                    val beat = scope.launch {
+                        while (true) {
+                            delay(3_000)
+                            if (System.currentTimeMillis() - lastHeard > 8_000) { ws?.cancel(); break }
+                            ws?.send("ping")
+                        }
+                    }
                     done.await()
                     beat.cancel()
                     _connected.value = false
@@ -140,6 +147,7 @@ class TableConnection(val tableId: String) {
                     if (member == false) { _closed.value = true; stopped = true; break }
                 }
                 wake = CompletableDeferred()
+                // يرجع النت: نعيد الاتصال على طول بدل انتظار المحاولة التالية
                 kotlinx.coroutines.withTimeoutOrNull(1000L * retry) { wake.await() }
             }
         }
@@ -147,6 +155,19 @@ class TableConnection(val tableId: String) {
 
     /** العودة للتطبيق: نعيد الاتصال فوراً بدل انتظار المحاولة التالية */
     fun reconnectNow() { if (!_connected.value) wake.complete(Unit) }
+
+    @Volatile private var lastHeard = 0L
+    // رجع النت (أو تغيّرت الشبكة): نعيد الاتصال فوراً، فيُعلن رجوعك للبقية على طول
+    private val connectivity = com.majlisk.app.MajliskApp.instance.getSystemService(android.net.ConnectivityManager::class.java)
+    private val netCallback = object : android.net.ConnectivityManager.NetworkCallback() {
+        override fun onAvailable(network: android.net.Network) {
+            scope.launch {
+                if (_connected.value && System.currentTimeMillis() - lastHeard > 3_500) ws?.cancel()
+                reconnectNow()
+            }
+        }
+    }
+    init { runCatching { connectivity.registerDefaultNetworkCallback(netCallback) } }
 
     private fun handle(text: String) {
         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
@@ -183,6 +204,7 @@ class TableConnection(val tableId: String) {
 
     fun stop() {
         stopped = true
+        runCatching { connectivity.unregisterNetworkCallback(netCallback) }
         ws?.close(1000, null)
         scope.cancel()
     }
