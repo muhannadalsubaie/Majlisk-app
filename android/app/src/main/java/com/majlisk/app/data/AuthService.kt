@@ -72,23 +72,9 @@ object AuthService {
         u != null && !u.isEmailVerified && u.providerData.any { it.providerId == "password" } &&
             (u.metadata?.creationTimestamp ?: 0) >= VERIFY_SINCE
 
-    /** آخر خطأ في إرسال رابط التحقق (تعرضه شاشة التحقق)، أو null إن نجح */
-    @Volatile var verificationError: String? = null
-        private set
-
-    /** يرسل رابط التحقق؛ يرجع سبب الفشل بالعربي أو null إن نجح */
-    suspend fun sendVerification(): String? {
+    suspend fun sendVerification() {
         auth.setLanguageCode("ar")
-        val err = runCatching { auth.currentUser?.sendEmailVerification()?.await() }.exceptionOrNull()?.let { e ->
-            val code = (e as? com.google.firebase.auth.FirebaseAuthException)?.errorCode.orEmpty()
-            when {
-                e is com.google.firebase.FirebaseTooManyRequestsException || code.contains("TOO_MANY") -> "أرسلنا روابط كثيرة لهذا البريد، انتظر شوي ثم أعد الإرسال."
-                e is com.google.firebase.FirebaseNetworkException -> "تعذّر الإرسال: تأكد من اتصالك بالإنترنت."
-                else -> "تعذّر إرسال الرابط (${code.ifEmpty { e.message ?: "خطأ" }})."
-            }
-        }
-        verificationError = err
-        return err
+        runCatching { auth.currentUser?.sendEmailVerification()?.await() }
     }
 
     /** يحدّث حالة الحساب من Firebase: هل ضغط رابط التحقق؟ */

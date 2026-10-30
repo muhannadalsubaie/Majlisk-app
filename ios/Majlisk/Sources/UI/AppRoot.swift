@@ -184,8 +184,7 @@ struct AuthScreen: View {
 /// خطوة التحقق من البريد: رابط يصل للإيميل، ثم نكمل تلقائياً أول ما يُضغط
 struct VerifyEmailScreen: View {
     @State private var busy = false
-    // إن فشل إرسال الرابط وقت التسجيل نبيّن السبب
-    @State private var error = AuthService.verificationError ?? ""
+    @State private var error = ""
     @State private var sentAt = Date()
     private var email: String { Auth.auth().currentUser?.email ?? "" }
     var body: some View {
@@ -206,10 +205,9 @@ struct VerifyEmailScreen: View {
                 if Date().timeIntervalSince(sentAt) < 60 { error = "انتظر دقيقة قبل إعادة الإرسال."; Announcer.announce(error); return }
                 busy = true; error = ""
                 Task { @MainActor in
-                    let failed = await AuthService.sendVerification()
+                    await AuthService.sendVerification()
                     sentAt = Date()
-                    if let failed { error = failed; Announcer.announce(failed) }
-                    else { Announcer.announce("أرسلنا الرابط مرة ثانية إلى \(email)") }
+                    Announcer.announce("أرسلنا الرابط مرة ثانية إلى \(email)")
                     busy = false
                 }
             }
