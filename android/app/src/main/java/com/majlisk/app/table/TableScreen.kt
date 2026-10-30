@@ -89,7 +89,8 @@ private const val TRICK_HOLD_MS = 1200L
 
 @Composable
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
-    val conn = remember(tableId) { TableConnection(tableId).also { it.start() } }
+    // أصوات اللعب تُشغَّل من الاتصال نفسه، فتستمر والتطبيق في الخلفية ما دمت في الطاولة
+    val conn = remember(tableId) { TableConnection(tableId).also { c -> val s = GameSoundTracker(); c.onState = s::update; c.start() } }
     DisposableEffect(conn) { onDispose { conn.stop(); Voice.dispose() } }
     // الشاشة لا تنطفئ ما دمت في الطاولة (انطفاؤها يقطع الاتصال والمحادثة الصوتية)
     val window = (androidx.compose.ui.platform.LocalContext.current as? android.app.Activity)?.window
@@ -217,9 +218,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         lastTrickNo = g.trickNo
         if (prev != null && g.trickNo == prev + 1 && g.lastTrick != null && g.trick.isEmpty()) {
             heldTrick = g.trickNo
-            delay(TRICK_HOLD_MS - 150)
-            Sounds.collect()
-            delay(150)
+            delay(TRICK_HOLD_MS)
             heldTrick = null
         }
     }
@@ -230,16 +229,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
     var wasMyTurn by remember { mutableStateOf(false) }
     LaunchedEffect(g.myTurn) {
         // النغمة أولاً (فورية)، ثم الإعلان
-        if (g.myTurn && !wasMyTurn) { Sounds.turn(Announcer.readerOn); Announcer.announce("دورك") }
+        if (g.myTurn && !wasMyTurn) Announcer.announce("دورك")
         wasMyTurn = g.myTurn
-    }
-
-    // المؤثرات الصوتية: نقارن الحالة الجديدة بالسابقة لنعرف ما حدث
-    var prevGame by remember { mutableStateOf<GameView?>(null) }
-    LaunchedEffect(g) {
-        val prev = prevGame
-        prevGame = g
-        if (prev != null) gameSounds(prev, g, mySeat)
     }
 
     val reads = mapOf(
@@ -482,6 +473,30 @@ private fun bidSound(b: Bid) = when (b.type) {
     "sun", "ashkal" -> Sounds.sun()
     "confirmHokm" -> Sounds.confirmHokm()
     else -> Unit
+}
+
+/**
+ * أصوات اللعب: تُستدعى مع كل حالة تصل من الخادم (لا من الشاشة)، فتشتغل والتطبيق في الخلفية.
+ * نقارن الحالة الجديدة بالسابقة لنعرف ما حدث.
+ */
+class GameSoundTracker {
+    private var prev: GameView? = null
+    private var wasMyTurn = false
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+
+    fun update(v: TableView) {
+        val g = v.game ?: run { prev = null; wasMyTurn = false; return }
+        val p = prev
+        prev = g
+        if (p != null) {
+            gameSounds(p, g, v.mySeat)
+            // اكتملت الأكلة: صوت سحبها قبل أن تذهب لصاحبها
+            if (g.trickNo == p.trickNo + 1 && g.lastTrick != null && g.trick.isEmpty()) main.postDelayed({ Sounds.collect() }, TRICK_HOLD_MS - 150)
+        }
+        // نغمة الدور (فورية، قبل إعلان "دورك")
+        if (g.myTurn && !wasMyTurn) Sounds.turn(Announcer.readerOn)
+        wasMyTurn = g.myTurn
+    }
 }
 
 private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {

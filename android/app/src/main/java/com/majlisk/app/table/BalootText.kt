@@ -26,11 +26,12 @@ class BalootText(private val view: TableView, private val g: GameView, private v
     fun contract(): String {
         val c = g.contract ?: run {
             val ground = g.qaba?.let { "، ورقة الأرض ${it.label}" }.orEmpty()
-            return "لم يشترِ أحد بعد، المزايدة في الجولة ${if (g.bidRound == 1) "الأولى" else "الثانية"}$ground"
+            return "لم يشترِ أحد بعد، المزايدة في الجولة ${if (g.bidRound == 1) "الأولى" else "الثانية"}$ground، ${start()}"
         }
         val mode = if (c.mode == "sun") "صن" else "حكم ${SUIT_NAMES[c.trump]}"
         val parts = mutableListOf(if (c.buyer == mySeat) "أنت اشتريت $mode" else "${name(c.buyer)} اشترى $mode، ${teamWord(c.buyer)}")
         if (c.qabaTo != c.buyer) parts += "القبلة لـ${if (c.qabaTo == mySeat) "ك" else name(c.qabaTo)}"
+        parts += start()
         val d = g.doubling
         when {
             d.gahwa -> parts += "قهوة"
@@ -41,6 +42,12 @@ class BalootText(private val view: TableView, private val g: GameView, private v
             else -> parts += "بدون دبل"
         }
         return parts.joinToString("، ")
+    }
+
+    /** البداية (أول من يلعب) عند اللاعب اللي بعد الموزّع */
+    private fun start(): String {
+        val first = (g.dealer + 1) % 4
+        return if (first == mySeat) "البداية عندك" else "البداية عند ${name(first)}"
     }
 
     /** المشاريع: من عنده مشروع فقط، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب */

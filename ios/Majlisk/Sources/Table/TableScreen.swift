@@ -14,7 +14,13 @@ struct TableScreen: View {
 
     init(tableId: String, uid: String, exit: @escaping () -> Void) {
         self.tableId = tableId; self.uid = uid; self.exit = exit
-        _conn = StateObject(wrappedValue: TableConnection(tableId))
+        // أصوات اللعب تُشغَّل من الاتصال نفسه، فتستمر والتطبيق في الخلفية ما دمت في الطاولة
+        _conn = StateObject(wrappedValue: {
+            let c = TableConnection(tableId)
+            let sounds = GameSoundTracker()
+            c.onState = { sounds.update($0) }
+            return c
+        }())
     }
 
     var body: some View {
@@ -226,11 +232,10 @@ struct BalootBoard: View {
         .onAppear { Gestures.shared.handler = { read($0) }; prevGame = g; wasMyTurn = g.myTurn }
         .onChange(of: conn.version) { _ in
             Gestures.shared.handler = { read($0) }
-            if let prev = prevGame { gameSounds(prev: prev, g: g) }
             if let p = prevGame, g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty { holdTrick() }
             // إعلان "دورك" مرة واحدة عند بداية الدور
             // النغمة أولاً (فورية)، ثم الإعلان
-            if g.myTurn && !wasMyTurn { Sounds.shared.turn(soft: Announcer.readerOn); Announcer.announce("دورك") }
+            if g.myTurn && !wasMyTurn { Announcer.announce("دورك") }
             wasMyTurn = g.myTurn
             prevGame = g
         }
@@ -240,7 +245,6 @@ struct BalootBoard: View {
     private func holdTrick() {
         let n = g.trickNo
         heldTrick = n
-        DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD - 0.15) { Sounds.shared.collect() }
         DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD) { if heldTrick == n { heldTrick = nil } }
     }
 
@@ -296,7 +300,31 @@ struct BalootBoard: View {
         }
     }
 
-    private func gameSounds(prev: GameView, g: GameView) {
+}
+
+/// أصوات اللعب: تُستدعى مع كل حالة تصل من الخادم (لا من الشاشة)، فتشتغل والتطبيق في الخلفية.
+/// نقارن الحالة الجديدة بالسابقة لنعرف ما حدث.
+final class GameSoundTracker {
+    private var prev: GameView?
+    private var wasMyTurn = false
+
+    func update(_ v: TableView) {
+        guard let g = v.game else { prev = nil; wasMyTurn = false; return }
+        let p = prev
+        prev = g
+        if let p {
+            gameSounds(prev: p, g: g, mySeat: v.mySeat)
+            // اكتملت الأكلة: صوت سحبها قبل أن تذهب لصاحبها
+            if g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty {
+                DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD - 0.15) { Sounds.shared.collect() }
+            }
+        }
+        // نغمة الدور (فورية، قبل إعلان "دورك")
+        if g.myTurn && !wasMyTurn { Sounds.shared.turn(soft: Announcer.readerOn) }
+        wasMyTurn = g.myTurn
+    }
+
+    private func gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
         let s = Sounds.shared
         let total = { (x: GameView) in x.handCounts.reduce(0, +) }
         if total(g) > total(prev) { s.deal(newHand: total(g) - total(prev) > 12) }

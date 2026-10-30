@@ -164,6 +164,8 @@ final class TableConnection: ObservableObject {
     @Published private(set) var closed = false
     /// أخرجه المالك أو حظره: لا نعيد الاتصال
     @Published private(set) var kicked: String?
+    /// يُستدعى مع كل حالة تصل (حتى والتطبيق في الخلفية): لأصوات اللعب
+    var onState: ((TableView) -> Void)?
     private var ws: URLSessionWebSocketTask?
     private var stopped = false
     private var loop: Task<Void, Never>?
@@ -220,7 +222,7 @@ final class TableConnection: ObservableObject {
         guard let data = text.data(using: .utf8), let msg = (try? JSONSerialization.jsonObject(with: data)) as? JSON else { return }
         switch msg.str("type") {
         case "state":
-            if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async { self.view = parsed; self.version += 1 } }
+            if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async { self.view = parsed; self.version += 1; self.onState?(parsed) } }
         case "events":
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)

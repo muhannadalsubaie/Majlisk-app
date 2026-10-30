@@ -97,6 +97,8 @@ private fun eventSound(events: List<String>) {
 class TableConnection(val tableId: String) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val _view = MutableStateFlow<TableView?>(null)
+    /** يُستدعى مع كل حالة تصل (حتى والتطبيق في الخلفية): لأصوات اللعب */
+    var onState: ((TableView) -> Unit)? = null
     val view: StateFlow<TableView?> = _view
     private val _connected = MutableStateFlow(false)
     val connected: StateFlow<Boolean> = _connected
@@ -146,7 +148,7 @@ class TableConnection(val tableId: String) {
     private fun handle(text: String) {
         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
         when (msg.optString("type")) {
-            "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it }
+            "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it) }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             "events" -> msg.optJSONArray("events")?.let { a ->

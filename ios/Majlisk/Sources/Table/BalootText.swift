@@ -23,11 +23,12 @@ struct BalootText {
     func contract() -> String {
         guard let c = g.contract else {
             let ground = g.qaba.map { "، ورقة الأرض \($0.label)" } ?? ""
-            return "لم يشترِ أحد بعد، المزايدة في الجولة \(g.bidRound == 1 ? "الأولى" : "الثانية")\(ground)"
+            return "لم يشترِ أحد بعد، المزايدة في الجولة \(g.bidRound == 1 ? "الأولى" : "الثانية")\(ground)، \(start())"
         }
         let mode = c.mode == "sun" ? "صن" : "حكم \(SUIT_NAMES[c.trump ?? ""] ?? "")"
         var parts = [c.buyer == mySeat ? "أنت اشتريت \(mode)" : "\(name(c.buyer)) اشترى \(mode)، \(teamWord(c.buyer))"]
         if c.qabaTo != c.buyer { parts.append("القبلة لـ\(c.qabaTo == mySeat ? "ك" : name(c.qabaTo))") }
+        parts.append(start())
         let d = g.doubling
         if d.gahwa { parts.append("قهوة") }
         else if d.level > 1 {
@@ -35,6 +36,12 @@ struct BalootText {
             parts.append(label + (c.mode == "hokm" ? (d.locked ? " مقفل" : " مفتوح") : ""))
         } else { parts.append("بدون دبل") }
         return parts.joined(separator: "، ")
+    }
+
+    /// البداية (أول من يلعب) عند اللاعب اللي بعد الموزّع
+    private func start() -> String {
+        let first = (g.dealer + 1) % 4
+        return first == mySeat ? "البداية عندك" : "البداية عند \(name(first))"
     }
 
     /// المشاريع المعلنة ومن أعلنها (وأوراقها بعد الأكلة الأولى)

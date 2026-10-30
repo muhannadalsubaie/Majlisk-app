@@ -72,6 +72,8 @@ struct GameView {
     let phase: String
     let scores: [Int]
     let turn: Int
+    /// الموزّع: البداية (أول من يلعب) عند اللاعب اللي بعده
+    let dealer: Int
     let qaba: Card?
     let bidRound: Int
     let contract: Contract?
@@ -165,6 +167,7 @@ struct TableView {
             phase: g.str("phase"),
             scores: g.ints("scores"),
             turn: g.int("turn"),
+            dealer: g.int("dealer"),
             qaba: Card(g.obj("qaba")),
             bidRound: g.int("bidRound", 1),
             contract: g.obj("contract").map { Contract(mode: $0.str("mode"), trump: $0.strOrNil("trump"), buyer: $0.int("buyer"), qabaTo: $0.int("qabaTo")) },

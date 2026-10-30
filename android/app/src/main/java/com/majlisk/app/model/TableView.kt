@@ -25,6 +25,8 @@ data class GameView(
     val phase: String,
     val scores: List<Int>,
     val turn: Int,
+    /** الموزّع: البداية (أول من يلعب) عند اللاعب اللي بعده */
+    val dealer: Int,
     val qaba: Card?,
     val bidRound: Int,
     val contract: Contract?,
@@ -113,6 +115,7 @@ data class TableView(
                 phase = g.optString("phase"),
                 scores = g.optJSONArray("scores").ints(),
                 turn = g.optInt("turn"),
+                dealer = g.optInt("dealer"),
                 qaba = Card.from(g.optJSONObject("qaba")),
                 bidRound = g.optInt("bidRound", 1),
                 contract = g.optJSONObject("contract")?.let {
