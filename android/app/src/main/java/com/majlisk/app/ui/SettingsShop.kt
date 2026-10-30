@@ -1,6 +1,8 @@
 package com.majlisk.app.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -12,6 +14,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.sp
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.AuthService
 import com.majlisk.app.data.Billing
@@ -46,12 +49,14 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)
             DangerButton("حذف الحساب", { confirmDelete = true })
             SecondaryButton("سياسة الخصوصية", { AuthService.openUrl(context, "$site/privacy.html") }, fill = true)
+            // في آخر الإعدادات العامة فقط، بخط صغير جداً: رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
+            val small = Modifier.fillMaxWidth()
+            Text("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0.", color = Palette.textDim, fontSize = 10.sp, lineHeight = 14.sp, modifier = small)
+            Text("مصدر صور الكروت", color = Palette.textDim, fontSize = 10.sp, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                modifier = small.clickable(role = androidx.compose.ui.semantics.Role.Button) { AuthService.openUrl(context, "https://github.com/richardschneider/cardsJS/tree/master/cards") })
+            Text("رخصة صور الكروت", color = Palette.textDim, fontSize = 10.sp, textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+                modifier = small.clickable(role = androidx.compose.ui.semantics.Role.Button) { AuthService.openUrl(context, "https://www.gnu.org/licenses/lgpl-3.0.html") })
         }
-        // رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
-        Note("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0.")
-        SecondaryButton("مصدر صور الكروت", { AuthService.openUrl(context, "https://github.com/richardschneider/cardsJS/tree/master/cards") }, fill = true)
-        SecondaryButton("رخصة صور الكروت", { AuthService.openUrl(context, "https://www.gnu.org/licenses/lgpl-3.0.html") }, fill = true)
-        Note("المؤثرات الصوتية: Kenney، رخصة CC0")
     }
     if (embedded) Column { body() } else Screen { body() }
 

@@ -20,12 +20,14 @@ struct SettingsScreen: View {
                 MButton("تسجيل الخروج") { Session.shared.signOut() }
                 MButton("حذف الحساب", .danger) { confirmDelete = true }
                 MButton("سياسة الخصوصية") { UIApplication.shared.open(URL(string: Api.site + "/privacy.html")!) }
+                // في آخر الإعدادات العامة فقط، بخط صغير جداً: رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
+                Text("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0.")
+                    .font(.system(size: 10)).foregroundColor(Palette.textDim)
+                Link("مصدر صور الكروت", destination: URL(string: "https://github.com/richardschneider/cardsJS/tree/master/cards")!)
+                    .font(.system(size: 10)).foregroundColor(Palette.textDim)
+                Link("رخصة صور الكروت", destination: URL(string: "https://www.gnu.org/licenses/lgpl-3.0.html")!)
+                    .font(.system(size: 10)).foregroundColor(Palette.textDim)
             }
-            // رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
-            Note("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0.")
-            MButton("مصدر صور الكروت") { UIApplication.shared.open(URL(string: "https://github.com/richardschneider/cardsJS/tree/master/cards")!) }
-            MButton("رخصة صور الكروت") { UIApplication.shared.open(URL(string: "https://www.gnu.org/licenses/lgpl-3.0.html")!) }
-            Note("المؤثرات الصوتية: Kenney، رخصة CC0")
         }
         .confirm("حذف الحساب", isPresented: $confirmDelete,
                  message: "سيتم حذف حسابك نهائياً: اسم المستخدم، والعملات، وقائمة الأصدقاء، وبيانات الدخول. لا يمكن التراجع عن هذا الإجراء.",
