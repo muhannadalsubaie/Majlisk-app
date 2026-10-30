@@ -126,7 +126,10 @@ class TableConnection(val tableId: String) {
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
                     })
+                    // نبضة كل 10 ثوانٍ: إذا انقطع نتك بلا إغلاق للاتصال يعرف الخادم خلال ثوانٍ ويعلن انقطاعك
+                    val beat = scope.launch { while (true) { delay(10_000); ws?.send("ping") } }
                     done.await()
+                    beat.cancel()
                     _connected.value = false
                 }
                 if (stopped) break
