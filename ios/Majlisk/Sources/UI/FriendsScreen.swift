@@ -5,6 +5,7 @@ struct FriendsScreen: View {
     let hub: HubState
     let navigate: (Route) -> Void
     let openTable: (String) -> Void
+    @ObservedObject private var hubLive = Hub.shared
     @State private var tab = 0
     @State private var friends: [Friend]?
     @State private var bans: [Friend]?
@@ -98,11 +99,11 @@ struct FriendsScreen: View {
                 }
             }
         }
-        // تحديث القائمة عند أي تغيير في المركز، وكل 20 ثانية لحالة الاتصال
-        .task(id: "\(hub.friends.count)-\(refreshKey)") {
+        // تحديث القائمة فوراً لما يتصل صديق أو يخرج (إشعار من المركز)، وعند أي تغيير، وكل 10 ثوانٍ احتياطاً
+        .task(id: "\(hub.friends.count)-\(refreshKey)-\(hubLive.presence)") {
             while !Task.isCancelled {
                 if let s = try? await Social.listFriends() { friends = s.friends } else if friends == nil { friends = [] }
-                try? await Task.sleep(nanoseconds: 20_000_000_000)
+                try? await Task.sleep(nanoseconds: 10_000_000_000)
             }
         }
         .task(id: tab) { if tab == 2 { bans = (try? await Social.listBans()) ?? [] } }

@@ -7,6 +7,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -60,11 +61,12 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
         }
     }
 
-    // تحديث القائمة عند أي تغيير في المركز، وكل 20 ثانية لحالة الاتصال
-    LaunchedEffect(hub.friends.size, refreshKey) {
+    // تحديث القائمة فوراً لما يتصل صديق أو يخرج (إشعار من المركز)، وعند أي تغيير، وكل 10 ثوانٍ احتياطاً
+    val presence by com.majlisk.app.data.Hub.presence.collectAsState()
+    LaunchedEffect(hub.friends.size, refreshKey, presence) {
         while (true) {
             friends = runCatching { Social.listFriends().friends }.getOrDefault(friends ?: emptyList())
-            delay(20_000)
+            delay(10_000)
         }
     }
     LaunchedEffect(tab) { if (tab == 2) bans = runCatching { Social.listBans() }.getOrDefault(emptyList()) }

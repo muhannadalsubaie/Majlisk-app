@@ -51,6 +51,8 @@ enum Social {
 final class Hub: ObservableObject {
     static let shared = Hub()
     @Published private(set) var state = HubState()
+    /// يزيد كلما اتصل صديق أو خرج: قائمة الأصدقاء تتحدث فوراً
+    @Published private(set) var presence = 0
     private var task: URLSessionWebSocketTask?
     private var loop: Task<Void, Never>?
 
@@ -63,8 +65,8 @@ final class Hub: ObservableObject {
                 let ws = URLSession.shared.webSocketTask(with: Api.wsURL("/me/ws", token: token))
                 self?.task = ws
                 ws.resume()
-                // نبقيه حياً برسالة كل 30 ثانية (كما في التطبيق الحالي)
-                let ping = Task { while !Task.isCancelled { try? await Task.sleep(nanoseconds: 30_000_000_000); try? await ws.send(.string("ping")) } }
+                // نبضة كل 15 ثانية: بها يعرف الخادم أنك متصل (وإذا انقطعت تصير "غير متصل" لأصدقائك)
+                let ping = Task { while !Task.isCancelled { try? await Task.sleep(nanoseconds: 15_000_000_000); try? await ws.send(.string("ping")) } }
                 while !Task.isCancelled {
                     guard let msg = try? await ws.receive() else { break }
                     retry = 0
@@ -84,6 +86,7 @@ final class Hub: ObservableObject {
         case "state":
             let s = HubState(friends: friends(msg, "friends"), requests: friends(msg, "requests"), invites: invites(msg))
             DispatchQueue.main.async { self.state = s }
+        case "presence": DispatchQueue.main.async { self.presence += 1 }
         case "notice": Announcer.announce(msg.str("text"))
         case "invite": Announcer.announce("\(msg.obj("invite")?.str("fromName") ?? "") يدعوك لطاولته")
         default: break

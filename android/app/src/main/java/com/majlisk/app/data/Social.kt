@@ -65,6 +65,9 @@ object Social {
 object Hub {
     private val _state = MutableStateFlow(HubState())
     val state: StateFlow<HubState> = _state
+    /** يزيد كلما اتصل صديق أو خرج: قائمة الأصدقاء تتحدث فوراً */
+    private val _presence = MutableStateFlow(0)
+    val presence: StateFlow<Int> = _presence
     private var ws: WebSocket? = null
     private var job: Job? = null
     private var enabled = false
@@ -85,6 +88,7 @@ object Hub {
                         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
                         when (msg.optString("type")) {
                             "state" -> _state.value = HubState(friends(msg, "friends"), friends(msg, "requests"), invites(msg))
+                            "presence" -> _presence.value++
                             "notice" -> Announcer.announce(msg.optString("text"))
                             "invite" -> Announcer.announce("${msg.optJSONObject("invite")?.optString("fromName")} يدعوك لطاولته")
                         }
@@ -92,8 +96,8 @@ object Hub {
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { closed.complete(Unit) }
                     override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { closed.complete(Unit) }
                 })
-                // نبقيه حياً برسالة كل 30 ثانية (كما في التطبيق الحالي)
-                val ping = launch { while (true) { delay(30_000); ws?.send("ping") } }
+                // نبضة كل 15 ثانية: بها يعرف الخادم أنك متصل (وإذا انقطعت تصير "غير متصل" لأصدقائك)
+                val ping = launch { while (true) { delay(15_000); ws?.send("ping") } }
                 closed.await()
                 ping.cancel()
                 if (!enabled) break
