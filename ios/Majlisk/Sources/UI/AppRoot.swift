@@ -1,4 +1,5 @@
 import SwiftUI
+import FirebaseAuth
 
 enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop }
 
@@ -19,7 +20,7 @@ struct AppRoot: View {
             .onChange(of: session.uid) { uid in if uid == nil && route != .splash { route = .auth } }
             .onChange(of: signedIn) { on in if on { hub.start(); Store.recover() } else { hub.stop() } }
             .onAppear { if signedIn { hub.start(); Store.recover() } }
-            .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
+            .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && !session.needsVerify && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
                 if let invite = pendingInvite {
                     Sheet(title: "دعوة لطاولة") {
                         BodyText("\(invite.fromName) يدعوك للعب معه في طاولته.")
@@ -31,7 +32,9 @@ struct AppRoot: View {
     }
 
     @ViewBuilder private var content: some View {
-        if needsUsername {
+        if session.uid != nil && session.needsVerify && route != .splash {
+            VerifyEmailScreen()
+        } else if needsUsername {
             ChooseUsernameScreen()
         } else {
             switch route {
@@ -175,6 +178,53 @@ struct AuthScreen: View {
 }
 
 /// يظهر لأي حساب بلا اسم مستخدم (مثل أول دخول بحساب Google) قبل الوصول للقائمة
+/// خطوة التحقق من البريد: رابط يصل للإيميل، ثم نكمل تلقائياً أول ما يُضغط
+struct VerifyEmailScreen: View {
+    @State private var busy = false
+    @State private var error = ""
+    @State private var sentAt = Date()
+    private var email: String { Auth.auth().currentUser?.email ?? "" }
+    var body: some View {
+        Screen {
+            HStack { Spacer(); Logo(size: 100); Spacer() }
+            Title("تحقق من بريدك")
+            BodyText("أرسلنا رابط تحقق إلى \(email). افتح الإيميل واضغط الرابط، ثم ارجع للتطبيق. إذا ما لقيته شوف مجلد الرسائل غير المرغوب فيها.")
+            if !error.isEmpty { Text(error).foregroundColor(Palette.goldSoft) }
+            MButton("تحققت", .primary, enabled: !busy) {
+                busy = true; error = ""
+                Task { @MainActor in
+                    if await AuthService.checkVerified() { done() }
+                    else { error = "ما تم التحقق بعد. اضغط الرابط اللي في الإيميل ثم حاول مرة ثانية."; Announcer.announce(error) }
+                    busy = false
+                }
+            }
+            MButton("إعادة إرسال الرابط", enabled: !busy) {
+                if Date().timeIntervalSince(sentAt) < 60 { error = "انتظر دقيقة قبل إعادة الإرسال."; Announcer.announce(error); return }
+                busy = true; error = ""
+                Task { @MainActor in
+                    await AuthService.sendVerification()
+                    sentAt = Date()
+                    Announcer.announce("أرسلنا الرابط مرة ثانية إلى \(email)")
+                    busy = false
+                }
+            }
+            MButton("تسجيل الخروج", enabled: !busy) { Session.shared.signOut() }
+        }
+        // نفحص كل بضع ثوانٍ: أول ما يضغط الرابط ويرجع للتطبيق يكمل بدون ما يضغط شي
+        .task {
+            while !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 4_000_000_000)
+                if await AuthService.checkVerified() { done(); break }
+            }
+        }
+    }
+
+    private func done() {
+        Announcer.announce("تم التحقق من بريدك")
+        Session.shared.markVerified()
+    }
+}
+
 struct ChooseUsernameScreen: View {
     @State private var name = ""
     @State private var busy = false

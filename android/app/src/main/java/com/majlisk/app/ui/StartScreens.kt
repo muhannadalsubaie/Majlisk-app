@@ -188,6 +188,47 @@ fun AuthScreen(done: () -> Unit) {
 }
 
 /** يظهر لأي حساب بلا اسم مستخدم (مثل أول دخول بحساب Google) قبل الوصول للقائمة */
+/** خطوة التحقق من البريد: رابط يصل للإيميل، ثم نكمل تلقائياً أول ما يُضغط */
+@Composable
+fun VerifyEmailScreen(email: String, onVerified: () -> Unit) {
+    var busy by remember { mutableStateOf(false) }
+    var sentAt by remember { mutableStateOf(System.currentTimeMillis()) }
+    var error by remember { mutableStateOf("") }
+    val scope = rememberCoroutineScope()
+    // نفحص كل بضع ثوانٍ: أول ما يضغط الرابط ويرجع للتطبيق يكمل بدون ما يضغط شي
+    LaunchedEffect(Unit) {
+        while (true) {
+            kotlinx.coroutines.delay(4000)
+            if (AuthService.checkVerified()) { Announcer.announce("تم التحقق من بريدك"); onVerified(); break }
+        }
+    }
+    Screen {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Logo(100) }
+        Title("تحقق من بريدك")
+        Body("أرسلنا رابط تحقق إلى $email. افتح الإيميل واضغط الرابط، ثم ارجع للتطبيق. إذا ما لقيته شوف مجلد الرسائل غير المرغوب فيها.")
+        if (error.isNotEmpty()) Text(error, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive })
+        PrimaryButton("تحققت", {
+            busy = true; error = ""
+            scope.launch {
+                if (AuthService.checkVerified()) { Announcer.announce("تم التحقق من بريدك"); onVerified() }
+                else { error = "ما تم التحقق بعد. اضغط الرابط اللي في الإيميل ثم حاول مرة ثانية."; Announcer.announce(error) }
+                busy = false
+            }
+        }, enabled = !busy)
+        SecondaryButton("إعادة إرسال الرابط", {
+            if (System.currentTimeMillis() - sentAt < 60_000) { error = "انتظر دقيقة قبل إعادة الإرسال."; Announcer.announce(error); return@SecondaryButton }
+            busy = true; error = ""
+            scope.launch {
+                AuthService.sendVerification()
+                sentAt = System.currentTimeMillis()
+                Announcer.announce("أرسلنا الرابط مرة ثانية إلى $email")
+                busy = false
+            }
+        }, enabled = !busy, fill = true)
+        SecondaryButton("تسجيل الخروج", { Session.signOut() }, enabled = !busy, fill = true)
+    }
+}
+
 @Composable
 fun ChooseUsernameScreen() {
     var name by remember { mutableStateOf("") }

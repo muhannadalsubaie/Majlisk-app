@@ -22,6 +22,8 @@ final class Session: ObservableObject {
     static let shared = Session()
     @Published private(set) var uid: String? = Auth.auth().currentUser?.uid
     @Published private(set) var profile: Profile? = nil
+    /// حساب جديد بالبريد لم يضغط رابط التحقق بعد
+    @Published private(set) var needsVerify = false
     private var doc: ListenerRegistration?
     private var authHandle: AuthStateDidChangeListenerHandle?
 
@@ -36,7 +38,8 @@ final class Session: ObservableObject {
         uid = user?.uid
         doc?.remove()
         doc = nil
-        guard let user else { profile = nil; return }
+        guard let user else { profile = nil; needsVerify = false; return }
+        needsVerify = AuthService.needsVerification(user)
         profile = Profile()
         // الخادم ينشئ ملف اللاعب مع العملات الترحيبية عند أول دخول، ويمنح الهدايا لمرة واحدة
         Task {
@@ -55,6 +58,8 @@ final class Session: ObservableObject {
             )
         }
     }
+
+    func markVerified() { needsVerify = false }
 
     func signOut() {
         try? Auth.auth().signOut()
@@ -105,6 +110,7 @@ enum AuthService {
         let check = try await Api.postPublic("/username/available", ["username": username])
         if !check.bool("available") { throw ApiError(code: check.str("error", "taken")) }
         try await Auth.auth().createUser(withEmail: email, password: password)
+        await sendVerification()
         // إن فشل الحجز هنا (سباق نادر) تظهر شاشة اختيار الاسم تلقائياً
         _ = try? await Api.post("/profile/username", ["username": username])
     }
@@ -130,6 +136,28 @@ enum AuthService {
         guard let tokenData = auth.identityToken, let idToken = String(data: tokenData, encoding: .utf8) else { throw ApiError(code: "cancelled") }
         let cred = OAuthProvider.appleCredential(withIDToken: idToken, rawNonce: nonce, fullName: auth.fullName)
         try await Auth.auth().signIn(with: cred)
+    }
+
+    /// الحسابات الجديدة بالبريد (من بعد إضافة هذه الخطوة) تتحقق من بريدها برابط قبل الدخول
+    private static let verifySince = Date(timeIntervalSince1970: 1_793_318_400)
+
+    static func needsVerification(_ u: User) -> Bool {
+        !u.isEmailVerified && u.providerData.contains { $0.providerID == "password" } && (u.metadata.creationDate ?? .distantPast) >= verifySince
+    }
+
+    static func sendVerification() async {
+        Auth.auth().languageCode = "ar"
+        try? await Auth.auth().currentUser?.sendEmailVerification()
+    }
+
+    /// يحدّث حالة الحساب من Firebase: هل ضغط رابط التحقق؟
+    static func checkVerified() async -> Bool {
+        guard let u = Auth.auth().currentUser else { return false }
+        try? await u.reload()
+        let ok = Auth.auth().currentUser?.isEmailVerified == true
+        // توكن جديد حتى يعرف الخادم أن البريد موثّق
+        if ok { _ = try? await Auth.auth().currentUser?.getIDTokenResult(forcingRefresh: true) }
+        return ok
     }
 
     static func resetPassword(_ email: String) async throws {

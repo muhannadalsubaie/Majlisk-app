@@ -56,7 +56,10 @@ fun AppRoot() {
 
     // أي حساب مسجّل بلا اسم مستخدم يجب أن يختار اسماً قبل أي شاشة أخرى
     val needsUsername = user != null && profile?.loaded == true && profile?.username.isNullOrEmpty() && screen != Route.Splash
+    // حساب جديد بالبريد لم يضغط رابط التحقق بعد
+    var verified by remember(user?.uid) { mutableStateOf(!com.majlisk.app.data.AuthService.needsVerification(user)) }
     when {
+        user != null && !verified && screen != Route.Splash -> VerifyEmailScreen(user?.email.orEmpty()) { verified = true }
         needsUsername -> ChooseUsernameScreen()
         else -> when (screen) {
             Route.Splash -> SplashScreen {
@@ -83,7 +86,7 @@ fun AppRoot() {
 
     // دعوة واردة لطاولة: تظهر فوق أي شاشة (إلا إن كنت في نفس الطاولة)
     val invite = hub.invites.firstOrNull { !(screen == Route.Table && tableId == it.tableId) }
-    if (invite != null && !needsUsername && user != null) {
+    if (invite != null && !needsUsername && verified && user != null) {
         var busy by remember(invite.tableId) { mutableStateOf(false) }
         val answer: (Boolean) -> Unit = { accept ->
             busy = true
