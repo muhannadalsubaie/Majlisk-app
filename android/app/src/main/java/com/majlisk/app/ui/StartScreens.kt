@@ -176,7 +176,6 @@ fun AuthScreen(done: () -> Unit) {
             }
         }, enabled = !busy)
         SecondaryButton("الدخول بحساب Google", { run { AuthService.google(); Announcer.announce("تم تسجيل الدخول"); done() } }, enabled = !busy, fill = true)
-        SecondaryButton("الدخول بحساب Apple", { run { AuthService.apple(); Announcer.announce("تم تسجيل الدخول"); done() } }, enabled = !busy, fill = true)
         SecondaryButton(if (signup) "عندي حساب — تسجيل الدخول" else "ما عندي حساب — حساب جديد", { signup = !signup; error = "" }, enabled = !busy, fill = true)
         if (!signup) SecondaryButton("نسيت كلمة المرور", {
             run {
