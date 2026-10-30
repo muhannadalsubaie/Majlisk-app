@@ -496,7 +496,8 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, silent: Boolea
             .then(if (legal) Modifier.border(3.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
             .focusable()
             .then(
-                if (silent) Modifier.semantics(mergeDescendants = true) { contentDescription = "\u200B" }
+                // بلا أي نص (حرف خفي كان يُقرأ "مسافة")
+                if (silent) Modifier.semantics(mergeDescendants = true) { }
                 else Modifier.clickable { tap() }.semantics(mergeDescendants = true) {
                     contentDescription = card.label
                     role = Role.Button

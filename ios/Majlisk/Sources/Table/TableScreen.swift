@@ -461,7 +461,8 @@ private struct HandCard: View {
             .contentShape(Rectangle())
             .onTapGesture { tap() }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(silent ? "\u{200B}" : card.label)
+            // بلا أي نص (حرف خفي كان يُقرأ "مسافة")
+            .accessibilityLabel(silent ? "" : card.label)
             .accessibilityAddTraits(silent ? [] : .isButton)
             .accessibilityAction { tap() }
     }
