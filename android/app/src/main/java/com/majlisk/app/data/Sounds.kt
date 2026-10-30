@@ -22,7 +22,7 @@ object Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "proj-hundred", "proj-400",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "proj-hundred", "proj-400",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -118,7 +118,8 @@ object Sounds {
     fun baloot() { play("collide", gain = 0.7f); play("chips2", at = 0.15, gain = 0.7f) }
 
     fun hokm() { if (once("hokm")) play("bid", gain = 0.8f, vary = false) }
-    fun sun() { if (once("sun")) play("bid", gain = 0.8f, vary = false) }
+    /** الصن صوته غير الحكم: نقرة خفيفة */
+    fun sun() { if (once("sun")) play("bid-sun", gain = 0.8f, vary = false) }
     fun confirmHokm() { if (once("confirm")) play("bid", gain = 0.7f, vary = false) }
 
     /** دبل/ثري/فور: الصوت يتكرر بعدد مستواه */

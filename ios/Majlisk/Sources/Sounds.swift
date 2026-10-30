@@ -13,7 +13,7 @@ final class Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3", "collide4",
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "proj-hundred", "proj-400",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "proj-hundred", "proj-400",
     ]
 
     func preload() {
@@ -108,7 +108,8 @@ final class Sounds {
     }
     func baloot() { play("collide", gain: 0.7); play("chips2", at: 0.15, gain: 0.7) }
     func hokm() { if once("hokm") { play("bid", gain: 0.8, vary: false) } }
-    func sun() { if once("sun") { play("bid", gain: 0.8, vary: false) } }
+    /// الصن صوته غير الحكم: نقرة خفيفة
+    func sun() { if once("sun") { play("bid-sun", gain: 0.8, vary: false) } }
     func confirmHokm() { if once("confirm") { play("bid", gain: 0.7, vary: false) } }
     /// دبل/ثري/فور: الصوت يتكرر بعدد مستواه
     func double(_ level: Int) {
