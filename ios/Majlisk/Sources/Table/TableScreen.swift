@@ -59,7 +59,9 @@ struct TableScreen: View {
                 try? await Task.sleep(nanoseconds: 10_000_000_000)
             }
         }
-        .onDisappear { Prefs.lastTable = nil; UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
+        // لا نمسح آخر طاولة هنا: إغلاق التطبيق من مبدّل التطبيقات (والمحادثة الصوتية شغالة بالخلفية)
+        // يهدم الشاشات فيستدعي onDisappear. نمسحها فقط عند الخروج من الطاولة بنفسك
+        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
         .onReceive(NotificationCenter.default.publisher(for: .appForeground)) { _ in conn.reconnectNow(); Voice.shared.onForeground() }
         .onChange(of: conn.view?.voice ?? []) { list in Voice.shared.sync(list) }
     }

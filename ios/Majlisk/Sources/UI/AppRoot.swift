@@ -47,7 +47,7 @@ struct AppRoot: View {
             case .settings: SettingsScreen(embedded: false) { route = .menu }
             case .shop: ShopScreen(profile: session.profile) { route = $0 }
             case .table:
-                if let tableId { TableScreen(tableId: tableId, uid: session.uid ?? "") { route = .menu }.id(tableId) }
+                if let tableId { TableScreen(tableId: tableId, uid: session.uid ?? "") { Prefs.lastTable = nil; route = .menu }.id(tableId) }
                 else { Color.clear.onAppear { route = .menu } }
             }
         }
