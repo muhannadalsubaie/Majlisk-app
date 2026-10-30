@@ -22,7 +22,7 @@ object Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "net-drop", "net-back",
+        "app-open", "net-drop", "net-back", "table-join", "table-leave",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -74,6 +74,10 @@ object Sounds {
     /** لاعب انقطع اتصاله / رجع */
     fun netDrop() = play("net-drop", gain = 0.7f, vary = false)
     fun netBack() = play("net-back", gain = 0.7f, vary = false)
+
+    /** لاعب انضم للطاولة (هارب يطلع) / غادرها (فقاعتان تنزلان) */
+    fun tableJoin() = play("table-join", gain = 0.7f, vary = false)
+    fun tableLeave() = play("table-leave", gain = 0.7f, vary = false)
 
     fun collect() = play("slide7", gain = 0.8f, vary = false)
 

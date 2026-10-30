@@ -86,10 +86,14 @@ object Tables {
 }
 
 /** اتصال حي بالطاولة: يستقبل الحالة والإعلانات، ويعيد الاتصال تلقائياً عند الانقطاع */
-/** نغمة انقطاع اتصال لاعب أو رجوعه، من نص إعلان الخادم */
-private fun netSound(events: List<String>) {
-    if (events.any { it.startsWith("انقطع اتصال") }) Sounds.netDrop()
-    else if (events.any { it.startsWith("عاد ") && it.endsWith("إلى الطاولة") }) Sounds.netBack()
+/** نغمة انقطاع اتصال لاعب أو رجوعه، وانضمامه للطاولة أو مغادرته، من نص إعلان الخادم */
+private fun eventSound(events: List<String>) {
+    when {
+        events.any { it.startsWith("انقطع اتصال") } -> Sounds.netDrop()
+        events.any { it.startsWith("عاد ") && it.endsWith("إلى الطاولة") } -> Sounds.netBack()
+        events.any { it.startsWith("انضم ") } -> Sounds.tableJoin()
+        events.any { it.startsWith("غادر ") || (it.startsWith("خرج ") && it.contains("من الطاولة")) } -> Sounds.tableLeave()
+    }
 }
 
 class TableConnection(val tableId: String) {
@@ -149,7 +153,7 @@ class TableConnection(val tableId: String) {
             // أحداث الحركة الواحدة تُقرأ جملة واحدة (أسرع من عدة إعلانات متتالية)
             "events" -> msg.optJSONArray("events")?.let { a ->
                 val events = (0 until a.length()).map { a.optString(it) }
-                netSound(events)
+                eventSound(events)
                 Announcer.announceNow(events.joinToString("، "))
             }
             "error" -> Announcer.announce(msg.optString("message"))

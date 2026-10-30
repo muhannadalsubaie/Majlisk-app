@@ -224,6 +224,8 @@ final class TableConnection: ObservableObject {
             let events = msg.strs("events").filter { !$0.isEmpty }
             if events.contains(where: { $0.hasPrefix("انقطع اتصال") }) { Sounds.shared.netDrop() }
             else if events.contains(where: { $0.hasPrefix("عاد ") && $0.hasSuffix("إلى الطاولة") }) { Sounds.shared.netBack() }
+            else if events.contains(where: { $0.hasPrefix("انضم ") }) { Sounds.shared.tableJoin() }
+            else if events.contains(where: { $0.hasPrefix("غادر ") || ($0.hasPrefix("خرج ") && $0.contains("من الطاولة")) }) { Sounds.shared.tableLeave() }
             if !events.isEmpty { Announcer.announceNow(events.joined(separator: "، ")) }
         case "error": Announcer.announce(msg.str("message"))
         case "kicked":
