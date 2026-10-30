@@ -154,7 +154,7 @@ class TableConnection(val tableId: String) {
             "events" -> msg.optJSONArray("events")?.let { a ->
                 val events = (0 until a.length()).map { a.optString(it) }
                 eventSound(events)
-                Announcer.announce(events.joinToString("، "))
+                Announcer.announceEvent(events.joinToString("، "))
             }
             "error" -> Announcer.announce(msg.optString("message"))
             "kicked" -> {

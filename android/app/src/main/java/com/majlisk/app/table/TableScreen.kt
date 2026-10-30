@@ -33,6 +33,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
@@ -288,6 +290,15 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
 
         if (g.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
+        // مؤشر قارئ الشاشة: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
+        // بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
+        val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
+        val cardFocus = remember { mutableMapOf<String, FocusRequester>() }
+        val focusCard: (Card?) -> Unit = { c ->
+            val fr = c?.let { cardFocus[cardKey(it)] }
+            if (fr != null && Announcer.readerOn) { Announcer.interruptNextEvents(); runCatching { fr.requestFocus() } }
+        }
+        val toHand = { focusCard(hand.firstOrNull()) }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // أزرار المزايدة
@@ -297,7 +308,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     g.actions.bids.forEach { b ->
-                        com.majlisk.app.ui.SmallButton(b.label, { bidSound(b); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
+                        com.majlisk.app.ui.SmallButton(b.label, { bidSound(b); toHand(); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
                     }
                 }
             }
@@ -307,30 +318,41 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                     g.actions.doubleLabel?.let { label ->
                         PrimaryButton(label, {
                             if (label == "قهوة") Sounds.gahwa() else Sounds.double(g.doubling.level + 1)
+                            toHand()
                             act(jsonOf("type" to "double"))
                         }, modifier = Modifier.weight(1f))
                     }
-                    if (g.actions.canPassDouble) SecondaryButton("بس", { act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
+                    if (g.actions.canPassDouble) SecondaryButton("بس", { toHand(); act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
                 }
             }
             if (g.actions.chooseLock) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    PrimaryButton("مقفل", { act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))
-                    PrimaryButton("مفتوح", { act(jsonOf("type" to "doubleLock", "locked" to false)) }, modifier = Modifier.weight(1f))
+                    PrimaryButton("مقفل", { toHand(); act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))
+                    PrimaryButton("مفتوح", { toHand(); act(jsonOf("type" to "doubleLock", "locked" to false)) }, modifier = Modifier.weight(1f))
                 }
             }
         // يد اللاعب
         if (mySeat != null) {
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
-            val hand = sortHand(g.myHand)
             Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp)) {
                 hand.forEachIndexed { i, c ->
-                    val k = i - (hand.size - 1) / 2f
-                    HandCard(
-                        c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f,
-                        modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp),
-                    ) { act(jsonOf("type" to "play", "card" to c.toJson())) }
+                    androidx.compose.runtime.key(cardKey(c)) {
+                        val k = i - (hand.size - 1) / 2f
+                        val fr = remember { FocusRequester() }
+                        androidx.compose.runtime.DisposableEffect(Unit) {
+                            cardFocus[cardKey(c)] = fr
+                            onDispose { cardFocus.remove(cardKey(c)) }
+                        }
+                        HandCard(
+                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f,
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr),
+                        ) {
+                            // الورقة اللي جنبها تأخذ المؤشر (اللي بعدها، أو اللي قبلها إن كانت الأخيرة)
+                            focusCard(hand.getOrNull(i + 1) ?: hand.getOrNull(i - 1))
+                            act(jsonOf("type" to "play", "card" to c.toJson()))
+                        }
+                    }
                 }
             }
         }
@@ -466,6 +488,8 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modi
             },
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }
+
+private fun cardKey(c: Card) = "${c.suit}${c.rank}"
 
 /** صاحب المزايدة يسمع صوتها فوراً عند الضغط (ولا يتكرر حين يصل التحديث من الخادم) */
 private fun bidSound(b: Bid) = when (b.type) {

@@ -34,6 +34,16 @@ object Announcer {
         }
     }
 
+    /** ننقل مؤشر قارئ الشاشة بعد حركتك: إعلان حركتك القادم يقطع قراءة العنصر المنقول إليه */
+    @Volatile private var interruptUntil = 0L
+
+    fun interruptNextEvents() { interruptUntil = System.currentTimeMillis() + 3000 }
+
+    /** إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد */
+    fun announceEvent(text: String) {
+        if (System.currentTimeMillis() < interruptUntil) { interruptUntil = 0; announceNow(text) } else announce(text)
+    }
+
     /**
      * يُقرأ الآن: يقطع ما يقرؤه TalkBack (إعلان قديم تأخر) ويقرأ الجديد مباشرة.
      * لأحداث اللعب وردود الإيماءات، فلا تتراكم القراءة خلف اللعب.

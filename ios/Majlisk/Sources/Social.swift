@@ -230,7 +230,7 @@ final class TableConnection: ObservableObject {
             // الانضمام ورجوع الاتصال بنغمة الانضمام، والمغادرة وانقطاع الاتصال بنغمة المغادرة
             if events.contains(where: { $0.hasPrefix("انضم ") || $0.hasPrefix("عاد اتصال") }) { Sounds.shared.tableJoin() }
             else if events.contains(where: { $0.hasPrefix("غادر ") || $0.hasPrefix("انقطع اتصال") || ($0.hasPrefix("خرج ") && $0.contains("من الطاولة")) }) { Sounds.shared.tableLeave() }
-            if !events.isEmpty { Announcer.announce(events.joined(separator: "، ")) }
+            if !events.isEmpty { Announcer.announceEvent(events.joined(separator: "، ")) }
         case "error": Announcer.announce(msg.str("message"))
         case "kicked":
             stopped = true

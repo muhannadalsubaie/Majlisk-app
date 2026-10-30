@@ -113,6 +113,9 @@ struct BalootBoard: View {
     let uid: String
     @ObservedObject var conn: TableConnection
     @State private var heldTrick: Int?
+    /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
+    /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
+    @AccessibilityFocusState private var focusedCard: Card?
     @State private var prevGame: GameView?
     @State private var wasMyTurn = false
 
@@ -187,7 +190,7 @@ struct BalootBoard: View {
                 if !g.actions.bids.isEmpty {
                     FlowLayout(spacing: 8) {
                         ForEach(g.actions.bids) { b in
-                            SmallButton(b.label, primary: b.type != "pass") { bidSound(b); act(["type": "bid", "bid": b.raw]) }
+                            SmallButton(b.label, primary: b.type != "pass") { bidSound(b); toHand(); act(["type": "bid", "bid": b.raw]) }
                         }
                     }
                     .accessibilityElement(children: .contain).accessibilityLabel("المزايدة")
@@ -198,16 +201,17 @@ struct BalootBoard: View {
                         if let label = g.actions.doubleLabel {
                             MButton(label, .primary) {
                                 if label == "قهوة" { Sounds.shared.gahwa() } else { Sounds.shared.double(g.doubling.level + 1) }
+                                toHand()
                                 act(["type": "double"])
                             }
                         }
-                        if g.actions.canPassDouble { MButton("بس") { act(["type": "doublePass"]) } }
+                        if g.actions.canPassDouble { MButton("بس") { toHand(); act(["type": "doublePass"]) } }
                     }
                 }
                 if g.actions.chooseLock {
                     HStack(spacing: 8) {
-                        MButton("مقفل", .primary) { act(["type": "doubleLock", "locked": true]) }
-                        MButton("مفتوح", .primary) { act(["type": "doubleLock", "locked": false]) }
+                        MButton("مقفل", .primary) { toHand(); act(["type": "doubleLock", "locked": true]) }
+                        MButton("مفتوح", .primary) { toHand(); act(["type": "doubleLock", "locked": false]) }
                     }
                 }
                 // يد اللاعب
@@ -219,7 +223,13 @@ struct BalootBoard: View {
                     ZStack(alignment: .bottom) {
                         ForEach(hand, id: \.self) { c in
                             let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
-                            HandCard(card: c, legal: g.actions.legal.contains(c)) { act(["type": "play", "card": c.json]) }
+                            HandCard(card: c, legal: g.actions.legal.contains(c)) {
+                                // الورقة اللي جنبها تأخذ المؤشر (اللي بعدها، أو اللي قبلها إن كانت الأخيرة)
+                                let i = hand.firstIndex(of: c) ?? 0
+                                focus(i + 1 < hand.count ? hand[i + 1] : i > 0 ? hand[i - 1] : nil)
+                                act(["type": "play", "card": c.json])
+                            }
+                                .accessibilityFocused($focusedCard, equals: c)
                                 .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
                         }
                     }
@@ -240,6 +250,15 @@ struct BalootBoard: View {
             prevGame = g
         }
     }
+
+    private func focus(_ c: Card?) {
+        guard let c, UIAccessibility.isVoiceOverRunning else { return }
+        Announcer.interruptNextEvents()
+        focusedCard = c
+    }
+
+    /// أزرار المزايدة تختفي بعد الضغط: المؤشر ينتقل لأول ورقة في يدك
+    private func toHand() { focus(sortHand(g.myHand).first) }
 
     /// بعد آخر ورقة في الأكلة: نبقي الأوراق الأربع ظاهرة لحظة قبل أن تذهب لصاحبها
     private func holdTrick() {

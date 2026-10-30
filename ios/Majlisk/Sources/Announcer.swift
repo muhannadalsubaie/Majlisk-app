@@ -13,6 +13,18 @@ enum Announcer {
         }
     }
 
+    /// ننقل مؤشر VoiceOver بعد حركتك: إعلان حركتك القادم يقطع قراءة العنصر المنقول إليه
+    private static var interruptUntil = Date.distantPast
+
+    static func interruptNextEvents() { interruptUntil = Date().addingTimeInterval(3) }
+
+    /// إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد
+    static func announceEvent(_ text: String) {
+        DispatchQueue.main.async {
+            if Date() < interruptUntil { interruptUntil = .distantPast; announceNow(text) } else { announce(text) }
+        }
+    }
+
     /// يُقرأ الآن (ردّ إيماءة أو زر قراءة سريعة)
     static func announceNow(_ text: String) {
         DispatchQueue.main.async {
