@@ -13,6 +13,7 @@ final class Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3",
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
+        "app-open", "net-drop", "net-back",
     ]
 
     func preload() {
@@ -54,6 +55,13 @@ final class Sounds {
         if newHand { play("shuffle", gain: 0.7); start = 1.1 }
         for i in 0..<4 { play(pick("slide1", "slide2", "slide3", "slide4"), at: start + Double(i) * 0.12, gain: 0.6) }
     }
+
+    /// نغمة فتح التطبيق (قانون بمقام الراست)
+    func appOpen() { play("app-open", vary: false) }
+
+    /// لاعب انقطع اتصاله / رجع
+    func netDrop() { play("net-drop", gain: 0.7, vary: false) }
+    func netBack() { play("net-back", gain: 0.7, vary: false) }
 
     func collect() { play("slide7", gain: 0.8, vary: false) }
 

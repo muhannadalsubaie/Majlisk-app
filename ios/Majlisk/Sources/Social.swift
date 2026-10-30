@@ -222,6 +222,8 @@ final class TableConnection: ObservableObject {
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتسبق ما تأخر من قبلها فلا تتراكم القراءة
             let events = msg.strs("events").filter { !$0.isEmpty }
+            if events.contains(where: { $0.hasPrefix("انقطع اتصال") }) { Sounds.shared.netDrop() }
+            else if events.contains(where: { $0.hasPrefix("عاد ") && $0.hasSuffix("إلى الطاولة") }) { Sounds.shared.netBack() }
             if !events.isEmpty { Announcer.announceNow(events.joined(separator: "، ")) }
         case "error": Announcer.announce(msg.str("message"))
         case "kicked":

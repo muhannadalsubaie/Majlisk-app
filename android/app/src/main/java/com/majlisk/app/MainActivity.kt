@@ -12,6 +12,7 @@ import kotlinx.coroutines.CompletableDeferred
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.unit.LayoutDirection
+import com.majlisk.app.data.Sounds
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.ui.AppRoot
 import com.majlisk.app.ui.MajliskTheme
@@ -46,6 +47,7 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         Announcer.attach(this)
         current = this
+        if (savedInstanceState == null) Sounds.appOpen()
         setContent {
             // التطبيق عربي بالكامل: من اليمين لليسار دائماً، مهما كانت لغة الجهاز
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {

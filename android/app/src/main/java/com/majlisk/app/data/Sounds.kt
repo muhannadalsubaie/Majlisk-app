@@ -22,12 +22,21 @@ object Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
+        "app-open", "net-drop", "net-back",
     )
+    private val loaded = HashSet<Int>()
+    private var openPending = false
 
     fun init(c: Context) {
         pool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(
             AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(),
         ).build()
+        // نغمة الفتح قد تُطلب قبل اكتمال تحميلها: تُشغَّل لحظة جاهزيتها
+        pool.setOnLoadCompleteListener { p, id, status ->
+            if (status != 0) return@setOnLoadCompleteListener
+            loaded += id
+            if (openPending && id == ids["app-open"]) { openPending = false; if (!Prefs.muted) p.play(id, 0.8f, 0.8f, 1, 0, 1f) }
+        }
         for (name in FILES) {
             runCatching { c.assets.openFd("sounds/$name.mp3").use { ids[name] = pool.load(it, 1) } }
         }
@@ -55,6 +64,16 @@ object Sounds {
         val start = if (newHand) { play("shuffle", gain = 0.7f); 1.1 } else 0.0
         repeat(4) { play(pick("slide1", "slide2", "slide3", "slide4"), at = start + it * 0.12, gain = 0.6f) }
     }
+
+    /** نغمة فتح التطبيق (قانون بمقام الراست) */
+    fun appOpen() {
+        val id = ids["app-open"] ?: return
+        if (id in loaded) play("app-open", vary = false) else openPending = true
+    }
+
+    /** لاعب انقطع اتصاله / رجع */
+    fun netDrop() = play("net-drop", gain = 0.7f, vary = false)
+    fun netBack() = play("net-back", gain = 0.7f, vary = false)
 
     fun collect() = play("slide7", gain = 0.8f, vary = false)
 

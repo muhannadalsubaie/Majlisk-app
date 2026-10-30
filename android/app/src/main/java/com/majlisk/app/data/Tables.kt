@@ -86,6 +86,12 @@ object Tables {
 }
 
 /** اتصال حي بالطاولة: يستقبل الحالة والإعلانات، ويعيد الاتصال تلقائياً عند الانقطاع */
+/** نغمة انقطاع اتصال لاعب أو رجوعه، من نص إعلان الخادم */
+private fun netSound(events: List<String>) {
+    if (events.any { it.startsWith("انقطع اتصال") }) Sounds.netDrop()
+    else if (events.any { it.startsWith("عاد ") && it.endsWith("إلى الطاولة") }) Sounds.netBack()
+}
+
 class TableConnection(val tableId: String) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val _view = MutableStateFlow<TableView?>(null)
@@ -141,7 +147,11 @@ class TableConnection(val tableId: String) {
             "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة (أسرع من عدة إعلانات متتالية)
-            "events" -> msg.optJSONArray("events")?.let { a -> Announcer.announceNow((0 until a.length()).joinToString("، ") { a.optString(it) }) }
+            "events" -> msg.optJSONArray("events")?.let { a ->
+                val events = (0 until a.length()).map { a.optString(it) }
+                netSound(events)
+                Announcer.announceNow(events.joinToString("، "))
+            }
             "error" -> Announcer.announce(msg.optString("message"))
             "kicked" -> {
                 stopped = true
