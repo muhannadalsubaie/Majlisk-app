@@ -2,6 +2,8 @@ import SwiftUI
 
 /// كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها
 private let TRICK_HOLD: Double = 1.2
+/// كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب)
+private let SILENT_FOCUS: Double = 4
 
 struct TableScreen: View {
     let tableId: String
@@ -116,6 +118,8 @@ struct BalootBoard: View {
     /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
     /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
     @AccessibilityFocusState private var focusedCard: Card?
+    /// الورقة اللي انتقل لها المؤشر بعد حركتك: اسمها مخفي لحظات فتسمع إعلانات اللعب فقط
+    @State private var silentCard: Card?
     @State private var prevGame: GameView?
     @State private var wasMyTurn = false
 
@@ -223,7 +227,7 @@ struct BalootBoard: View {
                     ZStack(alignment: .bottom) {
                         ForEach(hand, id: \.self) { c in
                             let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
-                            HandCard(card: c, legal: g.actions.legal.contains(c)) {
+                            HandCard(card: c, legal: g.actions.legal.contains(c), silent: silentCard == c) {
                                 // الورقة اللي جنبها تأخذ المؤشر (اللي بعدها، أو اللي قبلها إن كانت الأخيرة)
                                 let i = hand.firstIndex(of: c) ?? 0
                                 focus(i + 1 < hand.count ? hand[i + 1] : i > 0 ? hand[i - 1] : nil)
@@ -254,8 +258,10 @@ struct BalootBoard: View {
 
     private func focus(_ c: Card?) {
         guard let c, UIAccessibility.isVoiceOverRunning else { return }
+        silentCard = c
         Announcer.interruptNextEvents()
         focusedCard = c
+        DispatchQueue.main.asyncAfter(deadline: .now() + SILENT_FOCUS) { if silentCard == c { silentCard = nil } }
     }
 
     /// أزرار المزايدة تختفي بعد الضغط: المؤشر ينتقل لأول ورقة في يدك
@@ -440,21 +446,27 @@ private struct TableCard: View {
 }
 
 /// ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر VoiceOver حين ينتهي دورك
+/// ورقة في اليد. لا نعلن "غير متاحة" كحالة (تغيّرها لحظة انتهاء دورك قد يعيد قراءة الورقة المحددة).
+/// silent: انتقل لها المؤشر بعد حركتك، فلا يُقرأ اسمها حتى تنتهي إعلانات اللعب.
 private struct HandCard: View {
     let card: Card
     let legal: Bool
+    let silent: Bool
     let play: () -> Void
     var body: some View {
         TableCard(card: card, width: 66, height: 96)
             // المسموح لعبها بإطار ذهبي فقط، فيبقى شكل المروحة واحداً
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 3))
             .contentShape(Rectangle())
-            .onTapGesture { if legal { play() } }
+            .onTapGesture { tap() }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(card.label)
-            .accessibilityValue(legal ? "" : "غير متاحة")
-            .accessibilityAddTraits(.isButton)
-            .accessibilityAction { if legal { play() } }
+            .accessibilityLabel(silent ? "\u{200B}" : card.label)
+            .accessibilityAddTraits(silent ? [] : .isButton)
+            .accessibilityAction { tap() }
+    }
+
+    private func tap() {
+        if legal { play() } else { Announcer.announceNow("غير متاحة") }
     }
 }
 

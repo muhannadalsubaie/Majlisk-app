@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -88,6 +89,8 @@ import kotlinx.coroutines.delay
 
 /** كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها */
 private const val TRICK_HOLD_MS = 1200L
+/** كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب) */
+private const val SILENT_FOCUS_MS = 4000L
 
 @Composable
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
@@ -291,13 +294,19 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
 
         if (g.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
-        // مؤشر قارئ الشاشة: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
-        // بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
+        // مؤشر قارئ الشاشة: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب ورقة
+        // بدل ما يقفز لأعلى الشاشة، وبصمت: اسمها مخفي لحظات فتسمع إعلانات اللعب فقط، وتُقرأ عادي لما تحرك المؤشر
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
         val cardFocus = remember { mutableMapOf<String, FocusRequester>() }
+        var silentKey by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(silentKey) { if (silentKey != null) { delay(SILENT_FOCUS_MS); silentKey = null } }
         val focusCard: (Card?) -> Unit = { c ->
             val fr = c?.let { cardFocus[cardKey(it)] }
-            if (fr != null && Announcer.readerOn) { Announcer.interruptNextEvents(); runCatching { fr.requestFocus() } }
+            if (fr != null && Announcer.readerOn) {
+                silentKey = cardKey(c)
+                Announcer.interruptNextEvents()
+                runCatching { fr.requestFocus() }
+            }
         }
         val toHand = { focusCard(hand.firstOrNull()) }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
@@ -346,7 +355,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                             onDispose { cardFocus.remove(cardKey(c)) }
                         }
                         HandCard(
-                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f,
+                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, silent = silentKey == cardKey(c),
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr),
                         ) {
                             // الورقة اللي جنبها تأخذ المؤشر (اللي بعدها، أو اللي قبلها إن كانت الأخيرة)
@@ -469,9 +478,14 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
     }
 }
 
-/** ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك */
+/**
+ * ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك.
+ * لا نعلن "غير متاحة" كحالة: تغيّرها لحظة انتهاء دورك كان يجعل قارئ الشاشة يعيد قراءة الورقة المحددة.
+ * silent: انتقل لها المؤشر بعد حركتك، فلا يُقرأ اسمها حتى تنتهي إعلانات اللعب.
+ */
 @Composable
-private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modifier, onPlay: () -> Unit) {
+private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, silent: Boolean, modifier: Modifier, onPlay: () -> Unit) {
+    val tap = { if (legal) onPlay() else Announcer.announceNow("غير متاحة") }
     Box(
         modifier
             // مكانها في المروحة (تدور حول نقطة تحت اليد)، والمسموح لعبها بإطار ذهبي فقط فيبقى شكل المروحة واحداً
@@ -480,13 +494,15 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modi
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2.6f)
             }
             .then(if (legal) Modifier.border(3.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
-            .clickable { if (legal) onPlay() }
-            .semantics(mergeDescendants = true) {
-                contentDescription = card.label
-                role = Role.Button
-                if (!legal) disabled()
-                onClick { if (legal) onPlay(); true }
-            },
+            .focusable()
+            .then(
+                if (silent) Modifier.semantics(mergeDescendants = true) { contentDescription = "\u200B" }
+                else Modifier.clickable { tap() }.semantics(mergeDescendants = true) {
+                    contentDescription = card.label
+                    role = Role.Button
+                    onClick { tap(); true }
+                },
+            ),
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }
 
