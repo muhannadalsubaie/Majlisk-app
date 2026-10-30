@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.KeyboardOptions
@@ -32,6 +33,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalLayoutDirection
@@ -173,7 +175,6 @@ fun AuthScreen(done: () -> Unit) {
                 done()
             }
         }, enabled = !busy)
-        SecondaryButton("سياسة الخصوصية", { AuthService.openUrl(context, "${Api.BASE.removeSuffix("/api")}/privacy.html") }, fill = true)
         SecondaryButton("الدخول بحساب Google", { run { AuthService.google(); Announcer.announce("تم تسجيل الدخول"); done() } }, enabled = !busy, fill = true)
         SecondaryButton("الدخول بحساب Apple", { run { AuthService.apple(); Announcer.announce("تم تسجيل الدخول"); done() } }, enabled = !busy, fill = true)
         SecondaryButton(if (signup) "عندي حساب — تسجيل الدخول" else "ما عندي حساب — حساب جديد", { signup = !signup; error = "" }, enabled = !busy, fill = true)
@@ -184,6 +185,14 @@ fun AuthScreen(done: () -> Unit) {
                 Announcer.announce(error)
             }
         }, enabled = !busy, fill = true)
+        // آخر شي، نص صغير بلا مربع
+        Text(
+            "سياسة الخصوصية", color = Palette.textDim, fontSize = 12.sp, textAlign = TextAlign.Center,
+            textDecoration = androidx.compose.ui.text.style.TextDecoration.Underline,
+            modifier = Modifier.fillMaxWidth().clickable(role = androidx.compose.ui.semantics.Role.Button) {
+                AuthService.openUrl(context, "${Api.BASE.removeSuffix("/api")}/privacy.html")
+            },
+        )
     }
 }
 

@@ -160,7 +160,6 @@ struct AuthScreen: View {
                     done()
                 }
             }
-            MButton("سياسة الخصوصية") { UIApplication.shared.open(URL(string: Api.site + "/privacy.html")!) }
             MButton("الدخول بحساب Apple", enabled: !busy) { run { try await AuthService.apple(); Announcer.announce("تم تسجيل الدخول"); done() } }
             MButton("الدخول بحساب Google", enabled: !busy) { run { try await AuthService.google(); Announcer.announce("تم تسجيل الدخول"); done() } }
             MButton(signup ? "عندي حساب — تسجيل الدخول" : "ما عندي حساب — حساب جديد", enabled: !busy) { signup.toggle(); error = "" }
@@ -173,6 +172,10 @@ struct AuthScreen: View {
                     }
                 }
             }
+            // آخر شي، نص صغير بلا مربع
+            Link("سياسة الخصوصية", destination: URL(string: Api.site + "/privacy.html")!)
+                .font(.system(size: 12)).foregroundColor(Palette.textDim)
+                .frame(maxWidth: .infinity)
         }
     }
 }
