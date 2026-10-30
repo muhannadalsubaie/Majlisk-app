@@ -65,20 +65,16 @@ final class Sounds {
 
     func collect() { play("slide7", gain: 0.8, vary: false) }
 
-    /// نغمة الدور جاهزة مسبقاً (بلا تأخير تحضير عند أول تشغيل)
-    private lazy var turnPlayer: AVAudioPlayer? = {
-        guard let d = data["turn"], let p = try? AVAudioPlayer(data: d) else { return nil }
-        p.prepareToPlay()
-        return p
-    }()
-
     func turn(soft: Bool) {
         guard Prefs.turnChime, !Prefs.muted else { return }
+        // مشغّل جديد كل مرة (المحادثة الصوتية تغيّر إعدادات الصوت فيتعطل المشغّل القديم)،
+        // وبصوت واضح حتى مع VoiceOver (كان خافتاً معه فما ينسمع)
         DispatchQueue.main.async { [weak self] in
-            guard let p = self?.turnPlayer else { return }
-            p.volume = soft ? 0.35 : 0.7
-            p.currentTime = 0
+            guard let self, let d = self.data["turn"], let p = try? AVAudioPlayer(data: d) else { return }
+            p.volume = 0.9
             p.play()
+            self.playing.removeAll { !$0.isPlaying }
+            self.playing.append(p)
         }
     }
 

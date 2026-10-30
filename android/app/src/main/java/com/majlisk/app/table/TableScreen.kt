@@ -230,9 +230,10 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
     // إعلان "دورك" مرة واحدة عند بداية الدور
     var wasMyTurn by remember { mutableStateOf(false) }
     LaunchedEffect(g.myTurn) {
-        // النغمة أولاً (فورية)، ثم الإعلان
-        if (g.myTurn && !wasMyTurn) Announcer.announce("دورك")
+        val starts = g.myTurn && !wasMyTurn
         wasMyTurn = g.myTurn
+        // الجرس أولاً، ثم "دورك" بعد لحظة: قارئ الشاشة يخفض الأصوات وهو يتكلم فكان يغطي الجرس
+        if (starts) { delay(700); Announcer.announce("دورك") }
     }
 
     val reads = mapOf(

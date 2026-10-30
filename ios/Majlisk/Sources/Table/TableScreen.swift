@@ -245,7 +245,8 @@ struct BalootBoard: View {
             if let p = prevGame, g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty { holdTrick() }
             // إعلان "دورك" مرة واحدة عند بداية الدور
             // النغمة أولاً (فورية)، ثم الإعلان
-            if g.myTurn && !wasMyTurn { Announcer.announce("دورك") }
+            // الجرس أولاً، ثم "دورك" بعد لحظة: VoiceOver يخفض الأصوات وهو يتكلم فكان يغطي الجرس
+            if g.myTurn && !wasMyTurn { DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Announcer.announce("دورك") } }
             wasMyTurn = g.myTurn
             prevGame = g
         }

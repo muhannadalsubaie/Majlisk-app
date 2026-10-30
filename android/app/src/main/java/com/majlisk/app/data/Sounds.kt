@@ -79,7 +79,8 @@ object Sounds {
 
     fun turn(soft: Boolean) {
         if (!Prefs.turnChime) return
-        play("turn", gain = if (soft) 0.35f else 0.7f, vary = false)
+        // بصوت واضح حتى مع قارئ الشاشة (كان خافتاً معه فما ينسمع)
+        play("turn", gain = 0.9f, vary = false)
     }
 
     fun handEnd(result: String, kaboot: Boolean) {
