@@ -86,13 +86,11 @@ object Tables {
 }
 
 /** اتصال حي بالطاولة: يستقبل الحالة والإعلانات، ويعيد الاتصال تلقائياً عند الانقطاع */
-/** نغمة انقطاع اتصال لاعب أو رجوعه، وانضمامه للطاولة أو مغادرته، من نص إعلان الخادم */
+/** من نص إعلان الخادم: الانضمام ورجوع الاتصال بنغمة الانضمام، والمغادرة وانقطاع الاتصال بنغمة المغادرة */
 private fun eventSound(events: List<String>) {
     when {
-        events.any { it.startsWith("انقطع اتصال") } -> Sounds.netDrop()
-        events.any { it.startsWith("عاد ") && it.endsWith("إلى الطاولة") } -> Sounds.netBack()
-        events.any { it.startsWith("انضم ") } -> Sounds.tableJoin()
-        events.any { it.startsWith("غادر ") || (it.startsWith("خرج ") && it.contains("من الطاولة")) } -> Sounds.tableLeave()
+        events.any { it.startsWith("انضم ") || it.startsWith("عاد اتصال") } -> Sounds.tableJoin()
+        events.any { it.startsWith("غادر ") || it.startsWith("انقطع اتصال") || (it.startsWith("خرج ") && it.contains("من الطاولة")) } -> Sounds.tableLeave()
     }
 }
 

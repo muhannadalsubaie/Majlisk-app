@@ -13,7 +13,7 @@ final class Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3",
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "net-drop", "net-back", "table-join", "table-leave",
+        "app-open", "table-join", "table-leave",
     ]
 
     func preload() {
@@ -59,11 +59,7 @@ final class Sounds {
     /// نغمة فتح التطبيق (قانون بمقام الراست)
     func appOpen() { play("app-open", vary: false) }
 
-    /// لاعب انقطع اتصاله / رجع
-    func netDrop() { play("net-drop", gain: 0.7, vary: false) }
-    func netBack() { play("net-back", gain: 0.7, vary: false) }
-
-    /// لاعب انضم للطاولة (هارب يطلع) / غادرها (فقاعتان تنزلان)
+    /// لاعب انضم للطاولة أو رجع اتصاله (هارب يطلع) / غادرها أو انقطع اتصاله (فقاعتان تنزلان)
     func tableJoin() { play("table-join", gain: 0.7, vary: false) }
     func tableLeave() { play("table-leave", gain: 0.7, vary: false) }
 
