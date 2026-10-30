@@ -11,7 +11,7 @@ final class Sounds {
     private let files = [
         "card1", "card2", "card3", "card4", "slide1", "slide2", "slide3", "slide4",
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
-        "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3",
+        "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3", "collide4",
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave",
     ]
@@ -50,10 +50,11 @@ final class Sounds {
         return true
     }
 
+    /// التوزيع: ثماني أوراق متتالية بدون خلط (أول التوزيع وباقي الورق)
     func deal(newHand: Bool) {
-        var start = 0.0
-        if newHand { play("shuffle", gain: 0.7); start = 1.1 }
-        for i in 0..<4 { play(pick("slide1", "slide2", "slide3", "slide4"), at: start + Double(i) * 0.12, gain: 0.6) }
+        for (i, n) in ["slide1", "slide2", "slide3", "slide4", "slide1", "slide2", "slide3", "slide4"].enumerated() {
+            play(n, at: Double(i) * 0.1, gain: 0.6)
+        }
     }
 
     /// نغمة فتح التطبيق (قانون بمقام الراست)
@@ -93,9 +94,10 @@ final class Sounds {
 
     func matchEnd(won: Bool) { play(won ? "match-win" : "match-lose", gain: 0.8, vary: false) }
     func card() { play(pick("card1", "card2", "card3", "card4")) }
+    /// القطع بالحكم: ضربة ورقة
     func cut() {
-        play(pick("shove1", "shove2", "shove3", "shove4"), gain: 1)
-        play(pick("card1", "card3"), at: 0.02, gain: 1, rate: 0.85)
+        play("collide4", gain: 1)
+        play("slide7", at: 0.02, gain: 0.8)
     }
     func project() { play("fan", gain: 0.6); play("chips1", at: 0.25, gain: 0.7) }
     func baloot() { play("collide", gain: 0.7); play("chips2", at: 0.15, gain: 0.7) }

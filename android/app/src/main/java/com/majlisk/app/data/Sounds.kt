@@ -21,7 +21,7 @@ object Sounds {
         "card1", "card2", "card3", "card4", "slide1", "slide2", "slide3", "slide4",
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
-        "collide2", "collide3", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
+        "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave",
     )
     private val loaded = HashSet<Int>()
@@ -60,9 +60,11 @@ object Sounds {
         return true
     }
 
+    /** التوزيع: ثماني أوراق متتالية بدون خلط (أول التوزيع وباقي الورق) */
+    @Suppress("UNUSED_PARAMETER")
     fun deal(newHand: Boolean) {
-        val start = if (newHand) { play("shuffle", gain = 0.7f); 1.1 } else 0.0
-        repeat(4) { play(pick("slide1", "slide2", "slide3", "slide4"), at = start + it * 0.12, gain = 0.6f) }
+        listOf("slide1", "slide2", "slide3", "slide4", "slide1", "slide2", "slide3", "slide4")
+            .forEachIndexed { i, n -> play(n, at = i * 0.1, gain = 0.6f) }
     }
 
     /** نغمة فتح التطبيق (قانون بمقام الراست) */
@@ -100,9 +102,10 @@ object Sounds {
 
     fun card() = play(pick("card1", "card2", "card3", "card4"))
 
+    /** القطع بالحكم: ضربة ورقة */
     fun cut() {
-        play(pick("shove1", "shove2", "shove3", "shove4"), gain = 1f)
-        play(pick("card1", "card3"), at = 0.02, gain = 1f, rate = 0.85f)
+        play("collide4", gain = 1f)
+        play("slide7", at = 0.02, gain = 0.8f)
     }
 
     fun project() { play("fan", gain = 0.6f); play("chips1", at = 0.25, gain = 0.7f) }
