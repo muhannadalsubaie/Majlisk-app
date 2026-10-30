@@ -95,12 +95,21 @@ struct SmallButton: View {
 /// شاشة كاملة قابلة للتمرير بخلفية التطبيق
 struct Screen<Content: View>: View {
     var scroll = true
+    /// المحتوى يملأ طول الشاشة على الأقل، فيقدر Spacer يدفع ما بعده لأسفلها
+    var fill = false
     @ViewBuilder let content: () -> Content
     var body: some View {
         ZStack {
             // خلفية بعمق: أفتح قليلاً في الوسط وأغمق عند الأطراف
             RadialGradient(colors: [Palette.green800, Palette.green900], center: .center, startRadius: 0, endRadius: 600).ignoresSafeArea()
-            if scroll {
+            if fill {
+                GeometryReader { geo in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 14) { content() }.padding(16)
+                            .frame(minHeight: geo.size.height, alignment: .top)
+                    }
+                }
+            } else if scroll {
                 ScrollView { VStack(alignment: .leading, spacing: 14) { content() }.padding(16) }
             } else {
                 VStack(alignment: .leading, spacing: 14) { content() }.padding(16)

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -158,7 +159,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val leave = { conn.send("leave"); exit() }
 
     Box(Modifier.fillMaxSize()) {
-        Screen {
+        Screen(fill = true) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 com.majlisk.app.ui.BackButton({ menuOpen = true }, "القائمة")
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
@@ -180,6 +181,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             }
             // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب قارئ الشاشة
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
+            // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
+            Spacer(Modifier.weight(1f))
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { VoiceButton(v.id, uid) }
         }
     }

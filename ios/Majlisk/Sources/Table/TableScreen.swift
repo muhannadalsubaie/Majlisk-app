@@ -65,7 +65,7 @@ struct TableScreen: View {
     }
 
     @ViewBuilder private func table(_ v: TableView) -> some View {
-        Screen {
+        Screen(fill: true) {
             HStack(spacing: 8) {
                 SmallButton("القائمة") { menuOpen = true }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
@@ -82,6 +82,8 @@ struct TableScreen: View {
             }
             // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب VoiceOver
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
+            // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
+            Spacer(minLength: 0)
             HStack { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
         }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }

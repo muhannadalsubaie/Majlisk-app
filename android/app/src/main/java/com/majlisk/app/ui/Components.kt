@@ -58,15 +58,27 @@ import androidx.compose.ui.window.DialogProperties
 
 /** شاشة كاملة قابلة للتمرير بخلفية التطبيق */
 @Composable
-fun Screen(modifier: Modifier = Modifier, scroll: Boolean = true, content: @Composable ColumnScope.() -> Unit) {
+fun Screen(modifier: Modifier = Modifier, scroll: Boolean = true, fill: Boolean = false, content: @Composable ColumnScope.() -> Unit) {
     // خلفية بعمق: أفتح قليلاً في الوسط وأغمق عند الأطراف
     Box(Modifier.fillMaxSize().background(Brush.radialGradient(listOf(Palette.green800, Palette.green900), radius = 1400f))) {
-        val m = Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 12.dp)
-        Column(
-            (if (scroll) m.verticalScroll(rememberScrollState()) else m).then(modifier),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
-            content = content,
-        )
+        // fill: المحتوى يملأ طول الشاشة على الأقل، فيقدر Spacer(weight) يدفع ما بعده لأسفلها
+        if (fill) {
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
+                val inner = if (scroll) Modifier.verticalScroll(rememberScrollState()) else Modifier
+                Column(
+                    Modifier.fillMaxWidth().then(inner).heightIn(min = maxHeight).padding(horizontal = 16.dp, vertical = 12.dp).then(modifier),
+                    verticalArrangement = Arrangement.spacedBy(14.dp),
+                    content = content,
+                )
+            }
+        } else {
+            val m = Modifier.fillMaxSize().safeDrawingPadding().padding(horizontal = 16.dp, vertical = 12.dp)
+            Column(
+                (if (scroll) m.verticalScroll(rememberScrollState()) else m).then(modifier),
+                verticalArrangement = Arrangement.spacedBy(14.dp),
+                content = content,
+            )
+        }
     }
 }
 
