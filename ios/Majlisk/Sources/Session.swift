@@ -145,9 +145,23 @@ enum AuthService {
         !u.isEmailVerified && u.providerData.contains { $0.providerID == "password" } && (u.metadata.creationDate ?? .distantPast) >= verifySince
     }
 
-    static func sendVerification() async {
+    /// آخر خطأ في إرسال رابط التحقق (تعرضه شاشة التحقق)، أو nil إن نجح
+    private(set) static var verificationError: String?
+
+    /// يرسل رابط التحقق؛ يرجع سبب الفشل بالعربي أو nil إن نجح
+    @discardableResult
+    static func sendVerification() async -> String? {
         Auth.auth().languageCode = "ar"
-        try? await Auth.auth().currentUser?.sendEmailVerification()
+        do {
+            try await Auth.auth().currentUser?.sendEmailVerification()
+            verificationError = nil
+        } catch {
+            let code = AuthErrorCode(rawValue: (error as NSError).code)
+            verificationError = code == .tooManyRequests ? "أرسلنا روابط كثيرة لهذا البريد، انتظر شوي ثم أعد الإرسال."
+                : code == .networkError ? "تعذّر الإرسال: تأكد من اتصالك بالإنترنت."
+                : "تعذّر إرسال الرابط (\((error as NSError).code))."
+        }
+        return verificationError
     }
 
     /// يحدّث حالة الحساب من Firebase: هل ضغط رابط التحقق؟

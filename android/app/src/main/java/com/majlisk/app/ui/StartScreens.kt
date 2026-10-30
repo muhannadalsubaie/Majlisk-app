@@ -201,7 +201,8 @@ fun AuthScreen(done: () -> Unit) {
 fun VerifyEmailScreen(email: String, onVerified: () -> Unit) {
     var busy by remember { mutableStateOf(false) }
     var sentAt by remember { mutableStateOf(System.currentTimeMillis()) }
-    var error by remember { mutableStateOf("") }
+    // إن فشل إرسال الرابط وقت التسجيل نبيّن السبب
+    var error by remember { mutableStateOf(AuthService.verificationError.orEmpty()) }
     val scope = rememberCoroutineScope()
     // نفحص كل بضع ثوانٍ: أول ما يضغط الرابط ويرجع للتطبيق يكمل بدون ما يضغط شي
     LaunchedEffect(Unit) {
@@ -227,9 +228,10 @@ fun VerifyEmailScreen(email: String, onVerified: () -> Unit) {
             if (System.currentTimeMillis() - sentAt < 60_000) { error = "انتظر دقيقة قبل إعادة الإرسال."; Announcer.announce(error); return@SecondaryButton }
             busy = true; error = ""
             scope.launch {
-                AuthService.sendVerification()
+                val failed = AuthService.sendVerification()
                 sentAt = System.currentTimeMillis()
-                Announcer.announce("أرسلنا الرابط مرة ثانية إلى $email")
+                if (failed != null) { error = failed; Announcer.announce(failed) }
+                else Announcer.announce("أرسلنا الرابط مرة ثانية إلى $email")
                 busy = false
             }
         }, enabled = !busy, fill = true)
