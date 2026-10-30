@@ -223,13 +223,13 @@ final class TableConnection: ObservableObject {
             if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async { self.view = parsed; self.version += 1 } }
         case "events":
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
-            // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتسبق ما تأخر من قبلها فلا تتراكم القراءة
+            // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             let events = msg.strs("events").filter { !$0.isEmpty }
             if events.contains(where: { $0.hasPrefix("انقطع اتصال") }) { Sounds.shared.netDrop() }
             else if events.contains(where: { $0.hasPrefix("عاد ") && $0.hasSuffix("إلى الطاولة") }) { Sounds.shared.netBack() }
             else if events.contains(where: { $0.hasPrefix("انضم ") }) { Sounds.shared.tableJoin() }
             else if events.contains(where: { $0.hasPrefix("غادر ") || ($0.hasPrefix("خرج ") && $0.contains("من الطاولة")) }) { Sounds.shared.tableLeave() }
-            if !events.isEmpty { Announcer.announceNow(events.joined(separator: "، ")) }
+            if !events.isEmpty { Announcer.announce(events.joined(separator: "، ")) }
         case "error": Announcer.announce(msg.str("message"))
         case "kicked":
             stopped = true

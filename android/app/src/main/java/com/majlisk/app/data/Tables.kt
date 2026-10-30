@@ -150,11 +150,11 @@ class TableConnection(val tableId: String) {
         when (msg.optString("type")) {
             "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
-            // أحداث الحركة الواحدة تُقرأ جملة واحدة (أسرع من عدة إعلانات متتالية)
+            // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             "events" -> msg.optJSONArray("events")?.let { a ->
                 val events = (0 until a.length()).map { a.optString(it) }
                 eventSound(events)
-                Announcer.announceNow(events.joinToString("، "))
+                Announcer.announce(events.joinToString("، "))
             }
             "error" -> Announcer.announce(msg.optString("message"))
             "kicked" -> {
