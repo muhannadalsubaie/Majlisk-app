@@ -42,8 +42,6 @@ fun AppRoot() {
     }
     val signedIn = user != null && !profile?.username.isNullOrEmpty()
     // مركز اللاعب (الأصدقاء والدعوات)، واستكمال أي شراء دُفع ولم تُسلَّم عملاته
-    // موسيقى القائمة في كل الشاشات إلا الطاولة
-    LaunchedEffect(screen) { com.majlisk.app.data.MenuMusic.setWanted(screen != Route.Table) }
     LaunchedEffect(signedIn) {
         if (signedIn) { Hub.start(); Billing.recover() } else Hub.stop()
     }

@@ -37,10 +37,6 @@ enum Prefs {
         get { UserDefaults.standard.bool(forKey: "muted") }
         set { UserDefaults.standard.set(newValue, forKey: "muted") }
     }
-    static var music: Bool {
-        get { UserDefaults.standard.object(forKey: "music") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "music") }
-    }
     /// آخر طاولة كنت فيها ووقت آخر نبضة؛ لو أُغلق التطبيق ورجعت خلال دقيقة ترجع لها
     static var lastTable: String? {
         get { UserDefaults.standard.string(forKey: "lastTable") }

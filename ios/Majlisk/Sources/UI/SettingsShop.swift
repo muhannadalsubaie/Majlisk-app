@@ -7,7 +7,6 @@ struct SettingsScreen: View {
     let onBack: () -> Void
     @State private var muted = Prefs.muted
     @State private var chime = Prefs.turnChime
-    @State private var music = Prefs.music
     @State private var confirmDelete = false
 
     var body: some View {
@@ -16,7 +15,6 @@ struct SettingsScreen: View {
             SectionTitle("الصوت")
             SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
             SwitchRow(label: "نغمة دورك", isOn: chime, onChange: { chime = $0; Prefs.turnChime = $0 })
-            SwitchRow(label: "موسيقى القائمة", isOn: music, onChange: { music = $0; Prefs.music = $0; MenuMusic.shared.update() })
             if !embedded {
                 SectionTitle("الحساب")
                 MButton("تسجيل الخروج") { Session.shared.signOut() }

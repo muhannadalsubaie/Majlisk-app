@@ -122,12 +122,12 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     var busy by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     DisposableEffect(Unit) {
-        // ترتيب ثابت (الطاولة لا تتحرك من مكانها كل حركة لعب)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ،
+        // ترتيب ثابت (الطاولة لا تتحرك من مكانها كل حركة لعب، والجديدة تظهر فوق)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ،
         // حتى لا يعيد قارئ الشاشة قراءة الطاولة المحددة كل شوي
         val reg = Tables.listen { new ->
             val old = rows
             val pos = old.orEmpty().withIndex().associate { it.value.id to it.index }
-            val sorted = new.sortedBy { pos[it.id] ?: Int.MAX_VALUE }
+            val sorted = new.sortedBy { pos[it.id] ?: -1 }
             if (old == null || sorted.map { it.copy(people = 0) } != old.map { it.copy(people = 0) }) rows = sorted
         }
         onDispose { reg.remove() }
@@ -141,7 +141,7 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         rows?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
             val soon = r.kind != "baloot"
-            val spoken = "طاولة ${r.ownerName}، ${if (r.isPrivate) "مقفلة، " else ""}عدد اللاعبين ${r.players} من 4، ${STATUS[r.status].orEmpty()}${if (soon) "، $game قريباً في هذه النسخة" else ""}"
+            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else ""}عدد اللاعبين ${r.players} من 4، ${STATUS[r.status].orEmpty()}${if (soon) "، قريباً في هذه النسخة" else ""}"
             SecondaryButton(
                 "${if (r.isPrivate) "🔒 " else ""}طاولة ${r.ownerName} · $game · ${r.players}/4 · ${STATUS[r.status].orEmpty()}",
                 {

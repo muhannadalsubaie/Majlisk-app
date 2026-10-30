@@ -105,7 +105,7 @@ struct JoinTableScreen: View {
             ForEach(rows ?? []) { r in
                 let game = gameTitle(r.kind, r.variant)
                 let soon = r.kind != "baloot"
-                let spoken = "طاولة \(r.ownerName)، \(r.isPrivate ? "مقفلة، " : "")عدد اللاعبين \(r.players) من 4، \(STATUS[r.status] ?? "")\(soon ? "، \(game) قريباً في هذه النسخة" : "")"
+                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد اللاعبين \(r.players) من 4، \(STATUS[r.status] ?? "")\(soon ? "، قريباً في هذه النسخة" : "")"
                 MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · \(r.players)/4 · \(STATUS[r.status] ?? "")",
                         enabled: !r.isPrivate && !soon && busy != r.id, label: spoken) {
                     busy = r.id
@@ -120,10 +120,10 @@ struct JoinTableScreen: View {
         .onDisappear { reg?.remove(); reg = nil }
     }
 
-    /// ترتيب ثابت، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ، حتى لا يعيد VoiceOver قراءة الطاولة المحددة
+    /// ترتيب ثابت (والجديدة تظهر فوق)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ، حتى لا يعيد VoiceOver قراءة الطاولة المحددة
     private func update(_ list: [TableRow]) {
         let pos = Dictionary(uniqueKeysWithValues: (rows ?? []).enumerated().map { ($1.id, $0) })
-        let sorted = list.enumerated().sorted { (pos[$0.element.id] ?? Int.max, $0.offset) < (pos[$1.element.id] ?? Int.max, $1.offset) }.map(\.element)
+        let sorted = list.enumerated().sorted { (pos[$0.element.id] ?? -1, $0.offset) < (pos[$1.element.id] ?? -1, $1.offset) }.map(\.element)
         let sig = { (l: [TableRow]) in l.map { "\($0.id)|\($0.ownerName)|\($0.isPrivate)|\($0.players)|\($0.status)" } }
         if rows == nil || sig(sorted) != sig(rows!) { rows = sorted }
     }

@@ -12,10 +12,6 @@ object Prefs {
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }
 
-    var music: Boolean
-        get() = sp.getBoolean("music", true)
-        set(v) { sp.edit().putBoolean("music", v).apply() }
-
     /** آخر طاولة كنت فيها ومتى (للرجوع لها تلقائياً إن أُغلق التطبيق وفُتح خلال دقيقة) */
     var lastTable: String?
         get() = sp.getString("lastTable", null)

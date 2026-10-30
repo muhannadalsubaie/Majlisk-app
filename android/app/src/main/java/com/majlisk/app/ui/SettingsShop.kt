@@ -31,7 +31,6 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
     var muted by remember { mutableStateOf(Prefs.muted) }
     var chime by remember { mutableStateOf(Prefs.turnChime) }
-    var music by remember { mutableStateOf(Prefs.music) }
     var confirmDelete by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -42,7 +41,6 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
         SwitchRow("نغمة دورك", chime, { chime = it; Prefs.turnChime = it })
-        SwitchRow("موسيقى القائمة", music, { music = it; Prefs.music = it; com.majlisk.app.data.MenuMusic.update() })
         if (!embedded) {
             SectionTitle("الحساب")
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)
