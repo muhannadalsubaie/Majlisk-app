@@ -72,7 +72,7 @@ final class Sounds {
         // وبصوت واضح حتى مع VoiceOver (كان خافتاً معه فما ينسمع)
         DispatchQueue.main.async { [weak self] in
             guard let self, let d = self.data["turn"], let p = try? AVAudioPlayer(data: d) else { return }
-            p.volume = 0.8
+            p.volume = 0.6
             p.play()
             self.playing.removeAll { !$0.isPlaying }
             self.playing.append(p)
