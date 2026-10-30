@@ -19,8 +19,10 @@ jobs:
           set -e
           for pack in music-jingles casino-audio interface-sounds rpg-audio impact-sounds ui-audio; do
             PAGE=$(curl -sL --max-time 300 "https://kenney.nl/assets/$pack")
-            ZIP=$(echo "$PAGE" | grep -oE "https://kenney\.nl/media/pages/assets/$pack/[^\"]+\.zip" | head -1)
-            echo "$pack: $ZIP"
+            ZIP=$(echo "$PAGE" | grep -oE "https?://[^\"' ]+\.zip" | head -1)
+            [ -n "$ZIP" ] || ZIP=$(echo "$PAGE" | grep -oE "/media/pages/assets/[^\"' ]+\.zip" | head -1 | sed 's#^#https://kenney.nl#')
+            echo "$pack: $ZIP (page $(echo "$PAGE" | wc -c) bytes)"
+            [ -n "$ZIP" ] || echo "$PAGE" | grep -oiE "(href|data-[a-z-]+)=\"[^\"]*(download|zip)[^\"]*\"" | head -5
             [ -n "$ZIP" ] || continue
             curl -sL --max-time 300 "$ZIP" -o "/tmp/$pack.zip"
             mkdir -p "/tmp/packs/$pack" && unzip -o -q "/tmp/$pack.zip" -d "/tmp/packs/$pack"
