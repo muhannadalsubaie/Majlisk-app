@@ -46,6 +46,8 @@ struct TableScreen: View {
             // الشاشة لا تنطفئ ما دمت في الطاولة (انطفاؤها يقطع الاتصال والمحادثة الصوتية)
             UIApplication.shared.isIdleTimerDisabled = true
             conn.start()
+            // نغمة الانضمام يسمعها المنضم نفسه أول ما يدخل الطاولة (الموجودون يسمعونها من إعلان الخادم)
+            Sounds.shared.tableJoin()
             // كل من يدخل الطاولة ينضم للمحادثة الصوتية مستمعاً، وميكروفونه مقفل حتى يفتحه بنفسه
             Voice.shared.join(tableId, uid: uid, mode: .auto)
         }
