@@ -34,6 +34,7 @@ data class Bid(val type: String, val suit: String?, val raw: JSONObject) {
             "secondHokm" -> "حكم ثاني"
             "qablak" -> "قبلك"
             "confirmHokm" -> "تأكيد الحكم"
+            "double" -> "دبل"
             "hokm" -> "حكم ${SUIT_NAMES[suit]} ${SUIT_SYMBOLS[suit]}"
             else -> type
         }

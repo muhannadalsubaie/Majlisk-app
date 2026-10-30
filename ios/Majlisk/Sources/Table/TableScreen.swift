@@ -322,6 +322,7 @@ struct BalootBoard: View {
         case "hokm": Sounds.shared.hokm()
         case "sun", "ashkal": Sounds.shared.sun()
         case "confirmHokm": Sounds.shared.confirmHokm()
+        case "double": Sounds.shared.double(2)
         default: break
         }
     }

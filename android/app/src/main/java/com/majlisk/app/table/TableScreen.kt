@@ -513,6 +513,7 @@ private fun bidSound(b: Bid) = when (b.type) {
     "hokm" -> Sounds.hokm()
     "sun", "ashkal" -> Sounds.sun()
     "confirmHokm" -> Sounds.confirmHokm()
+    "double" -> Sounds.double(2)
     else -> Unit
 }
 

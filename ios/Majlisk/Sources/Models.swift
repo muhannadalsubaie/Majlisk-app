@@ -43,6 +43,7 @@ struct Bid: Identifiable {
         case "secondHokm": return "حكم ثاني"
         case "qablak": return "قبلك"
         case "confirmHokm": return "تأكيد الحكم"
+        case "double": return "دبل"
         case "hokm": return "حكم \(SUIT_NAMES[suit ?? ""] ?? "") \(SUIT_SYMBOLS[suit ?? ""] ?? "")"
         default: return type
         }
