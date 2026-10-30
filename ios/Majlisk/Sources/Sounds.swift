@@ -13,7 +13,7 @@ final class Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3", "collide4",
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "proj-hundred", "proj-400",
     ]
 
     func preload() {
@@ -99,9 +99,10 @@ final class Sounds {
         play("collide4", gain: 1)
         play("slide7", at: 0.02, gain: 0.8)
     }
-    /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)؛ المية والأربعمية بالصوت السابق حتى نختار لهم
+    /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع
     func project(_ kinds: [String]) {
-        if kinds.contains(where: { $0 == "مية" || $0 == "أربعمية" || $0 == "مية وخمسين" }) { play("fan", gain: 0.6); play("chips1", at: 0.25, gain: 0.7) }
+        if kinds.contains("أربعمية") { play("proj-400", gain: 0.8, vary: false) }
+        else if kinds.contains(where: { $0 == "مية" || $0 == "مية وخمسين" }) { play("proj-hundred", gain: 0.8, vary: false) }
         else if kinds.contains("خمسين") { play("proj-fifty", gain: 0.8, vary: false) }
         else { play("proj-sira", gain: 0.8, vary: false) }
     }

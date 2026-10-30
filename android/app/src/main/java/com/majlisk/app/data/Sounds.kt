@@ -22,7 +22,7 @@ object Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "proj-hundred", "proj-400",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -108,9 +108,10 @@ object Sounds {
         play("slide7", at = 0.02, gain = 0.8f)
     }
 
-    /** المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)؛ المية والأربعمية بالصوت السابق حتى نختار لهم */
+    /** المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع */
     fun project(kinds: List<String>) = when {
-        kinds.any { it == "مية" || it == "أربعمية" || it == "مية وخمسين" } -> { play("fan", gain = 0.6f); play("chips1", at = 0.25, gain = 0.7f) }
+        kinds.contains("أربعمية") -> play("proj-400", gain = 0.8f, vary = false)
+        kinds.any { it == "مية" || it == "مية وخمسين" } -> play("proj-hundred", gain = 0.8f, vary = false)
         kinds.contains("خمسين") -> play("proj-fifty", gain = 0.8f, vary = false)
         else -> play("proj-sira", gain = 0.8f, vary = false)
     }
