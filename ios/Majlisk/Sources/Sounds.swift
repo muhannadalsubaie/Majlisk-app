@@ -117,7 +117,7 @@ final class Sounds {
     /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع
     func project(_ kinds: [String]) {
         if kinds.contains("أربعمية") { play("proj-400", gain: 0.8, vary: false) }
-        else if kinds.contains(where: { $0 == "مية" || $0 == "مية وخمسين" }) { play("proj-hundred", gain: 0.8, vary: false) }
+        else if kinds.contains("مية") { play("proj-hundred", gain: 0.8, vary: false) }
         else if kinds.contains("خمسين") { play("proj-fifty", gain: 0.8, vary: false) }
         else { play("proj-sira", gain: 0.8, vary: false) }
     }

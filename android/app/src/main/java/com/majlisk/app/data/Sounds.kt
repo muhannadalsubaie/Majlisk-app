@@ -125,7 +125,7 @@ object Sounds {
     /** المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع */
     fun project(kinds: List<String>) = when {
         kinds.contains("أربعمية") -> play("proj-400", gain = 0.8f, vary = false)
-        kinds.any { it == "مية" || it == "مية وخمسين" } -> play("proj-hundred", gain = 0.8f, vary = false)
+        kinds.contains("مية") -> play("proj-hundred", gain = 0.8f, vary = false)
         kinds.contains("خمسين") -> play("proj-fifty", gain = 0.8f, vary = false)
         else -> play("proj-sira", gain = 0.8f, vary = false)
     }
