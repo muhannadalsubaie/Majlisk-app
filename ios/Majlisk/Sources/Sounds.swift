@@ -78,7 +78,7 @@ final class Sounds {
     func collect() { play("slide7", gain: 0.8, vary: false) }
 
     func turn(soft: Bool) {
-        guard Prefs.turnChime, !Prefs.muted else { return }
+        guard !Prefs.muted else { return }
         // مشغّل جديد كل مرة (المحادثة الصوتية تغيّر إعدادات الصوت فيتعطل المشغّل القديم)،
         // وبصوت واضح حتى مع VoiceOver (كان خافتاً معه فما ينسمع)
         DispatchQueue.main.async { [weak self] in

@@ -91,7 +91,6 @@ object Sounds {
     fun collect() = play("slide7", gain = 0.8f, vary = false)
 
     fun turn(soft: Boolean) {
-        if (!Prefs.turnChime) return
         // كلمة "دورك" منطوقة (بدل النغمة)
         play("voice-turn", gain = 0.9f, vary = false)
     }

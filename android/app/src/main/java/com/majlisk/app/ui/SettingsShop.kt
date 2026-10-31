@@ -33,7 +33,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
     var muted by remember { mutableStateOf(Prefs.muted) }
-    var chime by remember { mutableStateOf(Prefs.turnChime) }
     var confirmDelete by remember { mutableStateOf(false) }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -43,7 +42,6 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         TopBar("الإعدادات", onBack = onBack)
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
-        SwitchRow("صوت دورك", chime, { chime = it; Prefs.turnChime = it })
         if (!embedded) {
             SectionTitle("الحساب")
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)

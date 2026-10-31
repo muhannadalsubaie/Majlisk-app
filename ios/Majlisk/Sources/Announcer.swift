@@ -58,8 +58,4 @@ enum Prefs {
         get { UserDefaults.standard.double(forKey: "lastTableAt") }
         set { UserDefaults.standard.set(newValue, forKey: "lastTableAt") }
     }
-    static var turnChime: Bool {
-        get { UserDefaults.standard.object(forKey: "turnChime") as? Bool ?? true }
-        set { UserDefaults.standard.set(newValue, forKey: "turnChime") }
-    }
 }

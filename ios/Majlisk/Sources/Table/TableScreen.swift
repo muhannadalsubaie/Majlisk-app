@@ -249,8 +249,8 @@ struct BalootBoard: View {
             // إعلان "دورك" مرة واحدة عند بداية الدور
             // النغمة أولاً (فورية)، ثم الإعلان
             // الجرس أولاً، ثم "دورك" بعد لحظة: VoiceOver يخفض الأصوات وهو يتكلم فكان يغطي الجرس
-            // صوت "دورك" المنطوق يكفي؛ VoiceOver يعلنها فقط إذا كان الصوت مطفأ (كتم أو صوت دورك مقفل)
-            if g.myTurn && !wasMyTurn && (Prefs.muted || !Prefs.turnChime) { Announcer.announce("دورك") }
+            // صوت "دورك" المنطوق يكفي؛ VoiceOver يعلنها فقط إذا كان الصوت مطفأ (الكتم العام)
+            if g.myTurn && !wasMyTurn && Prefs.muted { Announcer.announce("دورك") }
             wasMyTurn = g.myTurn
             prevGame = g
         }

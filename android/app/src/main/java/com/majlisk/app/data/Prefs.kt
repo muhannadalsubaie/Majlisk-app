@@ -20,7 +20,4 @@ object Prefs {
         get() = sp.getLong("lastTableAt", 0)
         set(v) { sp.edit().putLong("lastTableAt", v).apply() }
 
-    var turnChime: Boolean
-        get() = sp.getBoolean("turnChime", true)
-        set(v) { sp.edit().putBoolean("turnChime", v).apply() }
 }
