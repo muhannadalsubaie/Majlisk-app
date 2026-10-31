@@ -1,0 +1,31 @@
+# يجمع أصواتاً مسجّلة مجانية (CC0) من OpenGameArt لتجربتها، ويحفظها في فرع sound-candidates. لا يغيّر أصوات التطبيق.
+name: Sound candidates
+
+on:
+  workflow_dispatch:
+    inputs:
+      pages:
+        description: روابط صفحات OpenGameArt (مفصولة بمسافة)
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  collect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
+      - run: python3 .github/scripts/oga_sounds.py ${{ inputs.pages }}
+      - name: Save to branch
+        run: |
+          ls candidates | wc -l; du -sh candidates
+          git config user.name "github-actions[bot]"
+          git config user.email "41898099+github-actions[bot]@users.noreply.github.com"
+          git checkout --orphan sound-candidates
+          git rm -rq --cached . && find . -maxdepth 1 ! -name . ! -name .git ! -name candidates -exec rm -rf {} +
+          git add candidates
+          git commit -qm "Sound candidates (OpenGameArt)"
+          git push -f origin sound-candidates
