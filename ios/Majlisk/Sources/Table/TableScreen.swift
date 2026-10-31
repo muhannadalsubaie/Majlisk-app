@@ -11,6 +11,8 @@ struct TableScreen: View {
     let exit: () -> Void
     @StateObject private var conn: TableConnection
     @State private var menuOpen = false
+    @State private var chatOpen = false
+    @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var historyOpen = false
     @State private var confirmLeave = false
 
@@ -19,6 +21,7 @@ struct TableScreen: View {
         // أصوات اللعب تُشغَّل من الاتصال نفسه، فتستمر والتطبيق في الخلفية ما دمت في الطاولة
         _conn = StateObject(wrappedValue: {
             let c = TableConnection(tableId)
+            c.myUid = uid
             let sounds = GameSoundTracker()
             c.onState = { sounds.update($0) }
             return c
@@ -94,8 +97,17 @@ struct TableScreen: View {
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
             // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
             Spacer(minLength: 0)
+            // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
+            if chatSettings.mode != .off {
+                HStack { Spacer(); ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
+            }
             HStack { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
         }
+        // آخر رسالة: لحظات في الزاوية اليمين تحت، بعيداً عن الطاولة والأوراق
+        .overlay(alignment: .bottomLeading) {
+            if chatSettings.mode != .off && !chatOpen { ChatToast(conn: conn) }
+        }
+        .sheet(isPresented: $chatOpen, onDismiss: { conn.chatOpen = false }) { ChatSheet(conn: conn) { chatOpen = false } }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
         .sheet(isPresented: $menuOpen) {
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false })

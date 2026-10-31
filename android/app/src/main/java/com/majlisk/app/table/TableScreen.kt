@@ -95,7 +95,7 @@ private const val SILENT_FOCUS_MS = 4000L
 @Composable
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     // أصوات اللعب تُشغَّل من الاتصال نفسه، فتستمر والتطبيق في الخلفية ما دمت في الطاولة
-    val conn = remember(tableId) { TableConnection(tableId).also { c -> val s = GameSoundTracker(); c.onState = s::update; c.start() } }
+    val conn = remember(tableId) { TableConnection(tableId).also { c -> val s = GameSoundTracker(); c.onState = s::update; c.myUid = uid; c.start() } }
     DisposableEffect(conn) { onDispose { conn.stop(); Voice.dispose() } }
     // الشاشة لا تنطفئ ما دمت في الطاولة (انطفاؤها يقطع الاتصال والمحادثة الصوتية)
     val window = (androidx.compose.ui.platform.LocalContext.current as? android.app.Activity)?.window
@@ -126,6 +126,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     var menuOpen by remember { mutableStateOf(false) }
     var historyOpen by remember { mutableStateOf(false) }
     var confirmLeave by remember { mutableStateOf(false) }
+    var chatOpen by remember { mutableStateOf(false) }
+    val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()
 
     // زر الرجوع في الجهاز يفتح قائمة الطاولة (ومنها المغادرة) بدل الخروج المفاجئ
     BackHandler(enabled = kicked == null && !closed) { menuOpen = true }
@@ -189,9 +191,16 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
             // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
             Spacer(Modifier.weight(1f))
+            // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
+            if (chatMode != com.majlisk.app.data.ChatMode.OFF) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ChatButton(conn) { chatOpen = true; conn.chatOpen = true } }
+            }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { VoiceButton(v.id, uid) }
         }
+        // آخر رسالة: لحظات في الزاوية اليمين تحت، بعيداً عن الطاولة والأوراق
+        if (chatMode != com.majlisk.app.data.ChatMode.OFF && !chatOpen) ChatToast(conn, Modifier.align(Alignment.BottomStart))
     }
+    if (chatOpen) ChatDialog(conn) { chatOpen = false; conn.chatOpen = false }
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
     if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false })

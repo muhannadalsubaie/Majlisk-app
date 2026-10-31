@@ -12,6 +12,11 @@ object Prefs {
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }
 
+    /** الدردشة الكتابية: read / silent / off */
+    var chatMode: String
+        get() = sp.getString("chatMode", "read") ?: "read"
+        set(v) { sp.edit().putString("chatMode", v).apply() }
+
     /** آخر طاولة كنت فيها ومتى (للرجوع لها تلقائياً إن أُغلق التطبيق وفُتح خلال دقيقة) */
     var lastTable: String?
         get() = sp.getString("lastTable", null)

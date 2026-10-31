@@ -110,6 +110,39 @@ class TableConnection(val tableId: String) {
     private val _kicked = MutableStateFlow<String?>(null)
     val kicked: StateFlow<String?> = _kicked
 
+    // ───── الدردشة الكتابية ─────
+    /** مقعدك (لتمييز رسائلك وعدم قراءتها عليك) */
+    var myUid: String = ""
+    /** نافذة الدردشة مفتوحة الآن (فلا نزيد عدد غير المقروء) */
+    var chatOpen = false
+        set(v) { field = v; if (v) _unread.value = 0 }
+    private val _chat = MutableStateFlow<List<ChatMessage>>(emptyList())
+    val chat: StateFlow<List<ChatMessage>> = _chat
+    private val _unread = MutableStateFlow(0)
+    val unread: StateFlow<Int> = _unread
+    /** آخر رسالة وصلت (تظهر لحظات في زاوية الشاشة) */
+    private val _toast = MutableStateFlow<ChatMessage?>(null)
+    val toast: StateFlow<ChatMessage?> = _toast
+
+    fun sendChat(text: String) {
+        val t = text.trim()
+        if (t.isNotEmpty()) ws?.send(org.json.JSONObject().put("type", "chat").put("text", t.take(200)).toString())
+    }
+
+    private fun sendChatPref() {
+        ws?.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString())
+    }
+
+    init {
+        // تغيّر اختيارك للدردشة: نبلغ الخادم فوراً، وإن أطفأتها نمسح الرسائل
+        scope.launch {
+            ChatSettings.mode.collect { m ->
+                sendChatPref()
+                if (m == ChatMode.OFF) { _chat.value = emptyList(); _unread.value = 0; _toast.value = null }
+            }
+        }
+    }
+
     private var ws: WebSocket? = null
     private var stopped = false
     private var loop: Job? = null
@@ -123,7 +156,7 @@ class TableConnection(val tableId: String) {
                 if (token != null) {
                     val done = CompletableDeferred<Unit>()
                     ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/tables/$tableId/ws", token)).build(), object : WebSocketListener() {
-                        override fun onOpen(webSocket: WebSocket, response: Response) { _connected.value = true; retry = 0 }
+                        override fun onOpen(webSocket: WebSocket, response: Response) { _connected.value = true; retry = 0; webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString()) }
                         override fun onMessage(webSocket: WebSocket, text: String) { lastHeard = System.currentTimeMillis(); if (text != "pong") handle(text) }
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
@@ -183,6 +216,17 @@ class TableConnection(val tableId: String) {
                 msg.optJSONArray("voices")?.let { v -> Sounds.voices((0 until v.length()).map { v.optString(it) }) }
                 eventSound(events)
                 Announcer.announceEvent(events.joinToString("، "))
+            }
+            "chat" -> {
+                val mode = ChatSettings.mode.value
+                if (mode == ChatMode.OFF) return
+                val m = ChatMessage(msg.optString("uid"), msg.optString("name"), msg.optString("text"), msg.optString("uid") == myUid)
+                _chat.value = (_chat.value + m).takeLast(100)
+                if (!m.mine) {
+                    if (!chatOpen) _unread.value += 1
+                    _toast.value = m
+                    if (mode == ChatMode.READ) Announcer.announce("${m.name}: ${m.text}")
+                }
             }
             "error" -> Announcer.announce(msg.optString("message"))
             "kicked" -> {

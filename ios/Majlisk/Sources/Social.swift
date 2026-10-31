@@ -1,4 +1,5 @@
 import Foundation
+import Combine
 import Network
 import FirebaseFirestore
 
@@ -159,6 +160,28 @@ enum Tables {
 }
 
 /// اتصال حي بالطاولة: يستقبل الحالة والإعلانات، ويعيد الاتصال تلقائياً عند الانقطاع
+/// رسالة في دردشة الطاولة الكتابية
+struct ChatMessage: Identifiable, Equatable { let id = UUID(); let uid: String; let name: String; let text: String; let mine: Bool }
+
+/// اختيار كل لاعب للدردشة الكتابية (له وحده، ويُحفظ لكل الطاولات):
+/// read توصله ويقرأها VoiceOver، silent توصله بلا قراءة، off ما توصله ولا يرسل.
+enum ChatMode: String, CaseIterable {
+    case read, silent, off
+    var label: String {
+        switch self {
+        case .read: return "توصلني ويقرأها قارئ الشاشة"
+        case .silent: return "توصلني بدون قراءة (أرجع لها بنفسي)"
+        case .off: return "مطفأة (ما توصلني ولا أرسل)"
+        }
+    }
+}
+
+final class ChatSettings: ObservableObject {
+    static let shared = ChatSettings()
+    @Published private(set) var mode = ChatMode(rawValue: Prefs.chatMode) ?? .read
+    func set(_ m: ChatMode) { Prefs.chatMode = m.rawValue; mode = m }
+}
+
 final class TableConnection: ObservableObject {
     let tableId: String
     @Published private(set) var view: TableView?
@@ -170,12 +193,39 @@ final class TableConnection: ObservableObject {
     @Published private(set) var kicked: String?
     /// يُستدعى مع كل حالة تصل (حتى والتطبيق في الخلفية): لأصوات اللعب
     var onState: ((TableView) -> Void)?
+
+    // ───── الدردشة الكتابية ─────
+    /// مقعدك (لتمييز رسائلك وعدم قراءتها عليك)
+    var myUid = ""
+    /// نافذة الدردشة مفتوحة الآن (فلا نزيد عدد غير المقروء)
+    var chatOpen = false { didSet { if chatOpen { unread = 0 } } }
+    @Published private(set) var chat: [ChatMessage] = []
+    @Published private(set) var unread = 0
+    /// آخر رسالة وصلت (تظهر لحظات في زاوية الشاشة)
+    @Published private(set) var toast: ChatMessage?
+    private var chatModeSub: Any?
+
+    func sendChat(_ text: String) {
+        let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if !t.isEmpty { send(["type": "chat", "text": String(t.prefix(200))]) }
+    }
+
+    private func chatPrefMessage() -> String { "{\"type\":\"chatPref\",\"off\":\(ChatSettings.shared.mode == .off)}" }
+
     private var ws: URLSessionWebSocketTask?
     private var stopped = false
     private var loop: Task<Void, Never>?
     private var wake: CheckedContinuation<Void, Never>?
 
-    init(_ tableId: String) { self.tableId = tableId }
+    init(_ tableId: String) {
+        self.tableId = tableId
+        // تغيّر اختيارك للدردشة: نبلغ الخادم فوراً، وإن أطفأتها نمسح الرسائل
+        chatModeSub = ChatSettings.shared.$mode.dropFirst().sink { [weak self] m in
+            guard let self else { return }
+            self.ws?.send(.string("{\"type\":\"chatPref\",\"off\":\(m == .off)}")) { _ in }
+            if m == .off { DispatchQueue.main.async { self.chat = []; self.unread = 0; self.toast = nil } }
+        }
+    }
 
     func start() {
         guard loop == nil else { return }
@@ -187,6 +237,7 @@ final class TableConnection: ObservableObject {
                     let ws = URLSession.shared.webSocketTask(with: Api.wsURL("/tables/\(self.tableId)/ws", token: token))
                     self.ws = ws
                     ws.resume()
+                    ws.send(.string(self.chatPrefMessage())) { _ in }
                     // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
                     self.lastHeard = Date()
                     let ping = Task { [weak self] in
@@ -263,6 +314,18 @@ final class TableConnection: ObservableObject {
             else if events.contains(where: { $0.hasSuffix("انضم للمحادثة الصوتية") }) { Sounds.shared.voiceJoin() }
             else if events.contains(where: { $0.hasSuffix("غادر المحادثة الصوتية") }) { Sounds.shared.voiceLeave() }
             if !events.isEmpty { Announcer.announceEvent(events.joined(separator: "، ")) }
+        case "chat":
+            let mode = ChatSettings.shared.mode
+            guard mode != .off else { return }
+            let m = ChatMessage(uid: msg.str("uid"), name: msg.str("name"), text: msg.str("text"), mine: msg.str("uid") == myUid)
+            DispatchQueue.main.async {
+                self.chat = Array((self.chat + [m]).suffix(100))
+                if !m.mine {
+                    if !self.chatOpen { self.unread += 1 }
+                    self.toast = m
+                }
+            }
+            if !m.mine && mode == .read { Announcer.announce("\(m.name): \(m.text)") }
         case "error": Announcer.announce(msg.str("message"))
         case "kicked":
             stopped = true

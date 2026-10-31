@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -42,6 +43,12 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         TopBar("الإعدادات", onBack = onBack)
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
+        SectionTitle("الدردشة الكتابية")
+        // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
+        val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()
+        com.majlisk.app.data.ChatMode.entries.forEach { m ->
+            SwitchRow(m.label, chatMode == m, { if (it) com.majlisk.app.data.ChatSettings.set(m) })
+        }
         if (!embedded) {
             SectionTitle("الحساب")
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)

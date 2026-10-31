@@ -6,6 +6,7 @@ struct SettingsScreen: View {
     let embedded: Bool
     let onBack: () -> Void
     @State private var muted = Prefs.muted
+    @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
 
     var body: some View {
@@ -13,6 +14,11 @@ struct SettingsScreen: View {
             TopBar("الإعدادات", onBack: onBack)
             SectionTitle("الصوت")
             SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
+            SectionTitle("الدردشة الكتابية")
+            // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
+            ForEach(ChatMode.allCases, id: \.self) { m in
+                SwitchRow(label: m.label, isOn: chatSettings.mode == m, onChange: { if $0 { chatSettings.set(m) } })
+            }
             if !embedded {
                 SectionTitle("الحساب")
                 MButton("تسجيل الخروج") { Session.shared.signOut() }
