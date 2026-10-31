@@ -91,6 +91,8 @@ private fun eventSound(events: List<String>) {
     when {
         events.any { it.startsWith("انضم ") || it.startsWith("عاد اتصال") } -> Sounds.tableJoin()
         events.any { it.startsWith("غادر ") || it.startsWith("انقطع اتصال") || (it.startsWith("خرج ") && it.contains("من الطاولة")) } -> Sounds.tableLeave()
+        events.any { it.endsWith("انضم للمحادثة الصوتية") } -> Sounds.voiceJoin()
+        events.any { it.endsWith("غادر المحادثة الصوتية") } -> Sounds.voiceLeave()
     }
 }
 

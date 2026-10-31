@@ -22,7 +22,7 @@ object Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "proj-hundred", "proj-400",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave", "proj-hundred", "proj-400",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -76,6 +76,10 @@ object Sounds {
     /** لاعب انضم للطاولة أو رجع اتصاله (هارب يطلع) / غادرها أو انقطع اتصاله (فقاعتان تنزلان) */
     fun tableJoin() = play("table-join", gain = 0.7f, vary = false)
     fun tableLeave() = play("table-leave", gain = 0.7f, vary = false)
+
+    /** أحد انضم للمحادثة الصوتية / غادرها */
+    fun voiceJoin() = play("voice-join", gain = 0.7f, vary = false)
+    fun voiceLeave() = play("voice-leave", gain = 0.7f, vary = false)
 
     fun collect() = play("slide7", gain = 0.8f, vary = false)
 
