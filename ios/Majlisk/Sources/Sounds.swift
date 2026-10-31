@@ -55,7 +55,7 @@ final class Sounds {
     /// التوزيع: ثماني أوراق متتالية بدون خلط (أول التوزيع وباقي الورق)
     func deal(newHand: Bool) {
         for (i, n) in ["slide1", "slide2", "slide3", "slide4", "slide1", "slide2", "slide3", "slide4"].enumerated() {
-            play(n, at: Double(i) * 0.1, gain: 0.6)
+            play(n, at: Double(i) * 0.1, gain: 1)
         }
     }
 
@@ -75,7 +75,7 @@ final class Sounds {
     func voiceJoin() { play("voice-join", gain: 0.7, vary: false) }
     func voiceLeave() { play("voice-leave", gain: 0.7, vary: false) }
 
-    func collect() { play("slide7", gain: 0.8, vary: false) }
+    func collect() { play("slide7", gain: 1, vary: false) }
 
     func turn(soft: Bool) {
         guard !Prefs.muted else { return }
@@ -105,11 +105,11 @@ final class Sounds {
     }
 
     func matchEnd(won: Bool) { play(won ? "match-win" : "match-lose", gain: 0.8, vary: false) }
-    func card() { play(pick("card1", "card2", "card3", "card4")) }
+    func card() { play(pick("card1", "card2", "card3", "card4"), gain: 1) }
     /// القطع بالحكم: ضربة ورقة
     func cut() {
         play("collide4", gain: 1)
-        play("slide7", at: 0.02, gain: 0.8)
+        play("slide7", at: 0.02, gain: 1)
     }
     /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع
     func project(_ kinds: [String]) {

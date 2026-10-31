@@ -66,7 +66,7 @@ object Sounds {
     @Suppress("UNUSED_PARAMETER")
     fun deal(newHand: Boolean) {
         listOf("slide1", "slide2", "slide3", "slide4", "slide1", "slide2", "slide3", "slide4")
-            .forEachIndexed { i, n -> play(n, at = i * 0.1, gain = 0.6f) }
+            .forEachIndexed { i, n -> play(n, at = i * 0.1, gain = 1f) }
     }
 
     /** نغمة فتح التطبيق (قانون بمقام الراست) */
@@ -88,7 +88,7 @@ object Sounds {
     fun voiceJoin() = play("voice-join", gain = 0.7f, vary = false)
     fun voiceLeave() = play("voice-leave", gain = 0.7f, vary = false)
 
-    fun collect() = play("slide7", gain = 0.8f, vary = false)
+    fun collect() = play("slide7", gain = 1f, vary = false)
 
     fun turn(soft: Boolean) {
         // كلمة "دورك" منطوقة (بدل النغمة)
@@ -110,12 +110,12 @@ object Sounds {
 
     fun matchEnd(won: Boolean) = play(if (won) "match-win" else "match-lose", gain = 0.8f, vary = false)
 
-    fun card() = play(pick("card1", "card2", "card3", "card4"))
+    fun card() = play(pick("card1", "card2", "card3", "card4"), gain = 1f)
 
     /** القطع بالحكم: ضربة ورقة */
     fun cut() {
         play("collide4", gain = 1f)
-        play("slide7", at = 0.02, gain = 0.8f)
+        play("slide7", at = 0.02, gain = 1f)
     }
 
     /** المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع */
