@@ -2,6 +2,13 @@ import SwiftUI
 
 /// كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها
 private let TRICK_HOLD: Double = 1.2
+
+/// هوية الدور الحالي إن كان لك (nil إن لم يكن): تتغير مع كل دور جديد لك حتى لو جاك مرتين ورا بعض
+/// (أكلت الأكلة فبدأت التالية، أو رجع لك الدور في المزايدة أو الدبل)، فينقال "دورك" كل مرة
+func turnKey(_ g: GameView) -> String? {
+    guard g.myTurn else { return nil }
+    return "\(g.phase)|\(g.bidRound)|\(g.hokmBidKey ?? "")|\(g.contract?.buyer ?? -1)|\(g.doubling.level)|\(g.trickNo)|\(g.trick.count)"
+}
 /// كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب)
 private let SILENT_FOCUS: Double = 4
 
@@ -133,7 +140,7 @@ struct BalootBoard: View {
     /// الورقة اللي انتقل لها المؤشر بعد حركتك: اسمها مخفي لحظات فتسمع إعلانات اللعب فقط
     @State private var silentCard: Card?
     @State private var prevGame: GameView?
-    @State private var wasMyTurn = false
+    @State private var lastTurn: String?
 
     private var mySeat: Int? { v.mySeat }
     private var me: Int { v.mySeat ?? 0 }
@@ -254,7 +261,7 @@ struct BalootBoard: View {
                 }
             }
         }
-        .onAppear { Gestures.shared.handler = { read($0) }; prevGame = g; wasMyTurn = g.myTurn }
+        .onAppear { Gestures.shared.handler = { read($0) }; prevGame = g; lastTurn = turnKey(g) }
         .onChange(of: conn.version) { _ in
             Gestures.shared.handler = { read($0) }
             if let p = prevGame, g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty { holdTrick() }
@@ -262,8 +269,9 @@ struct BalootBoard: View {
             // النغمة أولاً (فورية)، ثم الإعلان
             // الجرس أولاً، ثم "دورك" بعد لحظة: VoiceOver يخفض الأصوات وهو يتكلم فكان يغطي الجرس
             // صوت "دورك" المنطوق يكفي؛ VoiceOver يعلنها فقط إذا كان الصوت مطفأ (الكتم العام)
-            if g.myTurn && !wasMyTurn && Prefs.muted { Announcer.announce("دورك") }
-            wasMyTurn = g.myTurn
+            let key = turnKey(g)
+            if let key, key != lastTurn, Prefs.muted { Announcer.announce("دورك") }
+            lastTurn = key
             prevGame = g
         }
     }
@@ -335,10 +343,10 @@ struct BalootBoard: View {
 /// نقارن الحالة الجديدة بالسابقة لنعرف ما حدث.
 final class GameSoundTracker {
     private var prev: GameView?
-    private var wasMyTurn = false
+    private var lastTurn: String?
 
     func update(_ v: TableView) {
-        guard let g = v.game else { prev = nil; wasMyTurn = false; return }
+        guard let g = v.game else { prev = nil; lastTurn = nil; return }
         let p = prev
         prev = g
         if let p {
@@ -349,8 +357,9 @@ final class GameSoundTracker {
             }
         }
         // نغمة الدور (فورية، قبل إعلان "دورك")
-        if g.myTurn && !wasMyTurn { Sounds.shared.turn(soft: Announcer.readerOn) }
-        wasMyTurn = g.myTurn
+        let key = turnKey(g)
+        if let key, key != lastTurn { Sounds.shared.turn(soft: Announcer.readerOn) }
+        lastTurn = key
     }
 
     private func gameSounds(prev: GameView, g: GameView, mySeat: Int?) {

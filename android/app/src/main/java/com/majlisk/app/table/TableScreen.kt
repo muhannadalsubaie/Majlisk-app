@@ -239,11 +239,12 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
     val shownTrick: List<PlayedCard> = if (heldTrick == g.trickNo && g.trick.isEmpty() && g.lastTrick != null) g.lastTrick else g.trick
     val text = BalootText(v, g, shownTrick)
 
-    // إعلان "دورك" مرة واحدة عند بداية الدور
-    var wasMyTurn by remember { mutableStateOf(false) }
-    LaunchedEffect(g.myTurn) {
-        val starts = g.myTurn && !wasMyTurn
-        wasMyTurn = g.myTurn
+    // إعلان "دورك" عند بداية كل دور (حتى لو جاك الدور مرتين ورا بعض، مثل لما تاكل الأكلة)
+    var lastTurn by remember { mutableStateOf<String?>(null) }
+    val turnNow = turnKey(g)
+    LaunchedEffect(turnNow) {
+        val starts = turnNow != null && turnNow != lastTurn
+        lastTurn = turnNow
         // الجرس أولاً، ثم "دورك" بعد لحظة: قارئ الشاشة يخفض الأصوات وهو يتكلم فكان يغطي الجرس
         // صوت "دورك" المنطوق يكفي؛ قارئ الشاشة يعلنها فقط إذا كان الصوت مطفأ (الكتم العام)
         if (starts && com.majlisk.app.data.Prefs.muted) Announcer.announce("دورك")
@@ -518,6 +519,13 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, silent: Boolea
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }
 
+/**
+ * هوية الدور الحالي إن كان لك (null إن لم يكن): تتغير مع كل دور جديد لك حتى لو جاك مرتين ورا بعض
+ * (أكلت الأكلة فبدأت التالية، أو رجع لك الدور في المزايدة أو الدبل)، فينقال "دورك" كل مرة
+ */
+fun turnKey(g: GameView): String? = if (!g.myTurn) null else
+    listOf(g.phase, g.bidRound, g.hokmBidKey, g.contract?.buyer, g.doubling.level, g.trickNo, g.trick.size).joinToString("|")
+
 private fun cardKey(c: Card) = "${c.suit}${c.rank}"
 
 
@@ -527,11 +535,11 @@ private fun cardKey(c: Card) = "${c.suit}${c.rank}"
  */
 class GameSoundTracker {
     private var prev: GameView? = null
-    private var wasMyTurn = false
+    private var lastTurn: String? = null
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
 
     fun update(v: TableView) {
-        val g = v.game ?: run { prev = null; wasMyTurn = false; return }
+        val g = v.game ?: run { prev = null; lastTurn = null; return }
         val p = prev
         prev = g
         if (p != null) {
@@ -540,8 +548,9 @@ class GameSoundTracker {
             if (g.trickNo == p.trickNo + 1 && g.lastTrick != null && g.trick.isEmpty()) main.postDelayed({ Sounds.collect() }, TRICK_HOLD_MS - 150)
         }
         // نغمة الدور (فورية، قبل إعلان "دورك")
-        if (g.myTurn && !wasMyTurn) Sounds.turn(Announcer.readerOn)
-        wasMyTurn = g.myTurn
+        val key = turnKey(g)
+        if (key != null && key != lastTurn) Sounds.turn(Announcer.readerOn)
+        lastTurn = key
     }
 }
 
