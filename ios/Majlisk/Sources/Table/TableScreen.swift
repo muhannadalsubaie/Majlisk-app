@@ -228,9 +228,8 @@ struct BalootBoard: View {
                         ForEach(hand, id: \.self) { c in
                             let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
                             HandCard(card: c, legal: g.actions.legal.contains(c), silent: silentCard == c) {
-                                // الورقة اللي جنبها تأخذ المؤشر (اللي بعدها، أو اللي قبلها إن كانت الأخيرة)
-                                let i = hand.firstIndex(of: c) ?? 0
-                                focus(i + 1 < hand.count ? hand[i + 1] : i > 0 ? hand[i - 1] : nil)
+                                // المؤشر ينتقل لزر الميكروفون بصمت، فتسمع ورقتك وباقي اللعب
+                                MicFocus.shared.take()
                                 act(["type": "play", "card": c.json])
                             }
                                 .accessibilityFocused($focusedCard, equals: c)

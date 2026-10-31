@@ -359,8 +359,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                             c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, silent = silentKey == cardKey(c),
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr),
                         ) {
-                            // الورقة اللي جنبها تأخذ المؤشر (اللي بعدها، أو اللي قبلها إن كانت الأخيرة)
-                            focusCard(hand.getOrNull(i + 1) ?: hand.getOrNull(i - 1))
+                            // المؤشر ينتقل لزر الميكروفون بصمت، فتسمع ورقتك وباقي اللعب
+                            com.majlisk.app.voice.MicFocus.take()
                             act(jsonOf("type" to "play", "card" to c.toJson()))
                         }
                     }

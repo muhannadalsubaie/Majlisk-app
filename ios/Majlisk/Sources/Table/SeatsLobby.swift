@@ -175,10 +175,29 @@ struct HistoryView: View {
 
 /// زر المحادثة الصوتية — للاعبين والمشاهدين.
 /// ضغطة: فتح/كتم الميكروفون. ومن إجراءات VoiceOver (أو الضغط المطول): انضمام/مغادرة.
+/// بعد ما تلعب ورقة: مؤشر VoiceOver ينتقل لزر الميكروفون بصمت (اسمه مخفي لحظات)،
+/// فتسمع ورقتك وباقي اللعب بدل اسم الزر، ويُقرأ عادي لما تحرك المؤشر.
+final class MicFocus: ObservableObject {
+    static let shared = MicFocus()
+    @Published private(set) var request = 0
+    @Published private(set) var silent = false
+
+    func take() {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        silent = true
+        Announcer.interruptNextEvents()
+        request += 1
+        let n = request
+        DispatchQueue.main.asyncAfter(deadline: .now() + 4) { if self.request == n { self.silent = false } }
+    }
+}
+
 struct VoiceButton: View {
     let tableId: String
     let uid: String
     @ObservedObject private var voice = Voice.shared
+    @ObservedObject private var micFocus = MicFocus.shared
+    @AccessibilityFocusState private var focused: Bool
 
     var body: some View {
         // أثناء إعادة الاتصال الصامتة يبقى الزر على حاله: في المحادثة والميكروفون مغلق
@@ -199,10 +218,13 @@ struct VoiceButton: View {
             .onTapGesture(perform: toggleMute)
             .onLongPressGesture(perform: toggleJoin)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(status)
-            .accessibilityAddTraits(.isButton)
+            // صامت بعد لعب ورقة: بلا أي نص
+            .accessibilityLabel(micFocus.silent ? "" : status)
+            .accessibilityAddTraits(micFocus.silent ? [] : .isButton)
             .accessibilityAction { toggleMute() }
             .accessibilityAction(named: Text(voice.joined ? "الخروج من المحادثة الصوتية" : "العودة للمحادثة الصوتية")) { toggleJoin() }
+            .accessibilityFocused($focused)
+            .onChange(of: micFocus.request) { _ in focused = true }
     }
 
     private func toggleMute() {
