@@ -81,7 +81,7 @@ object Sounds {
 
     /** كلمات المزايدة والدبل منطوقة بالترتيب (من الخادم): حكم، صن، بس، ولا، دبل، مقفل... */
     fun voices(keys: List<String>) {
-        keys.forEachIndexed { i, k -> play("voice-$k", at = i * 0.7, gain = 0.9f, vary = false) }
+        keys.forEachIndexed { i, k -> play("voice-$k", at = i * 0.7, gain = 1f, vary = false) }
     }
 
     /** أحد انضم للمحادثة الصوتية / غادرها */
@@ -92,7 +92,7 @@ object Sounds {
 
     fun turn(soft: Boolean) {
         // كلمة "دورك" منطوقة (بدل النغمة)
-        play("voice-turn", gain = 0.9f, vary = false)
+        play("voice-turn", gain = 1f, vary = false)
     }
 
     fun handEnd(result: String, kaboot: Boolean) {

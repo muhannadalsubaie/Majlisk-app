@@ -68,7 +68,7 @@ final class Sounds {
 
     /// كلمات المزايدة والدبل منطوقة بالترتيب (من الخادم): حكم، صن، بس، ولا، دبل، مقفل...
     func voices(_ keys: [String]) {
-        for (i, k) in keys.enumerated() { play("voice-\(k)", at: Double(i) * 0.7, gain: 0.9, vary: false) }
+        for (i, k) in keys.enumerated() { play("voice-\(k)", at: Double(i) * 0.7, gain: 1, vary: false) }
     }
 
     /// أحد انضم للمحادثة الصوتية / غادرها
@@ -84,7 +84,7 @@ final class Sounds {
         DispatchQueue.main.async { [weak self] in
             // كلمة "دورك" منطوقة (بدل النغمة)
             guard let self, let d = self.data["voice-turn"], let p = try? AVAudioPlayer(data: d) else { return }
-            p.volume = 0.9
+            p.volume = 1
             p.play()
             self.playing.removeAll { !$0.isPlaying }
             self.playing.append(p)
