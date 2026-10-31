@@ -299,20 +299,41 @@ object Voice {
     private var savedMode = AudioManager.MODE_NORMAL
 
     /**
-     * أثناء المحادثة: الصوت من مكبر الجهاز (لا السماعة الصغيرة)، ونمسك تركيز الصوت ونطلب ألا يخفضنا النظام
-     * حين يتكلم TalkBack، فيبقى صوت اللاعبين بنفس المستوى.
+     * أثناء المحادثة: إذا فيه سماعة موصولة (سلكية أو USB أو بلوتوث) يطلع الصوت منها،
+     * وإلا من مكبر الجهاز (لا السماعة الصغيرة). ونتابع توصيل السماعة وفصلها أثناء المحادثة.
+     * ونمسك تركيز الصوت ونطلب ألا يخفضنا النظام حين يتكلم TalkBack، فيبقى صوت اللاعبين بنفس المستوى.
      */
+    private fun route(am: AudioManager) {
+        if (Build.VERSION.SDK_INT >= 31) {
+            val devices = am.availableCommunicationDevices
+            val order = listOf(
+                AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_USB_HEADSET,
+                AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLUETOOTH_SCO, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
+            )
+            order.firstNotNullOfOrNull { t -> devices.firstOrNull { it.type == t } }?.let { am.setCommunicationDevice(it) }
+        } else {
+            @Suppress("DEPRECATION")
+            val headset = am.isWiredHeadsetOn || am.isBluetoothScoOn || am.isBluetoothA2dpOn
+            @Suppress("DEPRECATION")
+            am.isSpeakerphoneOn = !headset
+        }
+    }
+
+    /** وصّلت سماعة أو فصلتها أثناء المحادثة: نعيد اختيار مخرج الصوت */
+    private val deviceWatch = object : android.media.AudioDeviceCallback() {
+        override fun onAudioDevicesAdded(added: Array<out AudioDeviceInfo>?) { if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager) }
+        override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>?) { if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager) }
+    }
+    private var audioOn = false
+
     private fun audio(on: Boolean) {
         val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (on) {
             savedMode = am.mode
             am.mode = AudioManager.MODE_IN_COMMUNICATION
-            if (Build.VERSION.SDK_INT >= 31) {
-                am.availableCommunicationDevices.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }?.let { am.setCommunicationDevice(it) }
-            } else {
-                @Suppress("DEPRECATION")
-                am.isSpeakerphoneOn = true
-            }
+            audioOn = true
+            route(am)
+            runCatching { am.registerAudioDeviceCallback(deviceWatch, android.os.Handler(android.os.Looper.getMainLooper())) }
             if (Build.VERSION.SDK_INT >= 26 && focus == null) {
                 focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                     .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
@@ -323,6 +344,8 @@ object Voice {
             }
             background(on = true, withMic = false)
         } else {
+            audioOn = false
+            runCatching { am.unregisterAudioDeviceCallback(deviceWatch) }
             if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
                 @Suppress("DEPRECATION")
                 am.isSpeakerphoneOn = false
