@@ -10,7 +10,7 @@ data class VoiceMember(val uid: String, val username: String, val sessionId: Str
 data class PlayedCard(val seat: Int, val card: Card)
 data class Contract(val mode: String, val trump: String?, val buyer: Int, val qabaTo: Int)
 data class Doubling(val level: Int, val gahwa: Boolean, val locked: Boolean)
-data class Declared(val seat: Int, val kinds: List<String>, val cards: List<String>?, val cancelled: Boolean)
+data class Declared(val seat: Int, val kinds: List<String>, val cards: List<String>?, val cancelled: Boolean, val faces: List<Card> = emptyList())
 data class LastHand(val points: List<Int>, val kaboot: Int?)
 
 data class GameActions(
@@ -138,6 +138,7 @@ data class TableView(
                         it.optJSONArray("kinds").mapIndexed { x, i -> x.optString(i) },
                         it.optJSONArray("cards")?.let { c -> c.mapIndexed { x, i -> x.optString(i) } },
                         it.optBoolean("cancelled"),
+                        it.optJSONArray("faces").objects().mapNotNull { c -> Card.from(c) },
                     )
                 },
                 actions = GameActions(

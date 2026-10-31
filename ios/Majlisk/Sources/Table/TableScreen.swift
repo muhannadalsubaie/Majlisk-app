@@ -189,11 +189,11 @@ struct BalootBoard: View {
             GeometryReader { geo in
                 let unit = geo.size.width / 4.6
                 VStack(spacing: 6) {
-                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, partner: true).frame(width: unit * 3)
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: text.faces((me + 2) % 4), partner: true).frame(width: unit * 3)
                     HStack(spacing: 6) {
-                        PlayerTag(v: v, g: g, seat: (me + 1) % 4).frame(width: unit * 0.8)
+                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: text.faces((me + 1) % 4)).frame(width: unit * 0.8)
                         trickArea.frame(width: min(unit * 3, 300), height: min(unit * 3, 300))
-                        PlayerTag(v: v, g: g, seat: (me + 3) % 4).frame(width: unit * 0.8)
+                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: text.faces((me + 3) % 4)).frame(width: unit * 0.8)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -238,7 +238,16 @@ struct BalootBoard: View {
                     }
                 }
                 // يد اللاعب
-                if mySeat != nil {
+                if let mine = mySeat {
+                    let myFaces = text.faces(mine)
+                    if !myFaces.isEmpty {
+                        HStack(spacing: 8) {
+                            Text("مشروعك").font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
+                            ProjectFaces(faces: myFaces)
+                        }
+                        .frame(maxWidth: .infinity)
+                        .accessibilityHidden(true)
+                    }
                     Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
@@ -417,20 +426,36 @@ private struct PlayerTag: View {
     let v: TableView
     let g: GameView
     let seat: Int
+    var faces: [Card] = []
     var partner = false
     var body: some View {
         let s = v.seat(seat)
         let turn = g.turn == seat && g.phase != "matchOver"
         let label = (s?.username ?? "مقعد \(seat + 1)") + (s?.isBot == true ? " (روبوت)" : "") + (s?.away == true ? " (انقطع الاتصال)" : "") + (partner ? " (شريكك)" : "")
-        Text(label)
-            .font(.system(size: 14, weight: .bold))
-            .multilineTextAlignment(.center)
-            .minimumScaleFactor(0.7)
+        VStack(spacing: 4) {
+            Text(label)
+                .font(.system(size: 14, weight: .bold))
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
+            if !faces.isEmpty { ProjectFaces(faces: faces) }
+        }
             .padding(.horizontal, 4).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
             .background(turn ? Palette.gold.opacity(0.08) : .clear)
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+    }
+}
+
+/// أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان)
+private struct ProjectFaces: View {
+    let faces: [Card]
+    var body: some View {
+        HStack(spacing: -12) {
+            ForEach(Array(faces.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: 24, height: 35) }
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .accessibilityHidden(true)
     }
 }
 

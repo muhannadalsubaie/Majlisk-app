@@ -11,6 +11,10 @@ import com.majlisk.app.model.teamOf
 class BalootText(private val view: TableView, private val g: GameView, private val shownTrick: List<PlayedCard>) {
     private val mySeat = view.mySeat
     private val me = mySeat ?: 0
+    /** الأكلة اللي على الشاشة (بعد آخر ورقة تبقى الأكلة المنتهية ظاهرة لحظة) */
+    private val shownTrickNo = if (g.trick.isEmpty() && shownTrick.isNotEmpty()) g.trickNo - 1 else g.trickNo
+    /** المشاريع تنكشف وتنقرأ في اللفة الثانية فقط */
+    val revealing = g.phase == "playing" && shownTrickNo == 1
     fun name(s: Int) = view.seats.getOrNull(s)?.username ?: "مقعد ${s + 1}"
     private fun teamWord(s: Int) = if (mySeat == null) "فريق ${name(s)}" else if (teamOf(s) == teamOf(me)) "فريقك" else "الخصم"
 
@@ -50,9 +54,9 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         return if (first == mySeat) "البداية عندك" else "البداية عند ${name(first)}"
     }
 
-    /** المشاريع: من عنده مشروع فقط، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب */
+    /** المشاريع (في اللفة الثانية فقط): من عنده مشروع، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب */
     fun projects(): String {
-        val lines = g.declared.map { d ->
+        val lines = (if (revealing) g.declared else emptyList()).map { d ->
             val who = if (d.seat == mySeat) "أنت" else name(d.seat)
             val cards = d.cards
             if (cards != null) "$who: " + d.kinds.mapIndexed { i, k -> cards.getOrNull(i)?.let { "$k: $it" } ?: k }.joinToString("، و")
@@ -61,6 +65,9 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         g.balootSeat?.let { lines += "${if (it == mySeat) "أنت" else name(it)}: بلوت" }
         return if (lines.isEmpty()) "لا توجد مشاريع معلنة" else lines.joinToString(". ")
     }
+
+    /** أوراق مشروع هذا المقعد المكشوفة (في اللفة الثانية فقط) */
+    fun faces(seat: Int): List<com.majlisk.app.model.Card> = if (!revealing) emptyList() else g.declared.filter { it.seat == seat }.flatMap { it.faces }
 
     /** دور مين الآن، وفي أي مرحلة */
     fun turn(): String {

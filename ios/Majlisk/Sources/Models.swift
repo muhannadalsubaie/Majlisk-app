@@ -58,7 +58,7 @@ struct VoiceMember: Equatable { let uid: String; let username: String; let sessi
 struct PlayedCard: Equatable { let seat: Int; let card: Card }
 struct Contract: Equatable { let mode: String; let trump: String?; let buyer: Int; let qabaTo: Int }
 struct Doubling: Equatable { let level: Int; let gahwa: Bool; let locked: Bool }
-struct Declared: Equatable { let seat: Int; let kinds: [String]; let cards: [String]?; let cancelled: Bool }
+struct Declared: Equatable { let seat: Int; let kinds: [String]; let cards: [String]?; let cancelled: Bool; var faces: [Card] = [] }
 struct LastHand: Equatable { let points: [Int]; let kaboot: Int? }
 
 struct GameActions {
@@ -184,7 +184,7 @@ struct TableView {
             balootSeat: g.intOrNil("balootSeat"),
             projectsWinningTeam: g.obj("projects")?.intOrNil("winningTeam"),
             declared: g.objs("declared").map {
-                Declared(seat: $0.int("seat"), kinds: $0.strs("kinds"), cards: $0["cards"] == nil || $0["cards"] is NSNull ? nil : $0.strs("cards"), cancelled: $0.bool("cancelled"))
+                Declared(seat: $0.int("seat"), kinds: $0.strs("kinds"), cards: $0["cards"] == nil || $0["cards"] is NSNull ? nil : $0.strs("cards"), cancelled: $0.bool("cancelled"), faces: $0.objs("faces").compactMap { Card($0) })
             },
             actions: GameActions(
                 bids: a.objs("bids").map { Bid(type: $0.str("type"), suit: $0.strOrNil("suit"), raw: $0) },

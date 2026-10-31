@@ -8,6 +8,13 @@ struct BalootText {
     private var mySeat: Int? { view.mySeat }
     private var me: Int { view.mySeat ?? 0 }
 
+    /// الأكلة اللي على الشاشة (بعد آخر ورقة تبقى الأكلة المنتهية ظاهرة لحظة)
+    private var shownTrickNo: Int { g.trick.isEmpty && !shownTrick.isEmpty ? g.trickNo - 1 : g.trickNo }
+    /// المشاريع تنكشف وتنقرأ في اللفة الثانية فقط
+    var revealing: Bool { g.phase == "playing" && shownTrickNo == 1 }
+    /// أوراق مشروع هذا المقعد المكشوفة (في اللفة الثانية فقط)
+    func faces(_ seat: Int) -> [Card] { revealing ? g.declared.filter { $0.seat == seat }.flatMap(\.faces) : [] }
+
     func name(_ s: Int) -> String { view.seat(s)?.username ?? "مقعد \(s + 1)" }
     private func teamWord(_ s: Int) -> String { mySeat == nil ? "فريق \(name(s))" : teamOf(s) == teamOf(me) ? "فريقك" : "الخصم" }
 
@@ -45,9 +52,9 @@ struct BalootText {
     }
 
     /// المشاريع المعلنة ومن أعلنها (وأوراقها بعد الأكلة الأولى)
-    /// المشاريع: من عنده مشروع فقط، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب
+    /// المشاريع (في اللفة الثانية فقط): من عنده مشروع، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب
     func projects() -> String {
-        var lines = g.declared.map { d -> String in
+        var lines = (revealing ? g.declared : []).map { d -> String in
             let who = d.seat == mySeat ? "أنت" : name(d.seat)
             if let cards = d.cards {
                 return "\(who): " + d.kinds.enumerated().map { i, k in cards[safe: i].map { "\(k): \($0)" } ?? k }.joined(separator: "، و")

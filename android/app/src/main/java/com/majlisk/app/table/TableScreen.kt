@@ -45,6 +45,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.sp
 import androidx.compose.foundation.layout.absoluteOffset
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.runtime.key
@@ -288,13 +289,13 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.weight(0.8f))
-                PlayerTag(v, g, seatOf(2), partner = true, modifier = Modifier.weight(3f))
+                PlayerTag(v, g, seatOf(2), faces = text.faces(seatOf(2)), partner = true, modifier = Modifier.weight(3f))
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PlayerTag(v, g, seatOf(1), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(1), faces = text.faces(seatOf(1)), modifier = Modifier.weight(0.8f))
                 Box(Modifier.weight(3f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
-                PlayerTag(v, g, seatOf(3), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(3), faces = text.faces(seatOf(3)), modifier = Modifier.weight(0.8f))
             }
         }
 
@@ -355,6 +356,12 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
             }
         // يد اللاعب
         if (mySeat != null) {
+            text.faces(mySeat).takeIf { it.isNotEmpty() }?.let { mine ->
+                Row(Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+                    Text("مشروعك", color = Palette.goldSoft, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+                    ProjectFaces(mine)
+                }
+            }
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp)) {
@@ -405,7 +412,7 @@ private fun Modifier.dashedPill(): Modifier = drawBehind {
 }
 
 @Composable
-private fun PlayerTag(v: TableView, g: GameView, seat: Int, partner: Boolean = false, modifier: Modifier = Modifier) {
+private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, modifier: Modifier = Modifier) {
     val s = v.seats.getOrNull(seat)
     val turn = g.turn == seat && g.phase != "matchOver"
     val label = buildString {
@@ -414,14 +421,27 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, partner: Boolean = f
         if (s?.away == true) append(" (انقطع الاتصال)")
         if (partner) append(" (شريكك)")
     }
-    Box(
+    Column(
         modifier
             .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
             .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
             .padding(horizontal = 4.dp, vertical = 8.dp),
-        contentAlignment = Alignment.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
+        if (faces.isNotEmpty()) ProjectFaces(faces)
+    }
+}
+
+/** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
+@Composable
+private fun ProjectFaces(faces: List<Card>) {
+    val w = 24; val step = 12
+    Box(Modifier.size((w + step * (faces.size - 1)).dp, 35.dp).clearAndSetSemantics { }) {
+        faces.forEachIndexed { i, c ->
+            CardFaceBox(c, Modifier.absoluteOffset(x = (i * step).dp).size(w.dp, 35.dp))
+        }
     }
 }
 
