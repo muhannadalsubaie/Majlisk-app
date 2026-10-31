@@ -15,7 +15,7 @@ final class Sounds {
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
-        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "proj-hundred", "proj-400",
+        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
     ]
 
     func preload() {
