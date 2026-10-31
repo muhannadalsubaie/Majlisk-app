@@ -43,7 +43,7 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         TopBar("الإعدادات", onBack = onBack)
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
-        SwitchRow("نغمة دورك", chime, { chime = it; Prefs.turnChime = it })
+        SwitchRow("صوت دورك", chime, { chime = it; Prefs.turnChime = it })
         if (!embedded) {
             SectionTitle("الحساب")
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)

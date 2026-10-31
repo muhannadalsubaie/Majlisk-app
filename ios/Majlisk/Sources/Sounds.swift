@@ -15,7 +15,7 @@ final class Sounds {
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
-        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "proj-hundred", "proj-400",
+        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "proj-hundred", "proj-400",
     ]
 
     func preload() {
@@ -82,8 +82,9 @@ final class Sounds {
         // مشغّل جديد كل مرة (المحادثة الصوتية تغيّر إعدادات الصوت فيتعطل المشغّل القديم)،
         // وبصوت واضح حتى مع VoiceOver (كان خافتاً معه فما ينسمع)
         DispatchQueue.main.async { [weak self] in
-            guard let self, let d = self.data["turn"], let p = try? AVAudioPlayer(data: d) else { return }
-            p.volume = 0.6
+            // كلمة "دورك" منطوقة (بدل النغمة)
+            guard let self, let d = self.data["voice-turn"], let p = try? AVAudioPlayer(data: d) else { return }
+            p.volume = 0.9
             p.play()
             self.playing.removeAll { !$0.isPlaying }
             self.playing.append(p)

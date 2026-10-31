@@ -236,7 +236,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         val starts = g.myTurn && !wasMyTurn
         wasMyTurn = g.myTurn
         // الجرس أولاً، ثم "دورك" بعد لحظة: قارئ الشاشة يخفض الأصوات وهو يتكلم فكان يغطي الجرس
-        if (starts) { delay(700); Announcer.announce("دورك") }
+        // صوت "دورك" المنطوق يكفي؛ قارئ الشاشة يعلنها فقط إذا كان الصوت مطفأ (كتم أو صوت دورك مقفل)
+        if (starts && (com.majlisk.app.data.Prefs.muted || !com.majlisk.app.data.Prefs.turnChime)) Announcer.announce("دورك")
     }
 
     val reads = mapOf(

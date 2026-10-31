@@ -24,7 +24,7 @@ object Sounds {
         "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
-        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "proj-hundred", "proj-400",
+        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "proj-hundred", "proj-400",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -92,8 +92,8 @@ object Sounds {
 
     fun turn(soft: Boolean) {
         if (!Prefs.turnChime) return
-        // بصوت واضح حتى مع قارئ الشاشة (كان خافتاً معه فما ينسمع)
-        play("turn", gain = 0.6f, vary = false)
+        // كلمة "دورك" منطوقة (بدل النغمة)
+        play("voice-turn", gain = 0.9f, vary = false)
     }
 
     fun handEnd(result: String, kaboot: Boolean) {
