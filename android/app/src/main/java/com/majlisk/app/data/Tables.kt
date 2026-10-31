@@ -149,6 +149,8 @@ class TableConnection(val tableId: String) {
     private var wake = CompletableDeferred<Unit>()
 
     fun start() {
+        // نبقي التطبيق شغال والطاولة مفتوحة حتى لو طلعت منه: بدونها يجمّده Android فتتأخر الأصوات وتعلق
+        com.majlisk.app.voice.KeepAlive.table(true)
         loop = scope.launch {
             var retry = 0
             while (!stopped) {
@@ -252,6 +254,7 @@ class TableConnection(val tableId: String) {
 
     fun stop() {
         stopped = true
+        com.majlisk.app.voice.KeepAlive.table(false)
         runCatching { connectivity.unregisterNetworkCallback(netCallback) }
         ws?.close(1000, null)
         scope.cancel()

@@ -1,13 +1,11 @@
 package com.majlisk.app.voice
 
 import android.content.Context
-import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioFocusRequest
 import android.media.AudioManager
 import android.os.Build
-import androidx.core.content.ContextCompat
 import com.majlisk.app.MainActivity
 import com.majlisk.app.MajliskApp
 import com.majlisk.app.a11y.Announcer
@@ -386,10 +384,7 @@ object Voice {
     }
 
     /** تشغيل المحادثة في الخلفية (خدمة أمامية بإشعار ثابت) أو إيقافها */
-    private fun background(on: Boolean, withMic: Boolean) {
-        val i = Intent(ctx, VoiceService::class.java).putExtra("mic", withMic)
-        runCatching { if (on) ContextCompat.startForegroundService(ctx, i) else ctx.stopService(i) }
-    }
+    private fun background(on: Boolean, withMic: Boolean) = KeepAlive.voice(on, withMic)
 }
 
 // ───── مساعدات WebRTC ─────
