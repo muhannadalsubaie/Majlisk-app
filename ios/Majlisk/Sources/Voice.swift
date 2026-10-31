@@ -23,6 +23,8 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         // الصوت من مكبر الجهاز (لا السماعة الصغيرة)، ويمتزج مع VoiceOver
         let cfg = RTCAudioSessionConfiguration.webRTC()
         cfg.categoryOptions = [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers]
+        // الاستماع بالوضع العادي: وضع المكالمات يخفض أصوات اللعب كثيراً
+        cfg.mode = AVAudioSession.Mode.default.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
         return RTCPeerConnectionFactory(encoderFactory: RTCDefaultVideoEncoderFactory(), decoderFactory: RTCDefaultVideoDecoderFactory())
     }()
@@ -135,6 +137,8 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         }
         if let mic {
             mic.isEnabled = !m
+            // مقفل: الوضع العادي (صوت اللعب كامل)، مفتوح: وضع المكالمات (إلغاء الصدى)
+            configureAudio(listening: m)
             update(muted: m)
             Announcer.announce(m ? "الميكروفون مغلق" : "الميكروفون مفتوح")
             let sid = sessionId
@@ -265,7 +269,13 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             try? s.setCategory(.playback, options: [.mixWithOthers])
             return
         }
-        try? s.setCategory(.playAndRecord, mode: .voiceChat, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
+        // استماع فقط (الميكروفون مقفل): الوضع العادي، فتبقى أصوات الورق والتعليق بصوتها الكامل.
+        // الميكروفون مفتوح: وضع المكالمات (يلغي الصدى حتى لا يسمعك الباقون مرتين)، وهو يخفض الأصوات شوي
+        let mode: AVAudioSession.Mode = listening == true ? .default : .voiceChat
+        let cfg = RTCAudioSessionConfiguration.webRTC()
+        cfg.mode = mode.rawValue
+        RTCAudioSessionConfiguration.setWebRTC(cfg)
+        try? s.setCategory(.playAndRecord, mode: mode, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
         try? s.setActive(true)
     }
 
