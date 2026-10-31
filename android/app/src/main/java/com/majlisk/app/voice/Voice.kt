@@ -160,6 +160,7 @@ object Voice {
         mic?.let { track ->
             track.setEnabled(!muted)
             set { copy(muted = muted) }
+            setTalking(!muted)
             Announcer.announce(if (muted) "الميكروفون مغلق" else "الميكروفون مفتوح")
             Session.scope.launch { runCatching { request(JSONObject().put("op", "mute").put("sessionId", sessionId).put("muted", muted)) } }
             return
@@ -189,6 +190,7 @@ object Voice {
                     r.optString("sessionId").takeIf { it.isNotEmpty() }?.let { sessionId = it }
                     conn.setRemoteAwait(parseDesc(r.getJSONObject("answer"))!!)
                     set { copy(muted = false, busy = false) }
+                    setTalking(true)
                     MainActivity.current?.requestNotificationsOnce()
                     background(on = true, withMic = true)
                     Announcer.announce("الميكروفون مفتوح")
@@ -223,6 +225,7 @@ object Voice {
         if (members.find { it.uid == myUid }?.blocked == true && mic != null && !s.muted) {
             mic?.setEnabled(false)
             set { copy(muted = true) }
+            setTalking(false)
             Announcer.announce("كتمك مالك الطاولة في المحادثة الصوتية")
         }
         Session.scope.launch {
@@ -304,6 +307,16 @@ object Voice {
      * ونمسك تركيز الصوت ونطلب ألا يخفضنا النظام حين يتكلم TalkBack، فيبقى صوت اللاعبين بنفس المستوى.
      */
     private fun route(am: AudioManager) {
+        // سماعة موصولة والميكروفون مغلق: وضع الصوت العادي (جودة كاملة، والبلوتوث بجودة الأغاني لا المكالمات)
+        if (!talking && headsetConnected(am)) {
+            if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
+                @Suppress("DEPRECATION")
+                am.isSpeakerphoneOn = false
+            }
+            am.mode = AudioManager.MODE_NORMAL
+            return
+        }
+        am.mode = AudioManager.MODE_IN_COMMUNICATION
         if (Build.VERSION.SDK_INT >= 31) {
             val devices = am.availableCommunicationDevices
             val order = listOf(
@@ -319,6 +332,19 @@ object Voice {
         }
     }
 
+    private val headsetTypes = setOf(
+        AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_USB_HEADSET,
+        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_BLE_HEADSET,
+    )
+    private fun headsetConnected(am: AudioManager) = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { it.type in headsetTypes }
+
+    /** الميكروفون مفتوح (نحتاج وضع المكالمات لإلغاء الصدى) */
+    private var talking = false
+    private fun setTalking(on: Boolean) {
+        talking = on
+        if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
+    }
+
     /** وصّلت سماعة أو فصلتها أثناء المحادثة: نعيد اختيار مخرج الصوت */
     private val deviceWatch = object : android.media.AudioDeviceCallback() {
         override fun onAudioDevicesAdded(added: Array<out AudioDeviceInfo>?) { if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager) }
@@ -330,8 +356,8 @@ object Voice {
         val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
         if (on) {
             savedMode = am.mode
-            am.mode = AudioManager.MODE_IN_COMMUNICATION
             audioOn = true
+            talking = false
             route(am)
             runCatching { am.registerAudioDeviceCallback(deviceWatch, android.os.Handler(android.os.Looper.getMainLooper())) }
             if (Build.VERSION.SDK_INT >= 26 && focus == null) {
@@ -345,6 +371,7 @@ object Voice {
             background(on = true, withMic = false)
         } else {
             audioOn = false
+            talking = false
             runCatching { am.unregisterAudioDeviceCallback(deviceWatch) }
             if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
                 @Suppress("DEPRECATION")
