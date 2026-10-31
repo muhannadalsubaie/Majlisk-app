@@ -34,7 +34,7 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         }
         val mode = if (c.mode == "sun") "صن" else "حكم ${SUIT_NAMES[c.trump]}"
         val parts = mutableListOf(if (c.buyer == mySeat) "أنت اشتريت $mode" else "${name(c.buyer)} اشترى $mode، ${teamWord(c.buyer)}")
-        if (c.qabaTo != c.buyer) parts += "القبلة لـ${if (c.qabaTo == mySeat) "ك" else name(c.qabaTo)}"
+        if (c.qabaTo != c.buyer) parts += "ورقة الأرض لـ${if (c.qabaTo == mySeat) "ك" else name(c.qabaTo)}"
         parts += start()
         val d = g.doubling
         when {

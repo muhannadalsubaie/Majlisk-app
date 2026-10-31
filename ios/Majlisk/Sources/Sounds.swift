@@ -16,6 +16,7 @@ final class Sounds {
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
+        "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
     ]
 
     func preload() {
@@ -72,6 +73,8 @@ final class Sounds {
     }
 
     /// أحد انضم للمحادثة الصوتية / غادرها
+    /// جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره
+    func micToggle(_ open: Bool) { play(open ? "mic-on" : "mic-off", gain: 0.8, vary: false) }
     func voiceJoin() { play("voice-join", gain: 0.7, vary: false) }
     func voiceLeave() { play("voice-leave", gain: 0.7, vary: false) }
 

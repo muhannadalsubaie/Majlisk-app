@@ -25,6 +25,7 @@ object Sounds {
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
+        "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -83,6 +84,9 @@ object Sounds {
     fun voices(keys: List<String>) {
         keys.forEachIndexed { i, k -> play("voice-$k", at = i * 0.7, gain = 1f, vary = false) }
     }
+
+    /** جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره */
+    fun micToggle(open: Boolean) = play(if (open) "mic-on" else "mic-off", gain = 0.8f, vary = false)
 
     /** أحد انضم للمحادثة الصوتية / غادرها */
     fun voiceJoin() = play("voice-join", gain = 0.7f, vary = false)

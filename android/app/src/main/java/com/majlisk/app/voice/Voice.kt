@@ -161,6 +161,7 @@ object Voice {
             track.setEnabled(!muted)
             set { copy(muted = muted) }
             setTalking(!muted)
+            com.majlisk.app.data.Sounds.micToggle(!muted)
             Announcer.announce(if (muted) "الميكروفون مغلق" else "الميكروفون مفتوح")
             Session.scope.launch { runCatching { request(JSONObject().put("op", "mute").put("sessionId", sessionId).put("muted", muted)) } }
             return
@@ -191,6 +192,7 @@ object Voice {
                     conn.setRemoteAwait(parseDesc(r.getJSONObject("answer"))!!)
                     set { copy(muted = false, busy = false) }
                     setTalking(true)
+                    com.majlisk.app.data.Sounds.micToggle(true)
                     MainActivity.current?.requestNotificationsOnce()
                     background(on = true, withMic = true)
                     Announcer.announce("الميكروفون مفتوح")

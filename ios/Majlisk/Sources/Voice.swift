@@ -140,6 +140,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             // مقفل: الوضع العادي (صوت اللعب كامل)، مفتوح: وضع المكالمات (إلغاء الصدى)
             configureAudio(listening: m)
             update(muted: m)
+            DispatchQueue.main.async { Sounds.shared.micToggle(!m) }
             Announcer.announce(m ? "الميكروفون مغلق" : "الميكروفون مفتوح")
             let sid = sessionId
             Task { _ = try? await request(["op": "mute", "sessionId": sid ?? "", "muted": m]) }
@@ -171,6 +172,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 guard let answer = parseDesc(r.obj("answer")) else { throw ApiError(code: "voice-failed") }
                 try await conn.setRemoteDescription(answer)
                 update(muted: false, busy: false)
+                DispatchQueue.main.async { Sounds.shared.micToggle(true) }
                 Announcer.announce("الميكروفون مفتوح")
             } catch {
                 mic?.isEnabled = false

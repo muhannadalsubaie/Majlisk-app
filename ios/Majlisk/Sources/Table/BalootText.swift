@@ -34,7 +34,7 @@ struct BalootText {
         }
         let mode = c.mode == "sun" ? "صن" : "حكم \(SUIT_NAMES[c.trump ?? ""] ?? "")"
         var parts = [c.buyer == mySeat ? "أنت اشتريت \(mode)" : "\(name(c.buyer)) اشترى \(mode)، \(teamWord(c.buyer))"]
-        if c.qabaTo != c.buyer { parts.append("القبلة لـ\(c.qabaTo == mySeat ? "ك" : name(c.qabaTo))") }
+        if c.qabaTo != c.buyer { parts.append("ورقة الأرض لـ\(c.qabaTo == mySeat ? "ك" : name(c.qabaTo))") }
         parts.append(start())
         let d = g.doubling
         if d.gahwa { parts.append("قهوة") }
