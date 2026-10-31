@@ -179,6 +179,8 @@ class TableConnection(val tableId: String) {
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             "events" -> msg.optJSONArray("events")?.let { a ->
                 val events = (0 until a.length()).map { a.optString(it) }
+                // المزايدة والدبل بأصوات منطوقة (حكم، صن، بس/ولا، دبل...)
+                msg.optJSONArray("voices")?.let { v -> Sounds.voices((0 until v.length()).map { v.optString(it) }) }
                 eventSound(events)
                 Announcer.announceEvent(events.joinToString("، "))
             }

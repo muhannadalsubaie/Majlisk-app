@@ -22,7 +22,9 @@ object Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave", "proj-hundred", "proj-400",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
+        "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
+        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "proj-hundred", "proj-400",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -76,6 +78,11 @@ object Sounds {
     /** لاعب انضم للطاولة أو رجع اتصاله (هارب يطلع) / غادرها أو انقطع اتصاله (فقاعتان تنزلان) */
     fun tableJoin() = play("table-join", gain = 0.7f, vary = false)
     fun tableLeave() = play("table-leave", gain = 0.7f, vary = false)
+
+    /** كلمات المزايدة والدبل منطوقة بالترتيب (من الخادم): حكم، صن، بس، ولا، دبل، مقفل... */
+    fun voices(keys: List<String>) {
+        keys.forEachIndexed { i, k -> play("voice-$k", at = i * 0.7, gain = 0.9f, vary = false) }
+    }
 
     /** أحد انضم للمحادثة الصوتية / غادرها */
     fun voiceJoin() = play("voice-join", gain = 0.7f, vary = false)

@@ -254,6 +254,9 @@ final class TableConnection: ObservableObject {
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             let events = msg.strs("events").filter { !$0.isEmpty }
+            // المزايدة والدبل بأصوات منطوقة (حكم، صن، بس/ولا، دبل...)
+            let voices = msg.strs("voices")
+            if !voices.isEmpty { Sounds.shared.voices(voices) }
             // الانضمام ورجوع الاتصال بنغمة الانضمام، والمغادرة وانقطاع الاتصال بنغمة المغادرة
             if events.contains(where: { $0.hasPrefix("انضم ") || $0.hasPrefix("عاد اتصال") }) { Sounds.shared.tableJoin() }
             else if events.contains(where: { $0.hasPrefix("غادر ") || $0.hasPrefix("انقطع اتصال") || ($0.hasPrefix("خرج ") && $0.contains("من الطاولة")) }) { Sounds.shared.tableLeave() }

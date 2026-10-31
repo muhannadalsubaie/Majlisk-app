@@ -318,7 +318,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     g.actions.bids.forEach { b ->
-                        com.majlisk.app.ui.SmallButton(b.label, { bidSound(b); toHand(); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
+                        // اللفة الثانية: "ولا" بدل "بس"
+                        com.majlisk.app.ui.SmallButton(if (b.type == "pass" && g.bidRound == 2) "ولا" else b.label, { toHand(); act(jsonOf("type" to "bid", "bid" to b.raw)) }, primary = b.type != "pass")
                     }
                 }
             }
@@ -327,7 +328,6 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     g.actions.doubleLabel?.let { label ->
                         PrimaryButton(label, {
-                            if (label == "قهوة") Sounds.gahwa() else Sounds.double(g.doubling.level + 1)
                             toHand()
                             act(jsonOf("type" to "double"))
                         }, modifier = Modifier.weight(1f))
@@ -509,14 +509,6 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, silent: Boolea
 
 private fun cardKey(c: Card) = "${c.suit}${c.rank}"
 
-/** صاحب المزايدة يسمع صوتها فوراً عند الضغط (ولا يتكرر حين يصل التحديث من الخادم) */
-private fun bidSound(b: Bid) = when (b.type) {
-    "hokm" -> Sounds.hokm()
-    "sun", "ashkal" -> Sounds.sun()
-    "confirmHokm" -> Sounds.confirmHokm()
-    "double" -> Sounds.double(2)
-    else -> Unit
-}
 
 /**
  * أصوات اللعب: تُستدعى مع كل حالة تصل من الخادم (لا من الشاشة)، فتشتغل والتطبيق في الخلفية.
@@ -569,11 +561,5 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
         h.postDelayed({ Sounds.handEnd(result, r.kaboot != null) }, TRICK_HOLD_MS + 200)
         if (g.outcomeStatus == "won" && team != null) h.postDelayed({ Sounds.matchEnd(g.outcomeWinner == team) }, TRICK_HOLD_MS + 1600)
     }
-    // المزايدة
-    if (g.hokmBidKey != null && g.hokmBidKey != prev.hokmBidKey) Sounds.hokm()
-    if (g.contract != null && prev.contract == null) {
-        if (g.contract.mode == "sun") Sounds.sun() else if (prev.hokmBidKey != null) Sounds.confirmHokm()
-    }
-    if (g.doubling.gahwa && !prev.doubling.gahwa) Sounds.gahwa()
-    else if (g.doubling.level > prev.doubling.level) Sounds.double(g.doubling.level)
+    // المزايدة والدبل: أصوات منطوقة يرسلها الخادم مع الإعلان (Sounds.voices)
 }

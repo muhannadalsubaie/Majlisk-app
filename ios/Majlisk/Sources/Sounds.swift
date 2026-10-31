@@ -13,7 +13,9 @@ final class Sounds {
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3", "collide4",
         "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
-        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave", "proj-hundred", "proj-400",
+        "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
+        "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
+        "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "proj-hundred", "proj-400",
     ]
 
     func preload() {
@@ -63,6 +65,11 @@ final class Sounds {
     /// لاعب انضم للطاولة أو رجع اتصاله (هارب يطلع) / غادرها أو انقطع اتصاله (فقاعتان تنزلان)
     func tableJoin() { play("table-join", gain: 0.7, vary: false) }
     func tableLeave() { play("table-leave", gain: 0.7, vary: false) }
+
+    /// كلمات المزايدة والدبل منطوقة بالترتيب (من الخادم): حكم، صن، بس، ولا، دبل، مقفل...
+    func voices(_ keys: [String]) {
+        for (i, k) in keys.enumerated() { play("voice-\(k)", at: Double(i) * 0.7, gain: 0.9, vary: false) }
+    }
 
     /// أحد انضم للمحادثة الصوتية / غادرها
     func voiceJoin() { play("voice-join", gain: 0.7, vary: false) }

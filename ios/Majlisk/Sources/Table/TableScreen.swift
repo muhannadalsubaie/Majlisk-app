@@ -194,7 +194,8 @@ struct BalootBoard: View {
                 if !g.actions.bids.isEmpty {
                     FlowLayout(spacing: 8) {
                         ForEach(g.actions.bids) { b in
-                            SmallButton(b.label, primary: b.type != "pass") { bidSound(b); toHand(); act(["type": "bid", "bid": b.raw]) }
+                            // اللفة الثانية: "ولا" بدل "بس"
+                            SmallButton(b.type == "pass" && g.bidRound == 2 ? "ولا" : b.label, primary: b.type != "pass") { toHand(); act(["type": "bid", "bid": b.raw]) }
                         }
                     }
                     .accessibilityElement(children: .contain).accessibilityLabel("المزايدة")
@@ -204,7 +205,6 @@ struct BalootBoard: View {
                     HStack(spacing: 8) {
                         if let label = g.actions.doubleLabel {
                             MButton(label, .primary) {
-                                if label == "قهوة" { Sounds.shared.gahwa() } else { Sounds.shared.double(g.doubling.level + 1) }
                                 toHand()
                                 act(["type": "double"])
                             }
@@ -316,16 +316,6 @@ struct BalootBoard: View {
         .accessibilityAction(named: "دور مين") { _ = read(.down) }
     }
 
-    /// صاحب المزايدة يسمع صوتها فوراً عند الضغط (ولا يتكرر حين يصل التحديث من الخادم)
-    private func bidSound(_ b: Bid) {
-        switch b.type {
-        case "hokm": Sounds.shared.hokm()
-        case "sun", "ashkal": Sounds.shared.sun()
-        case "confirmHokm": Sounds.shared.confirmHokm()
-        case "double": Sounds.shared.double(2)
-        default: break
-        }
-    }
 
 }
 
@@ -380,13 +370,7 @@ final class GameSoundTracker {
                 DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD + 1.6) { s.matchEnd(won: won) }
             }
         }
-        // المزايدة
-        if let k = g.hokmBidKey, k != prev.hokmBidKey { s.hokm() }
-        if let c = g.contract, prev.contract == nil {
-            if c.mode == "sun" { s.sun() } else if prev.hokmBidKey != nil { s.confirmHokm() }
-        }
-        if g.doubling.gahwa && !prev.doubling.gahwa { s.gahwa() }
-        else if g.doubling.level > prev.doubling.level { s.double(g.doubling.level) }
+        // المزايدة والدبل: أصوات منطوقة يرسلها الخادم مع الإعلان (Sounds.voices)
     }
 }
 
