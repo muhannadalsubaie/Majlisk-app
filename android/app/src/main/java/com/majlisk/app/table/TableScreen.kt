@@ -309,7 +309,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                 runCatching { fr.requestFocus() }
             }
         }
-        val toHand = { focusCard(hand.firstOrNull()) }
+        // أزرار المزايدة والدبل تختفي بعد الضغط: المؤشر ينتقل لزر الميكروفون بصمت
+        val toHand = { com.majlisk.app.voice.MicFocus.take() }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // أزرار المزايدة

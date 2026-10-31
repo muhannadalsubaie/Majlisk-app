@@ -264,8 +264,8 @@ struct BalootBoard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + SILENT_FOCUS) { if silentCard == c { silentCard = nil } }
     }
 
-    /// أزرار المزايدة تختفي بعد الضغط: المؤشر ينتقل لأول ورقة في يدك
-    private func toHand() { focus(sortHand(g.myHand).first) }
+    /// أزرار المزايدة والدبل تختفي بعد الضغط: المؤشر ينتقل لزر الميكروفون بصمت
+    private func toHand() { MicFocus.shared.take() }
 
     /// بعد آخر ورقة في الأكلة: نبقي الأوراق الأربع ظاهرة لحظة قبل أن تذهب لصاحبها
     private func holdTrick() {
