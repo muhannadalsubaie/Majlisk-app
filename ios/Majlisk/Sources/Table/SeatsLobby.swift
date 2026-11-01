@@ -54,7 +54,9 @@ struct SeatsLobby: View {
             if !v.spectators.isEmpty {
                 Note("المشاهدون: " + v.spectators.map { $0.uid == uid ? "\($0.username) (أنت)" : $0.username }.joined(separator: "، "))
             }
-            if isOwner { MButton("بدء المباراة", .primary, enabled: v.seats.count == 4 && v.seats.allSatisfy { $0 != nil }) { conn.send("start") } }
+            // البلوت والجاكارو أربعة، الدومينو لاعبين أو أربعة، اللودو لاعبين أو ثلاثة أو أربعة
+            if v.startCounts != [4] { Note("تبدأ بـ \(v.startCounts.map(String.init).joined(separator: " أو ")) لاعبين") }
+            if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { conn.send("start") } }
             else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
         }
         .sheet(item: $panel) { p in

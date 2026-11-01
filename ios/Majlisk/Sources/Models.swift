@@ -133,6 +133,8 @@ struct TableView {
     let domino: DominoView?
     let jackaroo: JackarooView?
     let ludo: LudoView?
+    /// كم لاعب يقدر يبدأ اللعبة
+    let startCounts: [Int]
 
     var hasGame: Bool { game != nil || otherGame }
     var playing: Bool {
@@ -161,6 +163,7 @@ struct TableView {
         let ui = o.obj("ui") ?? [:]
         domino = o.obj("domino").map { DominoView($0, ui, log: o.objs("dominoLog")) }
         jackaroo = o.obj("jackaroo").map { JackarooView($0, ui, mySeat: o.intOrNil("mySeat")) }
+        let counts = o.ints("startCounts"); startCounts = counts.isEmpty ? [4] : counts
         ludo = o.obj("ludo").map { LudoView($0, ui, log: o.strs("ludoLog")) }
     }
 

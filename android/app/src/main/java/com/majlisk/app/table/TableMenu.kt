@@ -35,6 +35,7 @@ private sealed interface Page {
     data object Invite : Page
     data object Settings : Page
     data object Stop : Page
+    data object ChangeGame : Page
     data class Replace(val seat: Int) : Page
     data class Member(val uid: String) : Page
     data class Confirm(val ban: Boolean, val uid: String) : Page
@@ -77,6 +78,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 enabled = !voice.busy, fill = true,
             )
             SecondaryButton("الإعدادات", { page = Page.Settings }, fill = true)
+            if (isOwner) SecondaryButton("تغيير اللعبة", { page = Page.ChangeGame }, fill = true)
             if (isOwner && (v.hasGame || v.seats.any { it != null })) DangerButton("إيقاف اللعبة", { page = Page.Stop })
             DangerButton("مغادرة الطاولة", onLeave)
             SecondaryButton("إغلاق القائمة", onClose, fill = true)
@@ -85,6 +87,16 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             Body("إيقاف نهائي: تُلغى المباراة وترجع النتيجة صفر صفر، ويصبح الجميع مشاهدين والمقاعد فارغة. بعدها تختار أنت من يلعب من صفحة اللاعبين.")
             DangerButton("إيقاف اللعبة", { conn.send("stop"); onClose() })
             SecondaryButton("إلغاء", { page = Page.Main }, fill = true)
+        }
+        // المالك يغيّر لعبة الطاولة: تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة
+        Page.ChangeGame -> MajliskDialog("تغيير اللعبة", { page = Page.Main }) {
+            Body("الحالية: ${com.majlisk.app.data.gameTitle(v.kind, v.variant)}. لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة.")
+            listOf(
+                "baloot" to "classic", "domino" to "classic", "jackaroo" to "classic", "jackaroo" to "complex", "ludo" to "classic", "ludo" to "teams",
+            ).filter { (k, va) -> !(k == v.kind && va == v.variant) }.forEach { (k, va) ->
+                PrimaryButton(com.majlisk.app.data.gameTitle(k, va), { conn.send("changeGame", "kind" to k, "variant" to va); onClose() })
+            }
+            SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }
         Page.Invite -> InviteFriendsDialog(v.id, seat = null, title = "دعوة صديق") { page = Page.Main }
         Page.Settings -> MajliskDialog("إعدادات", { page = Page.Main }) {

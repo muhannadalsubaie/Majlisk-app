@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum Page: Equatable {
-    case main, players, invite, settings, stop
+    case main, players, invite, settings, stop, changeGame
     case replace(Int), member(String), confirm(ban: Bool, uid: String)
 }
 
@@ -52,6 +52,7 @@ struct TableMenu: View {
                     onClose()
                 }
                 MButton("الإعدادات") { page = .settings }
+                if isOwner { MButton("تغيير اللعبة") { page = .changeGame } }
                 if isOwner && (view.hasGame || view.seats.contains { $0 != nil }) { MButton("إيقاف اللعبة", .danger) { page = .stop } }
                 MButton("مغادرة الطاولة", .danger, action: onLeave)
                 MButton("إغلاق القائمة", action: onClose)
@@ -61,6 +62,17 @@ struct TableMenu: View {
                 BodyText("إيقاف نهائي: تُلغى المباراة وترجع النتيجة صفر صفر، ويصبح الجميع مشاهدين والمقاعد فارغة. بعدها تختار أنت من يلعب من صفحة اللاعبين.")
                 MButton("إيقاف اللعبة", .danger) { conn.send("stop"); onClose() }
                 MButton("إلغاء") { page = .main }
+            }
+        case .changeGame:
+            // المالك يغيّر لعبة الطاولة: تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة
+            Sheet(title: "تغيير اللعبة") {
+                BodyText("الحالية: \(gameTitle(view.kind, view.variant)). لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة.")
+                ForEach(["baloot|classic", "domino|classic", "jackaroo|classic", "jackaroo|complex", "ludo|classic", "ludo|teams"]
+                    .filter { $0 != "\(view.kind)|\(view.variant)" }, id: \.self) { g in
+                    let kv = g.components(separatedBy: "|")
+                    MButton(gameTitle(kv[0], kv[1]), .primary) { conn.send("changeGame", ["kind": kv[0], "variant": kv[1]]); onClose() }
+                }
+                MButton("رجوع") { page = .main }
             }
         case .invite:
             InviteFriendsSheet(tableId: view.id, seat: nil, title: "دعوة صديق") { page = .main }

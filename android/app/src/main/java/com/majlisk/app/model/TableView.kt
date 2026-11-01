@@ -83,6 +83,8 @@ data class TableView(
     val domino: DominoView? = null,
     val jackaroo: JackarooView? = null,
     val ludo: LudoView? = null,
+    /** كم لاعب يقدر يبدأ اللعبة */
+    val startCounts: List<Int> = listOf(4),
 ) {
     val hasGame: Boolean get() = game != null || otherGame
     val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
@@ -110,6 +112,7 @@ data class TableView(
             history = o.optJSONArray("history").objects().map(::parseRecord),
             domino = o.optJSONObject("domino")?.let { DominoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("dominoLog")) },
             jackaroo = o.optJSONObject("jackaroo")?.let { JackarooView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optIntOrNull("mySeat")) },
+            startCounts = o.optJSONArray("startCounts")?.ints()?.takeIf { it.isNotEmpty() } ?: listOf(4),
             ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
         )
 

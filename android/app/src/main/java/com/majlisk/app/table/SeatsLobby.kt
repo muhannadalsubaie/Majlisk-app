@@ -71,7 +71,10 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     if (v.spectators.isNotEmpty()) {
         Note("المشاهدون: " + v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username })
     }
-    if (isOwner) PrimaryButton("بدء المباراة", { conn.send("start") }, enabled = v.seats.size == 4 && v.seats.all { it != null })
+    // البلوت والجاكارو أربعة، الدومينو لاعبين أو أربعة، اللودو لاعبين أو ثلاثة أو أربعة
+    val seated = v.seats.count { it != null }
+    if (v.startCounts != listOf(4)) Note("تبدأ بـ ${v.startCounts.joinToString(" أو ")} لاعبين")
+    if (isOwner) PrimaryButton("بدء المباراة", { conn.send("start") }, enabled = seated in v.startCounts)
     else Body("بانتظار مالك الطاولة لبدء المباراة")
 
     // كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون

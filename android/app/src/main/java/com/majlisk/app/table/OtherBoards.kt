@@ -35,6 +35,7 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
@@ -420,7 +421,6 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     val mySeat = v.mySeat
     val names = names(v)
     val readBoard = { Announcer.announceNow(l.boardText) }
-    val readMine = { Announcer.announceNow(l.mineText) }
     val partner = if (mySeat == null) -1 else (mySeat + 2) % 4
     // آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
     val rolls = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
@@ -429,24 +429,30 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         if (l.phase == "move" && l.dice != null) rolls[l.turn] = l.dice
     }
 
-    // السجل: يفتح بسحبة إصبعين من فوق لتحت (بدون زر)
+    // السجل (من فوق لتحت): قائمة فيها كل لاعب وأحجاره في أي خانة، تتنقل فيها
     var logOpen by remember { mutableStateOf(false) }
     if (logOpen) {
-        MajliskDialog("سجل اللعب", { logOpen = false }) {
-            if (l.log.isEmpty()) Note("ما فيه حركات بعد.")
-            // الأحدث أولاً
-            l.log.asReversed().forEach { Text(it, color = Palette.text, fontSize = 16.sp, modifier = Modifier.fillMaxWidth()) }
+        MajliskDialog("أماكن الأحجار", { logOpen = false }) {
+            l.positions.forEach { (name, color, tokens) ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.size(12.dp).background(LUDO_COLORS.getOrElse(color) { Palette.gold }, RoundedCornerShape(6.dp)))
+                    Text("$name، ${LUDO_COLOR_NAMES.getOrElse(color) { "" }}", color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+                }
+                tokens.forEach { Text(it, color = Palette.text, fontSize = 16.sp, modifier = Modifier.fillMaxWidth()) }
+            }
             PrimaryButton("إغلاق", { logOpen = false })
         }
     }
 
+    // سحب بإصبعين: من فوق لتحت = أماكن الأحجار، من تحت لفوق = الدور عند مين،
+    // من اليمين لليسار = آخر رمية نرد، من اليسار لليمين = ترمي النرد مباشرة
     Column(
         Modifier.fillMaxWidth().twoFingerSwipes {
             when (it) {
-                SwipeDir.Left -> readBoard()
-                SwipeDir.Right -> readMine()
                 SwipeDir.Down -> logOpen = true
-                else -> {}
+                SwipeDir.Up -> Announcer.announceNow(l.turnText)
+                SwipeDir.Left -> Announcer.announceNow(l.diceText)
+                SwipeDir.Right -> if (l.canRoll) act(conn, "ludo", jsonOf("type" to "roll")) else Announcer.announceNow(if (l.myTurn) "اختر الحجر أولاً" else l.turnText)
             }
         },
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -589,6 +595,12 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
         drawRect(if (start >= 0) LUDO_COLORS[start] else paper, Offset(p.x - U / 2 + 0.5f, p.y - U / 2 + 0.5f), Size(U - 1, U - 1))
         drawRect(Color(0x550D2B20), Offset(p.x - U / 2 + 0.5f, p.y - U / 2 + 0.5f), Size(U - 1, U - 1), style = Stroke(1f))
         if (i in LudoView.SAFE && start < 0) drawStar(p, U * 0.32f, Color(0x990D2B20))
+        // رقم الخانة من خانة بدايتك (0) إلى 51
+        val num = (i - LudoView.STARTS[bottom] + 52) % 52
+        drawContext.canvas.nativeCanvas.drawText("$num", p.x, p.y + U * 0.16f, android.graphics.Paint().apply {
+            isAntiAlias = true; textAlign = android.graphics.Paint.Align.CENTER; textSize = U * 0.42f
+            color = if (start >= 0) android.graphics.Color.WHITE else android.graphics.Color.argb(200, 13, 43, 32)
+        })
     }
     HOME_CELLS.forEachIndexed { o, cells -> cells.forEach { cell ->
         val p = xy(cell)

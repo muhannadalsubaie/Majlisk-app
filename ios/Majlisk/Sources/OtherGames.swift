@@ -158,12 +158,18 @@ struct LudoView {
     let boardText: String, mineText: String, prompt: String
     /// سجل الرميات والحركات بالترتيب
     let log: [String]
+    /// قائمة الأماكن: كل لاعب (اسمه ولونه) وأحجاره في أي خانة
+    let positions: [(name: String, color: Int, tokens: [String])]
+    let turnText: String, diceText: String
+    let canRoll: Bool
 
     func home(_ o: Int) -> Int { o < tokens.count ? tokens[o].filter { $0 == LudoView.FINISH }.count : 0 }
 
     init(_ s: JSON, _ ui: JSON, log: [String] = []) {
         let last = s.obj("lastMove")
         self.log = log
+        positions = ui.objs("positions").map { (name: $0.str("name"), color: $0.int("color"), tokens: $0.strs("tokens")) }
+        turnText = ui.str("turnText"); diceText = ui.str("diceText"); canRoll = ui.bool("canRoll")
         seats = s.ints("seats")
         tokens = s.arr("tokens").map { (($0 as? [Any]) ?? []).map { ($0 as? NSNumber)?.intValue ?? -1 } }
         turn = s.int("turn"); phase = s.str("phase")

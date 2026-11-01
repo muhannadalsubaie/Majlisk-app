@@ -194,6 +194,11 @@ data class LudoView(
     val prompt: String,
     /** سجل الرميات والحركات بالترتيب */
     val log: List<String> = emptyList(),
+    /** قائمة الأماكن: كل لاعب (اسمه ولونه) وأحجاره في أي خانة */
+    val positions: List<Triple<String, Int, List<String>>> = emptyList(),
+    val turnText: String = "",
+    val diceText: String = "",
+    val canRoll: Boolean = false,
 ) {
     fun home(owner: Int) = tokens.getOrNull(owner).orEmpty().count { it == FINISH }
 
@@ -230,6 +235,10 @@ data class LudoView(
                 mineText = ui.optString("mineText"),
                 prompt = ui.optString("prompt"),
                 log = log.mapIndexed { a, i -> a.optString(i) },
+                positions = ui.optJSONArray("positions").objects().map { Triple(it.optString("name"), it.optInt("color"), it.optJSONArray("tokens").mapIndexed { a, i -> a.optString(i) }) },
+                turnText = ui.optString("turnText"),
+                diceText = ui.optString("diceText"),
+                canRoll = ui.optBoolean("canRoll"),
             )
         }
     }

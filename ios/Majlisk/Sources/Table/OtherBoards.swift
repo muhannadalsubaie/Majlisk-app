@@ -557,24 +557,34 @@ struct LudoBoard: View {
         .onChange(of: l.moveSig) { _ in noteRoll() }
         .sheet(isPresented: $logOpen) {
             let cur = conn.view?.ludo ?? l
-            Sheet(title: "سجل اللعب") {
-                if cur.log.isEmpty { Note("ما فيه حركات بعد.") }
-                // الأحدث أولاً
-                ForEach(Array(cur.log.reversed().enumerated()), id: \.offset) { _, line in
-                    Text(line).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+            // قائمة فيها كل لاعب وأحجاره في أي خانة، تتنقل فيها
+            Sheet(title: "أماكن الأحجار") {
+                ForEach(Array(cur.positions.enumerated()), id: \.offset) { _, p in
+                    HStack(spacing: 8) {
+                        Circle().fill(p.color < LUDO_COLORS.count ? LUDO_COLORS[p.color] : Palette.gold).frame(width: 12, height: 12)
+                        Text("\(p.name)، \(p.color < LUDO_COLOR_NAMES.count ? LUDO_COLOR_NAMES[p.color] : "")").bold().foregroundColor(Palette.goldSoft)
+                    }
+                    .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
+                    ForEach(Array(p.tokens.enumerated()), id: \.offset) { _, line in
+                        Text(line).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
                 MButton("إغلاق", .primary) { logOpen = false }
             }
         }
     }
 
+    /// سحب بثلاث أصابع: من فوق لتحت = أماكن الأحجار، من تحت لفوق = الدور عند مين،
+    /// من اليمين لليسار = آخر رمية نرد، من اليسار لليمين = ترمي النرد مباشرة
     private func read(_ dir: SwipeDir) -> Bool {
         let cur = conn.view?.ludo ?? l
         switch dir {
-        case .left: Announcer.announceNow(cur.boardText)
-        case .right: Announcer.announceNow(cur.mineText)
         case .down: logOpen = true
-        default: return false
+        case .up: Announcer.announceNow(cur.turnText)
+        case .left: Announcer.announceNow(cur.diceText)
+        case .right:
+            if cur.canRoll { act(["type": "roll"]) }
+            else { Announcer.announceNow(cur.myTurn ? "اختر الحجر أولاً" : cur.turnText) }
         }
         return true
     }
@@ -653,6 +663,10 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
         ctx.fill(Path(r), with: .color(start.map { LUDO_COLORS[$0] } ?? paper))
         ctx.stroke(Path(r), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.33)), lineWidth: 1)
         if LudoView.SAFE.contains(i) && start == nil { ctx.fill(starPath(p, U * 0.32), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.6))) }
+        // رقم الخانة من خانة بدايتك (0) إلى 51
+        let num = (i - LudoView.STARTS[bottom] + 52) % 52
+        ctx.draw(Text("\(num)").font(.system(size: U * 0.42, weight: .semibold))
+            .foregroundColor(start != nil ? .white : Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.8)), at: p)
     }
     for (o, cells) in HOME_CELLS.enumerated() {
         for cell in cells { let p = xy(cell); ctx.fill(Path(CGRect(x: p.x - U / 2 + 0.5, y: p.y - U / 2 + 0.5, width: U - 1, height: U - 1)), with: .color(LUDO_COLORS[o])) }
