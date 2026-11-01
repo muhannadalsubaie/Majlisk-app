@@ -86,6 +86,10 @@ struct JackarooView {
     let myTurn: Bool, burning: Bool
     let hand: [JackarooHandCard]
     let boardText: String, mineText: String, prompt: String
+    /// الأوراق الملعوبة في هذا التوزيع بالترتيب
+    let pile: [JackarooCard]
+    /// أوراق اللفة الحالية في وسط الطاولة: تتجمع حتى أربع، ثم تنمسح وتبدأ اللفة التالية
+    var centerCards: [JackarooCard] { pile.isEmpty ? [] : Array(pile.suffix((pile.count - 1) % 4 + 1)) }
 
     func safeCount(_ team: Int) -> Int {
         [team, team + 2].reduce(0) { n, o in n + (o < marbles.count ? marbles[o].filter { $0.zone == "safe" }.count : 0) }
@@ -118,6 +122,7 @@ struct JackarooView {
                 moves: h.objs("moves").enumerated().map { k, m in JackarooMove(id: k, move: m.obj("move") ?? [:], text: m.str("text")) })
         }
         boardText = ui.str("boardText"); mineText = ui.str("mineText"); prompt = ui.str("prompt")
+        pile = s.objs("pile").map { JackarooCard(rank: $0.str("rank"), suit: $0.str("suit")) }
     }
 }
 
@@ -136,6 +141,8 @@ struct LudoView {
     let turn: Int
     let phase: String
     let dice: Int?, lastRoll: Int?, winner: Int?
+    /// من رمى آخر رمية
+    let lastSeat: Int?
     let teams: Bool
     let moveSig: String
     let moved: Bool
@@ -155,6 +162,7 @@ struct LudoView {
         tokens = s.arr("tokens").map { (($0 as? [Any]) ?? []).map { ($0 as? NSNumber)?.intValue ?? -1 } }
         turn = s.int("turn"); phase = s.str("phase")
         dice = s.intOrNil("dice"); lastRoll = last?.intOrNil("roll"); winner = s.intOrNil("winner")
+        lastSeat = last?.intOrNil("seat")
         teams = s.obj("rules")?.bool("teams") ?? false
         moveSig = jsonSig(s["lastMove"]) + "|\(s.int("turn"))|\(s.str("phase"))|\(s.intOrNil("dice") ?? -1)"
         moved = last?.obj("token") != nil

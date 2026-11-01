@@ -34,6 +34,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.semantics.Role
@@ -87,7 +88,7 @@ private fun ScoreTile(label: String, value: String, mine: Boolean, modifier: Mod
 
 /** سطر لاعب: إطار ذهبي على من عليه الدور، وخط بلونه */
 @Composable
-private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken: String? = null) {
+private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken: String? = null, trailing: (@Composable () -> Unit)? = null) {
     Row(
         Modifier.fillMaxWidth()
             .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(12.dp))
@@ -98,7 +99,8 @@ private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (color != null) Box(Modifier.size(12.dp).background(color, RoundedCornerShape(6.dp)))
-        Text(text, color = Palette.text, fontSize = 15.sp, fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal)
+        Text(text, color = Palette.text, fontSize = 15.sp, fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
+        trailing?.invoke()
     }
 }
 
@@ -261,6 +263,18 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.widthIn(max = 340.dp).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
+            // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
+            Row(Modifier.clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
+                j.centerCards.forEachIndexed { i, c ->
+                    Box(
+                        Modifier.size(40.dp, 58.dp)
+                            .graphicsLayer { rotationZ = (i - (j.centerCards.size - 1) / 2f) * 8f }
+                            .background(Color.White, RoundedCornerShape(6.dp))
+                            .border(1.dp, Color(0xFFB9B4A6), RoundedCornerShape(6.dp)),
+                        contentAlignment = Alignment.Center,
+                    ) { Text("${c.rank}${c.symbol}", color = if (c.red) Color(0xFFC62828) else Color(0xFF1A1A1A), fontSize = 15.sp, fontWeight = FontWeight.Bold) }
+                }
+            }
         }
         names.forEachIndexed { seat, n ->
             val partner = mySeat != null && seat == (mySeat + 2) % 4
@@ -356,6 +370,12 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     val readBoard = { Announcer.announceNow(l.boardText) }
     val readMine = { Announcer.announceNow(l.mineText) }
     val partner = if (mySeat == null) -1 else (mySeat + 2) % 4
+    // آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
+    val rolls = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
+    androidx.compose.runtime.LaunchedEffect(l.moveSig) {
+        if (l.lastSeat != null && l.lastRoll != null) rolls[l.lastSeat] = l.lastRoll
+        if (l.phase == "move" && l.dice != null) rolls[l.turn] = l.dice
+    }
 
     Column(
         Modifier.fillMaxWidth().twoFingerSwipes { if (it == SwipeDir.Left) readBoard() else if (it == SwipeDir.Right) readMine() },
@@ -363,10 +383,12 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     ) {
         l.seats.forEach { o ->
             val n = names.getOrElse(o) { "" }
+            val roll = rolls[o]
             PlayerLine(
                 "$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""} — ${l.home(o)}/4",
                 l.turn == o && l.phase != "over", LUDO_COLORS[o],
-                spoken = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4",
+                spoken = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}",
+                trailing = roll?.let { r -> @Composable { Dice(r, LUDO_COLORS[o], 26) } },
             )
         }
         Box(
@@ -400,11 +422,12 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
 
 /** النرد: نقاط للعين، والرقم يُعلن صوتياً */
 @Composable
-private fun Dice(value: Int?, color: Color) {
+private fun Dice(value: Int?, color: Color, sizeDp: Int = 54) {
     val spots = mapOf(1 to listOf(4), 2 to listOf(0, 8), 3 to listOf(0, 4, 8), 4 to listOf(0, 2, 6, 8), 5 to listOf(0, 2, 4, 6, 8), 6 to listOf(0, 2, 3, 5, 6, 8))
-    Canvas(Modifier.size(54.dp).clearAndSetSemantics { }) {
-        drawRoundRect(Color.White, cornerRadius = CornerRadius(10.dp.toPx()))
-        drawRoundRect(color, cornerRadius = CornerRadius(10.dp.toPx()), style = Stroke(3.dp.toPx()))
+    Canvas(Modifier.size(sizeDp.dp).clearAndSetSemantics { }) {
+        val r = size.width * 0.19f
+        drawRoundRect(Color.White, cornerRadius = CornerRadius(r))
+        drawRoundRect(color, cornerRadius = CornerRadius(r), style = Stroke(size.width * 0.055f))
         val on = value?.let { spots[it] }.orEmpty()
         for (i in on) {
             val x = (i % 3 + 0.5f) / 3f * size.width

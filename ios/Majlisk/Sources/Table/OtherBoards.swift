@@ -26,11 +26,14 @@ private struct PlayerLine: View {
     let text: String, turn: Bool
     var color: Color? = nil
     var spoken: String? = nil
+    /// نرد صغير بآخر رمية (لودو)
+    var roll: Int? = nil
     var body: some View {
         HStack(spacing: 8) {
             if let color { Circle().fill(color).frame(width: 12, height: 12) }
             Text(text).font(.system(size: 15, weight: turn ? .bold : .regular)).foregroundColor(Palette.text)
             Spacer(minLength: 0)
+            if let roll { DiceView(value: roll, color: color ?? Palette.gold, size: 26) }
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
         .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 12))
@@ -273,8 +276,23 @@ struct JackarooBoard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("في منطقة الأمان: \(usLabel) \(j.safeCount(myTeam)) من 8، \(themLabel) \(j.safeCount(1 - myTeam)) من 8")
             Button { Announcer.announceNow(j.boardText) } label: {
-                Canvas { ctx, size in drawJackaroo(ctx, size, j, mySeat ?? 0) }
-                    .aspectRatio(1, contentMode: .fit).frame(maxWidth: 340)
+                ZStack {
+                    Canvas { ctx, size in drawJackaroo(ctx, size, j, mySeat ?? 0) }
+                    // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
+                    HStack(spacing: -10) {
+                        ForEach(Array(j.centerCards.enumerated()), id: \.offset) { i, c in
+                            Text("\(c.rank)\(c.symbol)")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundColor(c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
+                                .frame(width: 40, height: 58)
+                                .background(Color.white).clipShape(RoundedRectangle(cornerRadius: 6))
+                                .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 1))
+                                .rotationEffect(.degrees(Double(i) * 8 - Double(j.centerCards.count - 1) * 4))
+                        }
+                    }
+                    .accessibilityHidden(true)
+                }
+                .aspectRatio(1, contentMode: .fit).frame(maxWidth: 340)
             }
             .buttonStyle(.plain).frame(maxWidth: .infinity)
             .accessibilityLabel("اللوحة: \(j.boardText)")
@@ -382,8 +400,14 @@ struct LudoBoard: View {
     let l: LudoView
     let conn: TableConnection
     let isOwner: Bool
+    /// آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
+    @State private var rolls: [Int: Int] = [:]
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
+    private func noteRoll() {
+        if let s = l.lastSeat, let r = l.lastRoll { rolls[s] = r }
+        if l.phase == "move", let d = l.dice { rolls[l.turn] = d }
+    }
 
     var body: some View {
         let names = seatNames(v)
@@ -394,7 +418,8 @@ struct LudoBoard: View {
                 let n = o < names.count ? names[o] : ""
                 PlayerLine(text: "\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "") — \(l.home(o))/4",
                            turn: l.turn == o && l.phase != "over", color: LUDO_COLORS[o],
-                           spoken: "\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4")
+                           spoken: "\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(rolls[o].map { "، آخر رمية \($0)" } ?? "")",
+                           roll: rolls[o])
             }
             Button { Announcer.announceNow(l.boardText) } label: {
                 Canvas { ctx, size in
@@ -424,7 +449,8 @@ struct LudoBoard: View {
             }
             if mySeat == nil { Note("أنت تشاهد هذه الطاولة.") }
         }
-        .onAppear { Gestures.shared.handler = { read($0) } }
+        .onAppear { Gestures.shared.handler = { read($0) }; noteRoll() }
+        .onChange(of: l.moveSig) { _ in noteRoll() }
     }
 
     private func read(_ dir: SwipeDir) -> Bool {
@@ -442,19 +468,20 @@ struct LudoBoard: View {
 private struct DiceView: View {
     let value: Int?
     let color: Color
+    var size: CGFloat = 54
     var body: some View {
         let spots: [Int: [Int]] = [1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]]
         Canvas { ctx, size in
-            let rect = Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 1.5, dy: 1.5), cornerRadius: 10)
+            let rect = Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 1.5, dy: 1.5), cornerRadius: size.width * 0.19)
             ctx.fill(rect, with: .color(.white))
-            ctx.stroke(rect, with: .color(color), lineWidth: 3)
+            ctx.stroke(rect, with: .color(color), lineWidth: max(1.5, size.width * 0.055))
             for i in value.flatMap({ spots[$0] }) ?? [] {
                 let x = (CGFloat(i % 3) + 0.5) / 3 * size.width, y = (CGFloat(i / 3) + 0.5) / 3 * size.height
                 let r = size.width * 0.08
                 ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(Color(white: 0.1)))
             }
         }
-        .frame(width: 54, height: 54)
+        .frame(width: size, height: size)
         .accessibilityHidden(true)
     }
 }

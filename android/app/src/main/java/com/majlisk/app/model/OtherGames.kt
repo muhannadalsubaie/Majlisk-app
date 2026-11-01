@@ -108,7 +108,12 @@ data class JackarooView(
     val boardText: String,
     val mineText: String,
     val prompt: String,
+    /** الأوراق الملعوبة في هذا التوزيع بالترتيب */
+    val pile: List<JackarooCard> = emptyList(),
 ) {
+    /** أوراق اللفة الحالية في وسط الطاولة: تتجمع حتى أربع، ثم تنمسح وتبدأ اللفة التالية */
+    val centerCards: List<JackarooCard> get() = if (pile.isEmpty()) emptyList() else pile.takeLast((pile.size - 1) % 4 + 1)
+
     /** عدد أحجار الفريق في منطقة الأمان */
     fun safeCount(team: Int) = listOf(team, team + 2).sumOf { o -> marbles.getOrNull(o).orEmpty().count { it.zone == "safe" } }
 
@@ -151,6 +156,7 @@ data class JackarooView(
                 boardText = ui.optString("boardText"),
                 mineText = ui.optString("mineText"),
                 prompt = ui.optString("prompt"),
+                pile = s.optJSONArray("pile").objects().map { JackarooCard(it.optString("rank"), it.optString("suit")) },
             )
         }
     }
@@ -167,6 +173,8 @@ data class LudoView(
     val phase: String,
     val dice: Int?,
     val lastRoll: Int?,
+    /** من رمى آخر رمية */
+    val lastSeat: Int?,
     val winner: Int?,
     val teams: Boolean,
     val moveSig: String,
@@ -200,6 +208,7 @@ data class LudoView(
                 phase = s.optString("phase"),
                 dice = s.optIntOrNull("dice"),
                 lastRoll = last?.optIntOrNull("roll"),
+                lastSeat = last?.optIntOrNull("seat"),
                 winner = s.optIntOrNull("winner"),
                 teams = s.optJSONObject("rules")?.optBoolean("teams") == true,
                 moveSig = "${s.opt("lastMove")}|${s.optInt("turn")}|${s.optString("phase")}|${s.opt("dice")}",
