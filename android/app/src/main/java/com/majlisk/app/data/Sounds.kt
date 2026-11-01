@@ -26,7 +26,7 @@ object Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -89,6 +89,8 @@ object Sounds {
     /** الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة */
     fun dominoShuffle() = play("domino-shuffle", gain = 1f, vary = false)
     fun dominoTile() = play("domino-tile", gain = 1f)
+    /** الجاكارو: صوت وضع الورقة */
+    fun jackarooCard() = play("jackaroo-card", gain = 1f)
     /** لودو: رمي النرد */
     fun dice() = play("dice", gain = 0.9f)
     /** مشي الحجر في اللودو والجاكارو: نقرة لكل خطوة */
