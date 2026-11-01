@@ -26,7 +26,7 @@ object Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
