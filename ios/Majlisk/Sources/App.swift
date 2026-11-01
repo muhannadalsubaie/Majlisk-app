@@ -43,7 +43,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = MajliskWindow(windowScene: windowScene)
         // التطبيق عربي بالكامل: من اليمين لليسار دائماً، مهما كانت لغة الجهاز
-        let root = AppRoot()
+        let root = RootOrDemo()
             .environment(\.layoutDirection, .rightToLeft)
             .environment(\.locale, Locale(identifier: "ar"))
             .preferredColorScheme(.dark)
@@ -74,3 +74,46 @@ func topViewController() -> UIViewController? {
     while let presented = vc?.presentedViewController { vc = presented }
     return vc
 }
+
+
+/// الجذر: التطبيق، أو (في نسخة التطوير فقط) طاولة تجريبية لصور الشاشات: -demoTable domino|jackaroo|ludo
+struct RootOrDemo: View {
+    var body: some View {
+        #if DEBUG
+        if let i = ProcessInfo.processInfo.arguments.firstIndex(of: "-demoTable"), i + 1 < ProcessInfo.processInfo.arguments.count {
+            DemoTable(name: ProcessInfo.processInfo.arguments[i + 1])
+        } else { AppRoot() }
+        #else
+        AppRoot()
+        #endif
+    }
+}
+
+#if DEBUG
+/// طاولة من حالة لعب محفوظة (Media/demo) بنفس ترتيب شاشة الطاولة — لصور الشاشات فقط
+struct DemoTable: View {
+    let name: String
+    @StateObject private var conn = TableConnection("demo")
+    var body: some View {
+        if let path = Bundle.main.path(forResource: name, ofType: "json", inDirectory: "Media/demo"),
+           let data = FileManager.default.contents(atPath: path),
+           let json = try? JSONSerialization.jsonObject(with: data) as? JSON {
+            let v = TableView(json)
+            Screen(fill: true) {
+                HStack(spacing: 8) {
+                    SmallButton("القائمة") {}
+                    Text("طاولة \(gameTitle(v.kind, v.variant))").foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
+                }
+                if let d = v.domino { DominoBoard(v: v, d: d, conn: conn, isOwner: true) }
+                else if let j = v.jackaroo { JackarooBoard(v: v, j: j, conn: conn, isOwner: true) }
+                else if let l = v.ludo { LudoBoard(v: v, l: l, conn: conn, isOwner: true) }
+                Spacer(minLength: 0)
+                HStack { Spacer(); ChatButton(conn: conn) {} }
+                HStack { Spacer(); VoiceButton(tableId: v.id, uid: "u1") }
+            }
+        } else {
+            Text("demo not found: \(name)")
+        }
+    }
+}
+#endif

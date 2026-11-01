@@ -51,6 +51,13 @@ android {
     androidResources {
         noCompress += "mp3"
     }
+    // صور شاشات الطاولات (تُرسم في اختبار على الكمبيوتر بدون جوال): ./gradlew testDebugUnitTest
+    testOptions {
+        unitTests {
+            isIncludeAndroidResources = true
+            all { it.systemProperty("roborazzi.test.record", "true") }
+        }
+    }
 }
 
 kotlin {
@@ -80,4 +87,12 @@ dependencies {
     implementation("io.getstream:stream-webrtc-android:1.3.10")
     implementation("com.google.android.gms:play-services-ads:24.4.0")
     implementation("com.android.billingclient:billing-ktx:7.1.1")
+
+    testImplementation(composeBom)
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.robolectric:robolectric:4.14.1")
+    testImplementation("androidx.compose.ui:ui-test-junit4")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi:1.43.0")
+    testImplementation("io.github.takahirom.roborazzi:roborazzi-compose:1.43.0")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
