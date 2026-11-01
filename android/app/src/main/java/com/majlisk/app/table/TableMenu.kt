@@ -98,8 +98,10 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                     if (canManage(u)) SecondaryButton(seatLabel(i) + muted, { page = Page.Member(u!!) }, modifier = Modifier.weight(1f))
                     else Text(seatLabel(i), color = Palette.text, modifier = Modifier.weight(1f))
                     val s = v.seats.getOrNull(i)
-                    if (isOwner && i != v.mySeat && !canManage(u) && (s == null || s.isBot)) {
-                        com.majlisk.app.ui.SmallButton("استبدال", { page = Page.Replace(i) }, description = "استبدال ${s?.username ?: "المقعد الفارغ"}")
+                    // المالك يستبدل المقعد الفاضي أو الروبوت، أو نفسه (حتى أثناء اللعب: يصير مشاهد ويبقى المالك)
+                    if (isOwner && !canManage(u) && (s == null || s.isBot || i == v.mySeat)) {
+                        com.majlisk.app.ui.SmallButton("استبدال", { page = Page.Replace(i) },
+                            description = if (i == v.mySeat) "استبدال نفسك بمشاهد" else "استبدال ${s?.username ?: "المقعد الفارغ"}")
                     }
                 }
             }

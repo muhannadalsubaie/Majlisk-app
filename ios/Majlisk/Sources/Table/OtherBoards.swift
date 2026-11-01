@@ -468,6 +468,48 @@ struct LudoBoard: View {
     @State private var rolls: [Int: Int] = [:]
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
+
+    /// زاوية لون اللاعب بعد تدوير اللوحة: (فوق؟، يسار؟)
+    private func corner(_ o: Int, _ mySeat: Int?) -> (top: Bool, left: Bool) {
+        let turns = (3 - (mySeat ?? 0) + 4) % 4
+        var p: (CGFloat, CGFloat) = (YARDS[o].0 + 2.5, YARDS[o].1 + 2.5)
+        for _ in 0..<turns { p = (p.1, 14 - p.0) }
+        return (p.0 < 7, p.1 < 7)
+    }
+
+    @ViewBuilder private func label(_ o: Int, names: [String], mySeat: Int?, partner: Int) -> some View {
+        let n = o < names.count ? names[o] : ""
+        let turn = l.turn == o && l.phase != "over"
+        HStack(spacing: 6) {
+            Circle().fill(LUDO_COLORS[o]).frame(width: 12, height: 12)
+            VStack(alignment: .leading, spacing: 0) {
+                Text("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")")
+                    .font(.system(size: 14, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
+                Text("وصل \(l.home(o))/4").font(.system(size: 12)).foregroundColor(Palette.textDim)
+            }
+            DiceView(value: rolls[o], color: LUDO_COLORS[o], size: 30)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 4)
+        .background(LUDO_COLORS[o].opacity(0.22)).clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : .clear, lineWidth: 1.5))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(rolls[o].map { "، آخر رمية \($0)" } ?? "")\(turn ? "، عليه الدور" : "")")
+    }
+
+    @ViewBuilder private func cornerRow(top: Bool, names: [String], mySeat: Int?, partner: Int) -> some View {
+        let here = l.seats.filter { corner($0, mySeat).top == top }
+        if !here.isEmpty {
+            HStack {
+                if let o = here.first(where: { corner($0, mySeat).left }) { label(o, names: names, mySeat: mySeat, partner: partner).environment(\.layoutDirection, .rightToLeft) }
+                Spacer(minLength: 4)
+                if let o = here.first(where: { !corner($0, mySeat).left }) { label(o, names: names, mySeat: mySeat, partner: partner).environment(\.layoutDirection, .rightToLeft) }
+            }
+            .environment(\.layoutDirection, .leftToRight)
+            .frame(maxWidth: 360)
+            .frame(maxWidth: .infinity)
+        }
+    }
+
     private func noteRoll() {
         if let s = l.lastSeat, let r = l.lastRoll { rolls[s] = r }
         if l.phase == "move", let d = l.dice { rolls[l.turn] = d }
@@ -478,13 +520,8 @@ struct LudoBoard: View {
         let mySeat = v.mySeat
         let partner = mySeat == nil ? -1 : (mySeat! + 2) % 4
         VStack(spacing: 10) {
-            ForEach(l.seats, id: \.self) { o in
-                let n = o < names.count ? names[o] : ""
-                PlayerLine(text: "\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "") — \(l.home(o))/4",
-                           turn: l.turn == o && l.phase != "over", color: LUDO_COLORS[o],
-                           spoken: "\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(rolls[o].map { "، آخر رمية \($0)" } ?? "")",
-                           roll: rolls[o])
-            }
+            // اسم كل لاعب عند زاوية لونه في اللوحة، وجنبه نرد بآخر رقم جاه
+            cornerRow(top: true, names: names, mySeat: mySeat, partner: partner)
             Button { Announcer.announceNow(l.boardText) } label: {
                 Canvas { ctx, size in
                     drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [])
@@ -493,6 +530,7 @@ struct LudoBoard: View {
             }
             .buttonStyle(.plain).frame(maxWidth: .infinity)
             .accessibilityLabel("اللوحة: \(l.boardText)")
+            cornerRow(top: false, names: names, mySeat: mySeat, partner: partner)
             if l.phase == "over" {
                 let w = l.winner ?? 0
                 let won = l.winner != nil && mySeat != nil && (l.teams ? l.winner == mySeat! % 2 : l.winner == mySeat)

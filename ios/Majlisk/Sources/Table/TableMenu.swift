@@ -75,8 +75,9 @@ struct TableMenu: View {
                         if canManage(u) { MButton(seatLabel(i) + muted) { page = .member(u) } }
                         else { Text(seatLabel(i)).frame(maxWidth: .infinity, alignment: .leading) }
                         let s = view.seat(i)
-                        if isOwner && i != view.mySeat && !canManage(u) && (s == nil || s!.isBot) {
-                            SmallButton("استبدال", label: "استبدال \(s?.username ?? "المقعد الفارغ")") { page = .replace(i) }
+                        // المالك يستبدل المقعد الفاضي أو الروبوت، أو نفسه (حتى أثناء اللعب: يصير مشاهد ويبقى المالك)
+                        if isOwner && !canManage(u) && (s == nil || s!.isBot || i == view.mySeat) {
+                            SmallButton("استبدال", label: i == view.mySeat ? "استبدال نفسك بمشاهد" : "استبدال \(s?.username ?? "المقعد الفارغ")") { page = .replace(i) }
                         }
                     }
                 }

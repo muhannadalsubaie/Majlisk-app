@@ -433,16 +433,48 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         Modifier.fillMaxWidth().twoFingerSwipes { if (it == SwipeDir.Left) readBoard() else if (it == SwipeDir.Right) readMine() },
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        l.seats.forEach { o ->
+        // اسم كل لاعب عند زاوية لونه في اللوحة، وجنبه نرد بآخر رقم جاه
+        val corner = { o: Int ->
+            val turns = (3 - (mySeat ?: 0) + 4) % 4
+            var p = (YARDS[o].first + 2.5f) to (YARDS[o].second + 2.5f)
+            repeat(turns) { p = p.second to 14f - p.first }
+            (p.first < 7f) to (p.second < 7f) // (فوق؟، يسار؟)
+        }
+        val label: @Composable (Int) -> Unit = { o ->
             val n = names.getOrElse(o) { "" }
             val roll = rolls[o]
-            PlayerLine(
-                "$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""} — ${l.home(o)}/4",
-                l.turn == o && l.phase != "over", LUDO_COLORS[o],
-                spoken = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}",
-                trailing = roll?.let { r -> @Composable { Dice(r, LUDO_COLORS[o], 26) } },
-            )
+            val turn = l.turn == o && l.phase != "over"
+            Row(
+                Modifier
+                    .border(1.5.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(12.dp))
+                    .background(LUDO_COLORS[o].copy(alpha = 0.22f), RoundedCornerShape(12.dp))
+                    .padding(horizontal = 8.dp, vertical = 4.dp)
+                    .semantics(mergeDescendants = true) {
+                        contentDescription = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (turn) "، عليه الدور" else ""}"
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Box(Modifier.size(12.dp).background(LUDO_COLORS[o], RoundedCornerShape(6.dp)))
+                Column {
+                    Text("$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""}", color = Palette.text, fontSize = 14.sp,
+                        fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
+                    Text("وصل ${l.home(o)}/4", color = Palette.textDim, fontSize = 12.sp)
+                }
+                Dice(roll, LUDO_COLORS[o], 30)
+            }
         }
+        val cornerRow: @Composable (Boolean) -> Unit = { top ->
+            val here = l.seats.filter { corner(it).first == top }
+            if (here.isNotEmpty()) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Row(Modifier.widthIn(max = 360.dp).fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    // في الواجهة العربية أول عنصر يصير يمين: نحط لاعب اليمين أولاً
+                    Box(Modifier.weight(1f), contentAlignment = androidx.compose.ui.AbsoluteAlignment.CenterRight) { here.firstOrNull { !corner(it).second }?.let { label(it) } }
+                    Box(Modifier.weight(1f), contentAlignment = androidx.compose.ui.AbsoluteAlignment.CenterLeft) { here.firstOrNull { corner(it).second }?.let { label(it) } }
+                }
+            }
+        }
+        cornerRow(true)
         Box(
             Modifier.fillMaxWidth().clickable(role = Role.Button) { readBoard() }
                 .semantics(mergeDescendants = true) { contentDescription = "اللوحة: ${l.boardText}" },
@@ -451,6 +483,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             val movable = if (l.myTurn && l.phase == "move") l.options.map { l.movableOwner to it.token } else emptyList()
             Canvas(Modifier.widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)) { drawLudo(l, mySeat ?: 0, movable) }
         }
+        cornerRow(false)
         if (l.phase == "over") {
             val won = l.winner != null && mySeat != null && (if (l.teams) l.winner == mySeat % 2 else l.winner == mySeat)
             val w = l.winner ?: 0
