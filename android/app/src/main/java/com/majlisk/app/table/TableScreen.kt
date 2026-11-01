@@ -96,7 +96,7 @@ private const val SILENT_FOCUS_MS = 4000L
 @Composable
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     // أصوات اللعب تُشغَّل من الاتصال نفسه، فتستمر والتطبيق في الخلفية ما دمت في الطاولة
-    val conn = remember(tableId) { TableConnection(tableId).also { c -> val s = GameSoundTracker(); c.onState = s::update; c.myUid = uid; c.start() } }
+    val conn = remember(tableId) { TableConnection(tableId).also { c -> val s = GameSoundTracker(); val o = OtherGameSounds(); c.onState = { v -> s.update(v); o.update(v) }; c.myUid = uid; c.start() } }
     DisposableEffect(conn) { onDispose { conn.stop(); Voice.dispose() } }
     // الشاشة لا تنطفئ ما دمت في الطاولة (انطفاؤها يقطع الاتصال والمحادثة الصوتية)
     val window = (androidx.compose.ui.platform.LocalContext.current as? android.app.Activity)?.window
@@ -183,9 +183,9 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
             when {
                 !v.hasGame -> SeatsLobby(v, uid, conn)
-                v.otherGame -> {
-                    Body("هذه الطاولة ${gameTitle(v.kind, v.variant)}، وهذه اللعبة تُضاف قريباً لهذه النسخة. يمكنك البقاء في المحادثة الصوتية.")
-                }
+                v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid)
+                v.jackaroo != null -> JackarooBoard(v, v.jackaroo, conn, v.ownerUid == uid)
+                v.ludo != null -> LudoBoard(v, v.ludo, conn, v.ownerUid == uid)
                 v.game != null -> BalootBoard(v, v.game, uid, conn)
             }
             // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب قارئ الشاشة

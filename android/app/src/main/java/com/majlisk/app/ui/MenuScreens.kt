@@ -29,6 +29,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.unit.dp
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.Ads
@@ -84,6 +85,8 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit) {
 fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     // أولاً تختار اللعبة، ثم إعدادات الطاولة
     var picked by remember { mutableStateOf<String?>(null) }
+    // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
+    var variant by remember { mutableStateOf("classic") }
     var isPrivate by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
@@ -93,19 +96,36 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
         Screen {
             TopBar("اختر اللعبة", onBack = { navigate(Route.Menu) })
             Spacer(Modifier.height(28.dp))
-            GameTile("بلوت", com.majlisk.app.R.drawable.baloot_table) { picked = "baloot" }
+            GameTile("بلوت", com.majlisk.app.R.drawable.baloot_table) { picked = "baloot"; variant = "classic" }
+            GameTile("دومينو", com.majlisk.app.R.drawable.domino_table) { picked = "domino"; variant = "classic" }
+            GameTile("جاكارو", com.majlisk.app.R.drawable.jackaroo_table) { picked = "jackaroo"; variant = "classic" }
+            GameTile("لودو", com.majlisk.app.R.drawable.ludo_table) { picked = "ludo"; variant = "classic" }
         }
         return
     }
     Screen {
-        TopBar("طاولة ${gameTitle(picked!!, "classic")}", onBack = { picked = null })
+        TopBar("طاولة ${gameTitle(picked!!, variant)}", onBack = { picked = null })
+        val variants = when (picked) {
+            "jackaroo" -> listOf("classic" to "عادي", "complex" to "كمبلكس")
+            "ludo" -> listOf("classic" to "فردي", "teams" to "فرق")
+            else -> emptyList()
+        }
+        if (variants.isNotEmpty()) {
+            Text("النسخة", color = Palette.textDim, modifier = Modifier.semantics { heading() })
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                variants.forEach { (id, label) ->
+                    if (variant == id) PrimaryButton("✓ $label", { }, modifier = Modifier.weight(1f), description = "$label، محددة")
+                    else SecondaryButton(label, { variant = id }, modifier = Modifier.weight(1f), fill = true)
+                }
+            }
+        }
         val balance = if (profile?.unlimited == true) "لا محدود" else "${profile?.coins ?: "…"} عملة"
         SwitchRow("طاولة خاصة", isPrivate, { isPrivate = it })
         if (error.isNotEmpty()) Text(error, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive })
         PrimaryButton("إنشاء الطاولة (2 🪙)", {
             busy = true; error = ""
             scope.launch {
-                runCatching { Tables.create(isPrivate, picked!!, "classic") }
+                runCatching { Tables.create(isPrivate, picked!!, variant) }
                     .onSuccess { Announcer.announce("تم إنشاء الطاولة"); openTable(it) }
                     .onFailure { error = Tables.error(it, "تعذّر إنشاء الطاولة، حاول مرة أخرى"); Announcer.announce(error) }
                 busy = false
@@ -140,8 +160,7 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         }
         rows?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
-            val soon = r.kind != "baloot"
-            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else ""}عدد اللاعبين ${r.players} من 4، ${STATUS[r.status].orEmpty()}${if (soon) "، قريباً في هذه النسخة" else ""}"
+            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else ""}عدد اللاعبين ${r.players} من 4، ${STATUS[r.status].orEmpty()}"
             SecondaryButton(
                 "${if (r.isPrivate) "🔒 " else ""}طاولة ${r.ownerName} · $game · ${r.players}/4 · ${STATUS[r.status].orEmpty()}",
                 {
@@ -153,7 +172,7 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                         busy = ""
                     }
                 },
-                enabled = !r.isPrivate && !soon && busy != r.id,
+                enabled = !r.isPrivate && busy != r.id,
                 description = spoken,
                 fill = true,
             )

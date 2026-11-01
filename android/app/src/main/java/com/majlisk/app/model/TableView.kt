@@ -77,12 +77,16 @@ data class TableView(
     val game: GameView?,
     val kind: String,
     val variant: String,
-    /** لعبة غير البلوت بدأت (الدومينو والجاكارو واللودو تأتي في المرحلة الثانية) */
+    /** لعبة غير البلوت بدأت (الدومينو أو الجاكارو أو اللودو) */
     val otherGame: Boolean,
     val history: List<HandRecord>,
+    val domino: DominoView? = null,
+    val jackaroo: JackarooView? = null,
+    val ludo: LudoView? = null,
 ) {
     val hasGame: Boolean get() = game != null || otherGame
-    val playing: Boolean get() = (game != null && game.phase != "matchOver") || otherGame
+    val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
+        (domino != null && domino.phase != "matchOver") || jackaroo?.phase == "playing" || (ludo != null && ludo.phase != "over")
 
     companion object {
         fun parse(o: JSONObject): TableView = TableView(
@@ -104,6 +108,9 @@ data class TableView(
             variant = o.optString("variant", "classic"),
             otherGame = listOf("domino", "jackaroo", "ludo").any { o.optJSONObject(it) != null },
             history = o.optJSONArray("history").objects().map(::parseRecord),
+            domino = o.optJSONObject("domino")?.let { DominoView.parse(it, o.optJSONObject("ui") ?: JSONObject()) },
+            jackaroo = o.optJSONObject("jackaroo")?.let { JackarooView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optIntOrNull("mySeat")) },
+            ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject()) },
         )
 
         private fun parseGame(g: JSONObject): GameView {

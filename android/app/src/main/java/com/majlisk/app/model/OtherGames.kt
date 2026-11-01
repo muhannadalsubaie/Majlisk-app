@@ -1,0 +1,198 @@
+package com.majlisk.app.model
+
+import org.json.JSONObject
+
+// الدومينو والجاكارو واللودو: حالة اللعبة من الخادم، ومعها "ui" (الحركات المسموحة ونصوصها
+// وقراءات اللوحة) محسوبة في الخادم لهذا اللاعب، فالتطبيق يرسم ويعرض الأزرار ويرسل الحركة كما هي.
+
+// ───── الدومينو ─────
+
+data class Tile(val a: Int, val b: Int) {
+    fun json(): JSONObject = JSONObject().put("a", a).put("b", b)
+    val isDouble get() = a == b
+}
+
+/** قطعة على الطاولة: الوجه الخارجي (الطرف الجديد) وأين وُضعت */
+data class PlacedTile(val tile: Tile, val seat: Int, val outer: Int, val side: String)
+
+data class DominoHandTile(val tile: Tile, val label: String, val legal: Boolean, val askSide: Boolean)
+
+data class DominoView(
+    val phase: String,
+    val turn: Int,
+    val players: Int,
+    val target: Int,
+    val scores: List<Int>,
+    val line: List<PlacedTile>,
+    val handCounts: List<Int>,
+    val boneyard: Int,
+    /** بصمة آخر حركة (للأصوات) */
+    val moveSig: String,
+    // من ui
+    val myTurn: Boolean,
+    val canDraw: Boolean,
+    val canPass: Boolean,
+    val hand: List<DominoHandTile>,
+    val ends: Pair<Int, Int>?,
+    val endsText: String,
+    val lineText: String,
+    val scoreText: String,
+    val sideNames: List<String>,
+    val mySide: Int,
+    val prompt: String,
+) {
+    companion object {
+        fun parse(s: JSONObject, ui: JSONObject): DominoView {
+            val rules = s.optJSONObject("rules") ?: JSONObject()
+            val tile = { o: JSONObject? -> Tile(o?.optInt("a") ?: 0, o?.optInt("b") ?: 0) }
+            return DominoView(
+                phase = s.optString("phase"),
+                turn = s.optInt("turn"),
+                players = rules.optInt("players", 4),
+                target = rules.optInt("target", 100),
+                scores = s.optJSONArray("scores").ints(),
+                line = s.optJSONArray("line").objects().map { PlacedTile(tile(it.optJSONObject("tile")), it.optInt("seat"), it.optInt("outer"), it.optString("side")) },
+                handCounts = s.optJSONArray("hands").mapIndexed { a, i -> a.optJSONArray(i)?.length() ?: 0 },
+                boneyard = s.optJSONArray("boneyard")?.length() ?: 0,
+                moveSig = "${s.opt("lastMove")}|${s.optString("phase")}|${s.optInt("handNo")}",
+                myTurn = ui.optBoolean("myTurn"),
+                canDraw = ui.optBoolean("canDraw"),
+                canPass = ui.optBoolean("canPass"),
+                hand = ui.optJSONArray("hand").objects().map {
+                    DominoHandTile(tile(it.optJSONObject("tile")), it.optString("label"), it.optBoolean("legal"), it.optBoolean("askSide"))
+                },
+                ends = ui.optJSONObject("ends")?.let { it.optInt("left") to it.optInt("right") },
+                endsText = ui.optString("endsText"),
+                lineText = ui.optString("lineText"),
+                scoreText = ui.optString("scoreText"),
+                sideNames = ui.optJSONArray("sideNames").mapIndexed { a, i -> a.optString(i) },
+                mySide = ui.optInt("mySide", -1),
+                prompt = ui.optString("prompt"),
+            )
+        }
+    }
+}
+
+// ───── الجاكارو ─────
+
+/** zone: home / track / safe — pos: موضع على المسار أو خانة الأمان */
+data class Marble(val zone: String, val pos: Int)
+
+data class JackarooCard(val rank: String, val suit: String) {
+    fun json(): JSONObject = JSONObject().put("rank", rank).put("suit", suit)
+    val red get() = suit == "H" || suit == "D"
+    val symbol get() = when (suit) { "S" -> "♠"; "H" -> "♥"; "D" -> "♦"; else -> "♣" }
+}
+
+data class JackarooMove(val move: JSONObject, val text: String)
+data class JackarooHandCard(val card: JackarooCard, val label: String, val usable: Boolean, val moves: List<JackarooMove>)
+
+data class JackarooView(
+    val phase: String,
+    val turn: Int,
+    val winnerTeam: Int?,
+    val dealNo: Int,
+    val segment: Int,
+    val marbles: List<List<Marble>>,
+    val handCounts: List<Int>,
+    val moveSig: String,
+    val myTurn: Boolean,
+    val burning: Boolean,
+    val hand: List<JackarooHandCard>,
+    val boardText: String,
+    val mineText: String,
+    val prompt: String,
+) {
+    /** عدد أحجار الفريق في منطقة الأمان */
+    fun safeCount(team: Int) = listOf(team, team + 2).sumOf { o -> marbles.getOrNull(o).orEmpty().count { it.zone == "safe" } }
+
+    companion object {
+        fun parse(s: JSONObject, ui: JSONObject, mySeat: Int?): JackarooView {
+            val rules = s.optJSONObject("rules") ?: JSONObject()
+            val hands = s.optJSONArray("hands")
+            val myCards = mySeat?.let { hands?.optJSONArray(it) }.let { a -> (0 until (a?.length() ?: 0)).map { i -> a!!.optJSONObject(i) } }
+                .map { JackarooCard(it?.optString("rank").orEmpty(), it?.optString("suit").orEmpty()) }
+            val uiHand = ui.optJSONArray("hand").objects()
+            return JackarooView(
+                phase = s.optString("phase"),
+                turn = s.optInt("turn"),
+                winnerTeam = s.optIntOrNull("winnerTeam"),
+                dealNo = s.optInt("dealNo"),
+                segment = rules.optInt("segment", 19),
+                marbles = s.optJSONArray("marbles").mapIndexed { a, i ->
+                    a.optJSONArray(i).objects().map { Marble(it.optString("zone"), it.optInt("pos")) }
+                },
+                handCounts = hands.mapIndexed { a, i -> a.optJSONArray(i)?.length() ?: 0 },
+                moveSig = "${s.opt("lastMove")}|${s.optInt("dealNo")}|${s.optString("phase")}",
+                myTurn = ui.optBoolean("myTurn"),
+                burning = ui.optBoolean("burning"),
+                hand = myCards.mapIndexed { i, c ->
+                    val h = uiHand.getOrNull(i)
+                    JackarooHandCard(
+                        c, h?.optString("label").orEmpty(), h?.optBoolean("usable") == true,
+                        h?.optJSONArray("moves").objects().map { JackarooMove(it.optJSONObject("move") ?: JSONObject(), it.optString("text")) },
+                    )
+                },
+                boardText = ui.optString("boardText"),
+                mineText = ui.optString("mineText"),
+                prompt = ui.optString("prompt"),
+            )
+        }
+    }
+}
+
+// ───── لودو ─────
+
+data class LudoOption(val token: Int, val text: String)
+
+data class LudoView(
+    val seats: List<Int>,
+    val tokens: List<List<Int>>,
+    val turn: Int,
+    val phase: String,
+    val dice: Int?,
+    val lastRoll: Int?,
+    val winner: Int?,
+    val teams: Boolean,
+    val moveSig: String,
+    /** تحرك حجر في آخر حركة (للصوت) */
+    val moved: Boolean,
+    val myTurn: Boolean,
+    val options: List<LudoOption>,
+    val movableOwner: Int,
+    val boardText: String,
+    val mineText: String,
+    val prompt: String,
+) {
+    fun home(owner: Int) = tokens.getOrNull(owner).orEmpty().count { it == FINISH }
+
+    companion object {
+        const val FINISH = 56
+        const val LAST_TRACK = 50
+        val STARTS = listOf(0, 13, 26, 39)
+        val SAFE = setOf(0, 8, 13, 21, 26, 34, 39, 47)
+        fun absPos(owner: Int, p: Int) = (STARTS[owner] + p) % 52
+
+        fun parse(s: JSONObject, ui: JSONObject): LudoView {
+            val last = s.optJSONObject("lastMove")
+            return LudoView(
+                seats = s.optJSONArray("seats").ints(),
+                tokens = s.optJSONArray("tokens").mapIndexed { a, i -> a.optJSONArray(i).ints() },
+                turn = s.optInt("turn"),
+                phase = s.optString("phase"),
+                dice = s.optIntOrNull("dice"),
+                lastRoll = last?.optIntOrNull("roll"),
+                winner = s.optIntOrNull("winner"),
+                teams = s.optJSONObject("rules")?.optBoolean("teams") == true,
+                moveSig = "${s.opt("lastMove")}|${s.optInt("turn")}|${s.optString("phase")}|${s.opt("dice")}",
+                moved = last?.optJSONObject("token") != null,
+                myTurn = ui.optBoolean("myTurn"),
+                options = ui.optJSONArray("options").objects().map { LudoOption(it.optInt("token"), it.optString("text")) },
+                movableOwner = ui.optInt("movableOwner", -1),
+                boardText = ui.optString("boardText"),
+                mineText = ui.optString("mineText"),
+                prompt = ui.optString("prompt"),
+            )
+        }
+    }
+}
