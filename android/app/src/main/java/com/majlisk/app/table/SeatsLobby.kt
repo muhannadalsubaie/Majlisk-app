@@ -73,7 +73,8 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     }
     // البلوت والجاكارو أربعة، الدومينو لاعبين أو أربعة، اللودو لاعبين أو ثلاثة أو أربعة
     val seated = v.seats.count { it != null }
-    if (v.startCounts != listOf(4)) Note("تبدأ بـ ${v.startCounts.joinToString(" أو ")} لاعبين")
+    if (v.kind == "domino") Note("الدومينو أربعة لاعبين: المقاعد الفاضية يكملها روبوت عند البدء (عملة لكل روبوت)")
+    else if (v.startCounts != listOf(4)) Note("تبدأ بـ ${v.startCounts.joinToString(" أو ")} لاعبين")
     if (isOwner) PrimaryButton("بدء المباراة", { conn.send("start") }, enabled = seated in v.startCounts)
     else Body("بانتظار مالك الطاولة لبدء المباراة")
 

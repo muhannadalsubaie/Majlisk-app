@@ -40,6 +40,9 @@ struct DominoView {
     let prompt: String
     /// سجل كل جولة (صكة): رقمها وحركاتها بالترتيب
     let log: [(hand: Int, lines: [String])]
+    /// من يختار البادئ (بعد فوز فريقه بالصكة)، وخياراتك لو الاختيار لك
+    let chooser: Int?
+    let starterOptions: [(seat: Int, text: String)]
 
     init(_ s: JSON, _ ui: JSON, log: [JSON] = []) {
         let rules = s.obj("rules") ?? [:]
@@ -59,6 +62,8 @@ struct DominoView {
         endsText = ui.str("endsText"); lineText = ui.str("lineText"); scoreText = ui.str("scoreText")
         sideNames = ui.strs("sideNames"); mySide = ui.int("mySide", -1); prompt = ui.str("prompt")
         self.log = log.map { (hand: $0.int("hand"), lines: $0.strs("lines")) }
+        chooser = s.intOrNil("chooser")
+        starterOptions = ui.objs("starterOptions").map { (seat: $0.int("seat"), text: $0.str("text")) }
     }
 }
 
@@ -134,7 +139,8 @@ struct JackarooView {
 struct LudoOption: Identifiable { var id: Int { token }; let token: Int; let text: String }
 
 struct LudoView {
-    static let FINISH = 56, LAST_TRACK = 50
+    /// المسار الرئيسي 0..51، ممر المنزل 52..57، المنزل 58
+    static let FINISH = 58, LAST_TRACK = 51
     static let STARTS = [0, 13, 26, 39]
     static let SAFE: Set<Int> = [0, 8, 13, 21, 26, 34, 39, 47]
     static func absPos(_ owner: Int, _ p: Int) -> Int { (STARTS[owner] + p) % 52 }

@@ -44,6 +44,10 @@ data class DominoView(
     val prompt: String,
     /** سجل كل جولة (صكة): رقمها وحركاتها بالترتيب */
     val log: List<Pair<Int, List<String>>> = emptyList(),
+    /** من يختار البادئ (بعد فوز فريقه بالصكة) */
+    val chooser: Int? = null,
+    /** خياراتك لمن يبدأ (أنت أو شريكك) لو الاختيار لك */
+    val starterOptions: List<Pair<Int, String>> = emptyList(),
 ) {
     companion object {
         fun parse(s: JSONObject, ui: JSONObject, log: org.json.JSONArray? = null): DominoView {
@@ -74,6 +78,8 @@ data class DominoView(
                 mySide = ui.optInt("mySide", -1),
                 prompt = ui.optString("prompt"),
                 log = log.objects().map { e -> e.optInt("hand") to e.optJSONArray("lines").mapIndexed { a, i -> a.optString(i) } },
+                chooser = s.optIntOrNull("chooser"),
+                starterOptions = ui.optJSONArray("starterOptions").objects().map { it.optInt("seat") to it.optString("text") },
             )
         }
     }
@@ -203,8 +209,9 @@ data class LudoView(
     fun home(owner: Int) = tokens.getOrNull(owner).orEmpty().count { it == FINISH }
 
     companion object {
-        const val FINISH = 56
-        const val LAST_TRACK = 50
+        /** المسار الرئيسي 0..51، ممر المنزل 52..57، المنزل 58 */
+        const val FINISH = 58
+        const val LAST_TRACK = 51
         val STARTS = listOf(0, 13, 26, 39)
         val SAFE = setOf(0, 8, 13, 21, 26, 34, 39, 47)
         fun absPos(owner: Int, p: Int) = (STARTS[owner] + p) % 52

@@ -32,6 +32,7 @@ fun gameTitle(kind: String, variant: String?): String {
     return when {
         kind == "jackaroo" && variant == "complex" -> "$base كمبلكس"
         kind == "ludo" && variant == "teams" -> "$base فرق"
+        kind == "domino" -> "$base ${if (variant == "t150") 150 else if (variant == "t200") 200 else 100}"
         else -> base
     }
 }

@@ -148,6 +148,11 @@ private struct LineItem: Identifiable { let id: Int; let p: PlacedTile }
 
 /// نص الدور في الدومينو: "دورك" أو "دور فلان"
 private func dominoTurnText(_ v: TableView, _ d: DominoView) -> String {
+    if d.phase == "chooseStarter" {
+        if d.chooser == v.mySeat { return "دورك: اختر من يبدأ، أنت أو شريكك" }
+        let names = seatNames(v)
+        return "\(names[min(d.chooser ?? 0, 3)]) يختار من يبدأ"
+    }
     if d.phase == "matchOver" { return "انتهت المباراة" }
     if d.phase != "playing" { return "انتهت الصكة، الصكة التالية بعد لحظات" }
     if d.turn == v.mySeat { return "دورك" }
@@ -212,7 +217,7 @@ struct DominoBoard: View {
                     .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
             }
             if d.phase != "playing" {
-                Text(d.phase == "matchOver" ? "انتهت المباراة" : "انتهت الصكة، الصكة التالية بعد لحظات")
+                Text(dominoTurnText(v, d))
                     .font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
             }
             if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
@@ -247,6 +252,14 @@ struct DominoHand: View {
     var body: some View {
         if v.mySeat != nil {
             VStack(spacing: 8) {
+                // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
+                if !d.starterOptions.isEmpty {
+                    HStack(spacing: 8) {
+                        ForEach(Array(d.starterOptions.enumerated()), id: \.offset) { _, o in
+                            MButton(o.text, .primary) { act(["type": "starter", "starter": o.seat]) }
+                        }
+                    }
+                }
                 if d.myTurn && (d.canDraw || d.canPass) {
                     HStack(spacing: 8) {
                         if d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
@@ -456,8 +469,9 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
 
 // ═════════════ لودو ═════════════
 
-private let LUDO_COLORS: [Color] = [Color(red: 0.85, green: 0.27, blue: 0.23), Color(red: 0.18, green: 0.65, blue: 0.38), Color(red: 0.9, green: 0.71, blue: 0.13), Color(red: 0.18, green: 0.5, blue: 0.85)]
-private let LUDO_COLOR_NAMES = ["الأحمر", "الأخضر", "الأصفر", "الأزرق"]
+// ترتيب الألوان مع ترتيب اللعب: أحمر ← أزرق ← أصفر ← أخضر (الفرق: أحمر+أصفر ضد أزرق+أخضر)
+private let LUDO_COLORS: [Color] = [Color(red: 0.85, green: 0.27, blue: 0.23), Color(red: 0.18, green: 0.5, blue: 0.85), Color(red: 0.9, green: 0.71, blue: 0.13), Color(red: 0.18, green: 0.65, blue: 0.38)]
+private let LUDO_COLOR_NAMES = ["الأحمر", "الأزرق", "الأصفر", "الأخضر"]
 
 struct LudoBoard: View {
     let v: TableView
@@ -690,7 +704,9 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
             let cell: Cell
             if p == -1 { cell = (YARDS[o].0 + YARD_SPOTS[i].0 - 0.5, YARDS[o].1 + YARD_SPOTS[i].1 - 0.5) }
             else if p == LudoView.FINISH { cell = CENTER_SPOT[o] }
-            else if p > LudoView.LAST_TRACK { cell = HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
+            // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
+            else if p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 { cell = HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
+            else if p > LudoView.LAST_TRACK { cell = ((HOME_CELLS[o][4].0 + CENTER_SPOT[o].0) / 2, (HOME_CELLS[o][4].1 + CENTER_SPOT[o].1) / 2) }
             else { cell = TRACK_CELLS[LudoView.absPos(o, p)] }
             let pt = xy(cell)
             let key = "\(Int(pt.x)),\(Int(pt.y))"

@@ -108,10 +108,11 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
         val variants = when (picked) {
             "jackaroo" -> listOf("classic" to "عادي", "complex" to "كمبلكس")
             "ludo" -> listOf("classic" to "فردي", "teams" to "فرق")
+            "domino" -> listOf("classic" to "100", "t150" to "150", "t200" to "200")
             else -> emptyList()
         }
         if (variants.isNotEmpty()) {
-            Text("النسخة", color = Palette.textDim, modifier = Modifier.semantics { heading() })
+            Text(if (picked == "domino") "هدف المباراة (نقاط)" else "النسخة", color = Palette.textDim, modifier = Modifier.semantics { heading() })
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 variants.forEach { (id, label) ->
                     if (variant == id) PrimaryButton("✓ $label", { }, modifier = Modifier.weight(1f), description = "$label، محددة")

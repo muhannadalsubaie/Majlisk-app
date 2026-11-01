@@ -63,9 +63,9 @@ struct CreateTableScreen: View {
             Screen {
                 TopBar("طاولة \(gameTitle(game, variant))", onBack: { picked = nil })
                 // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
-                let variants: [(String, String)] = game == "jackaroo" ? [("classic", "عادي"), ("complex", "كمبلكس")] : game == "ludo" ? [("classic", "فردي"), ("teams", "فرق")] : []
+                let variants: [(String, String)] = game == "jackaroo" ? [("classic", "عادي"), ("complex", "كمبلكس")] : game == "ludo" ? [("classic", "فردي"), ("teams", "فرق")] : game == "domino" ? [("classic", "100"), ("t150", "150"), ("t200", "200")] : []
                 if !variants.isEmpty {
-                    Text("النسخة").foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader)
+                    Text(game == "domino" ? "هدف المباراة (نقاط)" : "النسخة").foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader)
                     HStack(spacing: 10) {
                         ForEach(variants, id: \.0) { opt in
                             if variant == opt.0 { MButton("✓ \(opt.1)", .primary, label: "\(opt.1)، محددة") {} }

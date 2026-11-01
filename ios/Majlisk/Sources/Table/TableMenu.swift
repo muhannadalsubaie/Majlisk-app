@@ -67,7 +67,7 @@ struct TableMenu: View {
             // المالك يغيّر لعبة الطاولة: تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة
             Sheet(title: "تغيير اللعبة") {
                 BodyText("الحالية: \(gameTitle(view.kind, view.variant)). لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة.")
-                ForEach(["baloot|classic", "domino|classic", "jackaroo|classic", "jackaroo|complex", "ludo|classic", "ludo|teams"]
+                ForEach(["baloot|classic", "domino|classic", "domino|t150", "domino|t200", "jackaroo|classic", "jackaroo|complex", "ludo|classic", "ludo|teams"]
                     .filter { $0 != "\(view.kind)|\(view.variant)" }, id: \.self) { g in
                     let kv = g.components(separatedBy: "|")
                     MButton(gameTitle(kv[0], kv[1]), .primary) { conn.send("changeGame", ["kind": kv[0], "variant": kv[1]]); onClose() }

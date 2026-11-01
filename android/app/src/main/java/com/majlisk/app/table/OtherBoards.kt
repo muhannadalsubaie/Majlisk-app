@@ -146,6 +146,7 @@ private fun orient(p: PlacedTile): Tile {
 
 /** نص الدور في الدومينو: "دورك" أو "دور فلان" */
 private fun dominoTurnText(v: TableView, d: DominoView): String = when {
+    d.phase == "chooseStarter" -> if (d.chooser == v.mySeat) "دورك: اختر من يبدأ، أنت أو شريكك" else "${names(v).getOrElse(d.chooser ?: 0) { "" }} يختار من يبدأ"
     d.phase == "matchOver" -> "انتهت المباراة"
     d.phase != "playing" -> "انتهت الصكة، الصكة التالية بعد لحظات"
     d.turn == v.mySeat -> "دورك"
@@ -210,7 +211,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft,
                 modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
         }
-        if (d.phase != "playing") Text(if (d.phase == "matchOver") "انتهت المباراة" else "انتهت الصكة، الصكة التالية بعد لحظات",
+        if (d.phase != "playing") Text(dominoTurnText(v, d),
             color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
         if (mySeat == null) Note("أنت تشاهد هذه الطاولة.")
@@ -224,6 +225,14 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
     if (v.mySeat == null) return
     var chooseSide by remember { mutableStateOf<DominoHandTile?>(null) }
     Column(Modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
+        if (d.starterOptions.isNotEmpty()) {
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                d.starterOptions.forEach { (seat, text) ->
+                    PrimaryButton(text, { act(conn, "domino", jsonOf("type" to "starter", "starter" to seat)) }, modifier = Modifier.weight(1f))
+                }
+            }
+        }
         if (d.myTurn && (d.canDraw || d.canPass)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
@@ -413,8 +422,9 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
 
 // ═════════════ لودو ═════════════
 
-private val LUDO_COLORS = listOf(Color(0xFFD9453B), Color(0xFF2EA661), Color(0xFFE6B422), Color(0xFF2F7FD8))
-private val LUDO_COLOR_NAMES = listOf("الأحمر", "الأخضر", "الأصفر", "الأزرق")
+// ترتيب الألوان مع ترتيب اللعب: أحمر ← أزرق ← أصفر ← أخضر (الفرق: أحمر+أصفر ضد أزرق+أخضر)
+private val LUDO_COLORS = listOf(Color(0xFFD9453B), Color(0xFF2F7FD8), Color(0xFFE6B422), Color(0xFF2EA661))
+private val LUDO_COLOR_NAMES = listOf("الأحمر", "الأزرق", "الأصفر", "الأخضر")
 
 @Composable
 fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean) {
@@ -627,7 +637,9 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
             val cell = when {
                 p == -1 -> (YARDS[o].first + YARD_SPOTS[i].first - 0.5f) to (YARDS[o].second + YARD_SPOTS[i].second - 0.5f)
                 p == LudoView.FINISH -> CENTER_SPOT[o]
-                p > LudoView.LAST_TRACK -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
+                // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
+                p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
+                p > LudoView.LAST_TRACK -> ((HOME_CELLS[o][4].first + CENTER_SPOT[o].first) / 2) to ((HOME_CELLS[o][4].second + CENTER_SPOT[o].second) / 2)
                 else -> TRACK_CELLS[LudoView.absPos(o, p)]
             }
             val pt = xy(cell)
