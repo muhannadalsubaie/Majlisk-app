@@ -162,7 +162,7 @@ struct BalootBoard: View {
         let text = conn.view.flatMap { v in v.game.map { BalootText(view: v, g: $0, shownTrick: $0.trick) } } ?? self.text
         switch dir {
         case .left: Announcer.announceNow(text.trick())
-        case .right: Announcer.announceNow(text.contract())
+        case .right: let c = text.contract(); if !c.isEmpty { Announcer.announceNow(c) }
         case .up: Announcer.announceNow(text.projects())
         case .down: Announcer.announceNow(text.turn())
         }

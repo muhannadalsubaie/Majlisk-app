@@ -26,8 +26,12 @@ struct BalootText {
         return "لا توجد أوراق على الطاولة"
     }
 
+    /// بعد توزيع بقية الورق يختفي نوع اللعب: لا يُكتب ولا يُقرأ (اللاعب يتذكره بنفسه)
+    var contractHidden: Bool { g.phase == "playing" }
+
     /// نوع اللعب: من اشترى، وعلى ماذا، والدبل
     func contract() -> String {
+        if contractHidden { return "" }
         guard let c = g.contract else {
             let ground = g.qaba.map { "، ورقة الأرض \($0.label)" } ?? ""
             return "لم يشترِ أحد بعد، المزايدة في الجولة \(g.bidRound == 1 ? "الأولى" : "الثانية")\(ground)، \(start())"
@@ -77,6 +81,7 @@ struct BalootText {
     }
 
     func statusLine() -> String? {
+        if contractHidden { return nil }
         guard let c = g.contract else { return nil }
         let mode = c.mode == "sun" ? "صن" : "حكم \(SUIT_NAMES[c.trump ?? ""] ?? "") \(SUIT_SYMBOLS[c.trump ?? ""] ?? "")"
         let level = g.doubling.gahwa ? "قهوة" : [2: "دبل", 3: "ثري", 4: "فور"][g.doubling.level]

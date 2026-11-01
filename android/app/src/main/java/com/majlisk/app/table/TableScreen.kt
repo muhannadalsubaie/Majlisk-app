@@ -253,7 +253,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
 
     val reads = mapOf(
         SwipeDir.Left to { Announcer.announceNow(text.trick()) },
-        SwipeDir.Right to { Announcer.announceNow(text.contract()) },
+        SwipeDir.Right to { text.contract().takeIf { it.isNotEmpty() }?.let { Announcer.announceNow(it) } },
         SwipeDir.Up to { Announcer.announceNow(text.projects()) },
         SwipeDir.Down to { Announcer.announceNow(text.turn()) },
     )
@@ -464,9 +464,9 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
             .clickable { reads.getValue(SwipeDir.Left)() }
             .semantics(mergeDescendants = true) {
                 contentDescription = "وسط الطاولة: ${text.trick()}"
-                customActions = listOf(
+                customActions = listOfNotNull(
                     CustomAccessibilityAction("أوراق الطاولة") { reads.getValue(SwipeDir.Left)(); true },
-                    CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
+                    if (text.contractHidden) null else CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
                     CustomAccessibilityAction("المشاريع") { reads.getValue(SwipeDir.Up)(); true },
                     CustomAccessibilityAction("دور مين") { reads.getValue(SwipeDir.Down)(); true },
                 )
