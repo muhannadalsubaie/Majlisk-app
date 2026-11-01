@@ -26,7 +26,7 @@ object Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -142,7 +142,8 @@ object Sounds {
         kinds.contains("خمسين") -> play("proj-fifty", gain = 0.8f, vary = false)
         else -> play("proj-sira", gain = 0.8f, vary = false)
     }
-    fun baloot() { play("collide", gain = 0.7f); play("chips2", at = 0.15, gain = 0.7f) }
+    /** مشروع البلوت: تسجيلك «بلوت» */
+    fun baloot() = play("proj-baloot", gain = 0.8f, vary = false)
 
     fun hokm() { if (once("hokm")) play("bid", gain = 0.8f, vary = false) }
     /** الصن صوته غير الحكم: نقرة خفيفة */

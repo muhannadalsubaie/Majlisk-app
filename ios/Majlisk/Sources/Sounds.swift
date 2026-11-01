@@ -17,7 +17,7 @@ final class Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot",
     ]
 
     func preload() {
@@ -134,7 +134,8 @@ final class Sounds {
         else if kinds.contains("خمسين") { play("proj-fifty", gain: 0.8, vary: false) }
         else { play("proj-sira", gain: 0.8, vary: false) }
     }
-    func baloot() { play("collide", gain: 0.7); play("chips2", at: 0.15, gain: 0.7) }
+    /// مشروع البلوت: تسجيلك «بلوت»
+    func baloot() { play("proj-baloot", gain: 0.8, vary: false) }
     func hokm() { if once("hokm") { play("bid", gain: 0.8, vary: false) } }
     /// الصن صوته غير الحكم: نقرة خفيفة
     func sun() { if once("sun") { play("bid-sun", gain: 0.8, vary: false) } }
