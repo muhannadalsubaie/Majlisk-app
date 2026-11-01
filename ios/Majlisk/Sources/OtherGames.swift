@@ -156,11 +156,14 @@ struct LudoView {
     let options: [LudoOption]
     let movableOwner: Int
     let boardText: String, mineText: String, prompt: String
+    /// سجل الرميات والحركات بالترتيب
+    let log: [String]
 
     func home(_ o: Int) -> Int { o < tokens.count ? tokens[o].filter { $0 == LudoView.FINISH }.count : 0 }
 
-    init(_ s: JSON, _ ui: JSON) {
+    init(_ s: JSON, _ ui: JSON, log: [String] = []) {
         let last = s.obj("lastMove")
+        self.log = log
         seats = s.ints("seats")
         tokens = s.arr("tokens").map { (($0 as? [Any]) ?? []).map { ($0 as? NSNumber)?.intValue ?? -1 } }
         turn = s.int("turn"); phase = s.str("phase")

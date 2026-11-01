@@ -110,7 +110,7 @@ data class TableView(
             history = o.optJSONArray("history").objects().map(::parseRecord),
             domino = o.optJSONObject("domino")?.let { DominoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("dominoLog")) },
             jackaroo = o.optJSONObject("jackaroo")?.let { JackarooView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optIntOrNull("mySeat")) },
-            ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject()) },
+            ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
         )
 
         private fun parseGame(g: JSONObject): GameView {

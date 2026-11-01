@@ -192,6 +192,8 @@ data class LudoView(
     val boardText: String,
     val mineText: String,
     val prompt: String,
+    /** سجل الرميات والحركات بالترتيب */
+    val log: List<String> = emptyList(),
 ) {
     fun home(owner: Int) = tokens.getOrNull(owner).orEmpty().count { it == FINISH }
 
@@ -202,7 +204,7 @@ data class LudoView(
         val SAFE = setOf(0, 8, 13, 21, 26, 34, 39, 47)
         fun absPos(owner: Int, p: Int) = (STARTS[owner] + p) % 52
 
-        fun parse(s: JSONObject, ui: JSONObject): LudoView {
+        fun parse(s: JSONObject, ui: JSONObject, log: org.json.JSONArray? = null): LudoView {
             val last = s.optJSONObject("lastMove")
             return LudoView(
                 seats = s.optJSONArray("seats").ints(),
@@ -227,6 +229,7 @@ data class LudoView(
                 boardText = ui.optString("boardText"),
                 mineText = ui.optString("mineText"),
                 prompt = ui.optString("prompt"),
+                log = log.mapIndexed { a, i -> a.optString(i) },
             )
         }
     }

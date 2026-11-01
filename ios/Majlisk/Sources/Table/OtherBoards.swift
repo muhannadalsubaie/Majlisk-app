@@ -466,6 +466,8 @@ struct LudoBoard: View {
     let isOwner: Bool
     /// آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
     @State private var rolls: [Int: Int] = [:]
+    /// السجل: يفتح بسحبة إصبعين من فوق لتحت (بدون زر)
+    @State private var logOpen = false
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
 
@@ -553,6 +555,17 @@ struct LudoBoard: View {
         }
         .onAppear { Gestures.shared.handler = { read($0) }; noteRoll() }
         .onChange(of: l.moveSig) { _ in noteRoll() }
+        .sheet(isPresented: $logOpen) {
+            let cur = conn.view?.ludo ?? l
+            Sheet(title: "سجل اللعب") {
+                if cur.log.isEmpty { Note("ما فيه حركات بعد.") }
+                // الأحدث أولاً
+                ForEach(Array(cur.log.reversed().enumerated()), id: \.offset) { _, line in
+                    Text(line).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+                }
+                MButton("إغلاق", .primary) { logOpen = false }
+            }
+        }
     }
 
     private func read(_ dir: SwipeDir) -> Bool {
@@ -560,6 +573,7 @@ struct LudoBoard: View {
         switch dir {
         case .left: Announcer.announceNow(cur.boardText)
         case .right: Announcer.announceNow(cur.mineText)
+        case .down: logOpen = true
         default: return false
         }
         return true

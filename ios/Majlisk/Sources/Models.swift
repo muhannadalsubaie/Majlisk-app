@@ -161,7 +161,7 @@ struct TableView {
         let ui = o.obj("ui") ?? [:]
         domino = o.obj("domino").map { DominoView($0, ui, log: o.objs("dominoLog")) }
         jackaroo = o.obj("jackaroo").map { JackarooView($0, ui, mySeat: o.intOrNil("mySeat")) }
-        ludo = o.obj("ludo").map { LudoView($0, ui) }
+        ludo = o.obj("ludo").map { LudoView($0, ui, log: o.strs("ludoLog")) }
     }
 
     private static func played(_ a: [JSON]) -> [PlayedCard] {

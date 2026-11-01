@@ -429,8 +429,26 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         if (l.phase == "move" && l.dice != null) rolls[l.turn] = l.dice
     }
 
+    // السجل: يفتح بسحبة إصبعين من فوق لتحت (بدون زر)
+    var logOpen by remember { mutableStateOf(false) }
+    if (logOpen) {
+        MajliskDialog("سجل اللعب", { logOpen = false }) {
+            if (l.log.isEmpty()) Note("ما فيه حركات بعد.")
+            // الأحدث أولاً
+            l.log.asReversed().forEach { Text(it, color = Palette.text, fontSize = 16.sp, modifier = Modifier.fillMaxWidth()) }
+            PrimaryButton("إغلاق", { logOpen = false })
+        }
+    }
+
     Column(
-        Modifier.fillMaxWidth().twoFingerSwipes { if (it == SwipeDir.Left) readBoard() else if (it == SwipeDir.Right) readMine() },
+        Modifier.fillMaxWidth().twoFingerSwipes {
+            when (it) {
+                SwipeDir.Left -> readBoard()
+                SwipeDir.Right -> readMine()
+                SwipeDir.Down -> logOpen = true
+                else -> {}
+            }
+        },
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         // اسم كل لاعب عند زاوية لونه في اللوحة، وجنبه نرد بآخر رقم جاه
