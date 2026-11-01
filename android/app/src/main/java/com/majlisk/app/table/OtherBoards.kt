@@ -527,26 +527,43 @@ class OtherGameSounds {
     private var lastPrompt: String? = null
     private var phase: String? = null
     private var deal: Int? = null
+    private var ludoLast: String? = null
+    private var ludoTurn: Int? = null
 
     fun update(v: TableView) {
         val d = v.domino; val j = v.jackaroo; val l = v.ludo
         val newSig = d?.moveSig ?: j?.moveSig ?: l?.moveSig
-        if (newSig == null) { sig = null; wasMyTurn = false; lastPrompt = null; phase = null; deal = null; return }
+        if (newSig == null) { sig = null; wasMyTurn = false; lastPrompt = null; phase = null; deal = null; ludoLast = null; ludoTurn = null; return }
         val first = sig == null
         val changed = sig != newSig
         sig = newSig
-        if (!first && changed) {
+        if (changed) {
             when {
-                d != null -> {
-                    if (phase != null && phase != "playing" && d.phase == "playing") Sounds.deal(true)
-                    else if (d.moveSig.contains("\"kind\":\"play\"")) Sounds.card()
+                // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
+                d != null -> when {
+                    (first && d.line.isEmpty() && d.phase == "playing") || (phase != null && phase != "playing" && d.phase == "playing") -> Sounds.dominoShuffle()
+                    !first && (d.lastKind == "play" || d.lastKind == "draw") -> Sounds.dominoTile()
                 }
-                j != null -> { if (deal != null && deal != j.dealNo) Sounds.deal(true); if (j.moveSig.startsWith("{")) Sounds.card() }
-                l != null -> if (l.moved && l.phase != "move") Sounds.card()
+                // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
+                j != null -> {
+                    if ((first && !j.hasMove) || (!first && deal != null && deal != j.dealNo)) Sounds.deal(true)
+                    if (!first && j.hasMove) { Sounds.card(); if (j.lastSteps > 0) Sounds.steps(j.lastSteps, at = 0.25) }
+                }
+                // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
+                l != null && !first -> {
+                    val newTurnRoll = l.phase == "move" && (phase != "move" || ludoTurn != l.turn)
+                    val moveChanged = l.lastSig != ludoLast && l.lastSig != "null"
+                    // رمى ثم تحرك مباشرة (خيار واحد) أو ما فيه حركة: النرد ثم النقرات
+                    val rolledNow = newTurnRoll || (moveChanged && phase != "move")
+                    if (rolledNow) Sounds.dice()
+                    if (moveChanged && l.moved) Sounds.steps(l.lastSteps, at = if (rolledNow && !newTurnRoll) 0.6 else 0.0)
+                }
             }
         }
         phase = d?.phase ?: j?.phase ?: l?.phase
         deal = j?.dealNo
+        ludoLast = l?.lastSig
+        ludoTurn = l?.turn
         val myTurn = d?.myTurn ?: j?.myTurn ?: l?.myTurn ?: false
         val prompt = d?.prompt ?: j?.prompt ?: l?.prompt ?: ""
         if (myTurn && !wasMyTurn) Sounds.turn(Announcer.readerOn)

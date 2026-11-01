@@ -570,29 +570,43 @@ final class OtherGameSounds {
     private var lastPrompt: String?
     private var phase: String?
     private var deal: Int?
+    private var ludoLast: String?
+    private var ludoTurn: Int?
 
     func update(_ v: TableView) {
         let d = v.domino, j = v.jackaroo, l = v.ludo
         guard let newSig = d?.moveSig ?? j?.moveSig ?? l?.moveSig else {
-            sig = nil; wasMyTurn = false; lastPrompt = nil; phase = nil; deal = nil; return
+            sig = nil; wasMyTurn = false; lastPrompt = nil; phase = nil; deal = nil; ludoLast = nil; ludoTurn = nil; return
         }
         let first = sig == nil
         let changed = sig != newSig
         sig = newSig
-        if !first && changed {
+        let s = Sounds.shared
+        if changed {
             if let d {
-                if let phase, phase != "playing", d.phase == "playing" { Sounds.shared.deal(newHand: true) }
-                else if d.lastKind == "play" { Sounds.shared.card() }
+                // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
+                if (first && d.line.isEmpty && d.phase == "playing") || (phase != nil && phase != "playing" && d.phase == "playing") { s.dominoShuffle() }
+                else if !first && (d.lastKind == "play" || d.lastKind == "draw") { s.dominoTile() }
             } else if let j {
-                if let deal, deal != j.dealNo { Sounds.shared.deal(newHand: true) }
-                if j.hasMove { Sounds.shared.card() }
-            } else if let l, l.moved, l.phase != "move" { Sounds.shared.card() }
+                // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
+                if (first && !j.hasMove) || (!first && deal != nil && deal != j.dealNo) { s.deal(newHand: true) }
+                if !first && j.hasMove { s.card(); if j.lastSteps > 0 { s.steps(j.lastSteps, at: 0.25) } }
+            } else if let l, !first {
+                // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
+                let newTurnRoll = l.phase == "move" && (phase != "move" || ludoTurn != l.turn)
+                let moveChanged = l.lastSig != ludoLast && l.lastSig != "null"
+                let rolledNow = newTurnRoll || (moveChanged && phase != "move")
+                if rolledNow { s.dice() }
+                if moveChanged && l.moved { s.steps(l.lastSteps, at: rolledNow && !newTurnRoll ? 0.6 : 0) }
+            }
         }
         phase = d?.phase ?? j?.phase ?? l?.phase
         deal = j?.dealNo
+        ludoLast = l?.lastSig
+        ludoTurn = l?.turn
         let myTurn = d?.myTurn ?? j?.myTurn ?? l?.myTurn ?? false
         let prompt = d?.prompt ?? j?.prompt ?? l?.prompt ?? ""
-        if myTurn && !wasMyTurn { Sounds.shared.turn(soft: Announcer.readerOn) }
+        if myTurn && !wasMyTurn { s.turn(soft: Announcer.readerOn) }
         // نص الدور (مع الطرفين في الدومينو، أو "اختر الحجر" في لودو): مرة لكل تغيّر
         if myTurn && !prompt.isEmpty && changed && (prompt != lastPrompt || !wasMyTurn) { Announcer.announce(prompt) }
         lastPrompt = myTurn ? prompt : nil

@@ -17,6 +17,7 @@ final class Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2",
     ]
 
     func preload() {
@@ -73,6 +74,16 @@ final class Sounds {
     }
 
     /// أحد انضم للمحادثة الصوتية / غادرها
+    /// الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة
+    func dominoShuffle() { play("domino-shuffle", gain: 1, vary: false) }
+    func dominoTile() { play("domino-tile", gain: 1) }
+    /// لودو: رمي النرد
+    func dice() { play("dice", gain: 0.9) }
+    /// مشي الحجر في اللودو والجاكارو: نقرة لكل خطوة
+    func steps(_ n: Int, at: Double = 0) {
+        for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "step1" : "step2", at: at + Double(i) * 0.13, gain: 0.9) }
+    }
+
     /// جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره
     func micToggle(_ open: Bool) { play(open ? "mic-on" : "mic-off", gain: 0.8, vary: false) }
     func voiceJoin() { play("voice-join", gain: 0.7, vary: false) }

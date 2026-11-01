@@ -81,6 +81,8 @@ struct JackarooView {
     let handCounts: [Int]
     let moveSig: String
     let hasMove: Bool
+    /// كم خطوة مشت آخر حركة (لصوت النقرات)
+    let lastSteps: Int
     let myTurn: Bool, burning: Bool
     let hand: [JackarooHandCard]
     let boardText: String, mineText: String, prompt: String
@@ -98,6 +100,14 @@ struct JackarooView {
         handCounts = hands.map(\.count)
         moveSig = jsonSig(s["lastMove"]) + "|\(s.int("dealNo"))|\(s.str("phase"))"
         hasMove = s.obj("lastMove") != nil
+        if let m = s.obj("lastMove")?.obj("move") {
+            switch m.str("kind") {
+            case "forward", "back", "kingRun": lastSteps = m.int("steps")
+            case "split": lastSteps = m.objs("parts").reduce(0) { $0 + $1.int("steps") }
+            case "out", "swap": lastSteps = 1
+            default: lastSteps = 0
+            }
+        } else { lastSteps = 0 }
         myTurn = ui.bool("myTurn"); burning = ui.bool("burning")
         let uiHand = ui.objs("hand")
         let mine: [JSON] = mySeat.flatMap { $0 < hands.count ? hands[$0].compactMap { $0 as? JSON } : nil } ?? []
@@ -129,6 +139,9 @@ struct LudoView {
     let teams: Bool
     let moveSig: String
     let moved: Bool
+    /// بصمة آخر حركة، وكم خطوة مشى الحجر
+    let lastSig: String
+    let lastSteps: Int
     let myTurn: Bool
     let options: [LudoOption]
     let movableOwner: Int
@@ -145,6 +158,8 @@ struct LudoView {
         teams = s.obj("rules")?.bool("teams") ?? false
         moveSig = jsonSig(s["lastMove"]) + "|\(s.int("turn"))|\(s.str("phase"))|\(s.intOrNil("dice") ?? -1)"
         moved = last?.obj("token") != nil
+        lastSig = jsonSig(s["lastMove"])
+        if let f = last?.intOrNil("from"), let t = last?.intOrNil("to") { lastSteps = f == -1 ? 1 : t - f } else { lastSteps = 0 }
         myTurn = ui.bool("myTurn")
         options = ui.objs("options").map { LudoOption(token: $0.int("token"), text: $0.str("text")) }
         movableOwner = ui.int("movableOwner", -1)

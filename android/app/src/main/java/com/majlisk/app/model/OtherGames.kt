@@ -28,6 +28,8 @@ data class DominoView(
     val boneyard: Int,
     /** بصمة آخر حركة (للأصوات) */
     val moveSig: String,
+    /** نوع آخر حركة: play / draw / pass */
+    val lastKind: String?,
     // من ui
     val myTurn: Boolean,
     val canDraw: Boolean,
@@ -55,6 +57,7 @@ data class DominoView(
                 handCounts = s.optJSONArray("hands").mapIndexed { a, i -> a.optJSONArray(i)?.length() ?: 0 },
                 boneyard = s.optJSONArray("boneyard")?.length() ?: 0,
                 moveSig = "${s.opt("lastMove")}|${s.optString("phase")}|${s.optInt("handNo")}",
+                lastKind = s.optJSONObject("lastMove")?.optString("kind"),
                 myTurn = ui.optBoolean("myTurn"),
                 canDraw = ui.optBoolean("canDraw"),
                 canPass = ui.optBoolean("canPass"),
@@ -96,6 +99,9 @@ data class JackarooView(
     val marbles: List<List<Marble>>,
     val handCounts: List<Int>,
     val moveSig: String,
+    /** آخر حركة موجودة، وكم خطوة مشت (لصوت النقرات) */
+    val hasMove: Boolean,
+    val lastSteps: Int,
     val myTurn: Boolean,
     val burning: Boolean,
     val hand: List<JackarooHandCard>,
@@ -124,6 +130,15 @@ data class JackarooView(
                 },
                 handCounts = hands.mapIndexed { a, i -> a.optJSONArray(i)?.length() ?: 0 },
                 moveSig = "${s.opt("lastMove")}|${s.optInt("dealNo")}|${s.optString("phase")}",
+                hasMove = s.optJSONObject("lastMove") != null,
+                lastSteps = s.optJSONObject("lastMove")?.optJSONObject("move")?.let { m ->
+                    when (m.optString("kind")) {
+                        "forward", "back", "kingRun" -> m.optInt("steps")
+                        "split" -> m.optJSONArray("parts").objects().sumOf { it.optInt("steps") }
+                        "out", "swap" -> 1
+                        else -> 0
+                    }
+                } ?: 0,
                 myTurn = ui.optBoolean("myTurn"),
                 burning = ui.optBoolean("burning"),
                 hand = myCards.mapIndexed { i, c ->
@@ -157,6 +172,9 @@ data class LudoView(
     val moveSig: String,
     /** تحرك حجر في آخر حركة (للصوت) */
     val moved: Boolean,
+    /** بصمة آخر حركة، وكم خطوة مشى الحجر */
+    val lastSig: String,
+    val lastSteps: Int,
     val myTurn: Boolean,
     val options: List<LudoOption>,
     val movableOwner: Int,
@@ -186,6 +204,11 @@ data class LudoView(
                 teams = s.optJSONObject("rules")?.optBoolean("teams") == true,
                 moveSig = "${s.opt("lastMove")}|${s.optInt("turn")}|${s.optString("phase")}|${s.opt("dice")}",
                 moved = last?.optJSONObject("token") != null,
+                lastSig = "${s.opt("lastMove")}",
+                lastSteps = last?.let { m ->
+                    val from = m.optIntOrNull("from"); val to = m.optIntOrNull("to")
+                    if (from == null || to == null) 0 else if (from == -1) 1 else to - from
+                } ?: 0,
                 myTurn = ui.optBoolean("myTurn"),
                 options = ui.optJSONArray("options").objects().map { LudoOption(it.optInt("token"), it.optString("text")) },
                 movableOwner = ui.optInt("movableOwner", -1),
