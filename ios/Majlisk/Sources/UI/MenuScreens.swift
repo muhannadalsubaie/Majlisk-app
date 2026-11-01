@@ -53,6 +53,7 @@ struct CreateTableScreen: View {
     let openTable: (String) -> Void
     // أولاً تختار اللعبة، ثم إعدادات الطاولة
     @State private var picked: String?
+    @State private var variant = "classic"
     @State private var isPrivate = false
     @State private var busy = false
     @State private var error = ""
@@ -60,14 +61,25 @@ struct CreateTableScreen: View {
     var body: some View {
         if let game = picked {
             Screen {
-                TopBar("طاولة \(gameTitle(game, "classic"))", onBack: { picked = nil })
+                TopBar("طاولة \(gameTitle(game, variant))", onBack: { picked = nil })
+                // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
+                let variants: [(String, String)] = game == "jackaroo" ? [("classic", "عادي"), ("complex", "كمبلكس")] : game == "ludo" ? [("classic", "فردي"), ("teams", "فرق")] : []
+                if !variants.isEmpty {
+                    Text("النسخة").foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader)
+                    HStack(spacing: 10) {
+                        ForEach(variants, id: \.0) { opt in
+                            if variant == opt.0 { MButton("✓ \(opt.1)", .primary, label: "\(opt.1)، محددة") {} }
+                            else { MButton(opt.1) { variant = opt.0 } }
+                        }
+                    }
+                }
                 SwitchRow(label: "طاولة خاصة", isOn: isPrivate, onChange: { isPrivate = $0 })
                 if !error.isEmpty { Text(error).foregroundColor(Palette.goldSoft) }
                 MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy) {
                     busy = true; error = ""
                     Task { @MainActor in
                         do {
-                            let id = try await Tables.create(isPrivate: isPrivate, kind: game, variant: "classic")
+                            let id = try await Tables.create(isPrivate: isPrivate, kind: game, variant: variant)
                             Announcer.announce("تم إنشاء الطاولة")
                             openTable(id)
                         } catch {
@@ -82,7 +94,10 @@ struct CreateTableScreen: View {
             Screen {
                 TopBar("اختر اللعبة", onBack: { navigate(.menu) })
                 Spacer().frame(height: 28)
-                GameTile(name: "بلوت", image: "baloot_table") { picked = "baloot" }
+                GameTile(name: "بلوت", image: "baloot_table") { picked = "baloot"; variant = "classic" }
+                GameTile(name: "دومينو", image: "domino_table") { picked = "domino"; variant = "classic" }
+                GameTile(name: "جاكارو", image: "jackaroo_table") { picked = "jackaroo"; variant = "classic" }
+                GameTile(name: "لودو", image: "ludo_table") { picked = "ludo"; variant = "classic" }
             }
         }
     }
@@ -104,10 +119,9 @@ struct JoinTableScreen: View {
             else if rows!.isEmpty { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
             ForEach(rows ?? []) { r in
                 let game = gameTitle(r.kind, r.variant)
-                let soon = r.kind != "baloot"
-                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد اللاعبين \(r.players) من 4، \(STATUS[r.status] ?? "")\(soon ? "، قريباً في هذه النسخة" : "")"
+                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد اللاعبين \(r.players) من 4، \(STATUS[r.status] ?? "")"
                 MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · \(r.players)/4 · \(STATUS[r.status] ?? "")",
-                        enabled: !r.isPrivate && !soon && busy != r.id, label: spoken) {
+                        enabled: !r.isPrivate && busy != r.id, label: spoken) {
                     busy = r.id
                     Task { @MainActor in
                         do { try await Tables.join(r.id); openTable(r.id) } catch { Announcer.announce(Tables.error(error, "تعذّر الانضمام")) }

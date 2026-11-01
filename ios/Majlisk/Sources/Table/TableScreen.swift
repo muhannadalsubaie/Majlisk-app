@@ -30,7 +30,8 @@ struct TableScreen: View {
             let c = TableConnection(tableId)
             c.myUid = uid
             let sounds = GameSoundTracker()
-            c.onState = { sounds.update($0) }
+            let other = OtherGameSounds()
+            c.onState = { sounds.update($0); other.update($0) }
             return c
         }())
     }
@@ -95,8 +96,12 @@ struct TableScreen: View {
             if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }
             if !v.hasGame {
                 SeatsLobby(v: v, uid: uid, conn: conn)
-            } else if v.otherGame {
-                BodyText("هذه الطاولة \(gameTitle(v.kind, v.variant))، وهذه اللعبة تُضاف قريباً لهذه النسخة. يمكنك البقاء في المحادثة الصوتية.")
+            } else if let d = v.domino {
+                DominoBoard(v: v, d: d, conn: conn, isOwner: v.ownerUid == uid)
+            } else if let j = v.jackaroo {
+                JackarooBoard(v: v, j: j, conn: conn, isOwner: v.ownerUid == uid)
+            } else if let l = v.ludo {
+                LudoBoard(v: v, l: l, conn: conn, isOwner: v.ownerUid == uid)
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
             }

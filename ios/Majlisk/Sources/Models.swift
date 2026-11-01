@@ -127,12 +127,17 @@ struct TableView {
     let game: GameView?
     let kind: String
     let variant: String
-    /// لعبة غير البلوت بدأت (الدومينو والجاكارو واللودو تأتي في المرحلة الثانية)
+    /// لعبة غير البلوت بدأت (الدومينو أو الجاكارو أو اللودو)
     let otherGame: Bool
     let history: [HandRecord]
+    let domino: DominoView?
+    let jackaroo: JackarooView?
+    let ludo: LudoView?
 
     var hasGame: Bool { game != nil || otherGame }
-    var playing: Bool { (game != nil && game!.phase != "matchOver") || otherGame }
+    var playing: Bool {
+        (game != nil && game!.phase != "matchOver") || (domino != nil && domino!.phase != "matchOver") || jackaroo?.phase == "playing" || (ludo != nil && ludo!.phase != "over")
+    }
     func seat(_ i: Int) -> SeatInfo? { i < seats.count ? seats[i] : nil }
     func seatUid(_ i: Int) -> String { i < seatUids.count ? seatUids[i] : "" }
 
@@ -153,6 +158,10 @@ struct TableView {
         variant = o.str("variant", "classic")
         otherGame = ["domino", "jackaroo", "ludo"].contains { o.obj($0) != nil }
         history = o.objs("history").map(TableView.parseRecord)
+        let ui = o.obj("ui") ?? [:]
+        domino = o.obj("domino").map { DominoView($0, ui) }
+        jackaroo = o.obj("jackaroo").map { JackarooView($0, ui, mySeat: o.intOrNil("mySeat")) }
+        ludo = o.obj("ludo").map { LudoView($0, ui) }
     }
 
     private static func played(_ a: [JSON]) -> [PlayedCard] {
