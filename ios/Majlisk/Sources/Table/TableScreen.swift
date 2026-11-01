@@ -21,6 +21,7 @@ struct TableScreen: View {
     @State private var chatOpen = false
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var historyOpen = false
+    @State private var dominoLogOpen = false
     @State private var confirmLeave = false
 
     init(tableId: String, uid: String, exit: @escaping () -> Void) {
@@ -90,6 +91,7 @@ struct TableScreen: View {
             HStack(spacing: 8) {
                 SmallButton("القائمة") { menuOpen = true }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
+                if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 Text("طاولة \(gameTitle(v.kind, v.variant))").foregroundColor(Palette.textDim)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
@@ -97,7 +99,7 @@ struct TableScreen: View {
             if !v.hasGame {
                 SeatsLobby(v: v, uid: uid, conn: conn)
             } else if let d = v.domino {
-                DominoBoard(v: v, d: d, conn: conn, isOwner: v.ownerUid == uid)
+                DominoBoard(v: v, d: d, conn: conn, isOwner: v.ownerUid == uid) { dominoLogOpen = true }
             } else if let j = v.jackaroo {
                 JackarooBoard(v: v, j: j, conn: conn, isOwner: v.ownerUid == uid)
             } else if let l = v.ludo {
@@ -109,6 +111,8 @@ struct TableScreen: View {
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
             // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
             Spacer(minLength: 0)
+            // الدومينو: قطعك تحت فوق الميكروفون
+            if let d = v.domino { DominoHand(v: v, d: d, conn: conn) }
             // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
             if chatSettings.mode != .off {
                 HStack { Spacer(); ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
@@ -121,6 +125,9 @@ struct TableScreen: View {
         }
         .sheet(isPresented: $chatOpen, onDismiss: { conn.chatOpen = false }) { ChatSheet(conn: conn) { chatOpen = false } }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
+        .sheet(isPresented: $dominoLogOpen) {
+            if let d = (conn.view ?? v).domino { DominoLogView(d: d) { dominoLogOpen = false } }
+        }
         .sheet(isPresented: $menuOpen) {
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false })
         }

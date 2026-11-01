@@ -126,6 +126,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val kicked by conn.kicked.collectAsState()
     var menuOpen by remember { mutableStateOf(false) }
     var historyOpen by remember { mutableStateOf(false) }
+    var dominoLogOpen by remember { mutableStateOf(false) }
     var confirmLeave by remember { mutableStateOf(false) }
     var chatOpen by remember { mutableStateOf(false) }
     val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()
@@ -172,6 +173,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 com.majlisk.app.ui.BackButton({ menuOpen = true }, "القائمة")
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
+                if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(
                     "طاولة ${gameTitle(v.kind, v.variant)}",
                     color = Palette.textDim,
@@ -183,7 +185,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
             when {
                 !v.hasGame -> SeatsLobby(v, uid, conn)
-                v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid)
+                v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid) { dominoLogOpen = true }
                 v.jackaroo != null -> JackarooBoard(v, v.jackaroo, conn, v.ownerUid == uid)
                 v.ludo != null -> LudoBoard(v, v.ludo, conn, v.ownerUid == uid)
                 v.game != null -> BalootBoard(v, v.game, uid, conn)
@@ -192,6 +194,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
             // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
             Spacer(Modifier.weight(1f))
+            // الدومينو: قطعك تحت فوق الميكروفون
+            v.domino?.let { DominoHand(v, it, conn) { dominoLogOpen = true } }
             // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
             if (chatMode != com.majlisk.app.data.ChatMode.OFF) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ChatButton(conn) { chatOpen = true; conn.chatOpen = true } }
@@ -204,6 +208,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     if (chatOpen) ChatDialog(conn) { chatOpen = false; conn.chatOpen = false }
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
+    if (dominoLogOpen && v.domino != null) DominoLogDialog(v.domino) { dominoLogOpen = false }
     if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false })
     if (confirmLeave) {
         ConfirmDialog(

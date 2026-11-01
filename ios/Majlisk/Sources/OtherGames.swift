@@ -38,8 +38,10 @@ struct DominoView {
     let sideNames: [String]
     let mySide: Int
     let prompt: String
+    /// سجل كل جولة (صكة): رقمها وحركاتها بالترتيب
+    let log: [(hand: Int, lines: [String])]
 
-    init(_ s: JSON, _ ui: JSON) {
+    init(_ s: JSON, _ ui: JSON, log: [JSON] = []) {
         let rules = s.obj("rules") ?? [:]
         phase = s.str("phase"); turn = s.int("turn")
         players = rules.int("players", 4); target = rules.int("target", 100)
@@ -56,6 +58,7 @@ struct DominoView {
         ends = ui.obj("ends").map { (left: $0.int("left"), right: $0.int("right")) }
         endsText = ui.str("endsText"); lineText = ui.str("lineText"); scoreText = ui.str("scoreText")
         sideNames = ui.strs("sideNames"); mySide = ui.int("mySide", -1); prompt = ui.str("prompt")
+        self.log = log.map { (hand: $0.int("hand"), lines: $0.strs("lines")) }
     }
 }
 

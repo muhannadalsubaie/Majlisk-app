@@ -42,9 +42,11 @@ data class DominoView(
     val sideNames: List<String>,
     val mySide: Int,
     val prompt: String,
+    /** سجل كل جولة (صكة): رقمها وحركاتها بالترتيب */
+    val log: List<Pair<Int, List<String>>> = emptyList(),
 ) {
     companion object {
-        fun parse(s: JSONObject, ui: JSONObject): DominoView {
+        fun parse(s: JSONObject, ui: JSONObject, log: org.json.JSONArray? = null): DominoView {
             val rules = s.optJSONObject("rules") ?: JSONObject()
             val tile = { o: JSONObject? -> Tile(o?.optInt("a") ?: 0, o?.optInt("b") ?: 0) }
             return DominoView(
@@ -71,6 +73,7 @@ data class DominoView(
                 sideNames = ui.optJSONArray("sideNames").mapIndexed { a, i -> a.optString(i) },
                 mySide = ui.optInt("mySide", -1),
                 prompt = ui.optString("prompt"),
+                log = log.objects().map { e -> e.optInt("hand") to e.optJSONArray("lines").mapIndexed { a, i -> a.optString(i) } },
             )
         }
     }

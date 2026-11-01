@@ -52,11 +52,12 @@ class TableShots {
                             Text("طاولة ${gameTitle(v.kind, v.variant)}", color = Palette.textDim, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
                         }
                         when {
-                            v.domino != null -> DominoBoard(v, v.domino!!, conn, true)
+                            v.domino != null -> DominoBoard(v, v.domino!!, conn, true) {}
                             v.jackaroo != null -> JackarooBoard(v, v.jackaroo!!, conn, true)
                             v.ludo != null -> LudoBoard(v, v.ludo!!, conn, true)
                         }
                         Spacer(Modifier.weight(1f))
+                        v.domino?.let { com.majlisk.app.table.DominoHand(v, it, conn) {} }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ChatButton(conn) {} }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { VoiceButton(v.id, "u1") }
                     }

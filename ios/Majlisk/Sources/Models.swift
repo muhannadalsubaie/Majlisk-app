@@ -159,7 +159,7 @@ struct TableView {
         otherGame = ["domino", "jackaroo", "ludo"].contains { o.obj($0) != nil }
         history = o.objs("history").map(TableView.parseRecord)
         let ui = o.obj("ui") ?? [:]
-        domino = o.obj("domino").map { DominoView($0, ui) }
+        domino = o.obj("domino").map { DominoView($0, ui, log: o.objs("dominoLog")) }
         jackaroo = o.obj("jackaroo").map { JackarooView($0, ui, mySeat: o.intOrNil("mySeat")) }
         ludo = o.obj("ludo").map { LudoView($0, ui) }
     }

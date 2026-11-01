@@ -143,19 +143,45 @@ private fun orient(p: PlacedTile): Tile {
     return if (p.side == "right") Tile(inner, p.outer) else Tile(p.outer, inner)
 }
 
+/** نص الدور في الدومينو: "دورك" أو "دور فلان" */
+private fun dominoTurnText(v: TableView, d: DominoView): String = when {
+    d.phase == "matchOver" -> "انتهت المباراة"
+    d.phase != "playing" -> "انتهت الصكة، الصكة التالية بعد لحظات"
+    d.turn == v.mySeat -> "دورك"
+    else -> "دور ${names(v).getOrElse(d.turn) { "" }}"
+}
+
+/** جلا (تمرير): لما ما عندك قطعة تصلح */
+private fun dominoJala(conn: TableConnection, d: DominoView) = when {
+    !d.myTurn -> Announcer.announceNow("ليس دورك")
+    d.canPass -> act(conn, "domino", jsonOf("type" to "pass"))
+    d.canDraw -> Announcer.announceNow("ما تقدر تجلي، اسحب من البنك")
+    else -> Announcer.announceNow("ما تقدر تجلي، عندك قطعة تصلح")
+}
+
+/**
+ * سحب بإصبعين في الدومينو: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين،
+ * من اليسار لليمين = سجل الجولات، من فوق لتحت = جلا
+ */
+@Composable
+private fun Modifier.dominoSwipes(v: TableView, d: DominoView, conn: TableConnection, openLog: () -> Unit): Modifier = twoFingerSwipes {
+    when (it) {
+        SwipeDir.Left -> Announcer.announceNow(d.endsText)
+        SwipeDir.Up -> Announcer.announceNow(dominoTurnText(v, d))
+        SwipeDir.Right -> openLog()
+        SwipeDir.Down -> dominoJala(conn, d)
+    }
+}
+
+/** أعلى طاولة الدومينو: النقاط، اللاعبون، وخط اللعب */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boolean) {
+fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boolean, openLog: () -> Unit) {
     val mySeat = v.mySeat
     val names = names(v)
-    var chooseSide by remember { mutableStateOf<DominoHandTile?>(null) }
     val readBoard = { Announcer.announceNow("${d.lineText}. ${d.endsText}") }
-    val readScore = { Announcer.announceNow("${d.endsText}. ${d.scoreText}${if (d.boneyard > 0) ". في البنك ${d.boneyard} قطعة" else ""}") }
 
-    Column(
-        Modifier.fillMaxWidth().twoFingerSwipes { if (it == SwipeDir.Left) readBoard() else if (it == SwipeDir.Right) readScore() },
-        verticalArrangement = Arrangement.spacedBy(10.dp),
-    ) {
+    Column(Modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = d.scoreText }, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             d.scores.forEachIndexed { side, n -> ScoreTile(d.sideNames.getOrElse(side) { "" }, "$n", side == d.mySide, Modifier.weight(1f).clearAndSetSemantics { }) }
         }
@@ -185,35 +211,43 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
         }
         if (d.phase != "playing") Text(if (d.phase == "matchOver") "انتهت المباراة" else "انتهت الصكة، الصكة التالية بعد لحظات",
             color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+        if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
+        if (mySeat == null) Note("أنت تشاهد هذه الطاولة.")
+    }
+}
+
+/** قطعك في أسفل الشاشة فوق الميكروفون، ومعها زر جلا (وسحب من البنك إن وجد) */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -> Unit) {
+    if (v.mySeat == null) return
+    var chooseSide by remember { mutableStateOf<DominoHandTile?>(null) }
+    Column(Modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (d.myTurn && (d.canDraw || d.canPass)) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 if (d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
-                if (d.canPass) PrimaryButton("دق", { act(conn, "domino", jsonOf("type" to "pass")) }, modifier = Modifier.weight(1f))
+                if (d.canPass) PrimaryButton("جلا", { dominoJala(conn, d) }, modifier = Modifier.weight(1f))
             }
         }
-        if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
-
-        if (mySeat != null) {
-            Text("قطعك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                d.hand.forEach { h ->
-                    Box(
-                        Modifier
-                            .border(2.dp, if (h.legal) Palette.gold else Color.Transparent, RoundedCornerShape(8.dp))
-                            .clickable(role = Role.Button) {
-                                when {
-                                    !d.myTurn -> Announcer.announceNow("ليس دورك")
-                                    !h.legal -> Announcer.announceNow(h.label)
-                                    h.askSide -> chooseSide = h
-                                    else -> act(conn, "domino", jsonOf("type" to "play", "tile" to h.tile.json()))
-                                }
+        Text("قطعك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            d.hand.forEach { h ->
+                Box(
+                    Modifier
+                        .border(2.dp, if (h.legal) Palette.gold else Color.Transparent, RoundedCornerShape(8.dp))
+                        .clickable(role = Role.Button) {
+                            when {
+                                !d.myTurn -> Announcer.announceNow("ليس دورك")
+                                !h.legal -> Announcer.announceNow(h.label)
+                                h.askSide -> chooseSide = h
+                                else -> act(conn, "domino", jsonOf("type" to "play", "tile" to h.tile.json()))
                             }
-                            .semantics(mergeDescendants = true) { contentDescription = h.label }
-                            .padding(4.dp),
-                    ) { DominoTileView(h.tile, vertical = true, unit = 30, dim = d.myTurn && !h.legal) }
-                }
+                        }
+                        .semantics(mergeDescendants = true) { contentDescription = h.label }
+                        .padding(4.dp),
+                ) { DominoTileView(h.tile, vertical = true, unit = 30, dim = d.myTurn && !h.legal) }
             }
-        } else Note("أنت تشاهد هذه الطاولة.")
+        }
     }
 
     val pick = chooseSide
@@ -224,6 +258,24 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             PrimaryButton("اليسار (على ${e.first})", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "left")) })
             SecondaryButton("إلغاء", { chooseSide = null }, fill = true)
         }
+    }
+}
+
+/** سجل الدومينو: حركات كل جولة بالترتيب، تتنقل بين الجولات (يبدأ من الجولة الحالية) */
+@Composable
+fun DominoLogDialog(d: DominoView, onClose: () -> Unit) {
+    var page by remember { mutableStateOf(d.log.lastIndex.coerceAtLeast(0)) }
+    val entry = d.log.getOrNull(page)
+    val current = page == d.log.lastIndex
+    MajliskDialog(if (entry == null) "السجل" else "سجل الجولة ${entry.first}${if (current) " (الحالية)" else ""}", onClose) {
+        val lines = entry?.second.orEmpty()
+        if (lines.isEmpty()) Note(if (entry == null) "ما فيه حركات بعد." else "ما انلعبت حجار في هذه الجولة بعد.")
+        lines.forEach { Text(it, color = Palette.text, fontSize = 16.sp, modifier = Modifier.fillMaxWidth()) }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            if (page > 0) SecondaryButton("الجولة السابقة", { page-- }, modifier = Modifier.weight(1f), fill = true)
+            if (page < d.log.lastIndex) SecondaryButton("الجولة التالية", { page++ }, modifier = Modifier.weight(1f), fill = true)
+        }
+        PrimaryButton("إغلاق", onClose)
     }
 }
 

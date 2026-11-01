@@ -146,16 +146,33 @@ private func orient(_ p: PlacedTile) -> Tile {
 
 private struct LineItem: Identifiable { let id: Int; let p: PlacedTile }
 
+/// نص الدور في الدومينو: "دورك" أو "دور فلان"
+private func dominoTurnText(_ v: TableView, _ d: DominoView) -> String {
+    if d.phase == "matchOver" { return "انتهت المباراة" }
+    if d.phase != "playing" { return "انتهت الصكة، الصكة التالية بعد لحظات" }
+    if d.turn == v.mySeat { return "دورك" }
+    let names = seatNames(v)
+    return "دور \(d.turn < names.count ? names[d.turn] : "")"
+}
+
+/// جلا (تمرير): لما ما عندك قطعة تصلح
+private func dominoJala(_ conn: TableConnection, _ d: DominoView) {
+    if !d.myTurn { Announcer.announceNow("ليس دورك") }
+    else if d.canPass { conn.send(["type": "domino", "action": ["type": "pass"]]) }
+    else if d.canDraw { Announcer.announceNow("ما تقدر تجلي، اسحب من البنك") }
+    else { Announcer.announceNow("ما تقدر تجلي، عندك قطعة تصلح") }
+}
+
+/// أعلى طاولة الدومينو: النقاط، اللاعبون، وخط اللعب.
+/// سحب بإصبعين: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين، من اليسار لليمين = سجل الجولات، من فوق لتحت = جلا
 struct DominoBoard: View {
     let v: TableView
     let d: DominoView
     let conn: TableConnection
     let isOwner: Bool
-    @State private var chooseSide: DominoHandTile?
+    let openLog: () -> Void
 
-    private func act(_ a: JSON) { conn.send(["type": "domino", "action": a]) }
     private func readBoard() { Announcer.announceNow("\(d.lineText). \(d.endsText)") }
-    private func readScore() { Announcer.announceNow("\(d.endsText). \(d.scoreText)\(d.boneyard > 0 ? ". في البنك \(d.boneyard) قطعة" : "")") }
 
     var body: some View {
         let names = seatNames(v)
@@ -198,14 +215,44 @@ struct DominoBoard: View {
                 Text(d.phase == "matchOver" ? "انتهت المباراة" : "انتهت الصكة، الصكة التالية بعد لحظات")
                     .font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
             }
-            if d.myTurn && (d.canDraw || d.canPass) {
-                HStack(spacing: 8) {
-                    if d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
-                    if d.canPass { MButton("دق", .primary) { act(["type": "pass"]) } }
-                }
-            }
             if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
-            if mySeat != nil {
+            if mySeat == nil { Note("أنت تشاهد هذه الطاولة.") }
+        }
+        .onAppear { Gestures.shared.handler = { read($0) } }
+    }
+
+    private func read(_ dir: SwipeDir) -> Bool {
+        // آخر حالة وصلت وقت الإيماءة نفسها
+        let cur = conn.view?.domino ?? d
+        let view = conn.view ?? v
+        switch dir {
+        case .left: Announcer.announceNow(cur.endsText)
+        case .up: Announcer.announceNow(dominoTurnText(view, cur))
+        case .right: openLog()
+        case .down: dominoJala(conn, cur)
+        }
+        return true
+    }
+}
+
+/// قطعك في أسفل الشاشة فوق الميكروفون، ومعها زر جلا (وسحب من البنك إن وجد)
+struct DominoHand: View {
+    let v: TableView
+    let d: DominoView
+    let conn: TableConnection
+    @State private var chooseSide: DominoHandTile?
+
+    private func act(_ a: JSON) { conn.send(["type": "domino", "action": a]) }
+
+    var body: some View {
+        if v.mySeat != nil {
+            VStack(spacing: 8) {
+                if d.myTurn && (d.canDraw || d.canPass) {
+                    HStack(spacing: 8) {
+                        if d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
+                        if d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
+                    }
+                }
                 Text("قطعك").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 Wrap(items: d.hand, spacing: 8) { h in
                     Button {
@@ -221,29 +268,46 @@ struct DominoBoard: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(h.label)
                 }
-            } else { Note("أنت تشاهد هذه الطاولة.") }
-        }
-        .onAppear { Gestures.shared.handler = { read($0) } }
-        .sheet(item: $chooseSide) { h in
-            Sheet(title: "أين تلعب القطعة؟") {
-                if let e = d.ends {
-                    MButton("اليمين (على \(e.right))", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "right"]) }
-                    MButton("اليسار (على \(e.left))", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "left"]) }
+            }
+            .sheet(item: $chooseSide) { h in
+                Sheet(title: "أين تلعب القطعة؟") {
+                    if let e = d.ends {
+                        MButton("اليمين (على \(e.right))", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "right"]) }
+                        MButton("اليسار (على \(e.left))", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "left"]) }
+                    }
+                    MButton("إلغاء") { chooseSide = nil }
                 }
-                MButton("إلغاء") { chooseSide = nil }
             }
         }
     }
+}
 
-    private func read(_ dir: SwipeDir) -> Bool {
-        // آخر حالة وصلت وقت الإيماءة نفسها
-        let cur = conn.view?.domino ?? d
-        switch dir {
-        case .left: Announcer.announceNow("\(cur.lineText). \(cur.endsText)")
-        case .right: Announcer.announceNow("\(cur.endsText). \(cur.scoreText)\(cur.boneyard > 0 ? ". في البنك \(cur.boneyard) قطعة" : "")")
-        default: return false
+/// سجل الدومينو: حركات كل جولة بالترتيب، تتنقل بين الجولات (يبدأ من الجولة الحالية)
+struct DominoLogView: View {
+    let d: DominoView
+    let close: () -> Void
+    @State private var page: Int
+
+    init(d: DominoView, close: @escaping () -> Void) {
+        self.d = d; self.close = close
+        _page = State(initialValue: max(d.log.count - 1, 0))
+    }
+
+    var body: some View {
+        let entry = page < d.log.count ? d.log[page] : nil
+        let current = page == d.log.count - 1
+        Sheet(title: entry.map { "سجل الجولة \($0.hand)\(current ? " (الحالية)" : "")" } ?? "السجل") {
+            let lines = entry?.lines ?? []
+            if lines.isEmpty { Note(entry == nil ? "ما فيه حركات بعد." : "ما انلعبت حجار في هذه الجولة بعد.") }
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
+                Text(line).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+            }
+            HStack(spacing: 8) {
+                if page > 0 { MButton("الجولة السابقة") { page -= 1 } }
+                if page < d.log.count - 1 { MButton("الجولة التالية") { page += 1 } }
+            }
+            MButton("إغلاق", .primary, action: close)
         }
-        return true
     }
 }
 
