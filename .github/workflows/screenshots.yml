@@ -79,3 +79,26 @@ jobs:
         with:
           name: ios-shots
           path: ios/shots/*.png
+
+  # نحفظ الصور في فرع "screenshots" بالمستودع (أسهل للعرض من ملفات Artifacts)
+  collect:
+    needs: [android, ios]
+    if: always()
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: shots
+          merge-multiple: true
+      - name: Push to the screenshots branch
+        run: |
+          ls -la shots
+          cd shots
+          git init -q -b screenshots
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add -A
+          git commit -qm "Screenshots ${GITHUB_SHA}"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" screenshots
