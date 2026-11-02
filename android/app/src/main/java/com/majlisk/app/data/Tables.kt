@@ -97,6 +97,12 @@ private fun eventSound(events: List<String>) {
     }
 }
 
+/** سطور المزايدة والدبل اللي يغطيها التعليق الصوتي */
+private val BID_LINE = listOf(
+    Regex(".* اشترى .*"), Regex(".* (بس|ولا)$"), Regex(".*أكد الحكم.*"), Regex(".* قال قبلك$"), Regex(".* دبّل$"),
+    Regex("^(مقفل|مفتوح)$"), Regex(".*: (مقفل|مفتوح)$"),
+)
+
 class TableConnection(val tableId: String) {
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
     private val _view = MutableStateFlow<TableView?>(null)
@@ -216,9 +222,13 @@ class TableConnection(val tableId: String) {
             "events" -> msg.optJSONArray("events")?.let { a ->
                 val events = (0 until a.length()).map { a.optString(it) }
                 // المزايدة والدبل بأصوات منطوقة (حكم، صن، بس/ولا، دبل...)
-                msg.optJSONArray("voices")?.let { v -> Sounds.voices((0 until v.length()).map { v.optString(it) }) }
+                val voices = msg.optJSONArray("voices")?.let { v -> (0 until v.length()).map { v.optString(it) } }.orEmpty()
+                if (voices.isNotEmpty()) Sounds.voices(voices)
                 eventSound(events)
-                Announcer.announceEvent(events.joinToString("، "))
+                // المزايدة والدبل: التعليق الصوتي يبيّن وش اشترى أو قال، فقارئ الشاشة ما يقرأ نصها
+                // (يقول بس «دور فلان» مع تغيّر الدور)، ويبقى ما سواها مثل «ورقة الأرض لفلان»
+                val spoken = if (voices.isEmpty()) events else events.filterNot { e -> BID_LINE.any { it.matches(e) } }
+                if (spoken.isNotEmpty()) Announcer.announceEvent(spoken.joinToString("، "))
             }
             "chat" -> {
                 val mode = ChatSettings.mode.value

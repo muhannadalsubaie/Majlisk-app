@@ -430,7 +430,15 @@ private fun seatNote(g: GameView, seat: Int): String? {
     if (g.dealer == seat) parts += "الموزع"
     val c = g.contract
     when {
-        c != null && c.buyer == seat -> parts += if (c.mode == "hokm") "اشترى حكم" else if (c.qabaTo != c.buyer) "اشترى أشكل" else "اشترى صن"
+        c != null && c.buyer == seat -> parts += when {
+            // الحكم الثاني: بعد ما يحدد اللون ينكتب نوعه
+            c.mode == "hokm" && (g.bidRound == 2 || g.secondHokmSeat == seat) -> "حكم ثاني ${com.majlisk.app.model.SUIT_NAMES[c.trump].orEmpty()}"
+            c.mode == "hokm" -> "اشترى حكم"
+            c.qabaTo != c.buyer -> "اشترى أشكل"
+            else -> "اشترى صن"
+        }
+        // الحكم الثاني قبل ما يحدد اللون
+        c == null && g.secondHokmSeat == seat -> parts += "حكم ثاني"
         c == null && g.hokmBidKey?.firstOrNull()?.digitToIntOrNull() == seat -> parts += "اشترى حكم"
     }
     return parts.takeIf { it.isNotEmpty() }?.joinToString("، ")
@@ -584,6 +592,7 @@ class GameSoundTracker {
     private var prev: GameView? = null
     private var lastTurn: String? = null
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
+    private var lastBidTurn: String? = null
 
     fun update(v: TableView) {
         val g = v.game ?: run { prev = null; lastTurn = null; return }
@@ -598,6 +607,13 @@ class GameSoundTracker {
         val key = turnKey(g)
         if (key != null && key != lastTurn) Sounds.turn(Announcer.readerOn)
         lastTurn = key
+        // أثناء المزايدة: قارئ الشاشة يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي)
+        val bidTurn = if (g.phase == "bidding" && g.turn != v.mySeat) "${g.phase}|${g.bidRound}|${g.turn}|${g.hokmBidKey}|${g.secondHokmSeat}" else null
+        if (bidTurn != null && bidTurn != lastBidTurn) {
+            val who = v.seats.getOrNull(g.turn)?.username ?: "مقعد ${g.turn + 1}"
+            main.postDelayed({ Announcer.announce("دور $who") }, 700)
+        }
+        lastBidTurn = bidTurn
     }
 }
 

@@ -368,6 +368,7 @@ struct BalootBoard: View {
 final class GameSoundTracker {
     private var prev: GameView?
     private var lastTurn: String?
+    private var lastBidTurn: String?
 
     func update(_ v: TableView) {
         guard let g = v.game else { prev = nil; lastTurn = nil; return }
@@ -384,6 +385,13 @@ final class GameSoundTracker {
         let key = turnKey(g)
         if let key, key != lastTurn { Sounds.shared.turn(soft: Announcer.readerOn) }
         lastTurn = key
+        // أثناء المزايدة: VoiceOver يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي)
+        let bidTurn: String? = g.phase == "bidding" && g.turn != v.mySeat ? "\(g.bidRound)|\(g.turn)|\(g.hokmBidKey ?? "")|\(g.secondHokmSeat ?? -1)" : nil
+        if let bidTurn, bidTurn != lastBidTurn {
+            let who = v.seat(g.turn)?.username ?? "مقعد \(g.turn + 1)"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Announcer.announce("دور \(who)") }
+        }
+        lastBidTurn = bidTurn
     }
 
     private func gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
@@ -444,7 +452,14 @@ func seatNote(_ g: GameView, _ seat: Int) -> String? {
     var parts: [String] = []
     if g.dealer == seat { parts.append("الموزع") }
     if let c = g.contract {
-        if c.buyer == seat { parts.append(c.mode == "hokm" ? "اشترى حكم" : c.qabaTo != c.buyer ? "اشترى أشكل" : "اشترى صن") }
+        if c.buyer == seat {
+            // الحكم الثاني: بعد ما يحدد اللون ينكتب نوعه
+            if c.mode == "hokm" && (g.bidRound == 2 || g.secondHokmSeat == seat) { parts.append("حكم ثاني \(SUIT_NAMES[c.trump ?? ""] ?? "")") }
+            else { parts.append(c.mode == "hokm" ? "اشترى حكم" : c.qabaTo != c.buyer ? "اشترى أشكل" : "اشترى صن") }
+        }
+    } else if g.secondHokmSeat == seat {
+        // الحكم الثاني قبل ما يحدد اللون
+        parts.append("حكم ثاني")
     } else if let k = g.hokmBidKey?.first, Int(String(k)) == seat {
         parts.append("اشترى حكم")
     }

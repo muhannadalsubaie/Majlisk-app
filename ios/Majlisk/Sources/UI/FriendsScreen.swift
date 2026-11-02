@@ -57,6 +57,7 @@ struct FriendsScreen: View {
                 ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
                     // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
                     ItemRow {
+                        Avatar(uid: f.uid, name: f.username, size: 40)
                         Text("\(f.online ? "🟢" : "⚪") \(f.username)، \(status(f))").frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .contentShape(Rectangle())

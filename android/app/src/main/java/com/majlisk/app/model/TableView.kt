@@ -44,6 +44,8 @@ data class GameView(
     val declared: List<Declared>,
     val actions: GameActions,
     val hokmBidKey: String?,
+    /** من اشترى الحكم الثاني (قبل وبعد ما يحدد اللون) */
+    val secondHokmSeat: Int? = null,
 ) {
     val myTurn: Boolean
         get() = actions.bids.isNotEmpty() || actions.doubleLabel != null || actions.canPassDouble || actions.chooseLock || actions.legal.isNotEmpty()
@@ -159,6 +161,7 @@ data class TableView(
                     legal = a.optJSONArray("legal").objects().mapNotNull { Card.from(it) },
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
+                secondHokmSeat = g.optIntOrNull("secondHokmSeat"),
             )
         }
 

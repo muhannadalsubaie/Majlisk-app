@@ -98,6 +98,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                             onLongClick = { joinFriend(f) },
                         ).semantics(mergeDescendants = true) { contentDescription = "${f.username}، $status" },
                     ) {
+                        Avatar(f.uid, f.username, 40.dp)
                         Text("${if (f.online) "🟢" else "⚪"} ${f.username}، $status", color = Palette.text, modifier = Modifier.weight(1f))
                     }
                 }

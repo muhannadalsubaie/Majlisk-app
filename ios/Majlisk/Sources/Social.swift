@@ -314,7 +314,10 @@ final class TableConnection: ObservableObject {
             else if events.contains(where: { $0.hasPrefix("غادر ") || $0.hasPrefix("انقطع اتصال") || ($0.hasPrefix("خرج ") && $0.contains("من الطاولة")) }) { Sounds.shared.tableLeave() }
             else if events.contains(where: { $0.hasSuffix("انضم للمحادثة الصوتية") }) { Sounds.shared.voiceJoin() }
             else if events.contains(where: { $0.hasSuffix("غادر المحادثة الصوتية") }) { Sounds.shared.voiceLeave() }
-            if !events.isEmpty { Announcer.announceEvent(events.joined(separator: "، ")) }
+            // المزايدة والدبل: التعليق الصوتي يبيّن وش اشترى أو قال، فقارئ الشاشة ما يقرأ نصها
+            // (يقول بس «دور فلان» مع تغيّر الدور)، ويبقى ما سواها مثل «ورقة الأرض لفلان»
+            let spoken = voices.isEmpty ? events : events.filter { !isBidLine($0) }
+            if !spoken.isEmpty { Announcer.announceEvent(spoken.joined(separator: "، ")) }
         case "chat":
             let mode = ChatSettings.shared.mode
             guard mode != .off else { return }
@@ -357,4 +360,11 @@ final class TableConnection: ObservableObject {
         loop?.cancel()
         resumeWake()
     }
+}
+
+
+/// سطور المزايدة والدبل اللي يغطيها التعليق الصوتي
+func isBidLine(_ e: String) -> Bool {
+    let patterns = [".* اشترى .*", ".* (بس|ولا)$", ".*أكد الحكم.*", ".* قال قبلك$", ".* دبّل$", "^(مقفل|مفتوح)$", ".*: (مقفل|مفتوح)$"]
+    return patterns.contains { e.range(of: $0, options: .regularExpression) != nil }
 }
