@@ -6,9 +6,8 @@ import WebRTC
  * المحادثة الصوتية للطاولة عبر Cloudflare Realtime (WebRTC) — نفس طريقة التطبيق الحالي:
  * كل شخص ينشر ميكروفونه في جلسة خاصة به، ويسحب أصوات بقية المنضمين إلى نفس الاتصال.
  * الخادم (غرفة الطاولة) يمرر الطلبات ويتحقق أن الشخص في الطاولة ويملك جلسته.
- * يبدأ الميكروفون مكتوماً دائماً (استماع فقط).
- * الاستماع بلا "معالجة صوت المكالمات" (هي اللي تخفض الورق والتعليق وVoiceOver)، وفتح الميكروفون
- * يعيد الاتصال بالمعالجة (إلغاء الصدى ضروري وأنت تتكلم)، وقفله يرجع للاستماع بلا معالجة.
+ * يبدأ الميكروفون مكتوماً دائماً (استماع فقط)، والكتم محلي دون إعادة تفاوض.
+ * الصوت يمر عبر VoiceAudioDevice: ما يخفض أصوات اللعب ولا VoiceOver، حتى والميكروفون مفتوح.
  */
 final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     enum Mode { case manual, auto, rejoin }
@@ -20,27 +19,18 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     /// إعادة اتصال صامتة بعد انقطاع — الزر يبقى على حاله (لا يظهر "خارج المحادثة")
     @Published private(set) var reconnecting = false
 
-    private static let sslReady: Void = { RTCInitializeSSL() }()
-    private var factoryObj: RTCPeerConnectionFactory?
-    /// الاتصال الحالي بمعالجة صوت المكالمات (الميكروفون مفتوح) أو بدونها (استماع فقط)
-    private var talkMode = false
-    /// مصنع الاتصال: للاستماع بلا معالجة صوت المكالمات (ما تخفض أصوات اللعب ولا VoiceOver)،
-    /// وللكلام بالمعالجة (إلغاء الصدى). مصنع واحد في كل وقت
-    private func factory(talk: Bool) -> RTCPeerConnectionFactory {
-        if let f = factoryObj, talkMode == talk { return f }
-        _ = Voice.sslReady
+    private lazy var factory: RTCPeerConnectionFactory = {
+        RTCInitializeSSL()
         // الصوت من مكبر الجهاز (لا السماعة الصغيرة)، ويمتزج مع VoiceOver
         let cfg = RTCAudioSessionConfiguration.webRTC()
         cfg.categoryOptions = [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers]
-        cfg.mode = (talk ? AVAudioSession.Mode.voiceChat : AVAudioSession.Mode.default).rawValue
+        // الاستماع بالوضع العادي: وضع المكالمات يخفض أصوات اللعب كثيراً
+        cfg.mode = AVAudioSession.Mode.default.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
-        factoryObj = nil
-        let f = RTCPeerConnectionFactory(bypassVoiceProcessing: !talk, encoderFactory: RTCDefaultVideoEncoderFactory(), decoderFactory: RTCDefaultVideoDecoderFactory(), audioProcessingModule: nil)
-        factoryObj = f
-        talkMode = talk
-        return f
-    }
-    private var factory: RTCPeerConnectionFactory { factory(talk: talkMode) }
+        // جهاز صوت خاص: ما يخفض أصوات اللعب ولا VoiceOver (انظر VoiceAudioDevice)
+        return RTCPeerConnectionFactory(encoderFactory: RTCDefaultVideoEncoderFactory(), decoderFactory: RTCDefaultVideoDecoderFactory(), audioDevice: audioDevice)
+    }()
+    private let audioDevice = VoiceAudioDevice()
     private var tableId: String?
     private var myUid = ""
     private var pc: RTCPeerConnection?
@@ -91,7 +81,16 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             tableId = id
             myUid = uid
             do {
-                try await connect(talk: false)
+                configureAudio(listening: true)
+                let config = RTCConfiguration()
+                config.iceServers = [RTCIceServer(urlStrings: ["stun:stun.cloudflare.com:3478"])]
+                config.bundlePolicy = .maxBundle
+                config.sdpSemantics = .unifiedPlan
+                guard let conn = factory.peerConnection(with: config, constraints: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil), delegate: self) else { throw ApiError(code: "voice-failed") }
+                pc = conn
+                let r = try await request(["op": "session"])
+                sessionId = r.str("sessionId")
+                members = members.filter { $0.uid != uid } + [VoiceMember(uid: uid, username: "", sessionId: sessionId!, muted: true, mic: false, blocked: false)]
                 update(joined: true, muted: true, busy: false)
                 DispatchQueue.main.async { self.reconnecting = false }
                 autoRetries = 0
@@ -118,48 +117,6 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         }
     }
 
-    /// اتصال جديد (جلسة جديدة) بالمعالجة أو بدونها
-    private func connect(talk: Bool) async throws {
-        let f = factory(talk: talk)
-        configureAudio(listening: !talk)
-        let config = RTCConfiguration()
-        config.iceServers = [RTCIceServer(urlStrings: ["stun:stun.cloudflare.com:3478"])]
-        config.bundlePolicy = .maxBundle
-        config.sdpSemantics = .unifiedPlan
-        guard let conn = f.peerConnection(with: config, constraints: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil), delegate: self) else { throw ApiError(code: "voice-failed") }
-        pc = conn
-        let r = try await request(["op": "session"])
-        sessionId = r.str("sessionId")
-        members = members.filter { $0.uid != myUid } + [VoiceMember(uid: myUid, username: "", sessionId: sessionId!, muted: true, mic: false, blocked: false)]
-    }
-
-    /// نبدّل بين الاستماع بلا معالجة والكلام بالمعالجة: نقفل الاتصال الحالي ونفتح واحد جديد
-    private func reconnect(talk: Bool) async throws {
-        pulled.removeAll()
-        mic?.isEnabled = false
-        mic = nil
-        pc?.close()
-        pc = nil
-        sessionId = nil
-        try await connect(talk: talk)
-    }
-
-    /// قفل الميكروفون: نرجع للاستماع بلا معالجة (ترجع أصوات اللعب وVoiceOver كاملة)
-    private func backToListening() {
-        queue.run { [self] in
-            guard isJoined, talkMode else { return }
-            update(busy: true)
-            do {
-                try await reconnect(talk: false)
-                update(muted: true, busy: false)
-            } catch {
-                update(muted: true, busy: false)
-                rejoin()
-            }
-        }
-        syncNow()
-    }
-
     func leave(quiet: Bool = false) {
         if isJoined { leaving = true }
         queue.run { [self] in
@@ -181,20 +138,20 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         if !m && members.first(where: { $0.uid == myUid })?.blocked == true {
             Announcer.announce("كتمك مالك الطاولة، لا يمكنك فتح الميكروفون الآن"); return
         }
-        if m {
-            guard let mic else { return }
-            // قفل الميكروفون: يسكت فوراً، ثم نرجع للاستماع بلا معالجة
-            mic.isEnabled = false
-            update(muted: true)
-            DispatchQueue.main.async { Sounds.shared.micToggle(false) }
-            Announcer.announce("الميكروفون مغلق")
+        if let mic {
+            mic.isEnabled = !m
+            // مقفل: المعالجة مطفأة (صوت اللعب كامل)، مفتوح: إلغاء الصدى بلا خفض للأصوات
+            audioDevice.setTalking(!m)
+            update(muted: m)
+            DispatchQueue.main.async { Sounds.shared.micToggle(!m) }
+            Announcer.announce(m ? "الميكروفون مغلق" : "الميكروفون مفتوح")
             let sid = sessionId
-            Task { _ = try? await request(["op": "mute", "sessionId": sid ?? "", "muted": true]) }
-            backToListening()
+            Task { _ = try? await request(["op": "mute", "sessionId": sid ?? "", "muted": m]) }
             return
         }
+        if m { return }
         queue.run { [self] in
-            guard pc != nil, sessionId != nil, mic == nil else { return }
+            guard let conn = pc, sessionId != nil, mic == nil else { return }
             update(busy: true)
             let granted = await withCheckedContinuation { c in AVAudioSession.sharedInstance().requestRecordPermission { c.resume(returning: $0) } }
             if !granted {
@@ -203,9 +160,6 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 return
             }
             do {
-                // اتصال جديد بمعالجة صوت المكالمات (إلغاء الصدى) قبل نشر الميكروفون
-                if !talkMode { try await reconnect(talk: true) }
-                guard let conn = pc else { throw ApiError(code: "voice-failed") }
                 configureAudio(listening: false)
                 let source = factory.audioSource(with: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
                 let track = factory.audioTrack(with: source, trackId: "mic")
@@ -223,15 +177,11 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 update(muted: false, busy: false)
                 DispatchQueue.main.async { Sounds.shared.micToggle(true) }
                 Announcer.announce("الميكروفون مفتوح")
-                // أصوات البقية تنسحب من جديد على الاتصال الجديد
-                syncNow()
             } catch {
                 mic?.isEnabled = false
                 mic = nil
                 update(muted: true, busy: false)
                 Announcer.announce("تعذّر فتح الميكروفون، حاول مرة أخرى")
-                // نرجع للاستماع (بلا معالجة) لو انقطع شي في النص
-                if pc == nil || sessionId == nil { rejoin() } else { backToListening() }
             }
         }
     }
@@ -255,9 +205,9 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         // كتمني المالك وميكروفوني مفتوح: نغلقه فوراً
         if members.first(where: { $0.uid == myUid })?.blocked == true, let mic, !isMuted {
             mic.isEnabled = false
+            audioDevice.setTalking(false)
             update(muted: true)
             Announcer.announce("كتمك مالك الطاولة في المحادثة الصوتية")
-            backToListening()
         }
         syncNow()
     }
@@ -316,8 +266,6 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         sessionId = nil
         update(joined: false, muted: true, busy: false)
         configureAudio(listening: nil)
-        // الانضمام الجاي يبدأ استماع بلا معالجة
-        if talkMode { factoryObj = nil; talkMode = false }
     }
 
     /// الصوت من مكبر الجهاز، ويمتزج مع VoiceOver دون أن يخفضه أحدهما
@@ -327,9 +275,10 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             try? s.setCategory(.playback, options: [.mixWithOthers])
             return
         }
-        // استماع فقط (الميكروفون مقفل): الوضع العادي بلا معالجة المكالمات، فتبقى أصوات الورق والتعليق وVoiceOver كاملة.
+        // استماع فقط (الميكروفون مقفل): الوضع العادي، فتبقى أصوات الورق والتعليق بصوتها الكامل.
         // الميكروفون مفتوح: وضع المكالمات (يلغي الصدى حتى لا يسمعك الباقون مرتين)، وهو يخفض الأصوات شوي
-        let mode: AVAudioSession.Mode = listening == true ? .default : .voiceChat
+        // الوضع العادي دائماً: إلغاء الصدى من جهاز الصوت نفسه، ووضع المكالمات يخفض الأصوات
+        let mode: AVAudioSession.Mode = .default
         let cfg = RTCAudioSessionConfiguration.webRTC()
         cfg.mode = mode.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
