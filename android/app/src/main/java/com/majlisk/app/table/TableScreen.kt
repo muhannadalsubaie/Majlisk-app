@@ -467,17 +467,19 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(seat), s?.username.orEmpty(), 34.dp)
         Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
         if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
-        if (faces.isNotEmpty()) ProjectFaces(faces)
+        if (faces.isNotEmpty()) ProjectFaces(faces, if (partner) 200f else 62f)
     }
 }
 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @Composable
-private fun ProjectFaces(faces: List<Card>) {
-    val w = 24; val step = 12
-    Box(Modifier.size((w + step * (faces.size - 1)).dp, 35.dp).clearAndSetSemantics { }) {
+private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
+    // كل ورقة فوق التي على يسارها، ومزاحة بقدر يكشف زاويتها اليسرى (رقمها ورمزها) بوضوح
+    val w = 30f; val h = 44f
+    val step = if (faces.size > 1) minOf(16f, (maxWidth - w) / (faces.size - 1)) else 0f
+    Box(Modifier.size((w + step * (faces.size - 1)).dp, h.dp).clearAndSetSemantics { }) {
         faces.forEachIndexed { i, c ->
-            CardFaceBox(c, Modifier.absoluteOffset(x = (i * step).dp).size(w.dp, 35.dp))
+            CardFaceBox(c, Modifier.absoluteOffset(x = (i * step).dp).size(w.dp, h.dp))
         }
     }
 }

@@ -491,7 +491,7 @@ private struct PlayerTag: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
             if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
-            if !faces.isEmpty { ProjectFaces(faces: faces) }
+            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner ? 200 : 62) }
         }
             .padding(.horizontal, 4).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
@@ -504,9 +504,14 @@ private struct PlayerTag: View {
 /// أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان)
 private struct ProjectFaces: View {
     let faces: [Card]
+    /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
+    var maxWidth: CGFloat = 200
     var body: some View {
-        HStack(spacing: -12) {
-            ForEach(Array(faces.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: 24, height: 35) }
+        // كل ورقة فوق التي على يسارها، ومزاحة بقدر يكشف زاويتها اليسرى (رقمها ورمزها) بوضوح
+        let w: CGFloat = 30, h: CGFloat = 44
+        let step = faces.count > 1 ? min(16, (maxWidth - w) / CGFloat(faces.count - 1)) : 0
+        HStack(spacing: step - w) {
+            ForEach(Array(faces.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: w, height: h) }
         }
         .environment(\.layoutDirection, .leftToRight)
         .accessibilityHidden(true)
