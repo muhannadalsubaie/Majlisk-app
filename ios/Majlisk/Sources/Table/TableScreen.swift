@@ -201,11 +201,11 @@ struct BalootBoard: View {
             GeometryReader { geo in
                 let unit = geo.size.width / 4.6
                 VStack(spacing: 6) {
-                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: text.faces((me + 2) % 4), partner: true).frame(width: unit * 3)
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: text.faces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: true).frame(width: unit * 3)
                     HStack(spacing: 6) {
-                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: text.faces((me + 1) % 4)).frame(width: unit * 0.8)
+                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: text.faces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.8)
                         trickArea.frame(width: min(unit * 3, 300), height: min(unit * 3, 300))
-                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: text.faces((me + 3) % 4)).frame(width: unit * 0.8)
+                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: text.faces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.8)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -251,6 +251,7 @@ struct BalootBoard: View {
                 }
                 // يد اللاعب
                 if let mine = mySeat {
+                    if let note = seatNote(g, mine) { Text("أنت: \(note)").font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
                     let myFaces = text.faces(mine)
                     if !myFaces.isEmpty {
                         HStack(spacing: 8) {
@@ -434,11 +435,26 @@ private struct ScoreBox: View {
     }
 }
 
+/// تحت اسم اللاعب قبل توزيع بقية الورق: «الموزع»، ونوع ما اشتراه (حكم، صن، أشكل).
+/// أول ما تتوزع بقية الأوراق تختفي كلها.
+func seatNote(_ g: GameView, _ seat: Int) -> String? {
+    guard g.phase == "bidding" || g.phase == "doubling" else { return nil }
+    var parts: [String] = []
+    if g.dealer == seat { parts.append("الموزع") }
+    if let c = g.contract {
+        if c.buyer == seat { parts.append(c.mode == "hokm" ? "اشترى حكم" : c.qabaTo != c.buyer ? "اشترى أشكل" : "اشترى صن") }
+    } else if let k = g.hokmBidKey?.first, Int(String(k)) == seat {
+        parts.append("اشترى حكم")
+    }
+    return parts.isEmpty ? nil : parts.joined(separator: "، ")
+}
+
 private struct PlayerTag: View {
     let v: TableView
     let g: GameView
     let seat: Int
     var faces: [Card] = []
+    var note: String? = nil
     var partner = false
     var body: some View {
         let s = v.seat(seat)
@@ -449,6 +465,7 @@ private struct PlayerTag: View {
                 .font(.system(size: 14, weight: .bold))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
+            if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
             if !faces.isEmpty { ProjectFaces(faces: faces) }
         }
             .padding(.horizontal, 4).padding(.vertical, 8)

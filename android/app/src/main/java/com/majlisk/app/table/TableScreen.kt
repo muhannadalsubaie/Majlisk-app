@@ -294,13 +294,13 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.weight(0.8f))
-                PlayerTag(v, g, seatOf(2), faces = text.faces(seatOf(2)), partner = true, modifier = Modifier.weight(3f))
+                PlayerTag(v, g, seatOf(2), faces = text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = true, modifier = Modifier.weight(3f))
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PlayerTag(v, g, seatOf(1), faces = text.faces(seatOf(1)), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(1), faces = text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.8f))
                 Box(Modifier.weight(3f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
-                PlayerTag(v, g, seatOf(3), faces = text.faces(seatOf(3)), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(3), faces = text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.8f))
             }
         }
 
@@ -361,6 +361,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
             }
         // يد اللاعب
         if (mySeat != null) {
+            seatNote(g, mySeat)?.let { Text("أنت: $it", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
             text.faces(mySeat).takeIf { it.isNotEmpty() }?.let { mine ->
                 Row(Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                     Text("مشروعك", color = Palette.goldSoft, fontSize = 13.sp, fontWeight = FontWeight.Bold)
@@ -416,8 +417,24 @@ private fun Modifier.dashedPill(): Modifier = drawBehind {
     )
 }
 
+/**
+ * تحت اسم اللاعب قبل توزيع بقية الورق: «الموزع»، ونوع ما اشتراه (حكم، صن، أشكل).
+ * أول ما تتوزع بقية الأوراق تختفي كلها.
+ */
+private fun seatNote(g: GameView, seat: Int): String? {
+    if (g.phase != "bidding" && g.phase != "doubling") return null
+    val parts = mutableListOf<String>()
+    if (g.dealer == seat) parts += "الموزع"
+    val c = g.contract
+    when {
+        c != null && c.buyer == seat -> parts += if (c.mode == "hokm") "اشترى حكم" else if (c.qabaTo != c.buyer) "اشترى أشكل" else "اشترى صن"
+        c == null && g.hokmBidKey?.firstOrNull()?.digitToIntOrNull() == seat -> parts += "اشترى حكم"
+    }
+    return parts.takeIf { it.isNotEmpty() }?.joinToString("، ")
+}
+
 @Composable
-private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, modifier: Modifier = Modifier) {
+private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, note: String? = null, modifier: Modifier = Modifier) {
     val s = v.seats.getOrNull(seat)
     val turn = g.turn == seat && g.phase != "matchOver"
     val label = buildString {
@@ -435,6 +452,7 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
+        if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
         if (faces.isNotEmpty()) ProjectFaces(faces)
     }
 }
