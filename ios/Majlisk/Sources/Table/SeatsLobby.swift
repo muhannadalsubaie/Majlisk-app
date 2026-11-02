@@ -223,7 +223,9 @@ struct VoiceButton: View {
             .accessibilityElement(children: .ignore)
             // صامت بعد لعب ورقة: بلا أي نص
             .accessibilityLabel(micFocus.silent ? "" : status)
+            // صامت بعد لعب ورقة: ما ينطق شي أبداً (ولا «زر»)، عشان تسمع لعب اللي بعدك
             .accessibilityAddTraits(micFocus.silent ? [] : .isButton)
+            .accessibilityRemoveTraits(micFocus.silent ? [.isButton, .isStaticText] : [])
             .accessibilityAction { toggleMute() }
             .accessibilityAction(named: Text(voice.joined ? "الخروج من المحادثة الصوتية" : "العودة للمحادثة الصوتية")) { toggleJoin() }
             .accessibilityFocused($focused)

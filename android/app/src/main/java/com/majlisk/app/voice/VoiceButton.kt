@@ -92,17 +92,21 @@ fun VoiceButton(tableId: String, uid: String) {
             .background(bg, RoundedCornerShape(20.dp))
             .border(borderWidth, Palette.gold, RoundedCornerShape(20.dp))
             .focusRequester(fr)
-            .focusable()
-            .combinedClickable(onClick = toggleMute, onLongClick = toggleJoin)
-            // صامت بعد لعب ورقة: بلا أي نص؛ وإلا حالته وإجراءاته
+            // صامت بعد لعب ورقة: ما ينطق شي أبداً (ولا «زر»)، عشان تسمع لعب اللي بعدك؛ وإلا حالته وإجراءاته.
+            // نمسح دلالات الضغط نفسها (مو بس النص)، فما يعرّفه قارئ الشاشة كزر وقت الصمت
             .clearAndSetSemantics {
                 if (!silent) {
                     contentDescription = status
                     role = Role.Button
                     onClick { toggleMute(); true }
                     onLongClick { toggleJoin(); true }
+                } else {
+                    // علامة اتجاه غير مسموعة: تخلي المؤشر يقدر يوقف هنا بدون كلام
+                    contentDescription = "\u200F"
                 }
             }
+            .focusable()
+            .combinedClickable(onClick = toggleMute, onLongClick = toggleJoin)
             .padding(horizontal = 12.dp, vertical = 10.dp),
     )
 }
