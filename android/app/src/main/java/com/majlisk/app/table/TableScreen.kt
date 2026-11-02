@@ -89,7 +89,7 @@ import com.majlisk.app.voice.VoiceButton
 import kotlinx.coroutines.delay
 
 /** كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها */
-private const val TRICK_HOLD_MS = 1200L
+private const val TRICK_HOLD_MS = 2000L
 /** كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب) */
 private const val SILENT_FOCUS_MS = 4000L
 
