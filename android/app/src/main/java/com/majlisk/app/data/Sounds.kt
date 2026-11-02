@@ -26,7 +26,7 @@ object Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -118,11 +118,8 @@ object Sounds {
             listOf("chips3", "chips4", "chips5", "chips6", "collide2", "collide3").forEachIndexed { i, n -> play(n, at = 0.1 + i * 0.11, gain = 0.85f) }
             return
         }
-        when (result) {
-            "win" -> { play("chips3", gain = 0.85f); play("chips4", at = 0.14, gain = 0.8f); play("collide2", at = 0.32, gain = 0.75f); play("handle1", at = 0.5, gain = 0.6f) }
-            "lose" -> { play("lay1", gain = 0.7f); play("lay2", at = 0.22, gain = 0.5f) }
-            else -> { play("chips3", gain = 0.6f); play("collide2", at = 0.2, gain = 0.5f) }
-        }
+        // نهاية كل جولة: صوت هادئ (أجراس صغيرة)
+        play("hand-end", gain = 0.9f, vary = false)
     }
 
     fun matchEnd(won: Boolean) = play(if (won) "match-win" else "match-lose", gain = 0.8f, vary = false)
@@ -130,10 +127,7 @@ object Sounds {
     fun card() = play(pick("card1", "card2", "card3", "card4"), gain = 1f)
 
     /** القطع بالحكم: ضربة ورقة */
-    fun cut() {
-        play("collide4", gain = 1f)
-        play("slide7", at = 0.02, gain = 1f)
-    }
+    fun cut() = play("trump-cut", gain = 1f, vary = false) // ورقة ومعها رنة عملة
 
     /** المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع */
     fun project(kinds: List<String>) = when {

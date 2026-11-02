@@ -17,7 +17,7 @@ final class Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
     ]
 
     func preload() {
@@ -113,20 +113,15 @@ final class Sounds {
             for (i, n) in ["chips3", "chips4", "chips5", "chips6", "collide2", "collide3"].enumerated() { play(n, at: 0.1 + Double(i) * 0.11, gain: 0.85) }
             return
         }
-        switch result {
-        case "win": play("chips3", gain: 0.85); play("chips4", at: 0.14, gain: 0.8); play("collide2", at: 0.32, gain: 0.75); play("handle1", at: 0.5, gain: 0.6)
-        case "lose": play("lay1", gain: 0.7); play("lay2", at: 0.22, gain: 0.5)
-        default: play("chips3", gain: 0.6); play("collide2", at: 0.2, gain: 0.5)
-        }
+        // نهاية كل جولة: صوت هادئ (أجراس صغيرة)
+        play("hand-end", gain: 0.9, vary: false)
     }
 
     func matchEnd(won: Bool) { play(won ? "match-win" : "match-lose", gain: 0.8, vary: false) }
     func card() { play(pick("card1", "card2", "card3", "card4"), gain: 1) }
     /// القطع بالحكم: ضربة ورقة
-    func cut() {
-        play("collide4", gain: 1)
-        play("slide7", at: 0.02, gain: 1)
-    }
+    /// القطع بالحكم: ورقة ومعها رنة عملة
+    func cut() { play("trump-cut", gain: 1, vary: false) }
     /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع
     func project(_ kinds: [String]) {
         if kinds.contains("أربعمية") { play("proj-400", gain: 0.8, vary: false) }
