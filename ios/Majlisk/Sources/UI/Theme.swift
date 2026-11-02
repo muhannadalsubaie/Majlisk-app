@@ -97,6 +97,8 @@ struct Screen<Content: View>: View {
     var scroll = true
     /// المحتوى يملأ طول الشاشة على الأقل، فيقدر Spacer يدفع ما بعده لأسفلها
     var fill = false
+    /// الشاشة ما تتمرر (الطاولة مع VoiceOver): فسحب الأصابع الثلاث يوصل دائماً لإيماءات اللعبة بدل ما يمرر الشاشة
+    var lockScroll = false
     @ViewBuilder let content: () -> Content
     var body: some View {
         ZStack {
@@ -108,6 +110,7 @@ struct Screen<Content: View>: View {
                         VStack(alignment: .leading, spacing: 14) { content() }.padding(16)
                             .frame(minHeight: geo.size.height, alignment: .top)
                     }
+                    .scrollDisabled(lockScroll)
                 }
             } else if scroll {
                 ScrollView { VStack(alignment: .leading, spacing: 14) { content() }.padding(16) }

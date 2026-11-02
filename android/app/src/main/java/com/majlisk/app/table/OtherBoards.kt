@@ -182,7 +182,6 @@ private fun Modifier.dominoSwipes(v: TableView, d: DominoView, conn: TableConnec
 fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boolean, openLog: () -> Unit) {
     val mySeat = v.mySeat
     val names = names(v)
-    val readBoard = { Announcer.announceNow("${d.lineText}. ${d.endsText}") }
 
     Column(Modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = d.scoreText }, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -195,13 +194,12 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
                     avatar = v.seatUids.getOrNull(seat) to n)
             }
         }
-        // الطاولة: تُقرأ كاملة بالضغط عليها
+        // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
         FlowRow(
             Modifier.fillMaxWidth()
                 .background(Color(0xFF145036), RoundedCornerShape(16.dp))
                 .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
-                .clickable(role = Role.Button) { readBoard() }
-                .semantics(mergeDescendants = true) { contentDescription = "${d.lineText}. ${d.endsText}" }
+                .clearAndSetSemantics { }
                 .padding(10.dp),
             horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -302,14 +300,35 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
     val mySeat = v.mySeat
     val names = names(v)
     var picked by remember { mutableStateOf<JackarooHandCard?>(null) }
-    val readBoard = { Announcer.announceNow(j.boardText) }
-    val readMine = { Announcer.announceNow(j.mineText) }
+    // أماكن الأحجار (من فوق لتحت): أحجارك أولاً ثم كل لاعب
+    var posOpen by remember { mutableStateOf(false) }
+    if (posOpen) {
+        MajliskDialog("أماكن الأحجار", { posOpen = false }) {
+            jackarooPositions(j, mySeat).forEach { (title, color, lines) ->
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Box(Modifier.size(12.dp).background(JK_COLORS.getOrElse(color) { Palette.gold }, RoundedCornerShape(6.dp)))
+                    Text("$title، ${JK_COLOR_NAMES.getOrElse(color) { "" }}", color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+                }
+                lines.forEach { Text(it, color = Palette.text, fontSize = 16.sp, modifier = Modifier.fillMaxWidth()) }
+            }
+            PrimaryButton("إغلاق", { posOpen = false })
+        }
+    }
     val myTeam = (mySeat ?: 0) % 2
     val usLabel = if (mySeat == null) "فريق ${names[0]}" else "فريقك"
     val themLabel = if (mySeat == null) "فريق ${names[1]}" else "الخصم"
 
     Column(
-        Modifier.fillMaxWidth().twoFingerSwipes { if (it == SwipeDir.Left) readBoard() else if (it == SwipeDir.Right) readMine() },
+        // سحب بإصبعين: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = أحجارك،
+        // من تحت لفوق = الدور عند مين، من فوق لتحت = قائمة أماكن الأحجار
+        Modifier.fillMaxWidth().twoFingerSwipes {
+            when (it) {
+                SwipeDir.Left -> Announcer.announceNow(j.boardText)
+                SwipeDir.Right -> Announcer.announceNow(j.mineText)
+                SwipeDir.Up -> Announcer.announceNow(jackarooTurnText(v, j))
+                SwipeDir.Down -> posOpen = true
+            }
+        },
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
         Row(
@@ -321,9 +340,9 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             ScoreTile(usLabel, "${j.safeCount(myTeam)}/8", true, Modifier.weight(1f).clearAndSetSemantics { })
             ScoreTile(themLabel, "${j.safeCount(1 - myTeam)}/8", false, Modifier.weight(1f).clearAndSetSemantics { })
         }
+        // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
         Box(
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { readBoard() }
-                .semantics(mergeDescendants = true) { contentDescription = "اللوحة: ${j.boardText}" },
+            Modifier.fillMaxWidth().clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.widthIn(max = 340.dp).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
@@ -390,6 +409,48 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
     }
 }
 
+/** الدور عند مين في الجاكارو */
+private fun jackarooTurnText(v: TableView, j: JackarooView): String {
+    val names = names(v)
+    val me = v.mySeat
+    if (j.phase == "over") {
+        val w = j.winnerTeam ?: 0
+        return if (me != null) (if (w == me % 2) "انتهت اللعبة، فاز فريقك" else "انتهت اللعبة، فاز الفريق الآخر")
+        else "انتهت اللعبة، فاز فريق ${names[w]} و${names[w + 2]}"
+    }
+    if (j.turn == me) return if (j.burning) "دورك، ما عندك لعب صالح، احرق ورقة" else "دورك"
+    return "الدور عند ${names.getOrElse(j.turn) { "" }}"
+}
+
+/**
+ * "أحجار فلان: 1 في البيت، 2 على المسار، باقي له…" ← العنوان وسطر لكل حجر
+ * (الفاصل بين الأحجار فاصلة بعدها رقم الحجر، لأن وصف المكان نفسه فيه فواصل)
+ */
+private fun splitMarbles(text: String): Pair<String, List<String>> {
+    val i = text.indexOf(": ")
+    if (i < 0) return text to emptyList()
+    val lines = text.substring(i + 2).split(Regex("، (?=\\d)")).filter { it.isNotBlank() }.map { "حجر $it" }
+    return text.substring(0, i) to lines
+}
+
+/** أماكن الأحجار: أحجارك أولاً (أو أحجار شريكك لو تلعب بها)، ثم باقي اللاعبين بترتيب اللعب */
+private fun jackarooPositions(j: JackarooView, mySeat: Int?): List<Triple<String, Int, List<String>>> {
+    val all = j.boardText.split(". ")
+    val out = mutableListOf<Triple<String, Int, List<String>>>()
+    if (mySeat != null) {
+        val (title, lines) = splitMarbles(j.mineText)
+        out += Triple(title, if (title.startsWith("أحجارك")) mySeat else (mySeat + 2) % 4, lines)
+    }
+    val start = mySeat ?: 0
+    for (k in 0 until 4) {
+        val seat = (start + k) % 4
+        if (seat == mySeat || seat >= all.size) continue
+        val (title, lines) = splitMarbles(all[seat])
+        out += Triple(title, seat, lines)
+    }
+    return out
+}
+
 /** رسم لوحة الجاكارو (نفس رسم النسخة السابقة): المسار دائرة، ولكل لاعب قاعدة ومنطقة أمان وبيت */
 private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
     val k = size.minDimension / 320f
@@ -432,7 +493,6 @@ private val LUDO_COLOR_NAMES = listOf("الأحمر", "الأزرق", "الأص�
 fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean) {
     val mySeat = v.mySeat
     val names = names(v)
-    val readBoard = { Announcer.announceNow(l.boardText) }
     val partner = if (mySeat == null) -1 else (mySeat + 2) % 4
     // آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
     val rolls = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
@@ -531,9 +591,9 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             }
         }
         cornerRow(true)
+        // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
         Box(
-            Modifier.fillMaxWidth().clickable(role = Role.Button) { readBoard() }
-                .semantics(mergeDescendants = true) { contentDescription = "اللوحة: ${l.boardText}" },
+            Modifier.fillMaxWidth().clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
             val movable = if (l.myTurn && l.phase == "move") l.options.map { l.movableOwner to it.token } else emptyList()

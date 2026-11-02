@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -371,7 +372,8 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
             }
             Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
-            Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp)) {
+            // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
+            Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
                 hand.forEachIndexed { i, c ->
                     androidx.compose.runtime.key(cardKey(c)) {
                         val k = i - (hand.size - 1) / 2f

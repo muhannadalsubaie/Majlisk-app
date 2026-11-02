@@ -87,7 +87,8 @@ struct TableScreen: View {
     }
 
     @ViewBuilder private func table(_ v: TableView) -> some View {
-        Screen(fill: true) {
+        // مع VoiceOver الشاشة ما تتمرر، فسحب الأصابع الثلاث (فوق/تحت) يوصل لإيماءات اللعبة دائماً
+        Screen(fill: true, lockScroll: UIAccessibility.isVoiceOverRunning) {
             HStack(spacing: 8) {
                 SmallButton("القائمة") { menuOpen = true }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
@@ -107,17 +108,21 @@ struct TableScreen: View {
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
             }
-            // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب VoiceOver
-            // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
-            // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
             Spacer(minLength: 0)
             // الدومينو: قطعك تحت فوق الميكروفون
             if let d = v.domino { DominoHand(v: v, d: d, conn: conn) }
-            // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
-            if chatSettings.mode != .off {
-                HStack { Spacer(); ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
+        }
+        // زر الميكروفون أسفل يسار الشاشة، ثابت دائماً حتى لو طالت الطاولة،
+        // وبعد الأوراق مباشرة في ترتيب VoiceOver (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
+        .safeAreaInset(edge: .bottom, spacing: 0) {
+            VStack(spacing: 10) {
+                // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
+                if chatSettings.mode != .off {
+                    HStack { Spacer(); ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
+                }
+                HStack { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
             }
-            HStack { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
+            .padding(.horizontal, 16).padding(.bottom, 8)
         }
         // آخر رسالة: لحظات في الزاوية اليمين تحت، بعيداً عن الطاولة والأوراق
         .overlay(alignment: .bottomLeading) {
@@ -282,6 +287,9 @@ struct BalootBoard: View {
                     .padding(.bottom, 6)
                     .frame(maxWidth: .infinity, minHeight: 132, alignment: .bottom)
                     .environment(\.layoutDirection, .leftToRight)
+                    // ترتيب الأوراق لـ VoiceOver داخل اليد فقط: كانت أولوياتها تُقارن بعناصر الشاشة كلها
+                    // فينط المؤشر من الميكروفون لورقة واحدة ثم لوسط الطاولة
+                    .accessibilityElement(children: .contain)
                 }
             }
         }

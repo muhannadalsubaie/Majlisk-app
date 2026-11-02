@@ -2,8 +2,15 @@ import SwiftUI
 
 // الدومينو والجاكارو واللودو على طاولة مجلسك (نفس فكرة النسخة السابقة):
 // الحالة والحركات المسموحة ونصوصها من الخادم، والتطبيق يرسم اللوحة ويعرض الأزرار ويرسل الحركة.
-// لـ VoiceOver: كل قطعة/ورقة/خيار زر بنص واضح، والضغط على اللوحة يقرأها كاملة، وحركات الجميع يعلنها الخادم.
-// سحب بإصبعين: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = (الطرفان والنقاط) أو (أحجارك).
+// لـ VoiceOver: كل قطعة/ورقة/خيار زر بنص واضح، ولمس اللوحة في نص الشاشة ما يقرأ شي (القراءة بالإيماءات)، وحركات الجميع يعلنها الخادم.
+// الإيماءات: سحب بثلاث أصابع، ولكل لعبة اتجاهاتها (تحت عند كل لوحة).
+
+/// حجم لوحة اللودو والجاكارو: مع VoiceOver تصغر لين تكفي الشاشة كلها بلا تمرير
+/// (اللوحة للعين فقط، والقراءة بالإيماءات)، فتبقى كل العناصر والميكروفون داخل الشاشة
+private func boardSide(_ full: CGFloat) -> CGFloat {
+    guard UIAccessibility.isVoiceOverRunning else { return full }
+    return min(full, max(150, UIScreen.main.bounds.height - 560))
+}
 
 private func seatNames(_ v: TableView) -> [String] { (0..<4).map { v.seat($0)?.username ?? "المقعد \($0 + 1)" } }
 
@@ -172,15 +179,13 @@ private func dominoJala(_ conn: TableConnection, _ d: DominoView) {
 }
 
 /// أعلى طاولة الدومينو: النقاط، اللاعبون، وخط اللعب.
-/// سحب بإصبعين: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين، من اليسار لليمين = سجل الجولات، من فوق لتحت = جلا
+/// سحب بثلاث أصابع: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين، من اليسار لليمين = سجل الجولات، من فوق لتحت = جلا
 struct DominoBoard: View {
     let v: TableView
     let d: DominoView
     let conn: TableConnection
     let isOwner: Bool
     let openLog: () -> Void
-
-    private func readBoard() { Announcer.announceNow("\(d.lineText). \(d.endsText)") }
 
     var body: some View {
         let names = seatNames(v)
@@ -199,8 +204,8 @@ struct DominoBoard: View {
                                turn: d.turn == seat && d.phase == "playing", avatar: (v.seatUid(seat), names[seat]))
                 }
             }
-            // الطاولة: تُقرأ كاملة بالضغط عليها
-            Button(action: readBoard) {
+            // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
+            Group {
                 Group {
                     if d.line.isEmpty { Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(maxWidth: .infinity) }
                     else {
@@ -213,8 +218,7 @@ struct DominoBoard: View {
                 .background(Color(red: 0.08, green: 0.31, blue: 0.21)).clipShape(RoundedRectangle(cornerRadius: 16))
                 .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
             }
-            .buttonStyle(.plain)
-            .accessibilityLabel("\(d.lineText). \(d.endsText)")
+            .accessibilityHidden(true)
             if let e = d.ends {
                 Text("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")")
                     .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
@@ -338,6 +342,8 @@ struct JackarooBoard: View {
     let conn: TableConnection
     let isOwner: Bool
     @State private var picked: JackarooHandCard?
+    /// أماكن الأحجار: تفتح بسحبة من فوق لتحت
+    @State private var posOpen = false
 
     private func act(_ a: JSON) { conn.send(["type": "jackaroo", "action": a]) }
     private func short(_ label: String) -> String { label.components(separatedBy: "،").first ?? label }
@@ -355,7 +361,8 @@ struct JackarooBoard: View {
             }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel("في منطقة الأمان: \(usLabel) \(j.safeCount(myTeam)) من 8، \(themLabel) \(j.safeCount(1 - myTeam)) من 8")
-            Button { Announcer.announceNow(j.boardText) } label: {
+            // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
+            Group {
                 ZStack {
                     Canvas { ctx, size in drawJackaroo(ctx, size, j, mySeat ?? 0) }
                     // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
@@ -372,10 +379,10 @@ struct JackarooBoard: View {
                     }
                     .accessibilityHidden(true)
                 }
-                .aspectRatio(1, contentMode: .fit).frame(maxWidth: 340)
+                .aspectRatio(1, contentMode: .fit).frame(maxWidth: boardSide(340))
             }
-            .buttonStyle(.plain).frame(maxWidth: .infinity)
-            .accessibilityLabel("اللوحة: \(j.boardText)")
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
             ForEach(0..<4, id: \.self) { seat in
                 let partner = mySeat != nil && seat == (mySeat! + 2) % 4
                 let n = names[seat]
@@ -415,6 +422,23 @@ struct JackarooBoard: View {
             } else { Note("أنت تشاهد هذه الطاولة.") }
         }
         .onAppear { Gestures.shared.handler = { read($0) } }
+        .sheet(isPresented: $posOpen) {
+            let cur = conn.view?.jackaroo ?? j
+            let me = (conn.view ?? v).mySeat
+            Sheet(title: "أماكن الأحجار") {
+                ForEach(Array(jackarooPositions(cur, mySeat: me).enumerated()), id: \.offset) { _, p in
+                    HStack(spacing: 8) {
+                        Circle().fill(p.color < JK_COLORS.count ? JK_COLORS[p.color] : Palette.gold).frame(width: 12, height: 12)
+                        Text("\(p.title)، \(p.color < JK_COLOR_NAMES.count ? JK_COLOR_NAMES[p.color] : "")").bold().foregroundColor(Palette.goldSoft)
+                    }
+                    .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
+                    ForEach(Array(p.lines.enumerated()), id: \.offset) { _, line in
+                        Text(line).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+                    }
+                }
+                MButton("إغلاق", .primary) { posOpen = false }
+            }
+        }
         .sheet(item: $picked) { h in
             Sheet(title: "\(short(h.label)): اختر الحركة") {
                 ForEach(h.moves) { m in
@@ -425,15 +449,68 @@ struct JackarooBoard: View {
         }
     }
 
+    /// سحب بثلاث أصابع: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = أحجارك،
+    /// من تحت لفوق = الدور عند مين، من فوق لتحت = قائمة أماكن الأحجار (أحجارك أولاً ثم كل لاعب)
     private func read(_ dir: SwipeDir) -> Bool {
         let cur = conn.view?.jackaroo ?? j
         switch dir {
         case .left: Announcer.announceNow(cur.boardText)
         case .right: Announcer.announceNow(cur.mineText)
-        default: return false
+        case .up: Announcer.announceNow(jackarooTurnText(conn.view ?? v, cur))
+        case .down: posOpen = true
         }
         return true
     }
+}
+
+/// الدور عند مين في الجاكارو
+func jackarooTurnText(_ v: TableView, _ j: JackarooView) -> String {
+    let names = seatNames(v)
+    if j.phase == "over" {
+        let w = j.winnerTeam ?? 0
+        if let me = v.mySeat { return w == me % 2 ? "انتهت اللعبة، فاز فريقك" : "انتهت اللعبة، فاز الفريق الآخر" }
+        return "انتهت اللعبة، فاز فريق \(names[w]) و\(names[w + 2])"
+    }
+    if j.turn == v.mySeat { return j.burning ? "دورك، ما عندك لعب صالح، احرق ورقة" : "دورك" }
+    return "الدور عند \(j.turn < names.count ? names[j.turn] : "")"
+}
+
+/// "أحجار فلان: 1 في البيت، 2 على المسار، باقي له…" → العنوان وسطر لكل حجر
+/// (الفاصل بين الأحجار فاصلة بعدها رقم الحجر، لأن وصف المكان نفسه فيه فواصل)
+private func splitMarbles(_ text: String) -> (title: String, lines: [String]) {
+    guard let colon = text.range(of: ": ") else { return (text, []) }
+    let title = String(text[..<colon.lowerBound])
+    let body = String(text[colon.upperBound...])
+    var lines: [String] = [], cur = ""
+    let chars = Array(body)
+    var i = 0
+    while i < chars.count {
+        if chars[i] == "،", i + 2 < chars.count, chars[i + 1] == " ", chars[i + 2].isNumber, !cur.isEmpty {
+            lines.append("حجر \(cur)"); cur = ""; i += 2; continue
+        }
+        cur.append(chars[i]); i += 1
+    }
+    if !cur.isEmpty { lines.append("حجر \(cur)") }
+    return (title, lines)
+}
+
+/// أماكن الأحجار: أحجارك أولاً (أو أحجار شريكك لو تلعب بها)، ثم باقي اللاعبين بترتيب اللعب
+func jackarooPositions(_ j: JackarooView, mySeat: Int?) -> [(title: String, color: Int, lines: [String])] {
+    let all = j.boardText.components(separatedBy: ". ")
+    var out: [(title: String, color: Int, lines: [String])] = []
+    let start = mySeat ?? 0
+    if let me = mySeat {
+        let m = splitMarbles(j.mineText)
+        // تلعب بأحجار شريكك بعد ما خلصت أحجارك
+        out.append((m.title, m.title.hasPrefix("أحجارك") ? me : (me + 2) % 4, m.lines))
+    }
+    for k in 0..<4 {
+        let seat = (start + k) % 4
+        if seat == mySeat || seat >= all.count { continue }
+        let p = splitMarbles(all[seat])
+        out.append((p.title, seat, p.lines))
+    }
+    return out
 }
 
 /// رسم لوحة الجاكارو (نفس رسم النسخة السابقة): المسار دائرة، ولكل لاعب قاعدة ومنطقة أمان وبيت
@@ -558,14 +635,13 @@ struct LudoBoard: View {
         VStack(spacing: 10) {
             // اسم كل لاعب عند زاوية لونه في اللوحة، وجنبه نرد بآخر رقم جاه
             cornerRow(top: true, names: names, mySeat: mySeat, partner: partner)
-            Button { Announcer.announceNow(l.boardText) } label: {
-                Canvas { ctx, size in
-                    drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [])
-                }
-                .aspectRatio(1, contentMode: .fit).frame(maxWidth: 360)
+            // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
+            Canvas { ctx, size in
+                drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [])
             }
-            .buttonStyle(.plain).frame(maxWidth: .infinity)
-            .accessibilityLabel("اللوحة: \(l.boardText)")
+            .aspectRatio(1, contentMode: .fit).frame(maxWidth: boardSide(360))
+            .frame(maxWidth: .infinity)
+            .accessibilityHidden(true)
             cornerRow(top: false, names: names, mySeat: mySeat, partner: partner)
             if l.phase == "over" {
                 let w = l.winner ?? 0
