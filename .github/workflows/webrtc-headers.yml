@@ -1,0 +1,22 @@
+# أداة فحص مؤقتة: تبحث في ملفات WebRTC (stasel) عن خيارات معالجة الصوت (لينكس، بلا ماك)
+name: WebRTC headers
+
+on:
+  workflow_dispatch:
+
+jobs:
+  grep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Headers
+        run: |
+          for V in 125 140 156; do
+            echo "===== M$V"
+            URL=$(curl -sSL "https://raw.githubusercontent.com/stasel/WebRTC/$V.0.0/Package.swift" | grep -o 'https://[^"]*zip')
+            curl -sSL -o w$V.zip "$URL" || continue
+            unzip -q -o w$V.zip -d w$V
+            H=$(find w$V -path '*ios-arm64/*' -name '*.h' | head -400)
+            grep -h -n -i "bypassVoiceProcessing\|VoiceProcessing\|ducking\|initWithEncoderFactory\|AudioDeviceModule\|prefersNoInterruptions\|isAudioEnabled\|useManualAudio" $(find w$V -path '*ios-arm64/*' -name 'RTCPeerConnectionFactory.h' -o -path '*ios-arm64/*' -name 'RTCAudioSession*.h' -o -path '*ios-arm64/*' -name 'RTCAudioDevice*.h') | head -60
+            ls $(dirname $(find w$V -path '*ios-arm64/*' -name 'RTCPeerConnectionFactory.h' | head -1)) | grep -i audio | head -30
+          done
