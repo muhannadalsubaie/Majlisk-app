@@ -21,11 +21,14 @@ struct Card: Hashable {
 }
 
 /// ترتيب اليد: حسب اللون ثم الرتبة
+/// ترتيب يدك من اليمين لليسار: هاص، ديمن، شريا، سبيت (اللي ما معك منه يُتخطّى)،
+/// وفي كل لون الأكبر يمين ثم الأصغر. الأوراق تُرسم من اليسار لليمين، فنرجعها مقلوبة.
+private let HAND_SUITS_LTR = ["S", "C", "D", "H"]
 func sortHand(_ hand: [Card]) -> [Card] {
     hand.sorted { a, b in
-        let sa = SUITS.firstIndex(of: a.suit) ?? 0, sb = SUITS.firstIndex(of: b.suit) ?? 0
+        let sa = HAND_SUITS_LTR.firstIndex(of: a.suit) ?? 0, sb = HAND_SUITS_LTR.firstIndex(of: b.suit) ?? 0
         if sa != sb { return sa < sb }
-        return (RANK_ORDER.firstIndex(of: a.rank) ?? 0) < (RANK_ORDER.firstIndex(of: b.rank) ?? 0)
+        return (RANK_ORDER.firstIndex(of: a.rank) ?? 0) > (RANK_ORDER.firstIndex(of: b.rank) ?? 0)
     }
 }
 

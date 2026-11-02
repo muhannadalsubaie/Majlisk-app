@@ -275,6 +275,8 @@ struct BalootBoard: View {
                             }
                                 .accessibilityFocused($focusedCard, equals: c)
                                 .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
+                                // VoiceOver يقرأ من اليمين لليسار: هاص الأكبر أولاً
+                                .accessibilitySortPriority(Double(hand.firstIndex(of: c) ?? 0))
                         }
                     }
                     .padding(.bottom, 6)

@@ -59,6 +59,7 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -381,7 +382,9 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                         }
                         HandCard(
                             c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, silent = silentKey == cardKey(c),
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr),
+                            // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
+                                .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
                             // المؤشر ينتقل لزر الميكروفون بصمت، فتسمع ورقتك وباقي اللعب
                             com.majlisk.app.voice.MicFocus.take()
