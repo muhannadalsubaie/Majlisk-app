@@ -5,10 +5,13 @@ import SwiftUI
 // لـ VoiceOver: كل قطعة/ورقة/خيار زر بنص واضح، ولمس اللوحة في نص الشاشة ما يقرأ شي (القراءة بالإيماءات)، وحركات الجميع يعلنها الخادم.
 // الإيماءات: سحب بثلاث أصابع، ولكل لعبة اتجاهاتها (تحت عند كل لوحة).
 
-/// حجم لوحة اللودو والجاكارو: تصغر شوي حسب طول الجوال، فتكفي الطاولة كلها صفحة وحدة بلا تمرير
+/// حجم لوحة اللودو والجاكارو: يتكيّف مع طول شاشة الجوال (من الصغير مثل SE للكبير)،
+/// فتكفي الطاولة كلها صفحة وحدة بلا تمرير
 private func boardSide(_ full: CGFloat) -> CGFloat {
-    min(full, max(200, UIScreen.main.bounds.height - 550))
+    min(full, max(170, UIScreen.main.bounds.height - 550))
 }
+/// قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة
+private var dominoUnit: Int { UIScreen.main.bounds.height < 740 ? 15 : 18 }
 
 private func seatNames(_ v: TableView) -> [String] { (0..<4).map { v.seat($0)?.username ?? "المقعد \($0 + 1)" } }
 
@@ -208,7 +211,7 @@ struct DominoBoard: View {
                     if d.line.isEmpty { Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(maxWidth: .infinity) }
                     else {
                         Wrap(items: d.line.enumerated().map { LineItem(id: $0.offset, p: $0.element) }, spacing: 3) { item in
-                            DominoTileView(t: orient(item.p), vertical: item.p.tile.isDouble, unit: 18)
+                            DominoTileView(t: orient(item.p), vertical: item.p.tile.isDouble, unit: dominoUnit)
                         }
                     }
                 }

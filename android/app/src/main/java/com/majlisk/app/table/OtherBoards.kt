@@ -205,7 +205,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (d.line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim)
-            d.line.forEach { p -> Box(Modifier.align(Alignment.CenterVertically)) { DominoTileView(orient(p), vertical = p.tile.isDouble, unit = 18) } }
+            d.line.forEach { p -> Box(Modifier.align(Alignment.CenterVertically)) { DominoTileView(orient(p), vertical = p.tile.isDouble, unit = dominoUnit()) } }
         }
         d.ends?.let { (left, right) ->
             Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft,
@@ -417,12 +417,16 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
     }
 }
 
-/** حجم لوحة اللودو والجاكارو: تصغر شوي حسب طول الجوال، فتكفي الطاولة كلها صفحة وحدة بلا تمرير */
+/** حجم لوحة اللودو والجاكارو: يتكيّف مع طول شاشة الجوال، فتكفي الطاولة كلها صفحة وحدة بلا تمرير */
 @Composable
 private fun boardSide(full: Int): androidx.compose.ui.unit.Dp {
     val h = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp
-    return minOf(full, maxOf(200, h - 550)).dp
+    return minOf(full, maxOf(170, h - 550)).dp
 }
+
+/** قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة */
+@Composable
+private fun dominoUnit(): Int = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 740) 15 else 18
 
 /** الدور عند مين في الجاكارو */
 private fun jackarooTurnText(v: TableView, j: JackarooView): String {
