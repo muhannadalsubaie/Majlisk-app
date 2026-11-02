@@ -777,8 +777,8 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
         ctx.fill(Path(r), with: .color(start.map { LUDO_COLORS[$0] } ?? paper))
         ctx.stroke(Path(r), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.33)), lineWidth: 1)
         if LudoView.SAFE.contains(i) && start == nil { ctx.fill(starPath(p, U * 0.32), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.6))) }
-        // رقم الخانة من خانة بدايتك (0) إلى 51
-        let num = (i - LudoView.STARTS[bottom] + 52) % 52
+        // رقم الخانة ثابت للجميع من 1 إلى 52 (نفس الأرقام اللي ينطقها الإعلان لكل اللاعبين)
+        let num = i + 1
         ctx.draw(Text("\(num)").font(.system(size: U * 0.42, weight: .semibold))
             .foregroundColor(start != nil ? .white : Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.8)), at: p)
     }

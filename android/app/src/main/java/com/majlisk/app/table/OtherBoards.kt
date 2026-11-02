@@ -706,8 +706,8 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
         drawRect(if (start >= 0) LUDO_COLORS[start] else paper, Offset(p.x - U / 2 + 0.5f, p.y - U / 2 + 0.5f), Size(U - 1, U - 1))
         drawRect(Color(0x550D2B20), Offset(p.x - U / 2 + 0.5f, p.y - U / 2 + 0.5f), Size(U - 1, U - 1), style = Stroke(1f))
         if (i in LudoView.SAFE && start < 0) drawStar(p, U * 0.32f, Color(0x990D2B20))
-        // رقم الخانة من خانة بدايتك (0) إلى 51
-        val num = (i - LudoView.STARTS[bottom] + 52) % 52
+        // رقم الخانة ثابت للجميع من 1 إلى 52 (نفس الأرقام اللي ينطقها الإعلان لكل اللاعبين)
+        val num = i + 1
         drawContext.canvas.nativeCanvas.drawText("$num", p.x, p.y + U * 0.16f, android.graphics.Paint().apply {
             isAntiAlias = true; textAlign = android.graphics.Paint.Align.CENTER; textSize = U * 0.42f
             color = if (start >= 0) android.graphics.Color.WHITE else android.graphics.Color.argb(200, 13, 43, 32)
