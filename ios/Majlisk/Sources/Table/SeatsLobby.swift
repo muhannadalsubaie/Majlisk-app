@@ -39,6 +39,7 @@ struct SeatsLobby: View {
                 Text(team.id).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
                     ItemRow {
+                        if let m = v.seat(i) { Avatar(uid: v.seatUid(i), name: m.username, size: 32) }
                         Text("المقعد \(i + 1): \(occupantLabel(v, i))").frame(maxWidth: .infinity, alignment: .leading)
                         if isOwner {
                             if v.seat(i) == nil {

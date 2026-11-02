@@ -28,9 +28,12 @@ private struct PlayerLine: View {
     var spoken: String? = nil
     /// نرد صغير بآخر رمية (لودو)
     var roll: Int? = nil
+    /// الصورة الشخصية: (uid، الاسم)
+    var avatar: (String?, String)? = nil
     var body: some View {
         HStack(spacing: 8) {
             if let color { Circle().fill(color).frame(width: 12, height: 12) }
+            if let avatar { Avatar(uid: avatar.0, name: avatar.1, size: 30) }
             Text(text).font(.system(size: 15, weight: turn ? .bold : .regular)).foregroundColor(Palette.text)
             Spacer(minLength: 0)
             if let roll { DiceView(value: roll, color: color ?? Palette.gold, size: 26) }
@@ -193,7 +196,7 @@ struct DominoBoard: View {
                 if seat != mySeat {
                     let partner = mySeat != nil && d.players == 4 && seat == (mySeat! + 2) % 4
                     PlayerLine(text: "\(names[seat])\(partner ? " (شريكك)" : "")، \(seat < d.handCounts.count ? d.handCounts[seat] : 0) قطع",
-                               turn: d.turn == seat && d.phase == "playing")
+                               turn: d.turn == seat && d.phase == "playing", avatar: (v.seatUid(seat), names[seat]))
                 }
             }
             // الطاولة: تُقرأ كاملة بالضغط عليها
@@ -379,7 +382,7 @@ struct JackarooBoard: View {
                 let cards = seat < j.handCounts.count ? j.handCounts[seat] : 0
                 PlayerLine(text: "\(seat == mySeat ? "\(n) (أنت)" : n)\(partner ? " (شريكك)" : "")، \(cards) أوراق",
                            turn: j.turn == seat && j.phase == "playing", color: JK_COLORS[seat],
-                           spoken: "\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق")
+                           spoken: "\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق", avatar: (v.seatUid(seat), n))
             }
             if j.phase == "over" {
                 let w = j.winnerTeam ?? 0
@@ -498,6 +501,7 @@ struct LudoBoard: View {
         let turn = l.turn == o && l.phase != "over"
         HStack(spacing: 6) {
             Circle().fill(LUDO_COLORS[o]).frame(width: 12, height: 12)
+            Avatar(uid: v.seatUid(o), name: n, size: 30)
             VStack(alignment: .leading, spacing: 0) {
                 Text("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")")
                     .font(.system(size: 14, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)

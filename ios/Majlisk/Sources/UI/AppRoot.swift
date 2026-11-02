@@ -1,7 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 
-enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop }
+enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop, profile }
 
 struct AppRoot: View {
     @StateObject private var session = Session.shared
@@ -46,6 +46,7 @@ struct AppRoot: View {
             case .friends: FriendsScreen(hub: hub.state, navigate: { route = $0 }, openTable: open)
             case .settings: SettingsScreen(embedded: false) { route = .menu }
             case .shop: ShopScreen(profile: session.profile) { route = $0 }
+            case .profile: ProfileScreen(profile: session.profile) { route = .menu }
             case .table:
                 if let tableId { TableScreen(tableId: tableId, uid: session.uid ?? "") { Prefs.lastTable = nil; route = .menu }.id(tableId) }
                 else { Color.clear.onAppear { route = .menu } }

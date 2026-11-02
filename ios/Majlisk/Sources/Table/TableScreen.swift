@@ -461,6 +461,7 @@ private struct PlayerTag: View {
         let turn = g.turn == seat && g.phase != "matchOver"
         let label = (s?.username ?? "مقعد \(seat + 1)") + (s?.isBot == true ? " (روبوت)" : "") + (s?.away == true ? " (انقطع الاتصال)" : "") + (partner ? " (شريكك)" : "")
         VStack(spacing: 4) {
+            Avatar(uid: v.seatUid(seat), name: s?.username ?? "", size: 34)
             Text(label)
                 .font(.system(size: 14, weight: .bold))
                 .multilineTextAlignment(.center)

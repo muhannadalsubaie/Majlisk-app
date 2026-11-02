@@ -18,7 +18,10 @@ struct MainMenuScreen: View {
     @State private var getCoins = false
     var body: some View {
         Screen(scroll: false) {
-            HStack {
+            HStack(spacing: 10) {
+                // صورتك الدائرية: تفتح الملف الشخصي
+                Button { navigate(.profile) } label: { Avatar(uid: Session.shared.uid, name: profile?.username ?? "", size: 48) }
+                    .buttonStyle(.plain).accessibilityLabel("الملف الشخصي")
                 VStack(alignment: .leading) {
                     Title("مجلسك")
                     if let name = profile?.username, !name.isEmpty { Note("أهلاً \(name)") }
@@ -32,6 +35,7 @@ struct MainMenuScreen: View {
             MButton("انضمام إلى طاولة", .primary) { navigate(.joinTable) }
             MButton("الأصدقاء") { navigate(.friends) }
             MButton("الحصول على عملات 🪙") { getCoins = true }
+            MButton("الملف الشخصي") { navigate(.profile) }
             MButton("الإعدادات") { navigate(.settings) }
         }
         .sheet(isPresented: $getCoins) {
