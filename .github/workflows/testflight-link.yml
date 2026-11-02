@@ -1,0 +1,27 @@
+# إضافة نسخة مرفوعة من قبل لرابط المختبرين الخارجيين (TestFlight العام) وإرسالها للمراجعة.
+# Actions ← TestFlight public link ← Run workflow ← رقم النسخة (مثل 1075)
+name: TestFlight public link
+
+on:
+  workflow_dispatch:
+    inputs:
+      build:
+        description: رقم النسخة (CFBundleVersion)
+        required: true
+
+jobs:
+  testers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: External testers (public link)
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          BUILD: ${{ inputs.build }}
+        run: |
+          KEY=$RUNNER_TEMP/k.p8; printf '%s' "$KEY_P8" > $KEY
+          awk '/^## تحديث/{n++} n==1' CHANGELOG.md > $RUNNER_TEMP/notes.txt
+          KEY=$KEY NOTES=$RUNNER_TEMP/notes.txt node .github/scripts/asc-external.mjs | tee -a $GITHUB_STEP_SUMMARY

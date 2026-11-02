@@ -1,7 +1,8 @@
 # بناء تطبيق الآيفون (Swift) على ماك سحابي.
 # مع كل تعديل: يُبنى فقط للتأكد أن الكود سليم، بلا رفع.
 # الرفع إلى TestFlight يدوي فقط (Actions ← iOS ← Run workflow ← upload = true)، حين يطلبه صاحب التطبيق،
-# وبعده تنضاف النسخة تلقائياً لمختبرين الرابط العام وتنرسل للمراجعة (مهمة testers).
+# ومع public_link = true تنضاف النسخة بعده لمختبرين الرابط العام وتنرسل للمراجعة (مهمة testers)،
+# أو لاحقاً من Actions ← TestFlight public link (لنسخة مرفوعة من قبل).
 # المستودع خاص: دقائق الماك محدودة، فالانتظار بعد الرفع على لينكس.
 # الأسرار: APPLE_TEAM_ID، ASC_KEY_ID، ASC_ISSUER_ID، ASC_KEY_P8 (مفتاح App Store Connect بصلاحية Admin).
 # مشروع Xcode يُولَّد من ios/project.yml بأداة XcodeGen.
@@ -16,6 +17,10 @@ on:
     inputs:
       upload:
         description: رفع النسخة إلى TestFlight
+        type: boolean
+        default: false
+      public_link:
+        description: إضافة النسخة لرابط المختبرين الخارجيين (بعد الرفع)
         type: boolean
         default: false
 
@@ -96,7 +101,7 @@ jobs:
   # على لينكس (أرخص من الماك)، والانتظار هنا بدل ما يوقف الماك.
   testers:
     needs: build
-    if: github.event_name == 'workflow_dispatch' && inputs.upload
+    if: github.event_name == 'workflow_dispatch' && inputs.upload && inputs.public_link
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
