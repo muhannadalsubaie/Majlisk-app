@@ -508,7 +508,7 @@ private struct ProjectFaces: View {
     var maxWidth: CGFloat = 200
     var body: some View {
         // كل ورقة فوق التي على يسارها، ومزاحة بقدر يكشف زاويتها اليسرى (رقمها ورمزها) بوضوح
-        let w: CGFloat = 30, h: CGFloat = 44
+        let w: CGFloat = 24, h: CGFloat = 35
         let step = faces.count > 1 ? min(16, (maxWidth - w) / CGFloat(faces.count - 1)) : 0
         HStack(spacing: step - w) {
             ForEach(Array(faces.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: w, height: h) }

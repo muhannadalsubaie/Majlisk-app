@@ -475,7 +475,7 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
     // كل ورقة فوق التي على يسارها، ومزاحة بقدر يكشف زاويتها اليسرى (رقمها ورمزها) بوضوح
-    val w = 30f; val h = 44f
+    val w = 24f; val h = 35f
     val step = if (faces.size > 1) minOf(16f, (maxWidth - w) / (faces.size - 1)) else 0f
     Box(Modifier.size((w + step * (faces.size - 1)).dp, h.dp).clearAndSetSemantics { }) {
         faces.forEachIndexed { i, c ->
