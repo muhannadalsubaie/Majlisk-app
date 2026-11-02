@@ -108,11 +108,13 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         var u: AudioUnit?
         guard AudioComponentInstanceNew(comp, &u) == noErr, let u else { return false }
 
-        var one: UInt32 = 1, zero: UInt32 = 0
+        var one: UInt32 = 1
+        let zero: UInt32 = 0
         let size = UInt32(MemoryLayout<UInt32>.size)
         // الإخراج (السماعة) دائماً، والإدخال (الميكروفون) بس لما تفتحه
         AudioUnitSetProperty(u, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Output, 0, &one, size)
-        AudioUnitSetProperty(u, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, input ? &one : &zero, size)
+        var inputOn: UInt32 = input ? one : zero
+        AudioUnitSetProperty(u, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &inputOn, size)
 
         var fmt = AudioStreamBasicDescription(mSampleRate: session.sampleRate, mFormatID: kAudioFormatLinearPCM,
                                               mFormatFlags: kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked,
