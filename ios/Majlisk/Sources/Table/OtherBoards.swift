@@ -13,6 +13,12 @@ private func boardSide(_ full: CGFloat) -> CGFloat {
 /// قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة
 private var dominoUnit: CGFloat { UIScreen.main.bounds.height < 740 ? 15 : 18 }
 
+/// في الآيفون فوق/تحت يوصلان من VoiceOver مقلوبين في ألعاب اللوحة (الدومينو والجاكارو واللودو)
+/// مقارنة بالبلوت، فنعدّلهما هنا لتطابق الاتجاهات المكتوبة (من فوق لتحت، ومن تحت لفوق)
+private func flipVertical(_ d: SwipeDir) -> SwipeDir {
+    switch d { case .up: return .down; case .down: return .up; default: return d }
+}
+
 private func seatNames(_ v: TableView) -> [String] { (0..<4).map { v.seat($0)?.username ?? "المقعد \($0 + 1)" } }
 
 /// مربع نقاط (مثل البلوت)
@@ -234,7 +240,8 @@ struct DominoBoard: View {
         .onAppear { Gestures.shared.handler = { read($0) } }
     }
 
-    private func read(_ dir: SwipeDir) -> Bool {
+    private func read(_ raw: SwipeDir) -> Bool {
+        let dir = flipVertical(raw)
         // آخر حالة وصلت وقت الإيماءة نفسها
         let cur = conn.view?.domino ?? d
         let view = conn.view ?? v
@@ -455,7 +462,8 @@ struct JackarooBoard: View {
 
     /// سحب بثلاث أصابع: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = أحجارك،
     /// من تحت لفوق = الدور عند مين، من فوق لتحت = قائمة أماكن الأحجار (أحجارك أولاً ثم كل لاعب)
-    private func read(_ dir: SwipeDir) -> Bool {
+    private func read(_ raw: SwipeDir) -> Bool {
+        let dir = flipVertical(raw)
         let cur = conn.view?.jackaroo ?? j
         switch dir {
         case .left: Announcer.announceNow(cur.boardText)
@@ -690,7 +698,8 @@ struct LudoBoard: View {
 
     /// سحب بثلاث أصابع: من فوق لتحت = أماكن الأحجار، من تحت لفوق = الدور عند مين،
     /// من اليمين لليسار = آخر رمية نرد، من اليسار لليمين = ترمي النرد مباشرة
-    private func read(_ dir: SwipeDir) -> Bool {
+    private func read(_ raw: SwipeDir) -> Bool {
+        let dir = flipVertical(raw)
         let cur = conn.view?.ludo ?? l
         switch dir {
         case .down: logOpen = true
