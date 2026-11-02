@@ -483,6 +483,10 @@ struct LudoBoard: View {
     let isOwner: Bool
     /// آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
     @State private var rolls: [Int: Int] = [:]
+    @State private var rollTicks: [Int: Int] = [:]
+    @State private var prevPhase: String?
+    @State private var prevTurn: Int?
+    @State private var prevLast: String?
     /// السجل: يفتح بسحبة إصبعين من فوق لتحت (بدون زر)
     @State private var logOpen = false
 
@@ -496,22 +500,29 @@ struct LudoBoard: View {
         return (p.0 < 7, p.1 < 7)
     }
 
+    /// عند كل لون: صورة اللاعب الدائرية واسمه، وجنبها النرد بآخر رقم رماه (يتدحرج أول ما يرمي)
     @ViewBuilder private func label(_ o: Int, names: [String], mySeat: Int?, partner: Int) -> some View {
         let n = o < names.count ? names[o] : ""
         let turn = l.turn == o && l.phase != "over"
-        HStack(spacing: 6) {
-            Circle().fill(LUDO_COLORS[o]).frame(width: 12, height: 12)
-            Avatar(uid: v.seatUid(o), name: n, size: 30)
-            VStack(alignment: .leading, spacing: 0) {
+        let left = corner(o, mySeat).left
+        let dice = DiceView(value: rolls[o], color: LUDO_COLORS[o], size: 40)
+            .rotationEffect(.degrees(Double(rollTicks[o] ?? 0) * 360))
+            .animation(.easeOut(duration: 0.45), value: rollTicks[o] ?? 0)
+        HStack(spacing: 8) {
+            // النرد جهة اللوحة: لاعب اليسار نرده يمين صورته، ولاعب اليمين يسارها
+            if !left { dice }
+            VStack(spacing: 2) {
+                Avatar(uid: v.seatUid(o), name: n, size: 52)
+                    .padding(3)
+                    .overlay(Circle().stroke(turn ? Palette.gold : LUDO_COLORS[o], lineWidth: 3))
                 Text("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")")
-                    .font(.system(size: 14, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
-                Text("وصل \(l.home(o))/4").font(.system(size: 12)).foregroundColor(Palette.textDim)
+                    .font(.system(size: 13, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
+                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Color.black.opacity(0.4)).clipShape(RoundedRectangle(cornerRadius: 8))
+                Text("وصل \(l.home(o))/4").font(.system(size: 11)).foregroundColor(Palette.textDim)
             }
-            DiceView(value: rolls[o], color: LUDO_COLORS[o], size: 30)
+            if left { dice }
         }
-        .padding(.horizontal, 8).padding(.vertical, 4)
-        .background(LUDO_COLORS[o].opacity(0.22)).clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : .clear, lineWidth: 1.5))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(rolls[o].map { "، آخر رمية \($0)" } ?? "")\(turn ? "، عليه الدور" : "")")
     }
@@ -520,9 +531,9 @@ struct LudoBoard: View {
         let here = l.seats.filter { corner($0, mySeat).top == top }
         if !here.isEmpty {
             HStack {
-                if let o = here.first(where: { corner($0, mySeat).left }) { label(o, names: names, mySeat: mySeat, partner: partner).environment(\.layoutDirection, .rightToLeft) }
+                if let o = here.first(where: { corner($0, mySeat).left }) { label(o, names: names, mySeat: mySeat, partner: partner) }
                 Spacer(minLength: 4)
-                if let o = here.first(where: { !corner($0, mySeat).left }) { label(o, names: names, mySeat: mySeat, partner: partner).environment(\.layoutDirection, .rightToLeft) }
+                if let o = here.first(where: { !corner($0, mySeat).left }) { label(o, names: names, mySeat: mySeat, partner: partner) }
             }
             .environment(\.layoutDirection, .leftToRight)
             .frame(maxWidth: 360)
@@ -530,9 +541,14 @@ struct LudoBoard: View {
         }
     }
 
+    /// رمية جديدة: نحدّث نرد صاحبها ونزيد عدّاده فيتدحرج
     private func noteRoll() {
-        if let s = l.lastSeat, let r = l.lastRoll { rolls[s] = r }
-        if l.phase == "move", let d = l.dice { rolls[l.turn] = d }
+        if l.phase == "move", let d = l.dice, prevPhase != "move" || prevTurn != l.turn {
+            rolls[l.turn] = d; rollTicks[l.turn, default: 0] += 1
+        } else if let s = l.lastSeat, let r = l.lastRoll, l.lastSig != prevLast, prevPhase != "move", prevPhase != nil {
+            rolls[s] = r; rollTicks[s, default: 0] += 1
+        } else if let s = l.lastSeat, let r = l.lastRoll, rolls[s] == nil { rolls[s] = r }
+        prevPhase = l.phase; prevTurn = l.turn; prevLast = l.lastSig
     }
 
     var body: some View {

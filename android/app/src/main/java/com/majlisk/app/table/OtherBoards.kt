@@ -436,9 +436,17 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     val partner = if (mySeat == null) -1 else (mySeat + 2) % 4
     // آخر رمية لكل لاعب (نرد صغير جنب اسمه)، نتذكرها من الحالات اللي توصل
     val rolls = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
+    // عدّاد رميات لكل لاعب: يزيد مع كل رمية جديدة فيتدحرج نرده
+    val rollTicks = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
+    val prev = remember { arrayOf<Any?>(null, null, null) } // المرحلة، الدور، آخر حركة
     androidx.compose.runtime.LaunchedEffect(l.moveSig) {
-        if (l.lastSeat != null && l.lastRoll != null) rolls[l.lastSeat] = l.lastRoll
-        if (l.phase == "move" && l.dice != null) rolls[l.turn] = l.dice
+        val (pPhase, pTurn, pLast) = Triple(prev[0] as String?, prev[1] as Int?, prev[2] as String?)
+        if (l.phase == "move" && l.dice != null && (pPhase != "move" || pTurn != l.turn)) {
+            rolls[l.turn] = l.dice; rollTicks[l.turn] = (rollTicks[l.turn] ?: 0) + 1
+        } else if (l.lastSeat != null && l.lastRoll != null && l.lastSig != pLast && pPhase != "move" && pPhase != null) {
+            rolls[l.lastSeat] = l.lastRoll; rollTicks[l.lastSeat] = (rollTicks[l.lastSeat] ?: 0) + 1
+        } else if (l.lastSeat != null && l.lastRoll != null && rolls[l.lastSeat] == null) rolls[l.lastSeat] = l.lastRoll
+        prev[0] = l.phase; prev[1] = l.turn; prev[2] = l.lastSig
     }
 
     // السجل (من فوق لتحت): قائمة فيها كل لاعب وأحجاره في أي خانة، تتنقل فيها
@@ -476,29 +484,40 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             repeat(turns) { p = p.second to 14f - p.first }
             (p.first < 7f) to (p.second < 7f) // (فوق؟، يسار؟)
         }
+        // عند كل لون: صورة اللاعب الدائرية واسمه، وجنبها النرد بآخر رقم رماه (يتحرك أول ما يرمي)
         val label: @Composable (Int) -> Unit = { o ->
             val n = names.getOrElse(o) { "" }
             val roll = rolls[o]
             val turn = l.turn == o && l.phase != "over"
+            val left = corner(o).second
+            // دحرجة النرد مع كل رمية جديدة
+            val spin = remember { androidx.compose.animation.core.Animatable(0f) }
+            val tick = rollTicks[o] ?: 0
+            androidx.compose.runtime.LaunchedEffect(tick) {
+                if (tick > 0) { spin.snapTo(0f); spin.animateTo(360f, androidx.compose.animation.core.tween(450)) }
+            }
+            val dice: @Composable () -> Unit = {
+                Box(Modifier.graphicsLayer { rotationZ = spin.value }) { Dice(roll, LUDO_COLORS[o], 40) }
+            }
             Row(
-                Modifier
-                    .border(1.5.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(12.dp))
-                    .background(LUDO_COLORS[o].copy(alpha = 0.22f), RoundedCornerShape(12.dp))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-                    .semantics(mergeDescendants = true) {
-                        contentDescription = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (turn) "، عليه الدور" else ""}"
-                    },
+                Modifier.semantics(mergeDescendants = true) {
+                    contentDescription = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (turn) "، عليه الدور" else ""}"
+                },
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                Box(Modifier.size(12.dp).background(LUDO_COLORS[o], RoundedCornerShape(6.dp)))
-                com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(o), n, 30.dp)
-                Column {
-                    Text("$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""}", color = Palette.text, fontSize = 14.sp,
-                        fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
-                    Text("وصل ${l.home(o)}/4", color = Palette.textDim, fontSize = 12.sp)
+                // النرد جهة اللوحة: لاعب اليسار نرده يمين صورته، ولاعب اليمين يسارها
+                if (!left) dice()
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Box(
+                        Modifier.border(3.dp, if (turn) Palette.gold else LUDO_COLORS[o], androidx.compose.foundation.shape.CircleShape).padding(3.dp),
+                    ) { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(o), n, 52.dp) }
+                    Text("$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""}", color = Palette.text, fontSize = 13.sp,
+                        fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
+                        modifier = Modifier.background(Color(0x66000000), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp))
+                    Text("وصل ${l.home(o)}/4", color = Palette.textDim, fontSize = 11.sp)
                 }
-                Dice(roll, LUDO_COLORS[o], 30)
+                if (left) dice()
             }
         }
         val cornerRow: @Composable (Boolean) -> Unit = { top ->
