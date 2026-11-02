@@ -89,7 +89,7 @@ private fun ScoreTile(label: String, value: String, mine: Boolean, modifier: Mod
 
 /** سطر لاعب: إطار ذهبي على من عليه الدور، وخط بلونه */
 @Composable
-private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken: String? = null, trailing: (@Composable () -> Unit)? = null) {
+private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken: String? = null, trailing: (@Composable () -> Unit)? = null, avatar: Pair<String?, String>? = null) {
     Row(
         Modifier.fillMaxWidth()
             .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(12.dp))
@@ -100,6 +100,7 @@ private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
         if (color != null) Box(Modifier.size(12.dp).background(color, RoundedCornerShape(6.dp)))
+        avatar?.let { (u, n) -> com.majlisk.app.ui.Avatar(u, n, 30.dp) }
         Text(text, color = Palette.text, fontSize = 15.sp, fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
         trailing?.invoke()
     }
@@ -190,7 +191,8 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
         names.forEachIndexed { seat, n ->
             if (seat != mySeat && seat < d.players) {
                 val partner = mySeat != null && d.players == 4 && seat == (mySeat + 2) % 4
-                PlayerLine("$n${if (partner) " (شريكك)" else ""}، ${d.handCounts.getOrElse(seat) { 0 }} قطع", d.turn == seat && d.phase == "playing")
+                PlayerLine("$n${if (partner) " (شريكك)" else ""}، ${d.handCounts.getOrElse(seat) { 0 }} قطع", d.turn == seat && d.phase == "playing",
+                    avatar = v.seatUids.getOrNull(seat) to n)
             }
         }
         // الطاولة: تُقرأ كاملة بالضغط عليها
@@ -342,7 +344,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             val partner = mySeat != null && seat == (mySeat + 2) % 4
             PlayerLine("${if (seat == mySeat) "$n (أنت)" else n}${if (partner) " (شريكك)" else ""}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق",
                 j.turn == seat && j.phase == "playing", JK_COLORS[seat],
-                spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق")
+                spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق", avatar = v.seatUids.getOrNull(seat) to n)
         }
         if (j.phase == "over") {
             val w = j.winnerTeam ?: 0
@@ -490,6 +492,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 horizontalArrangement = Arrangement.spacedBy(6.dp),
             ) {
                 Box(Modifier.size(12.dp).background(LUDO_COLORS[o], RoundedCornerShape(6.dp)))
+                com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(o), n, 30.dp)
                 Column {
                     Text("$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""}", color = Palette.text, fontSize = 14.sp,
                         fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1)

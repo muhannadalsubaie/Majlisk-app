@@ -21,7 +21,7 @@ import com.majlisk.app.data.Social
 import com.majlisk.app.table.TableScreen
 import kotlinx.coroutines.launch
 
-enum class Route { Splash, Auth, Menu, CreateTable, JoinTable, Table, Friends, Settings, Shop }
+enum class Route { Splash, Auth, Menu, CreateTable, JoinTable, Table, Friends, Settings, Shop, Profile }
 
 @Composable
 fun AppRoot() {
@@ -80,6 +80,7 @@ fun AppRoot() {
             Route.Friends -> FriendsScreen(hub, navigate, openTable)
             Route.Settings -> SettingsScreen(onBack = { screen = Route.Menu }, embedded = false)
             Route.Shop -> ShopScreen(profile, navigate)
+            Route.Profile -> ProfileScreen(profile) { screen = Route.Menu }
             Route.Table -> tableId?.let { id -> TableScreen(id, user?.uid.orEmpty()) { Prefs.lastTable = null; screen = Route.Menu } } ?: run { screen = Route.Menu }
         }
     }

@@ -57,7 +57,12 @@ fun CoinsBadge(profile: Profile?) {
 fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit) {
     var getCoins by remember { mutableStateOf(false) }
     Screen(scroll = false) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            // صورتك الدائرية: تفتح الملف الشخصي
+            Box(Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { navigate(Route.Profile) }
+                .semantics(mergeDescendants = true) { contentDescription = "الملف الشخصي" }) {
+                Avatar(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid, profile?.username.orEmpty(), 48.dp)
+            }
             Column(Modifier.weight(1f)) {
                 Title("مجلسك")
                 if (!profile?.username.isNullOrEmpty()) Note("أهلاً ${profile?.username}")
@@ -70,6 +75,7 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit) {
         PrimaryButton("انضمام إلى طاولة", { navigate(Route.JoinTable) })
         SecondaryButton("الأصدقاء", { navigate(Route.Friends) }, fill = true)
         SecondaryButton("الحصول على عملات 🪙", { getCoins = true }, fill = true)
+        SecondaryButton("الملف الشخصي", { navigate(Route.Profile) }, fill = true)
         SecondaryButton("الإعدادات", { navigate(Route.Settings) }, fill = true)
     }
     if (getCoins) {

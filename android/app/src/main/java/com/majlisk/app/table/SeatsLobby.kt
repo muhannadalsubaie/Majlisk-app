@@ -25,6 +25,7 @@ import com.majlisk.app.ui.PrimaryButton
 import com.majlisk.app.ui.SecondaryButton
 import com.majlisk.app.ui.SectionTitle
 import com.majlisk.app.ui.SmallButton
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -56,6 +57,7 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         Text(title, color = Palette.goldSoft)
         seats.forEach { i ->
             ItemRow {
+                v.seats.getOrNull(i)?.let { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(i), it.username, 32.dp) }
                 Text("المقعد ${i + 1}: ${occupantLabel(v, i)}", color = Palette.text, modifier = Modifier.weight(1f))
                 if (isOwner) {
                     if (v.seats.getOrNull(i) == null) {
