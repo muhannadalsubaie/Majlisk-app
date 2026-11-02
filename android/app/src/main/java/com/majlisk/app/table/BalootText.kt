@@ -26,12 +26,11 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         else -> "لا توجد أوراق على الطاولة"
     }
 
-    /** بعد توزيع بقية الورق يختفي نوع اللعب: لا يُكتب ولا يُقرأ (اللاعب يتذكره بنفسه) */
-    val contractHidden: Boolean get() = g.phase == "playing"
+    /** نوع اللعب يبقى مكتوب ومقروء طول الجولة (حتى بعد توزيع كل الأوراق) */
+    val contractHidden: Boolean get() = false
 
     /** نوع اللعب: من اشترى، وعلى ماذا، والدبل */
     fun contract(): String {
-        if (contractHidden) return ""
         val c = g.contract ?: run {
             val ground = g.qaba?.let { "، ورقة الأرض ${it.label}" }.orEmpty()
             return "لم يشترِ أحد بعد، المزايدة في الجولة ${if (g.bidRound == 1) "الأولى" else "الثانية"}$ground، ${start()}"
@@ -85,11 +84,12 @@ class BalootText(private val view: TableView, private val g: GameView, private v
     }
 
     fun statusLine(): String? {
-        if (contractHidden) return null
         val c = g.contract ?: return null
         val mode = if (c.mode == "sun") "صن" else "حكم ${SUIT_NAMES[c.trump]} ${SUIT_SYMBOLS[c.trump]}"
         val level = if (g.doubling.gahwa) "قهوة" else mapOf(2 to "دبل", 3 to "ثري", 4 to "فور")[g.doubling.level]
         val lock = if (c.mode == "hokm" && g.doubling.level > 1 && !g.doubling.gahwa) (if (g.doubling.locked) " (مقفل)" else " (مفتوح)") else ""
-        return "$mode — ${name(c.buyer)}${level?.let { " — $it" }.orEmpty()}$lock"
+        // المشتري ونوع اللعب جنبه، طول الجولة
+        val kind = if (c.mode == "sun" && c.qabaTo != c.buyer) "أشكل" else mode
+        return "المشتري ${name(c.buyer)} — $kind${level?.let { " — $it" }.orEmpty()}$lock"
     }
 }
