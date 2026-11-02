@@ -198,11 +198,11 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             Spacer(Modifier.weight(1f))
             // الدومينو: قطعك تحت فوق الميكروفون
             v.domino?.let { DominoHand(v, it, conn) { dominoLogOpen = true } }
-            // زر الدردشة الكتابية فوق الميكروفون (يختفي إن أطفأتها من الإعدادات)
-            if (chatMode != com.majlisk.app.data.ChatMode.OFF) {
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ChatButton(conn) { chatOpen = true; conn.chatOpen = true } }
+            // زر الدردشة الكتابية جنب الميكروفون في نفس الصف (يختفي إن أطفأتها من الإعدادات)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                if (chatMode != com.majlisk.app.data.ChatMode.OFF) ChatButton(conn) { chatOpen = true; conn.chatOpen = true }
+                VoiceButton(v.id, uid)
             }
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { VoiceButton(v.id, uid) }
         }
         // آخر رسالة: لحظات في الزاوية اليمين تحت، بعيداً عن الطاولة والأوراق
         if (chatMode != com.majlisk.app.data.ChatMode.OFF && !chatOpen) ChatToast(conn, Modifier.align(Alignment.BottomStart))

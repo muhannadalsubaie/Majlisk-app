@@ -5,11 +5,9 @@ import SwiftUI
 // لـ VoiceOver: كل قطعة/ورقة/خيار زر بنص واضح، ولمس اللوحة في نص الشاشة ما يقرأ شي (القراءة بالإيماءات)، وحركات الجميع يعلنها الخادم.
 // الإيماءات: سحب بثلاث أصابع، ولكل لعبة اتجاهاتها (تحت عند كل لوحة).
 
-/// حجم لوحة اللودو والجاكارو: مع VoiceOver تصغر لين تكفي الشاشة كلها بلا تمرير
-/// (اللوحة للعين فقط، والقراءة بالإيماءات)، فتبقى كل العناصر والميكروفون داخل الشاشة
+/// حجم لوحة اللودو والجاكارو: تصغر شوي حسب طول الجوال، فتكفي الطاولة كلها صفحة وحدة بلا تمرير
 private func boardSide(_ full: CGFloat) -> CGFloat {
-    guard UIAccessibility.isVoiceOverRunning else { return full }
-    return min(full, max(150, UIScreen.main.bounds.height - 560))
+    min(full, max(200, UIScreen.main.bounds.height - 550))
 }
 
 private func seatNames(_ v: TableView) -> [String] { (0..<4).map { v.seat($0)?.username ?? "المقعد \($0 + 1)" } }
@@ -210,7 +208,7 @@ struct DominoBoard: View {
                     if d.line.isEmpty { Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(maxWidth: .infinity) }
                     else {
                         Wrap(items: d.line.enumerated().map { LineItem(id: $0.offset, p: $0.element) }, spacing: 3) { item in
-                            DominoTileView(t: orient(item.p), vertical: item.p.tile.isDouble)
+                            DominoTileView(t: orient(item.p), vertical: item.p.tile.isDouble, unit: 18)
                         }
                     }
                 }
@@ -281,7 +279,7 @@ struct DominoHand: View {
                         else if h.askSide { chooseSide = h }
                         else { act(["type": "play", "tile": h.tile.json]) }
                     } label: {
-                        DominoTileView(t: h.tile, vertical: true, unit: 30, dim: d.myTurn && !h.legal)
+                        DominoTileView(t: h.tile, vertical: true, unit: 24, dim: d.myTurn && !h.legal)
                             .padding(4)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(h.legal ? Palette.gold : .clear, lineWidth: 2))
                     }
@@ -383,6 +381,8 @@ struct JackarooBoard: View {
             }
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
+            // اللاعبون: كل اثنين في صف، فتكفي الطاولة صفحة وحدة
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
             ForEach(0..<4, id: \.self) { seat in
                 let partner = mySeat != nil && seat == (mySeat! + 2) % 4
                 let n = names[seat]
@@ -390,6 +390,7 @@ struct JackarooBoard: View {
                 PlayerLine(text: "\(seat == mySeat ? "\(n) (أنت)" : n)\(partner ? " (شريكك)" : "")، \(cards) أوراق",
                            turn: j.turn == seat && j.phase == "playing", color: JK_COLORS[seat],
                            spoken: "\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق", avatar: (v.seatUid(seat), n))
+            }
             }
             if j.phase == "over" {
                 let w = j.winnerTeam ?? 0

@@ -205,7 +205,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             if (d.line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim)
-            d.line.forEach { p -> Box(Modifier.align(Alignment.CenterVertically)) { DominoTileView(orient(p), vertical = p.tile.isDouble) } }
+            d.line.forEach { p -> Box(Modifier.align(Alignment.CenterVertically)) { DominoTileView(orient(p), vertical = p.tile.isDouble, unit = 18) } }
         }
         d.ends?.let { (left, right) ->
             Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft,
@@ -255,7 +255,7 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                         }
                         .semantics(mergeDescendants = true) { contentDescription = h.label }
                         .padding(4.dp),
-                ) { DominoTileView(h.tile, vertical = true, unit = 30, dim = d.myTurn && !h.legal) }
+                ) { DominoTileView(h.tile, vertical = true, unit = 24, dim = d.myTurn && !h.legal) }
             }
         }
     }
@@ -345,7 +345,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             Modifier.fillMaxWidth().clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.widthIn(max = 340.dp).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
+            Canvas(Modifier.widthIn(max = boardSide(340)).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
             // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
             Row(Modifier.clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
                 j.centerCards.forEachIndexed { i, c ->
@@ -359,11 +359,19 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                 }
             }
         }
-        names.forEachIndexed { seat, n ->
-            val partner = mySeat != null && seat == (mySeat + 2) % 4
-            PlayerLine("${if (seat == mySeat) "$n (أنت)" else n}${if (partner) " (شريكك)" else ""}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق",
-                j.turn == seat && j.phase == "playing", JK_COLORS[seat],
-                spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق", avatar = v.seatUids.getOrNull(seat) to n)
+        // اللاعبون: كل اثنين في صف، فتكفي الطاولة صفحة وحدة
+        names.chunked(2).forEachIndexed { row, pair ->
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                pair.forEachIndexed { col, n ->
+                    val seat = row * 2 + col
+                    val partner = mySeat != null && seat == (mySeat + 2) % 4
+                    Box(Modifier.weight(1f)) {
+                        PlayerLine("${if (seat == mySeat) "$n (أنت)" else n}${if (partner) " (شريكك)" else ""}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق",
+                            j.turn == seat && j.phase == "playing", JK_COLORS[seat],
+                            spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق", avatar = v.seatUids.getOrNull(seat) to n)
+                    }
+                }
+            }
         }
         if (j.phase == "over") {
             val w = j.winnerTeam ?: 0
@@ -407,6 +415,13 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             SecondaryButton("إلغاء", { picked = null }, fill = true)
         }
     }
+}
+
+/** حجم لوحة اللودو والجاكارو: تصغر شوي حسب طول الجوال، فتكفي الطاولة كلها صفحة وحدة بلا تمرير */
+@Composable
+private fun boardSide(full: Int): androidx.compose.ui.unit.Dp {
+    val h = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp
+    return minOf(full, maxOf(200, h - 550)).dp
 }
 
 /** الدور عند مين في الجاكارو */
@@ -597,7 +612,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             contentAlignment = Alignment.Center,
         ) {
             val movable = if (l.myTurn && l.phase == "move") l.options.map { l.movableOwner to it.token } else emptyList()
-            Canvas(Modifier.widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)) { drawLudo(l, mySeat ?: 0, movable) }
+            Canvas(Modifier.widthIn(max = boardSide(360)).fillMaxWidth().aspectRatio(1f)) { drawLudo(l, mySeat ?: 0, movable) }
         }
         cornerRow(false)
         if (l.phase == "over") {
