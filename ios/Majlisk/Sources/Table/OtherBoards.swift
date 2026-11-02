@@ -11,7 +11,7 @@ private func boardSide(_ full: CGFloat) -> CGFloat {
     min(full, max(170, UIScreen.main.bounds.height - 550))
 }
 /// قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة
-private var dominoUnit: Int { UIScreen.main.bounds.height < 740 ? 15 : 18 }
+private var dominoUnit: CGFloat { UIScreen.main.bounds.height < 740 ? 15 : 18 }
 
 private func seatNames(_ v: TableView) -> [String] { (0..<4).map { v.seat($0)?.username ?? "المقعد \($0 + 1)" } }
 
