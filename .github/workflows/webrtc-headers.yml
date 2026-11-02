@@ -11,12 +11,9 @@ jobs:
     steps:
       - name: Headers
         run: |
-          for V in 125 140 156; do
-            echo "===== M$V"
-            URL=$(curl -sSL "https://raw.githubusercontent.com/stasel/WebRTC/$V.0.0/Package.swift" | grep -o 'https://[^"]*zip')
-            curl -sSL -o w$V.zip "$URL" || continue
-            unzip -q -o w$V.zip -d w$V
-            H=$(find w$V -path '*ios-arm64/*' -name '*.h' | head -400)
-            grep -h -n -i "bypassVoiceProcessing\|VoiceProcessing\|ducking\|initWithEncoderFactory\|AudioDeviceModule\|prefersNoInterruptions\|isAudioEnabled\|useManualAudio" $(find w$V -path '*ios-arm64/*' -name 'RTCPeerConnectionFactory.h' -o -path '*ios-arm64/*' -name 'RTCAudioSession*.h' -o -path '*ios-arm64/*' -name 'RTCAudioDevice*.h') | head -60
-            ls $(dirname $(find w$V -path '*ios-arm64/*' -name 'RTCPeerConnectionFactory.h' | head -1)) | grep -i audio | head -30
-          done
+          URL=$(curl -sSL "https://raw.githubusercontent.com/stasel/WebRTC/125.0.0/Package.swift" | grep -o 'https://[^"]*zip')
+          curl -sSL -o w.zip "$URL"; unzip -q -o w.zip -d w
+          D=$(dirname $(find w -path '*ios-arm64/*' -name 'RTCPeerConnectionFactory.h' | head -1))
+          sed -n 30,70p $D/RTCPeerConnectionFactory.h
+          echo "===== RTCAudioDevice.h"
+          grep -v '^ \*\|^/\*\|^$' $D/RTCAudioDevice.h
