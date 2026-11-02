@@ -1,7 +1,8 @@
 # بناء تطبيق الآيفون (Swift) على ماك سحابي.
 # مع كل تعديل: يُبنى فقط للتأكد أن الكود سليم، بلا رفع.
-# الرفع إلى TestFlight يدوي فقط (Actions ← iOS ← Run workflow ← upload = true)، حين يطلبه صاحب التطبيق.
-# المستودع عام، فبناء الماك مجاني في GitHub.
+# الرفع إلى TestFlight يدوي فقط (Actions ← iOS ← Run workflow ← upload = true)، حين يطلبه صاحب التطبيق،
+# وبعده تنضاف النسخة تلقائياً لمختبرين الرابط العام وتنرسل للمراجعة (مهمة testers).
+# المستودع خاص: دقائق الماك محدودة، فالانتظار بعد الرفع على لينكس.
 # الأسرار: APPLE_TEAM_ID، ASC_KEY_ID، ASC_ISSUER_ID، ASC_KEY_P8 (مفتاح App Store Connect بصلاحية Admin).
 # مشروع Xcode يُولَّد من ios/project.yml بأداة XcodeGen.
 name: iOS
@@ -90,3 +91,24 @@ jobs:
       - name: Build log (on failure)
         if: failure()
         run: tail -n 200 $RUNNER_TEMP/build.log 2>/dev/null || true
+
+  # بعد الرفع: تنتظر المعالجة، ثم تضيف النسخة لمختبرين TestFlight الخارجيين (الرابط العام) وترسلها للمراجعة.
+  # على لينكس (أرخص من الماك)، والانتظار هنا بدل ما يوقف الماك.
+  testers:
+    needs: build
+    if: github.event_name == 'workflow_dispatch' && inputs.upload
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: External testers (public link)
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          KEY=$RUNNER_TEMP/k.p8; printf '%s' "$KEY_P8" > $KEY
+          # "وش الجديد": أحدث قسم مرفوع في سجل التحديثات
+          awk '/^## تحديث/{n++} n==1' CHANGELOG.md > $RUNNER_TEMP/notes.txt
+          KEY=$KEY BUILD=$((1000 + ${{ github.run_number }})) NOTES=$RUNNER_TEMP/notes.txt \
+            node .github/scripts/asc-external.mjs | tee -a $GITHUB_STEP_SUMMARY
