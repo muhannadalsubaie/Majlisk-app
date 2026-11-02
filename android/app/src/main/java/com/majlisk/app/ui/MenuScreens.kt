@@ -98,6 +98,8 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
     var error by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
+    // الرجوع من إعدادات اللعبة يرجعك لقائمة الألعاب أولاً، والرجوع منها للقائمة الرئيسية
+    androidx.activity.compose.BackHandler(enabled = picked != null) { picked = null }
     if (picked == null) {
         Screen {
             TopBar("اختر اللعبة", onBack = { navigate(Route.Menu) })

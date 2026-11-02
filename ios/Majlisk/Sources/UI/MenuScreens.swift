@@ -94,6 +94,8 @@ struct CreateTableScreen: View {
                     }
                 }
             }
+            // إيماءة الرجوع (VoiceOver: حرف Z بإصبعين): من إعدادات اللعبة لقائمة الألعاب
+            .accessibilityAction(.escape) { picked = nil }
         } else {
             Screen {
                 TopBar("اختر اللعبة", onBack: { navigate(.menu) })
@@ -103,6 +105,8 @@ struct CreateTableScreen: View {
                 GameTile(name: "جاكارو", image: "jackaroo_table") { picked = "jackaroo"; variant = "classic" }
                 GameTile(name: "لودو", image: "ludo_table") { picked = "ludo"; variant = "classic" }
             }
+            // ومن قائمة الألعاب للقائمة الرئيسية
+            .accessibilityAction(.escape) { navigate(.menu) }
         }
     }
 }
