@@ -6,7 +6,12 @@ on:
     inputs:
       pages:
         description: روابط صفحات OpenGameArt (مفصولة بمسافة)
-        required: true
+        required: false
+        default: ''
+      mixkit:
+        description: فئات Mixkit (مثل applause laugh) مفصولة بمسافة
+        required: false
+        default: ''
 
 permissions:
   contents: write
@@ -19,6 +24,9 @@ jobs:
       - uses: actions/checkout@v4
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
       - run: python3 .github/scripts/oga_sounds.py ${{ inputs.pages }}
+        if: inputs.pages != ''
+      - run: python3 .github/scripts/mixkit_sounds.py ${{ inputs.mixkit }}
+        if: inputs.mixkit != ''
       - name: Save to branch
         run: |
           ls candidates | wc -l; du -sh candidates
