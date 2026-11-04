@@ -89,6 +89,12 @@ data class TableView(
     val ludo: LudoView? = null,
     /** كم لاعب يقدر يبدأ اللعبة */
     val startCounts: List<Int> = listOf(4),
+    /** خيارات اللعبة من صفحة المقاعد: فرق، كمبلكس، هدف الدومينو */
+    val optTeams: Boolean = true,
+    val optComplex: Boolean = false,
+    val optTarget: Int = 100,
+    /** اسم مالك الطاولة */
+    val ownerName: String = "",
 ) {
     val hasGame: Boolean get() = game != null || otherGame
     val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
@@ -117,6 +123,10 @@ data class TableView(
             domino = o.optJSONObject("domino")?.let { DominoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("dominoLog")) },
             jackaroo = o.optJSONObject("jackaroo")?.let { JackarooView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optIntOrNull("mySeat")) },
             startCounts = o.optJSONArray("startCounts")?.ints()?.takeIf { it.isNotEmpty() } ?: listOf(4),
+            optTeams = o.optJSONObject("options")?.optBoolean("teams", true) ?: true,
+            optComplex = o.optJSONObject("options")?.optBoolean("complex") == true,
+            optTarget = o.optJSONObject("options")?.optInt("target", 100) ?: 100,
+            ownerName = o.optString("ownerName"),
             ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
         )
 

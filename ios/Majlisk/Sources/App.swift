@@ -102,7 +102,7 @@ struct DemoTable: View {
             Screen(fill: true) {
                 HStack(spacing: 8) {
                     SmallButton("القائمة") {}
-                    Text("طاولة \(gameTitle(v.kind, v.variant))").foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
+                    Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 if let d = v.domino { DominoBoard(v: v, d: d, conn: conn, isOwner: true) {} }
                 else if let j = v.jackaroo { JackarooBoard(v: v, j: j, conn: conn, isOwner: true) }

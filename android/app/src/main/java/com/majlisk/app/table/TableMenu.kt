@@ -90,11 +90,10 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
         }
         // المالك يغيّر لعبة الطاولة: تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة
         Page.ChangeGame -> MajliskDialog("تغيير اللعبة", { page = Page.Main }) {
-            Body("الحالية: ${com.majlisk.app.data.gameTitle(v.kind, v.variant)}. لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة.")
-            listOf(
-                "baloot" to "classic", "domino" to "classic", "domino" to "t150", "domino" to "t200", "jackaroo" to "classic", "jackaroo" to "complex", "ludo" to "classic", "ludo" to "teams",
-            ).filter { (k, va) -> !(k == v.kind && va == v.variant) }.forEach { (k, va) ->
-                PrimaryButton(com.majlisk.app.data.gameTitle(k, va), { conn.send("changeGame", "kind" to k, "variant" to va); onClose() })
+            Body("الحالية: ${com.majlisk.app.data.gameTitle(v.kind, "classic")}. لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة. خيارات اللعبة (فردي أو فرق، عادي أو كومبلكس، نهاية المباراة) تختارها من صفحة المقاعد.")
+            // اسم اللعبة بس
+            listOf("baloot", "domino", "jackaroo", "ludo").filter { it != v.kind }.forEach { k ->
+                PrimaryButton(com.majlisk.app.data.gameTitle(k, "classic"), { conn.send("changeGame", "kind" to k); onClose() })
             }
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }

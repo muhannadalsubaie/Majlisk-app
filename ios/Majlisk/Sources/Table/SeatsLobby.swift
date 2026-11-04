@@ -32,8 +32,49 @@ struct SeatsLobby: View {
         return (seated + watching).filter { !$0.id.isEmpty }
     }
 
+    @State private var targetText = ""
+
+    /// خيار من اثنين (فردي/فرق، عادي/كومبلكس): المالك يغيّره، والباقين يشوفونه بس
+    @ViewBuilder private func choice(_ a: String, _ b: String, second: Bool, send: @escaping (Bool) -> Void) -> some View {
+        HStack(spacing: 8) {
+            ForEach([false, true], id: \.self) { isB in
+                let on = isB == second
+                SmallButton(isB ? b : a, primary: on, label: "\(isB ? b : a)\(on ? "، محدد" : "")") { if isOwner && !on { send(isB) } }
+                    .disabled(!isOwner && !on)
+            }
+        }
+    }
+
+    /// خيارات اللعبة فوق المقاعد
+    @ViewBuilder private var options: some View {
+        if v.kind == "ludo" || v.kind == "domino" {
+            choice("فردي", "فرق", second: v.optTeams) { conn.send("setOptions", ["teams": $0]) }
+        }
+        if v.kind == "jackaroo" {
+            choice("عادي", "كومبلكس", second: v.optComplex) { conn.send("setOptions", ["complex": $0]) }
+        }
+        if v.kind == "domino" {
+            if isOwner {
+                HStack(spacing: 8) {
+                    TextField("نهاية المباراة", text: $targetText)
+                        .keyboardType(.numberPad)
+                        .padding(10).background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 10))
+                        .accessibilityLabel("نهاية المباراة، الحالية \(v.optTarget)")
+                    SmallButton("حفظ", primary: true, label: "حفظ نهاية المباراة") {
+                        if let n = Int(targetText.filter(\.isNumber)) { conn.send("setOptions", ["target": n]) }
+                    }
+                }
+                .onAppear { targetText = "\(v.optTarget)" }
+                .onChange(of: v.optTarget) { targetText = "\($0)" }
+            } else {
+                Note("نهاية المباراة: \(v.optTarget)")
+            }
+        }
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
+            options
             SectionTitle("المقاعد")
             ForEach([Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
                 Text(team.id).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
@@ -55,8 +96,6 @@ struct SeatsLobby: View {
             if !v.spectators.isEmpty {
                 Note("المشاهدون: " + v.spectators.map { $0.uid == uid ? "\($0.username) (أنت)" : $0.username }.joined(separator: "، "))
             }
-            // البلوت والجاكارو أربعة، الدومينو لاعبين أو أربعة، اللودو لاعبين أو ثلاثة أو أربعة
-            if v.startCounts != [4] { Note("تبدأ بـ \(v.startCounts.map(String.init).joined(separator: " أو ")) لاعبين") }
             if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { conn.send("start") } }
             else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
         }

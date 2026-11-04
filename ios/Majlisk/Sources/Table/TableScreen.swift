@@ -93,7 +93,8 @@ struct TableScreen: View {
                 SmallButton("القائمة") { menuOpen = true }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
-                Text("طاولة \(gameTitle(v.kind, v.variant))").foregroundColor(Palette.textDim)
+                // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
+                Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
             if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }

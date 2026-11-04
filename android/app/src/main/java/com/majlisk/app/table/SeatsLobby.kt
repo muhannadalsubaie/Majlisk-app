@@ -52,6 +52,33 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     val isOwner = v.ownerUid == uid
     var panel by remember { mutableStateOf<SeatPanel?>(null) }
 
+    // خيارات اللعبة فوق المقاعد: المالك يغيّرها، والباقين يشوفونها بس
+    val choice: @Composable (String, String, Boolean, (Boolean) -> Unit) -> Unit = { a, b, second, send ->
+        androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+            listOf(false, true).forEach { isB ->
+                val on = isB == second
+                val name = if (isB) b else a
+                SmallButton(name, { if (isOwner && !on) send(isB) }, primary = on, enabled = isOwner || on, description = "$name${if (on) "، محدد" else ""}")
+            }
+        }
+    }
+    if (v.kind == "ludo" || v.kind == "domino") choice("فردي", "فرق", v.optTeams) { conn.send("setOptions", "teams" to it) }
+    if (v.kind == "jackaroo") choice("عادي", "كومبلكس", v.optComplex) { conn.send("setOptions", "complex" to it) }
+    if (v.kind == "domino") {
+        if (isOwner) {
+            var target by remember(v.optTarget) { mutableStateOf(v.optTarget.toString()) }
+            androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {
+                androidx.compose.material3.OutlinedTextField(
+                    value = target, onValueChange = { target = it.filter(Char::isDigit).take(4) },
+                    label = { Text("نهاية المباراة") }, singleLine = true,
+                    keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.Number),
+                    modifier = Modifier.weight(1f),
+                )
+                SmallButton("حفظ", { target.toIntOrNull()?.let { conn.send("setOptions", "target" to it) } }, primary = true, description = "حفظ نهاية المباراة")
+            }
+        } else Note("نهاية المباراة: ${v.optTarget}")
+    }
+
     SectionTitle("المقاعد")
     listOf("الفريق الأول" to listOf(0, 2), "الفريق الثاني" to listOf(1, 3)).forEach { (title, seats) ->
         Text(title, color = Palette.goldSoft)
@@ -73,9 +100,7 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     if (v.spectators.isNotEmpty()) {
         Note("المشاهدون: " + v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username })
     }
-    // البلوت والجاكارو أربعة، الدومينو لاعبين أو أربعة، اللودو لاعبين أو ثلاثة أو أربعة
     val seated = v.seats.count { it != null }
-    if (v.startCounts != listOf(4)) Note("تبدأ بـ ${v.startCounts.joinToString(" أو ")} لاعبين")
     if (isOwner) PrimaryButton("بدء المباراة", { conn.send("start") }, enabled = seated in v.startCounts)
     else Body("بانتظار مالك الطاولة لبدء المباراة")
 

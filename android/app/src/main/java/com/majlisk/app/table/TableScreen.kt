@@ -178,7 +178,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
                 if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(
-                    "طاولة ${gameTitle(v.kind, v.variant)}",
+                    // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
+                    "طاولة ${if (v.kind == "domino") "دومينو ${v.optTarget}" else gameTitle(v.kind, v.variant)}${if (v.ownerName.isNotEmpty()) " — المالك ${v.ownerName}" else ""}",
                     color = Palette.textDim,
                     modifier = Modifier.weight(1f).semantics { heading() },
                     textAlign = TextAlign.End,
