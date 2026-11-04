@@ -542,6 +542,8 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
     for p in 0..<L {
         let owner = (0...3).first { start($0) == p }
         ctx.fill(dot(at(CGFloat(p)), (owner != nil ? 6 : 3.5) * k), with: .color(owner.map { JK_COLORS[$0] } ?? Color.white.opacity(0.2)))
+        // رقم الخانة (ثابت للجميع، نفس الرقم اللي ينقال في الإعلان) داخل الدائرة جنب كل نقطة
+        ctx.draw(Text("\(p)").font(.system(size: 6.5 * k, weight: .semibold)).foregroundColor(Color.white.opacity(0.75)), at: at(CGFloat(p), R - 12))
     }
     for o in 0...3 {
         for s in 0..<4 { ctx.stroke(dot(at(CGFloat(start(o) - 1), R - 16 - CGFloat(s) * 14), 5 * k), with: .color(JK_COLORS[o]), lineWidth: 1.5 * k) }

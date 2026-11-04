@@ -486,6 +486,12 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
     for (p in 0 until L) {
         val owner = (0..3).firstOrNull { start(it) == p }
         drawCircle(if (owner != null) JK_COLORS[owner] else Color(0x33FFFFFF), (if (owner != null) 6f else 3.5f) * k, at(p.toFloat()))
+        // رقم الخانة (ثابت للجميع، نفس الرقم اللي ينقال في الإعلان) داخل الدائرة جنب كل نقطة
+        val tp = at(p.toFloat(), R - 12)
+        drawContext.canvas.nativeCanvas.drawText("$p", tp.x, tp.y + 2.3f * k, android.graphics.Paint().apply {
+            isAntiAlias = true; textAlign = android.graphics.Paint.Align.CENTER; textSize = 6.5f * k
+            color = android.graphics.Color.argb(190, 255, 255, 255)
+        })
     }
     for (o in 0..3) {
         for (s in 0 until 4) drawCircle(JK_COLORS[o], 5f * k, at((start(o) - 1).toFloat(), R - 16 - s * 14), style = Stroke(1.5f * k))
