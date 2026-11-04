@@ -645,7 +645,8 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
     }
     if (played != null) {
         val trump = g.contract?.takeIf { it.mode == "hokm" }?.trump
-        if (trump != null && played.first.suit == trump && played.second.suit != trump) Sounds.cut() else Sounds.card()
+        // أي ورقة حكم في الحكم (قطع أو أول ورقة في الأرض): صوت الحكم
+        if (trump != null && played.first.suit == trump) Sounds.cut() else Sounds.card()
     }
     if (g.declared.size > prev.declared.size) Sounds.project(g.declared.drop(prev.declared.size).flatMap { it.kinds })
     if (g.balootSeat != null && prev.balootSeat == null) Sounds.baloot()

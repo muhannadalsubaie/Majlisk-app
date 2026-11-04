@@ -427,7 +427,9 @@ final class GameSoundTracker {
         if let p = played {
             let (card, lead) = p
             let trump = g.contract?.mode == "hokm" ? g.contract?.trump : nil
-            if let trump, card.suit == trump && lead.suit != trump { s.cut() } else { s.card() }
+            // أي ورقة حكم في الحكم (قطع أو أول ورقة في الأرض): صوت الحكم
+            _ = lead
+            if let trump, card.suit == trump { s.cut() } else { s.card() }
         }
         if g.declared.count > prev.declared.count { s.project(g.declared.dropFirst(prev.declared.count).flatMap(\.kinds)) }
         if g.balootSeat != nil && prev.balootSeat == nil { s.baloot() }
