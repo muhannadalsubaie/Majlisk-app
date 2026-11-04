@@ -97,6 +97,8 @@ struct GameView {
     let hokmBidKey: String?
     /// من اشترى الحكم الثاني (قبل وبعد ما يحدد اللون)
     let secondHokmSeat: Int?
+    /// شراء ما تأكد بعد: (المقعد، hokm/sun/ashkal/secondHokm)
+    var pendingBuy: (seat: Int, kind: String)? = nil
 
     var myTurn: Bool {
         !actions.bids.isEmpty || actions.doubleLabel != nil || actions.canPassDouble || actions.chooseLock || !actions.legal.isEmpty
@@ -211,7 +213,8 @@ struct TableView {
                 legal: a.objs("legal").compactMap { Card($0) }
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },
-            secondHokmSeat: g.intOrNil("secondHokmSeat")
+            secondHokmSeat: g.intOrNil("secondHokmSeat"),
+            pendingBuy: g.obj("pendingBuy").map { (seat: $0.int("seat"), kind: $0.str("kind")) }
         )
     }
 

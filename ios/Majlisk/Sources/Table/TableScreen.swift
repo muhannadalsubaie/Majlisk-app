@@ -1,7 +1,7 @@
 import SwiftUI
 
 /// كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها
-private let TRICK_HOLD: Double = 2
+private let TRICK_HOLD: Double = 3
 
 /// هوية الدور الحالي إن كان لك (nil إن لم يكن): تتغير مع كل دور جديد لك حتى لو جاك مرتين ورا بعض
 /// (أكلت الأكلة فبدأت التالية، أو رجع لك الدور في المزايدة أو الدبل)، فينقال "دورك" كل مرة
@@ -233,7 +233,6 @@ struct BalootBoard: View {
                             SmallButton(b.type == "pass" && g.bidRound == 2 ? "ولا" : b.label, primary: b.type != "pass") { toHand(); act(["type": "bid", "bid": b.raw]) }
                         }
                     }
-                    .accessibilityElement(children: .contain).accessibilityLabel("المزايدة")
                 }
                 // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
                 if g.actions.doubleLabel != nil || g.actions.canPassDouble {
@@ -392,8 +391,9 @@ final class GameSoundTracker {
         let key = turnKey(g)
         if let key, key != lastTurn { Sounds.shared.turn(soft: Announcer.readerOn) }
         lastTurn = key
-        // أثناء المزايدة: VoiceOver يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي)
-        let bidTurn: String? = g.phase == "bidding" && g.turn != v.mySeat ? "\(g.bidRound)|\(g.turn)|\(g.hokmBidKey ?? "")|\(g.secondHokmSeat ?? -1)" : nil
+        // أثناء الشراء: VoiceOver يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي).
+        // شراء فلان (حكم/صن) ما يعيد «دور فلان» له: نعلن بس لما ينتقل الدور لشخص ثاني
+        let bidTurn: String? = g.phase == "bidding" && g.turn != v.mySeat ? "\(g.bidRound)|\(g.turn)" : nil
         if let bidTurn, bidTurn != lastBidTurn {
             let who = v.seat(g.turn)?.username ?? "مقعد \(g.turn + 1)"
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Announcer.announce("دور \(who)") }
@@ -405,6 +405,8 @@ final class GameSoundTracker {
         let s = Sounds.shared
         let total = { (x: GameView) in x.handCounts.reduce(0, +) }
         if total(g) > total(prev) { s.deal(newHand: total(g) - total(prev) > 12) }
+        // الكل قال بس في اللفتين: إعادة توزيع (نفس عدد الأوراق) بصوت التوزيع مثل بداية الجولة
+        else if g.phase == "bidding" && g.bidRound == 1 && (prev.bidRound == 2 || prev.dealer != g.dealer) && prev.phase == "bidding" { s.deal(newHand: true) }
         // الورقة الجديدة: آخر ورقة في الأكلة الحالية، أو الرابعة إن اكتملت الأكلة للتو
         var played: (Card, Card)?
         if g.trickNo == prev.trickNo && g.trick.count > prev.trick.count { played = (g.trick.last!.card, g.trick.first!.card) }

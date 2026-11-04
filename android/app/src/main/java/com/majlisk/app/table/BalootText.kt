@@ -33,7 +33,13 @@ class BalootText(private val view: TableView, private val g: GameView, private v
     fun contract(): String {
         val c = g.contract ?: run {
             val ground = g.qaba?.let { "، ورقة الأرض ${it.label}" }.orEmpty()
-            return "لم يشترِ أحد بعد، المزايدة في الجولة ${if (g.bidRound == 1) "الأولى" else "الثانية"}$ground، ${start()}"
+            // اشترى أحد وما تأكد بعد (حكم ينتظر التأكيد، صن/أشكل ممكن ياخذه اللي قبله، حكم ثاني)
+            g.pendingBuy?.let { (seat, k) ->
+                val kind = when (k) { "sun" -> "صن"; "ashkal" -> "أشكل"; "secondHokm" -> "حكم ثاني"; else -> "حكم" }
+                val who = if (seat == mySeat) "أنت اشتريت $kind" else "${name(seat)} اشترى $kind، ${teamWord(seat)}"
+                return "$who$ground، ${start()}"
+            }
+            return "لم يشترِ أحد بعد، اللفة ${if (g.bidRound == 1) "الأولى" else "الثانية"}$ground، ${start()}"
         }
         val mode = if (c.mode == "sun") "صن" else "حكم ${SUIT_NAMES[c.trump]}"
         val parts = mutableListOf(if (c.buyer == mySeat) "أنت اشتريت $mode" else "${name(c.buyer)} اشترى $mode، ${teamWord(c.buyer)}")
@@ -57,13 +63,18 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         return if (first == mySeat) "البداية عندك" else "البداية عند ${name(first)}"
     }
 
-    /** المشاريع (في اللفة الثانية فقط): من عنده مشروع، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب */
+    /**
+     * المشاريع: في اللفة الأولى مين عنده مشروع ونوعه (سرا، خمسين، مية) بلا تفاصيل، وفي اللفة الثانية
+     * نوعه وأوراقه بعد ما ينكشف، وبعد اللفة الثانية تنمسح
+     */
     fun projects(): String {
-        val lines = (if (revealing) g.declared else emptyList()).map { d ->
+        val active = g.phase == "playing" && shownTrickNo <= 1
+        val lines = (if (active) g.declared else emptyList()).map { d ->
             val who = if (d.seat == mySeat) "أنت" else name(d.seat)
             val cards = d.cards
             if (cards != null) "$who: " + d.kinds.mapIndexed { i, k -> cards.getOrNull(i)?.let { "$k: $it" } ?: k }.joinToString("، و")
-            else if (d.seat == mySeat) "عندك مشروع" else "$who عنده مشروع"
+            else if (d.cancelled) "$who: أُلغي المشروع"
+            else "$who: ${d.kinds.joinToString(" و")}"
         }.toMutableList()
         g.balootSeat?.let { lines += "${if (it == mySeat) "أنت" else name(it)}: بلوت" }
         return if (lines.isEmpty()) "لا توجد مشاريع معلنة" else lines.joinToString(". ")
@@ -77,7 +88,7 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         if (g.phase == "matchOver") return "انتهت المباراة"
         val who = if (g.turn == mySeat) "دورك" else "دور ${name(g.turn)}"
         return when (g.phase) {
-            "bidding" -> "$who في المزايدة"
+            "bidding" -> who
             "doubling" -> if (g.myTurn) "دورك تقرر الدبل" else "بانتظار قرار الدبل"
             else -> "$who في اللعب"
         }

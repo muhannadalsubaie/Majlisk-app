@@ -91,7 +91,7 @@ import com.majlisk.app.voice.VoiceButton
 import kotlinx.coroutines.delay
 
 /** كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها */
-private const val TRICK_HOLD_MS = 2000L
+private const val TRICK_HOLD_MS = 3000L
 /** كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب) */
 private const val SILENT_FOCUS_MS = 4000L
 
@@ -334,7 +334,7 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
         // أزرار المزايدة
             if (g.actions.bids.isNotEmpty()) {
                 FlowRow(
-                    Modifier.fillMaxWidth().semantics { contentDescription = "المزايدة" },
+                    Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     g.actions.bids.forEach { b ->
@@ -612,7 +612,7 @@ class GameSoundTracker {
         if (key != null && key != lastTurn) Sounds.turn(Announcer.readerOn)
         lastTurn = key
         // أثناء المزايدة: قارئ الشاشة يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي)
-        val bidTurn = if (g.phase == "bidding" && g.turn != v.mySeat) "${g.phase}|${g.bidRound}|${g.turn}|${g.hokmBidKey}|${g.secondHokmSeat}" else null
+        val bidTurn = if (g.phase == "bidding" && g.turn != v.mySeat) "${g.phase}|${g.bidRound}|${g.turn}" else null
         if (bidTurn != null && bidTurn != lastBidTurn) {
             val who = v.seats.getOrNull(g.turn)?.username ?: "مقعد ${g.turn + 1}"
             main.postDelayed({ Announcer.announce("دور $who") }, 700)
@@ -624,6 +624,8 @@ class GameSoundTracker {
 private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
     val total = { x: GameView -> x.handCounts.sum() }
     if (total(g) > total(prev)) Sounds.deal(total(g) - total(prev) > 12)
+    // الكل قال بس في اللفتين: إعادة توزيع (نفس عدد الأوراق) بصوت التوزيع مثل بداية الجولة
+    else if (g.phase == "bidding" && g.bidRound == 1 && prev.phase == "bidding" && (prev.bidRound == 2 || prev.dealer != g.dealer)) Sounds.deal(true)
     // الورقة الجديدة: آخر ورقة في الأكلة الحالية، أو الرابعة إن اكتملت الأكلة للتو
     val played: Pair<Card, Card>? = when {
         g.trickNo == prev.trickNo && g.trick.size > prev.trick.size -> g.trick.last().card to g.trick.first().card

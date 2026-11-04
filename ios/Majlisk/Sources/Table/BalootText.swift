@@ -33,7 +33,13 @@ struct BalootText {
     func contract() -> String {
         guard let c = g.contract else {
             let ground = g.qaba.map { "، ورقة الأرض \($0.label)" } ?? ""
-            return "لم يشترِ أحد بعد، المزايدة في الجولة \(g.bidRound == 1 ? "الأولى" : "الثانية")\(ground)، \(start())"
+            // اشترى أحد وما تأكد بعد (حكم ينتظر التأكيد، صن/أشكل ممكن ياخذه اللي قبله، حكم ثاني)
+            if let p = g.pendingBuy {
+                let kind = ["sun": "صن", "ashkal": "أشكل", "secondHokm": "حكم ثاني"][p.kind] ?? "حكم"
+                let who = p.seat == mySeat ? "أنت اشتريت \(kind)" : "\(name(p.seat)) اشترى \(kind)، \(teamWord(p.seat))"
+                return "\(who)\(ground)، \(start())"
+            }
+            return "لم يشترِ أحد بعد، اللفة \(g.bidRound == 1 ? "الأولى" : "الثانية")\(ground)، \(start())"
         }
         let mode = c.mode == "sun" ? "صن" : "حكم \(SUIT_NAMES[c.trump ?? ""] ?? "")"
         var parts = [c.buyer == mySeat ? "أنت اشتريت \(mode)" : "\(name(c.buyer)) اشترى \(mode)، \(teamWord(c.buyer))"]
@@ -54,15 +60,17 @@ struct BalootText {
         return first == mySeat ? "البداية عندك" : "البداية عند \(name(first))"
     }
 
-    /// المشاريع المعلنة ومن أعلنها (وأوراقها بعد الأكلة الأولى)
-    /// المشاريع (في اللفة الثانية فقط): من عنده مشروع، وبعد كشف المشروع نوعه وأوراقه — بلا ذكر لمن يُحتسب
+    /// المشاريع: في اللفة الأولى مين عنده مشروع ونوعه (سرا، خمسين، مية) بلا تفاصيل، وفي اللفة الثانية
+    /// نوعه وأوراقه بعد ما ينكشف، وبعد اللفة الثانية تنمسح
     func projects() -> String {
-        var lines = (revealing ? g.declared : []).map { d -> String in
+        let active = g.phase == "playing" && shownTrickNo <= 1
+        var lines = (active ? g.declared : []).map { d -> String in
             let who = d.seat == mySeat ? "أنت" : name(d.seat)
             if let cards = d.cards {
                 return "\(who): " + d.kinds.enumerated().map { i, k in cards[safe: i].map { "\(k): \($0)" } ?? k }.joined(separator: "، و")
             }
-            return d.seat == mySeat ? "عندك مشروع" : "\(who) عنده مشروع"
+            if d.cancelled { return "\(who): أُلغي المشروع" }
+            return "\(who): \(d.kinds.joined(separator: " و"))"
         }
         if let b = g.balootSeat { lines.append("\(b == mySeat ? "أنت" : name(b)): بلوت") }
         return lines.isEmpty ? "لا توجد مشاريع معلنة" : lines.joined(separator: ". ")
@@ -73,7 +81,7 @@ struct BalootText {
         if g.phase == "matchOver" { return "انتهت المباراة" }
         let who = g.turn == mySeat ? "دورك" : "دور \(name(g.turn))"
         switch g.phase {
-        case "bidding": return "\(who) في المزايدة"
+        case "bidding": return who
         case "doubling": return g.myTurn ? "دورك تقرر الدبل" : "بانتظار قرار الدبل"
         default: return "\(who) في اللعب"
         }
