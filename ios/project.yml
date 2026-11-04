@@ -35,6 +35,8 @@ targets:
         product: FirebaseAuth
       - package: Firebase
         product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseMessaging
       - package: GoogleSignIn
         product: GoogleSignIn
       - package: WebRTC
@@ -45,6 +47,8 @@ targets:
       path: Majlisk/Majlisk.entitlements
       properties:
         com.apple.developer.applesignin: [Default]
+        # إشعارات دعوات الأصدقاء
+        aps-environment: production
     info:
       path: Majlisk/Info.plist
       properties:

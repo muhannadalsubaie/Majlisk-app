@@ -143,7 +143,8 @@ struct InviteFriendsSheet: View {
             ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
                 ItemRow {
                     Text("\(f.username)، \(f.online ? "متصل" : "غير متصل")").frame(maxWidth: .infinity, alignment: .leading)
-                    if f.online {
+                    // غير المتصل تصله الدعوة إشعار على جواله
+                    Group {
                         SmallButton("دعوة", enabled: busy != f.uid, label: "دعوة \(f.username)") {
                             busy = f.uid
                             Task { @MainActor in

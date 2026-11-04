@@ -48,6 +48,8 @@ class MainActivity : ComponentActivity() {
         Announcer.attach(this)
         current = this
         if (savedInstanceState == null) Sounds.appOpen()
+        // فتحت التطبيق من إشعار دعوة: ندخلك الطاولة
+        com.majlisk.app.push.Push.fromIntent(intent?.extras)
         setContent {
             // التطبيق عربي بالكامل: من اليمين لليسار دائماً، مهما كانت لغة الجهاز
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -56,6 +58,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+    override fun onNewIntent(intent: android.content.Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        com.majlisk.app.push.Push.fromIntent(intent.extras)
+    }
+
+    /** إذن الإشعارات (Android 13+) عند تسجيل الدخول: عشان تصلك دعوات أصدقائك حتى والتطبيق مقفل */
+    fun requestNotifications() {
+        if (android.os.Build.VERSION.SDK_INT < 33) return
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
+        val prefs = getSharedPreferences("majlisk", MODE_PRIVATE)
+        if (prefs.getBoolean("askedNotifyInvites", false)) return
+        prefs.edit().putBoolean("askedNotifyInvites", true).putBoolean("askedNotify", true).apply()
+        notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
 
     override fun onDestroy() {
         if (current === this) current = null

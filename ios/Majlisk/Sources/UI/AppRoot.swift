@@ -6,6 +6,7 @@ enum Route { case splash, auth, menu, createTable, joinTable, table, friends, se
 struct AppRoot: View {
     @StateObject private var session = Session.shared
     @StateObject private var hub = Hub.shared
+    @ObservedObject private var push = Push.shared
     @State private var route: Route = .splash
     @State private var tableId: String?
     @State private var busyInvite = false
@@ -18,8 +19,10 @@ struct AppRoot: View {
     var body: some View {
         content
             .onChange(of: session.uid) { uid in if uid == nil && route != .splash { route = .auth } }
-            .onChange(of: signedIn) { on in if on { hub.start(); Store.recover() } else { hub.stop() } }
-            .onAppear { if signedIn { hub.start(); Store.recover() } }
+            .onChange(of: signedIn) { on in if on { hub.start(); Store.recover(); Push.shared.register(); openPushTable() } else { hub.stop() } }
+            .onAppear { if signedIn { hub.start(); Store.recover(); Push.shared.register() } }
+            // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
+            .onChange(of: push.pendingTable) { _ in openPushTable() }
             .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && !session.needsVerify && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
                 if let invite = pendingInvite {
                     Sheet(title: "دعوة لطاولة") {
@@ -63,6 +66,22 @@ struct AppRoot: View {
         Task { @MainActor in
             let member = (try? await Api.get("/tables/\(last)/member"))?.bool("member") ?? false
             if member { open(last) } else { route = .menu }
+        }
+    }
+
+    /// دعوة من إشعار: نقبلها ونفتح الطاولة (ولو انتهت الدعوة وأنت أصلاً في الطاولة ندخلك)
+    private func openPushTable() {
+        guard let id = push.pendingTable, signedIn, !session.needsVerify else { return }
+        push.pendingTable = nil
+        Task { @MainActor in
+            do {
+                try await Social.respondInvite(id, accept: true)
+                hub.dropInvite(id)
+                open(id)
+            } catch {
+                let member = (try? await Api.get("/tables/\(id)/member"))?.bool("member") ?? false
+                if member { open(id) } else { Announcer.announce(Social.error(error)) }
+            }
         }
     }
 

@@ -151,7 +151,8 @@ fun InviteFriendsDialog(tableId: String, seat: Int?, title: String, onClose: () 
         friends?.sortedByDescending { it.online }?.forEach { f ->
             ItemRow {
                 Text("${f.username}، ${if (f.online) "متصل" else "غير متصل"}", color = Palette.text, modifier = Modifier.weight(1f))
-                if (f.online) SmallButton("دعوة", {
+                // غير المتصل تصله الدعوة إشعار على جواله
+                SmallButton("دعوة", {
                     busy = f.uid
                     scope.launch {
                         runCatching { Social.inviteFriend(tableId, f.uid, seat) }

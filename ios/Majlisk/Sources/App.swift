@@ -7,6 +7,7 @@ import GoogleSignIn
 class AppDelegate: UIResponder, UIApplicationDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]?) -> Bool {
         FirebaseApp.configure()
+        Push.shared.configure()
         Sounds.shared.preload()
         Sounds.shared.appOpen()
         return true

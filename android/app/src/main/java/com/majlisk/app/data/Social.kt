@@ -46,7 +46,7 @@ object Social {
         "self" to "هذا اسمك أنت",
         "already-friends" to "أنتما صديقان بالفعل",
         "not-friends" to "هذا اللاعب ليس في قائمة أصدقائك",
-        "offline" to "صديقك غير متصل الآن",
+        "offline" to "صديقك غير متصل وما فعّل إشعارات التطبيق",
         "no-invite" to "انتهت صلاحية الدعوة",
         "not-enough-coins" to "رصيدك من العملات لا يكفي",
         "not-owner" to "الدعوة لمالك الطاولة فقط",

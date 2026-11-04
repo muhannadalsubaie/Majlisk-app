@@ -10,6 +10,7 @@ class MajliskApp : Application() {
         instance = this
         Prefs.init(this)
         Sounds.init(this)
+        com.majlisk.app.push.Push.createChannel(this)
     }
 
     companion object {

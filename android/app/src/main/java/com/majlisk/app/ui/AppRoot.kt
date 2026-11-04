@@ -85,6 +85,28 @@ fun AppRoot() {
         }
     }
 
+    // بعد تسجيل الدخول: إذن الإشعارات ورمز الجهاز، عشان تصلك دعوات أصدقائك حتى والتطبيق مقفل
+    LaunchedEffect(user?.uid, verified, needsUsername) {
+        if (user != null && verified && !needsUsername) {
+            com.majlisk.app.MainActivity.current?.requestNotifications()
+            com.majlisk.app.push.Push.register()
+        }
+    }
+    // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
+    val pushTable by com.majlisk.app.push.Push.pendingTable.collectAsState()
+    LaunchedEffect(pushTable, user?.uid, verified, needsUsername) {
+        val id = pushTable ?: return@LaunchedEffect
+        if (user == null || !verified || needsUsername) return@LaunchedEffect
+        com.majlisk.app.push.Push.pendingTable.value = null
+        runCatching { Social.respondInvite(id, true) }
+            .onSuccess { Hub.dropInvite(id); openTable(id) }
+            .onFailure {
+                // انتهت الدعوة: لو أنت أصلاً في الطاولة ندخلك، وإلا نقول السبب
+                val member = runCatching { Api.get("/tables/$id/member").optBoolean("member") }.getOrDefault(false)
+                if (member) openTable(id) else Announcer.announce(Social.error(it))
+            }
+    }
+
     // دعوة واردة لطاولة: تظهر فوق أي شاشة (إلا إن كنت في نفس الطاولة)
     val invite = hub.invites.firstOrNull { !(screen == Route.Table && tableId == it.tableId) }
     if (invite != null && !needsUsername && verified && user != null) {
