@@ -93,7 +93,7 @@ import kotlinx.coroutines.delay
 /** كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها */
 private const val TRICK_HOLD_MS = 3000L
 /** كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب) */
-private const val SILENT_FOCUS_MS = 4000L
+private const val SILENT_FOCUS_MS = 1200L
 
 @Composable
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
@@ -327,8 +327,18 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                 runCatching { fr.requestFocus() }
             }
         }
-        // أزرار المزايدة والدبل تختفي بعد الضغط: المؤشر ينتقل لزر الميكروفون بصمت
-        val toHand = { com.majlisk.app.voice.MicFocus.take() }
+        // بعد ما تلعب ورقة (أو تضغط زر شراء/دبل يختفي): المؤشر يبقى عند أوراقك، على الورقة اللي جنبها، بصمت
+        // لحظة بس (فتسمع لعب الباقين)، وبعدها الورقة تنقرأ عادي لما تحرك المؤشر — ما ينط فوق ولا تحت
+        // pending: (الورقة اللي انلعبت أو null، الورقة اللي يروح لها المؤشر)
+        var pending by remember { mutableStateOf<Pair<String?, String>?>(null) }
+        LaunchedEffect(hand.map(::cardKey), g.actions.bids.size, g.actions.doubleLabel, g.actions.chooseLock) {
+            val p = pending ?: return@LaunchedEffect
+            if (p.first != null && hand.any { cardKey(it) == p.first }) return@LaunchedEffect
+            pending = null
+            delay(60)
+            focusCard(hand.firstOrNull { cardKey(it) == p.second })
+        }
+        val toHand = { hand.lastOrNull()?.let { pending = null to cardKey(it) }; Unit }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
         // أزرار المزايدة
@@ -388,8 +398,9 @@ private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConne
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
                                 .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
-                            // المؤشر ينتقل لزر الميكروفون بصمت، فتسمع ورقتك وباقي اللعب
-                            com.majlisk.app.voice.MicFocus.take()
+                            // المؤشر يبقى عند أوراقك: على الورقة اللي جنبها بصمت، فتسمع ورقتك وباقي اللعب
+                            val target = hand.getOrNull(i - 1) ?: hand.getOrNull(i + 1)
+                            if (target != null) pending = cardKey(c) to cardKey(target)
                             act(jsonOf("type" to "play", "card" to c.toJson()))
                         }
                     }

@@ -10,7 +10,7 @@ func turnKey(_ g: GameView) -> String? {
     return "\(g.phase)|\(g.bidRound)|\(g.hokmBidKey ?? "")|\(g.contract?.buyer ?? -1)|\(g.doubling.level)|\(g.trickNo)|\(g.trick.count)"
 }
 /// كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب)
-private let SILENT_FOCUS: Double = 4
+private let SILENT_FOCUS: Double = 1.2
 
 struct TableScreen: View {
     let tableId: String
@@ -155,6 +155,8 @@ struct BalootBoard: View {
     @AccessibilityFocusState private var focusedCard: Card?
     /// الورقة اللي انتقل لها المؤشر بعد حركتك: اسمها مخفي لحظات فتسمع إعلانات اللعب فقط
     @State private var silentCard: Card?
+    /// بعد ما تلعب ورقة أو تضغط زر شراء/دبل: (الورقة اللي انلعبت أو nil، الورقة اللي يروح لها المؤشر)
+    @State private var pendingFocus: (played: Card?, target: Card)?
     @State private var prevGame: GameView?
     @State private var lastTurn: String?
 
@@ -272,8 +274,9 @@ struct BalootBoard: View {
                         ForEach(hand, id: \.self) { c in
                             let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
                             HandCard(card: c, legal: g.actions.legal.contains(c), silent: silentCard == c) {
-                                // المؤشر ينتقل لزر الميكروفون بصمت، فتسمع ورقتك وباقي اللعب
-                                MicFocus.shared.take()
+                                // المؤشر يبقى عند أوراقك: على الورقة اللي جنبها بصمت، فتسمع ورقتك وباقي اللعب
+                                let i = hand.firstIndex(of: c) ?? 0
+                                if let t = hand[safe: i - 1] ?? hand[safe: i + 1] { pendingFocus = (c, t) }
                                 act(["type": "play", "card": c.json])
                             }
                                 .accessibilityFocused($focusedCard, equals: c)
@@ -294,6 +297,7 @@ struct BalootBoard: View {
         .onAppear { Gestures.shared.handler = { read($0) }; prevGame = g; lastTurn = turnKey(g) }
         .onChange(of: conn.version) { _ in
             Gestures.shared.handler = { read($0) }
+            settleFocus()
             if let p = prevGame, g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty { holdTrick() }
             // إعلان "دورك" مرة واحدة عند بداية الدور
             // النغمة أولاً (فورية)، ثم الإعلان
@@ -314,8 +318,17 @@ struct BalootBoard: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + SILENT_FOCUS) { if silentCard == c { silentCard = nil } }
     }
 
-    /// أزرار المزايدة والدبل تختفي بعد الضغط: المؤشر ينتقل لزر الميكروفون بصمت
-    private func toHand() { MicFocus.shared.take() }
+    /// أزرار الشراء والدبل تختفي بعد الضغط: المؤشر ينتقل لأوراقك بصمت (لا فوق ولا تحت)
+    private func toHand() { if let t = sortHand(g.myHand).last { pendingFocus = (nil, t) } }
+
+    /// وصلت الحالة الجديدة واختفت الورقة (أو الأزرار): نحط المؤشر على الورقة المحددة بصمت لحظة
+    private func settleFocus() {
+        guard let p = pendingFocus else { return }
+        if let played = p.played, g.myHand.contains(played) { return }
+        pendingFocus = nil
+        guard g.myHand.contains(p.target) else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) { focus(p.target) }
+    }
 
     /// بعد آخر ورقة في الأكلة: نبقي الأوراق الأربع ظاهرة لحظة قبل أن تذهب لصاحبها
     private func holdTrick() {
