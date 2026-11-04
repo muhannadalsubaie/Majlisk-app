@@ -227,7 +227,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConnection) {
+internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConnection) {
     val mySeat = v.mySeat
     val me = mySeat ?: 0
     val myTeam = teamOf(me)

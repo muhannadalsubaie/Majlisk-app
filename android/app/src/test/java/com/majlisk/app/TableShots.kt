@@ -49,17 +49,21 @@ class TableShots {
                     Screen(fill = true) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                             BackButton({}, "القائمة")
-                            Text("طاولة ${gameTitle(v.kind, v.variant)}", color = Palette.textDim, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
+                            Text("طاولة ${if (v.kind == "domino") "دومينو ${v.optTarget}" else gameTitle(v.kind, v.variant)} — المالك ${v.ownerName}", color = Palette.textDim, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
                         }
                         when {
+                            !v.hasGame -> com.majlisk.app.table.SeatsLobby(v, "u1", conn)
+                            v.game != null -> com.majlisk.app.table.BalootBoard(v, v.game!!, "u1", conn)
                             v.domino != null -> DominoBoard(v, v.domino!!, conn, true) {}
                             v.jackaroo != null -> JackarooBoard(v, v.jackaroo!!, conn, true)
                             v.ludo != null -> LudoBoard(v, v.ludo!!, conn, true)
                         }
                         Spacer(Modifier.weight(1f))
                         v.domino?.let { com.majlisk.app.table.DominoHand(v, it, conn) {} }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { ChatButton(conn) {} }
-                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) { VoiceButton(v.id, "u1") }
+                        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                            ChatButton(conn) {}
+                            VoiceButton(v.id, "u1")
+                        }
                     }
                 }
             }
@@ -69,4 +73,7 @@ class TableShots {
     @Test fun domino() = shot("domino")
     @Test fun jackaroo() = shot("jackaroo")
     @Test fun ludo() = shot("ludo")
+    @Test fun baloot() = shot("baloot")
+    @Test fun balootBid() = shot("baloot-bid")
+    @Test fun lobby() = shot("lobby")
 }
