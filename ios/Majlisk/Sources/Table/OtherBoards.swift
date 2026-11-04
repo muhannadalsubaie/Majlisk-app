@@ -163,6 +163,75 @@ private func orient(_ p: PlacedTile) -> Tile {
 
 private struct LineItem: Identifiable { let id: Int; let p: PlacedTile }
 
+/// لاعب على طاولة الدومينو: صورته واسمه وكم قطعة معه، بإطار ذهبي لما يكون دوره
+private struct DominoSeatTag: View {
+    let name: String, uid: String?, count: Int, partner: Bool, turn: Bool
+    var body: some View {
+        VStack(spacing: 2) {
+            Avatar(uid: uid, name: name, size: 32)
+            Text(name).font(.system(size: 12, weight: turn ? .bold : .regular)).lineLimit(1).minimumScaleFactor(0.7)
+            Text("\(count) قطع").font(.system(size: 11)).foregroundColor(Palette.textDim)
+        }
+        .padding(4)
+        .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(name)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")")
+    }
+}
+
+/**
+ * خط اللعب على شكل حرف U: يبدأ من فوق على اليسار وينزل، يمشي على الأسفل، ويطلع يمين لين فوق.
+ * أول الخط (الطرف اليسار) فوق على اليسار، وآخره (الطرف اليمين) فوق على اليمين.
+ * كل ما كثرت القطع تصغر عشان تكفي الطاولة كلها بلا صفوف.
+ */
+private struct DominoSnake: View {
+    let line: [PlacedTile]
+    var body: some View {
+        GeometryReader { geo in
+            let W = geo.size.width, H = geo.size.height
+            let n = line.count
+            // أكبر حجم يكفي كل القطع على طول الـ U
+            let u: CGFloat = {
+                var u: CGFloat = 18
+                while u > 6 {
+                    let m = u * 0.6, lh = H - 2 * m - u, lw = W - 2 * m - 2 * u
+                    if CGFloat(n) * (2 * u + 2) <= 2 * lh + lw { break }
+                    u -= 0.5
+                }
+                return u
+            }()
+            let m = u * 0.6, g: CGFloat = 2
+            let lh = H - 2 * m - u, lw = W - 2 * m - 2 * u
+            ZStack(alignment: .topLeading) {
+                if line.isEmpty {
+                    Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(width: W, height: H)
+                }
+                ForEach(Array(line.enumerated()), id: \.offset) { i, p in
+                    let t = orient(p)
+                    let dist = CGFloat(i) * (2 * u + g) + u
+                    if dist <= lh {
+                        // العمود اليسار نازل: أول القطعة فوق
+                        DominoTileView(t: t, vertical: true, unit: u).position(x: m + u / 2, y: m + dist)
+                    } else if dist <= lh + lw {
+                        // الأسفل من اليسار لليمين
+                        DominoTileView(t: Tile(a: t.b, b: t.a), vertical: false, unit: u).position(x: m + u + (dist - lh), y: H - m - u / 2)
+                    } else {
+                        // العمود اليمين طالع: أول القطعة تحت
+                        DominoTileView(t: Tile(a: t.b, b: t.a), vertical: true, unit: u).position(x: W - m - u / 2, y: H - m - u - (dist - lh - lw))
+                    }
+                }
+            }
+            .frame(width: W, height: H)
+        }
+        .frame(maxWidth: .infinity)
+        .frame(height: 230)
+        .background(Color(red: 0.08, green: 0.31, blue: 0.21)).clipShape(RoundedRectangle(cornerRadius: 16))
+        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
+        .environment(\.layoutDirection, .leftToRight)
+    }
+}
+
 /// نص الدور في الدومينو: "دورك" أو "دور فلان"
 private func dominoTurnText(_ v: TableView, _ d: DominoView) -> String {
     if d.phase == "chooseStarter" {
@@ -204,28 +273,26 @@ struct DominoBoard: View {
                 }
             }
             .accessibilityElement(children: .ignore).accessibilityLabel(d.scoreText)
-            ForEach(0..<min(d.players, 4), id: \.self) { seat in
-                if seat != mySeat {
-                    let partner = mySeat != nil && d.players == 4 && seat == (mySeat! + 2) % 4
-                    PlayerLine(text: "\(names[seat])\(partner ? " (شريكك)" : "")، \(seat < d.handCounts.count ? d.handCounts[seat] : 0) قطع",
-                               turn: d.turn == seat && d.phase == "playing", avatar: (v.seatUid(seat), names[seat]))
-                }
+            // اللاعبون حول الطاولة: المقابل فوق، والباقين يمين ويسار (مثل البلوت)، والقطع في النص
+            let me = mySeat ?? 0
+            let others = (1..<max(d.players, 2)).map { (me + $0) % d.players }
+            let top: Int? = d.players == 4 ? others[1] : d.players == 2 ? others[0] : nil
+            let right: Int? = d.players >= 3 ? others[0] : nil
+            let left: Int? = d.players == 4 ? others[2] : d.players == 3 ? others[1] : nil
+            let seatTag = { (seat: Int) -> DominoSeatTag in
+                let partner = mySeat != nil && d.players == 4 && seat == (me + 2) % 4
+                return DominoSeatTag(name: names[seat], uid: v.seatUid(seat), count: seat < d.handCounts.count ? d.handCounts[seat] : 0,
+                                     partner: partner, turn: d.turn == seat && d.phase == "playing")
             }
-            // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
-            Group {
-                Group {
-                    if d.line.isEmpty { Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(maxWidth: .infinity) }
-                    else {
-                        Wrap(items: d.line.enumerated().map { LineItem(id: $0.offset, p: $0.element) }, spacing: 3) { item in
-                            DominoTileView(t: orient(item.p), vertical: item.p.tile.isDouble, unit: dominoUnit)
-                        }
-                    }
-                }
-                .padding(10).frame(maxWidth: .infinity)
-                .background(Color(red: 0.08, green: 0.31, blue: 0.21)).clipShape(RoundedRectangle(cornerRadius: 16))
-                .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
+            if let top { seatTag(top) }
+            HStack(alignment: .center, spacing: 6) {
+                if let right { seatTag(right).frame(width: 66) }
+                // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
+                DominoSnake(line: d.line)
+                    .accessibilityHidden(true)
+                if let left { seatTag(left).frame(width: 66) }
             }
-            .accessibilityHidden(true)
+            if mySeat == nil { seatTag(0) }
             if let e = d.ends {
                 Text("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")")
                     .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
@@ -298,10 +365,11 @@ struct DominoHand: View {
                 }
             }
             .sheet(item: $chooseSide) { h in
-                Sheet(title: "أين تلعب القطعة؟") {
+                Sheet(title: "القطعة تصلح على الطرفين: وش تبي تصير الجهتين؟") {
                     if let e = d.ends {
-                        MButton("اليمين (على \(e.right))", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "right"]) }
-                        MButton("اليسار (على \(e.left))", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "left"]) }
+                        // على اليمين (يطابق \(e.right)) تصير الجهتين \(e.left)، وعلى اليسار تصير \(e.right)
+                        MButton("الجهتين \(e.left)", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "right"]) }
+                        MButton("الجهتين \(e.right)", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "left"]) }
                     }
                     MButton("إلغاء") { chooseSide = nil }
                 }

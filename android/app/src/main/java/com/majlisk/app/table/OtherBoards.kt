@@ -15,7 +15,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -118,10 +121,10 @@ private val PIPS = mapOf(
 
 /** قطعة دومينو للعين: عمودية (a فوق) أو أفقية (a يمين) */
 @Composable
-private fun DominoTileView(t: Tile, vertical: Boolean, unit: Int = 22, dim: Boolean = false) {
+private fun DominoTileView(t: Tile, vertical: Boolean, unit: Float = 22f, dim: Boolean = false, modifier: Modifier = Modifier) {
     val w = if (vertical) unit else unit * 2
     val h = if (vertical) unit * 2 else unit
-    Canvas(Modifier.size(w.dp, h.dp)) {
+    Canvas(modifier.size(w.dp, h.dp)) {
         val face = if (dim) Color(0xFFCFCABB) else Color(0xFFFAF7EE)
         drawRoundRect(face, cornerRadius = CornerRadius(size.minDimension * 0.18f))
         drawRoundRect(Color(0xFF9E9886), cornerRadius = CornerRadius(size.minDimension * 0.18f), style = Stroke(1.dp.toPx()))
@@ -143,6 +146,63 @@ private fun orient(p: PlacedTile): Tile {
     if (p.side == "first") return p.tile
     val inner = if (p.tile.a == p.outer) p.tile.b else p.tile.a
     return if (p.side == "right") Tile(inner, p.outer) else Tile(p.outer, inner)
+}
+
+/** لاعب على طاولة الدومينو: صورته واسمه وكم قطعة معه، بإطار ذهبي لما يكون دوره */
+@Composable
+private fun DominoSeatTag(name: String, uid: String?, count: Int, partner: Boolean, turn: Boolean, modifier: Modifier) {
+    Column(
+        modifier
+            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(10.dp))
+            .background(if (turn) Palette.gold.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(10.dp))
+            .padding(4.dp)
+            .clearAndSetSemantics { contentDescription = "$name${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}" },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        com.majlisk.app.ui.Avatar(uid, name, 32.dp)
+        Text(name, color = Palette.text, fontSize = 12.sp, fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
+        Text("$count قطع", color = Palette.textDim, fontSize = 11.sp)
+    }
+}
+
+/**
+ * خط اللعب على شكل حرف U: يبدأ من فوق على اليسار وينزل، يمشي على الأسفل، ويطلع يمين لين فوق.
+ * أول الخط (الطرف اليسار) فوق على اليسار، وآخره (الطرف اليمين) فوق على اليمين.
+ * كل ما كثرت القطع تصغر عشان تكفي الطاولة كلها بلا صفوف.
+ */
+@Composable
+private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
+    androidx.compose.foundation.layout.BoxWithConstraints(
+        modifier.height(230.dp)
+            .background(Color(0xFF145036), RoundedCornerShape(16.dp))
+            .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
+            .clearAndSetSemantics { },
+    ) {
+        val W = maxWidth.value; val H = maxHeight.value
+        val n = line.size
+        var u = 18f
+        while (u > 6f) {
+            val m = u * 0.6f
+            if (n * (2 * u + 2) <= 2 * (H - 2 * m - u) + (W - 2 * m - 2 * u)) break
+            u -= 0.5f
+        }
+        val m = u * 0.6f; val g = 2f
+        val lh = H - 2 * m - u; val lw = W - 2 * m - 2 * u
+        if (line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim, modifier = Modifier.align(Alignment.Center))
+        line.forEachIndexed { i, p ->
+            val t = orient(p)
+            val dist = i * (2 * u + g) + u
+            when {
+                // العمود اليسار نازل: أول القطعة فوق
+                dist <= lh -> DominoTileView(t, true, u, modifier = Modifier.absoluteOffset((m).dp, (m + dist - u).dp))
+                // الأسفل من اليسار لليمين
+                dist <= lh + lw -> DominoTileView(Tile(t.b, t.a), false, u, modifier = Modifier.absoluteOffset((m + u + (dist - lh) - u).dp, (H - m - u).dp))
+                // العمود اليمين طالع: أول القطعة تحت
+                else -> DominoTileView(Tile(t.b, t.a), true, u, modifier = Modifier.absoluteOffset((W - m - u).dp, (H - m - u - (dist - lh - lw) - u).dp))
+            }
+        }
+    }
 }
 
 /** نص الدور في الدومينو: "دورك" أو "دور فلان" */
@@ -187,26 +247,25 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
         Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = d.scoreText }, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             d.scores.forEachIndexed { side, n -> ScoreTile(d.sideNames.getOrElse(side) { "" }, "$n", side == d.mySide, Modifier.weight(1f).clearAndSetSemantics { }) }
         }
-        names.forEachIndexed { seat, n ->
-            if (seat != mySeat && seat < d.players) {
-                val partner = mySeat != null && d.players == 4 && seat == (mySeat + 2) % 4
-                PlayerLine("$n${if (partner) " (شريكك)" else ""}، ${d.handCounts.getOrElse(seat) { 0 }} قطع", d.turn == seat && d.phase == "playing",
-                    avatar = v.seatUids.getOrNull(seat) to n)
-            }
+        // اللاعبون حول الطاولة: المقابل فوق، والباقين يمين ويسار (مثل البلوت)، والقطع في النص
+        val me = mySeat ?: 0
+        val others = (1 until maxOf(d.players, 2)).map { (me + it) % d.players }
+        val top = when (d.players) { 4 -> others[1]; 2 -> others[0]; else -> null }
+        val right = if (d.players >= 3) others[0] else null
+        val left = when (d.players) { 4 -> others[2]; 3 -> others[1]; else -> null }
+        val seatTag: @Composable (Int, Modifier) -> Unit = { seat, m ->
+            val partner = mySeat != null && d.players == 4 && seat == (me + 2) % 4
+            DominoSeatTag(names.getOrElse(seat) { "" }, v.seatUids.getOrNull(seat), d.handCounts.getOrElse(seat) { 0 }, partner, d.turn == seat && d.phase == "playing", m)
         }
-        // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
-        FlowRow(
-            Modifier.fillMaxWidth()
-                .background(Color(0xFF145036), RoundedCornerShape(16.dp))
-                .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
-                .clearAndSetSemantics { }
-                .padding(10.dp),
-            horizontalArrangement = Arrangement.spacedBy(3.dp, Alignment.CenterHorizontally),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-        ) {
-            if (d.line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim)
-            d.line.forEach { p -> Box(Modifier.align(Alignment.CenterVertically)) { DominoTileView(orient(p), vertical = p.tile.isDouble, unit = dominoUnit()) } }
+        top?.let { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { seatTag(it, Modifier) } }
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            // في الواجهة العربية أول عنصر يصير يمين
+            right?.let { seatTag(it, Modifier.width(66.dp)) }
+            // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
+            DominoSnake(d.line, Modifier.weight(1f))
+            left?.let { seatTag(it, Modifier.width(66.dp)) }
         }
+        if (mySeat == null) seatTag(0, Modifier)
         d.ends?.let { (left, right) ->
             Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft,
                 modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
@@ -255,7 +314,7 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                         }
                         .semantics(mergeDescendants = true) { contentDescription = h.label }
                         .padding(4.dp),
-                ) { DominoTileView(h.tile, vertical = true, unit = 24, dim = d.myTurn && !h.legal) }
+                ) { DominoTileView(h.tile, vertical = true, unit = 24f, dim = d.myTurn && !h.legal) }
             }
         }
     }
@@ -263,9 +322,10 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
     val pick = chooseSide
     val e = d.ends
     if (pick != null && e != null) {
-        MajliskDialog("أين تلعب القطعة؟", { chooseSide = null }) {
-            PrimaryButton("اليمين (على ${e.second})", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "right")) })
-            PrimaryButton("اليسار (على ${e.first})", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "left")) })
+        MajliskDialog("القطعة تصلح على الطرفين: وش تبي تصير الجهتين؟", { chooseSide = null }) {
+            // على اليمين (يطابق ${e.second}) تصير الجهتين ${e.first}، وعلى اليسار تصير ${e.second}
+            PrimaryButton("الجهتين ${e.first}", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "right")) })
+            PrimaryButton("الجهتين ${e.second}", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "left")) })
             SecondaryButton("إلغاء", { chooseSide = null }, fill = true)
         }
     }
@@ -426,7 +486,7 @@ private fun boardSide(full: Int): androidx.compose.ui.unit.Dp {
 
 /** قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة */
 @Composable
-private fun dominoUnit(): Int = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 740) 15 else 18
+private fun dominoUnit(): Float = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 740) 15f else 18f
 
 /** الدور عند مين في الجاكارو */
 private fun jackarooTurnText(v: TableView, j: JackarooView): String {
