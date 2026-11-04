@@ -8,6 +8,8 @@ import WebRTC
  * (إلغاء الصدى)، لكن بإعداداتنا:
  *  • "خفض الأصوات الثانية" على أقل مستوى (iOS 17+): الورق والتعليق وVoiceOver تبقى بصوتها حتى والميكروفون مفتوح.
  *  • وأنت تسمع بس (الميكروفون مقفل): المعالجة نفسها مطفأة، فما يتأثر أي صوت أبداً.
+ * وفي iOS 18.2 وأحدث: بدل وحدة المكالمات نستخدم وحدة الصوت العادية مع "إلغاء الصدى من النظام"
+ * (prefersEchoCancelledInput)، فما فيه أي خفض للأصوات أبداً، لا والميكروفون مقفل ولا مفتوح.
  * الصوت PCM ‏16-بت أحادي، WebRTC يسحب الصوت للتشغيل ونسلّمه صوت الميكروفون.
  */
 final class VoiceAudioDevice: NSObject, RTCAudioDevice {
@@ -25,6 +27,13 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     private var recordBuffer = [Int16](repeating: 0, count: 4096)
 
     private var session: AVAudioSession { AVAudioSession.sharedInstance() }
+    /// iOS 18.2+: إلغاء الصدى من النظام نفسه على الوحدة العادية (بلا وحدة المكالمات اللي تخفض الأصوات)
+    private var systemEcho: Bool {
+        if #available(iOS 18.2, *) { return session.isEchoCancelledInputAvailable }
+        return false
+    }
+    /// الوحدة الحالية: العادية (RemoteIO) أو وحدة المكالمات (VoiceProcessingIO)
+    private var plainUnit = false
     var deviceInputSampleRate: Double { session.sampleRate }
     var inputIOBufferDuration: TimeInterval { session.ioBufferDuration }
     var inputNumberOfChannels: Int { 1 }
@@ -69,6 +78,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func initializeRecording() -> Bool {
         // الميكروفون ينفتح أول مرة: نعيد بناء الوحدة مع الإدخال (قبلها ما نطلب الميكروفون أبداً)
         let wasPlaying = isPlaying
+        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable { try? session.setPrefersEchoCancelledInput(true) }
         disposeUnit()
         guard makeUnit(input: true) else { return false }
         isRecordingInitialized = true
@@ -94,7 +104,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     /// يتكلم (الميكروفون مفتوح) أو يسمع بس: المعالجة تشتغل أو تنطفئ بدون إعادة اتصال
     func setTalking(_ on: Bool) {
         talking = on
-        guard let unit else { return }
+        guard let unit, !plainUnit else { return }
         var bypass: UInt32 = on ? 0 : 1
         AudioUnitSetProperty(unit, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, UInt32(MemoryLayout<UInt32>.size))
     }
@@ -102,7 +112,9 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     // ───── وحدة الصوت ─────
 
     private func makeUnit(input: Bool) -> Bool {
-        var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: kAudioUnitSubType_VoiceProcessingIO,
+        // iOS 18.2+: الوحدة العادية دائماً (إلغاء الصدى من النظام وقت الكلام) — بلا أي خفض للأصوات
+        let plain = systemEcho
+        var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: plain ? kAudioUnitSubType_RemoteIO : kAudioUnitSubType_VoiceProcessingIO,
                                              componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
         guard let comp = AudioComponentFindNext(nil, &desc) else { return false }
         var u: AudioUnit?
@@ -139,17 +151,20 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         }
 
         // "خفض الأصوات الثانية" على أقل مستوى: الورق والتعليق وVoiceOver ما تنخفض وأنت تتكلم
-        if #available(iOS 17.0, *) {
+        if !plain, #available(iOS 17.0, *) {
             var duck = AUVoiceIOOtherAudioDuckingConfiguration(mEnableAdvancedDucking: false, mDuckingLevel: .min)
             AudioUnitSetProperty(u, kAUVoiceIOProperty_OtherAudioDuckingConfiguration, kAudioUnitScope_Global, 0, &duck,
                                  UInt32(MemoryLayout<AUVoiceIOOtherAudioDuckingConfiguration>.size))
         }
         // المعالجة مطفأة وأنت تسمع بس
-        var bypass: UInt32 = talking ? 0 : 1
-        AudioUnitSetProperty(u, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, size)
+        if !plain {
+            var bypass: UInt32 = talking ? 0 : 1
+            AudioUnitSetProperty(u, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, size)
+        }
 
         guard AudioUnitInitialize(u) == noErr else { AudioComponentInstanceDispose(u); return false }
         unit = u
+        plainUnit = plain
         return true
     }
 

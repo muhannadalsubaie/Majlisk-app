@@ -161,7 +161,9 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             }
             do {
                 configureAudio(listening: false)
-                let source = factory.audioSource(with: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
+                // تنقية صوت الميكروفون: إزالة الضجيج، وفلتر الأصوات المنخفضة (هواء/طنين)، وتوازن مستوى الصوت
+                let clean = ["googNoiseSuppression": "true", "googHighpassFilter": "true", "googAutoGainControl": "true", "googEchoCancellation": "true"]
+                let source = factory.audioSource(with: RTCMediaConstraints(mandatoryConstraints: clean, optionalConstraints: nil))
                 let track = factory.audioTrack(with: source, trackId: "mic")
                 mic = track
                 let initTx = RTCRtpTransceiverInit()
