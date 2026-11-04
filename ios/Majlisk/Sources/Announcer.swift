@@ -40,7 +40,11 @@ enum SwipeDir { case left, right, up, down }
 final class Gestures {
     static let shared = Gestures()
     var handler: ((SwipeDir) -> Bool)?
+    /// صاحب المعالج الحالي (اللعبة المعروضة): لما تختفي لوحتها ينمسح، فما تنقرأ لعبة سابقة أبداً
+    private var owner: String?
     func fire(_ dir: SwipeDir) -> Bool { handler?(dir) ?? false }
+    func set(_ id: String, _ h: @escaping (SwipeDir) -> Bool) { owner = id; handler = h }
+    func clear(_ id: String) { if owner == id { owner = nil; handler = nil } }
 }
 
 /// إعدادات الجهاز (كتم الأصوات، نغمة الدور)

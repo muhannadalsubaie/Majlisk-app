@@ -170,7 +170,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
     val leave = { conn.send("leave"); exit() }
 
-    Box(Modifier.fillMaxSize()) {
+    // إيماءات اللعبة تشتغل في أي مكان في شاشة الطاولة
+    Box(Modifier.fillMaxSize().tableGestureArea()) {
         Screen(fill = true) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 com.majlisk.app.ui.BackButton({ menuOpen = true }, "القائمة")

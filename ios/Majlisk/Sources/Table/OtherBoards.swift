@@ -304,7 +304,8 @@ struct DominoBoard: View {
             if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
             if mySeat == nil { Note("أنت تشاهد هذه الطاولة.") }
         }
-        .onAppear { Gestures.shared.handler = { read($0) } }
+        .onAppear { Gestures.shared.set("domino") { read($0) } }
+        .onDisappear { Gestures.shared.clear("domino") }
     }
 
     private func read(_ raw: SwipeDir) -> Bool {
@@ -500,7 +501,8 @@ struct JackarooBoard: View {
                 }
             } else { Note("أنت تشاهد هذه الطاولة.") }
         }
-        .onAppear { Gestures.shared.handler = { read($0) } }
+        .onAppear { Gestures.shared.set("jackaroo") { read($0) } }
+        .onDisappear { Gestures.shared.clear("jackaroo") }
         .sheet(isPresented: $posOpen) {
             let cur = conn.view?.jackaroo ?? j
             let me = (conn.view ?? v).mySeat
@@ -745,7 +747,8 @@ struct LudoBoard: View {
             }
             if mySeat == nil { Note("أنت تشاهد هذه الطاولة.") }
         }
-        .onAppear { Gestures.shared.handler = { read($0) }; noteRoll() }
+        .onAppear { Gestures.shared.set("ludo") { read($0) }; noteRoll() }
+        .onDisappear { Gestures.shared.clear("ludo") }
         .onChange(of: l.moveSig) { _ in noteRoll() }
         .sheet(isPresented: $logOpen) {
             let cur = conn.view?.ludo ?? l

@@ -294,9 +294,10 @@ struct BalootBoard: View {
                 }
             }
         }
-        .onAppear { Gestures.shared.handler = { read($0) }; prevGame = g; lastTurn = turnKey(g) }
+        .onAppear { Gestures.shared.set("baloot") { read($0) }; prevGame = g; lastTurn = turnKey(g) }
+        .onDisappear { Gestures.shared.clear("baloot") }
         .onChange(of: conn.version) { _ in
-            Gestures.shared.handler = { read($0) }
+            Gestures.shared.set("baloot") { read($0) }
             settleFocus()
             if let p = prevGame, g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty { holdTrick() }
             // إعلان "دورك" مرة واحدة عند بداية الدور

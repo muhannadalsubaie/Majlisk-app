@@ -283,7 +283,8 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
 fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -> Unit) {
     if (v.mySeat == null) return
     var chooseSide by remember { mutableStateOf<DominoHandTile?>(null) }
-    Column(Modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    // الإيماءات مسجّلة من لوحة الدومينو، وتشتغل في أي مكان في الشاشة
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
         if (d.starterOptions.isNotEmpty()) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {

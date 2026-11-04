@@ -19,38 +19,60 @@ fun swipeDir(dx: Float, dy: Float, min: Float): SwipeDir? = when {
     else -> null
 }
 
+/** معالج الإيماءات الحالي: اللوحة المعروضة تسجّل قراءاتها، وشاشة الطاولة كلها تلتقط السحب */
+object TableGestures {
+    @Volatile var handler: ((SwipeDir) -> Unit)? = null
+}
+
 /**
- * إيماءات القراءة السريعة بإصبعين. مع TalkBack: النظام يستهلك إيماءات الإصبع الواحد،
- * ويمرر سحب الإصبعين للتطبيق كإصبع واحد في المنتصف، فأي سحب يصلنا وقتها هو سحب بإصبعين.
- * نراقب اللمس فقط دون أن نستهلكه، فالأزرار تعمل كالمعتاد.
+ * لوحة اللعبة تسجّل قراءاتها للإيماءات (آخر نسخة دائماً)، وتنمسح لما تختفي اللوحة
+ * (تغيير اللعبة أو الرجوع للمقاعد) فما تنقرأ لعبة سابقة أبداً.
  */
 @Composable
 fun Modifier.twoFingerSwipes(onSwipe: (SwipeDir) -> Unit): Modifier {
-    val min = with(LocalDensity.current) { 40f * density }
-    // آخر نسخة من القراءات (حالة اللعب الحالية)، لا النسخة وقت أول رسم للشاشة
     val latest = rememberUpdatedState(onSwipe)
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        val h: (SwipeDir) -> Unit = { latest.value(it) }
+        TableGestures.handler = h
+        onDispose { if (TableGestures.handler === h) TableGestures.handler = null }
+    }
+    return this
+}
+
+/**
+ * إيماءات القراءة السريعة بإصبعين، في أي مكان في شاشة الطاولة. مع TalkBack: النظام يستهلك إيماءات
+ * الإصبع الواحد، ويمرر سحب الإصبعين للتطبيق كإصبع واحد في المنتصف، فأي سحب يصلنا وقتها هو سحب بإصبعين.
+ * نراقب اللمس فقط دون أن نستهلكه، فالأزرار تعمل كالمعتاد.
+ */
+@Composable
+fun Modifier.tableGestureArea(): Modifier {
+    val min = with(LocalDensity.current) { 30f * density }
     return this.pointerInput(Unit) {
         awaitPointerEventScope {
             var start: Offset? = null
             var last = Offset.Zero
             var startTime = 0L
+            var prevCount = 0
             while (true) {
                 val event = awaitPointerEvent(PointerEventPass.Initial)
                 val down = event.changes.filter { it.pressed }
                 val ok = down.size == 2 || (down.size == 1 && Announcer.readerOn)
                 if (ok) {
                     val mid = Offset(down.map { it.position.x }.average().toFloat(), down.map { it.position.y }.average().toFloat())
-                    if (start == null) { start = mid; startTime = System.currentTimeMillis() }
+                    // بداية اللمس، أو نزل الإصبع الثاني بعد الأول: نبدأ القياس من منتصف الأصابع الحالية
+                    if (start == null || down.size > prevCount) { start = mid; startTime = System.currentTimeMillis() }
                     last = mid
                 } else if (down.size > 2) {
                     start = null
                 } else if (down.isEmpty()) {
                     val s = start
+                    val end = last
                     start = null
-                    if (s != null && System.currentTimeMillis() - startTime < 1200) {
-                        swipeDir(last.x - s.x, last.y - s.y, min)?.let { latest.value(it) }
+                    if (s != null && System.currentTimeMillis() - startTime < 1500) {
+                        swipeDir(end.x - s.x, end.y - s.y, min)?.let { TableGestures.handler?.invoke(it) }
                     }
                 }
+                prevCount = down.size
             }
         }
     }
