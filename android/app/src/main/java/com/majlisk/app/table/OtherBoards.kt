@@ -273,7 +273,8 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             DominoSnake(d.line, Modifier.weight(1f))
             left?.let { seatTag(it, Modifier.width(66.dp)) }
         }
-        if (mySeat == null) seatTag(0, Modifier)
+        // المشاهد: اللاعب الرابع تحت في النص (الأربعة متقابلين)
+        if (mySeat == null) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { seatTag(0, Modifier) }
         d.ends?.let { (left, right) ->
             Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft,
                 modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)

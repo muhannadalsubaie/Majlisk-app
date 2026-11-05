@@ -291,7 +291,8 @@ struct DominoBoard: View {
                 return DominoSeatTag(name: names[seat], uid: v.seatUid(seat), count: seat < d.handCounts.count ? d.handCounts[seat] : 0,
                                      partner: partner, turn: d.turn == seat && d.phase == "playing")
             }
-            if let top { seatTag(top) }
+            // الأربعة متقابلين: فوق في النص، ويمين ويسار جنب الطاولة، وتحت في النص (للمشاهد)
+            if let top { seatTag(top).frame(maxWidth: .infinity, alignment: .center) }
             HStack(alignment: .center, spacing: 6) {
                 if let right { seatTag(right).frame(width: 66) }
                 // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
@@ -299,7 +300,7 @@ struct DominoBoard: View {
                     .accessibilityHidden(true)
                 if let left { seatTag(left).frame(width: 66) }
             }
-            if mySeat == nil { seatTag(0) }
+            if mySeat == nil { seatTag(0).frame(maxWidth: .infinity, alignment: .center) }
             if let e = d.ends {
                 Text("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")")
                     .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
