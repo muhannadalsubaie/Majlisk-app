@@ -37,10 +37,9 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         if #available(iOS 18.2, *) { return session.isEchoCancelledInputAvailable }
         return false
     }
-    /// سماعة (سلكية أو بلوتوث أو USB): ما فيه صدى أصلاً، فما نحتاج أي معالجة ولا أي خفض للأصوات
-    private var headset: Bool {
-        session.currentRoute.outputs.contains { [.headphones, .bluetoothA2DP, .bluetoothHFP, .bluetoothLE, .usbAudio].contains($0.portType) }
-    }
+    /// إلغاء الصدى دائماً (حتى مع السماعة): كان يتوقف مع البلوتوث، فلو كان الصوت من سماعة خارجية أو انفصلت
+    /// السماعة أثناء المحادثة يرجع صوت الباقين لهم ويسمعون قارئ الشاشة
+    private var headset: Bool { false }
     /// الوحدة الحالية: العادية (RemoteIO) أو وحدة المكالمات (VoiceProcessingIO)
     private var plainUnit = false
     var deviceInputSampleRate: Double { session.sampleRate }
