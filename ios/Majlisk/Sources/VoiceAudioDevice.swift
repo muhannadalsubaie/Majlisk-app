@@ -37,9 +37,9 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         if #available(iOS 18.2, *) { return session.isEchoCancelledInputAvailable }
         return false
     }
-    /// إلغاء الصدى دائماً (حتى مع السماعة): كان يتوقف مع البلوتوث، فلو كان الصوت من سماعة خارجية أو انفصلت
-    /// السماعة أثناء المحادثة يرجع صوت الباقين لهم ويسمعون قارئ الشاشة
-    private var headset: Bool { false }
+    /// إلغاء الصدى من النظام اشتغل فعلاً (نتأكد بعد طلبه): لو ما اشتغل نستخدم وحدة المكالمات،
+    /// وإلا يرجع صوت الباقين لهم ويسمعون قارئ الشاشة من جوالك
+    private var systemEchoOn = false
     /// الوحدة الحالية: العادية (RemoteIO) أو وحدة المكالمات (VoiceProcessingIO)
     private var plainUnit = false
     var deviceInputSampleRate: Double { session.sampleRate }
@@ -91,7 +91,12 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func initializeRecording() -> Bool {
         // الميكروفون ينفتح أول مرة: نعيد بناء الوحدة مع الإدخال (قبلها ما نطلب الميكروفون أبداً)
         let wasPlaying = isPlaying
-        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable { try? session.setPrefersEchoCancelledInput(!headset) }
+        systemEchoOn = false
+        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable {
+            try? session.setPrefersEchoCancelledInput(true)
+            try? session.setActive(true)
+            systemEchoOn = session.isEchoCancelledInputEnabled
+        }
         disposeUnit()
         guard makeUnit(input: true) else { return false }
         isRecordingInitialized = true
@@ -118,7 +123,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func setTalking(_ on: Bool) {
         talking = on
         guard let unit, !plainUnit else { return }
-        var bypass: UInt32 = on && !headset ? 0 : 1
+        var bypass: UInt32 = on ? 0 : 1
         AudioUnitSetProperty(unit, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, UInt32(MemoryLayout<UInt32>.size))
     }
 
@@ -126,7 +131,8 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
 
     private func makeUnit(input: Bool) -> Bool {
         // iOS 18.2+: الوحدة العادية دائماً (إلغاء الصدى من النظام وقت الكلام) — بلا أي خفض للأصوات
-        let plain = systemEcho || headset
+        // مع الميكروفون: الوحدة العادية بس لو إلغاء الصدى من النظام اشتغل فعلاً، وإلا وحدة المكالمات (تلغي الصدى أكيد)
+        let plain = input ? systemEchoOn : systemEcho
         var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: plain ? kAudioUnitSubType_RemoteIO : kAudioUnitSubType_VoiceProcessingIO,
                                              componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
         guard let comp = AudioComponentFindNext(nil, &desc) else { return false }
@@ -171,7 +177,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         }
         // المعالجة مطفأة وأنت تسمع بس
         if !plain {
-            var bypass: UInt32 = talking && !headset ? 0 : 1
+            var bypass: UInt32 = talking ? 0 : 1
             AudioUnitSetProperty(u, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, size)
         }
 
