@@ -39,3 +39,23 @@ for (const c of certs.data) {
   await api(`certificates/${c.id}`, { method: 'DELETE' });
   console.log('revoked old development certificate:', c.attributes.name ?? c.id);
 }
+
+// الإشعارات (دعوات الأصدقاء): نفعّل خاصية Push Notifications لمعرّف التطبيق إن لم تكن مفعّلة،
+// ونحذف ملفات توقيع المتجر القديمة اللي ما فيها الخاصية، فيُنشئ Xcode ملفات جديدة تشملها.
+const bundles = await api('bundleIds?filter[identifier]=com.majlisk.app&limit=5');
+const bundle = bundles.data.find((b) => b.attributes.identifier === 'com.majlisk.app');
+if (bundle) {
+  const caps = await api(`bundleIds/${bundle.id}/bundleIdCapabilities`);
+  if (!caps.data.some((c) => c.attributes.capabilityType === 'PUSH_NOTIFICATIONS')) {
+    await api('bundleIdCapabilities', {
+      method: 'POST',
+      body: JSON.stringify({ data: { type: 'bundleIdCapabilities', attributes: { capabilityType: 'PUSH_NOTIFICATIONS' }, relationships: { bundleId: { data: { type: 'bundleIds', id: bundle.id } } } } }),
+    });
+    console.log('enabled push notifications capability');
+    const profiles = await api(`bundleIds/${bundle.id}/profiles?limit=50`);
+    for (const p of profiles.data) {
+      await api(`profiles/${p.id}`, { method: 'DELETE' }).catch((e) => console.log('profile', e.message));
+      console.log('deleted old profile:', p.attributes.name);
+    }
+  } else console.log('push notifications capability already enabled');
+} else console.log('bundle id not found');
