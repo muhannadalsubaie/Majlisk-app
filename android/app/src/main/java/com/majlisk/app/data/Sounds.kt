@@ -31,7 +31,7 @@ object Sounds {
     private val FILES = listOf(
         "card1", "card2", "card3", "card4",
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
-        "knock1", "cup1", "slide7", "chips3", "chips4", "chips5", "chips6",
+        "knock1", "cup1", "trick-collect", "chips3", "chips4", "chips5", "chips6",
         "collide2", "collide3", "collide4", "lay1", "lay2", "handle1", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
@@ -128,7 +128,8 @@ object Sounds {
     fun voiceJoin() = play("voice-join", gain = 0.7f, vary = false)
     fun voiceLeave() = play("voice-leave", gain = 0.7f, vary = false)
 
-    fun collect() = play("slide7", gain = 1f, vary = false)
+    /** أخذ الأكلة: الأوراق تنسحب لصاحبها */
+    fun collect() = play("trick-collect", gain = 1f, vary = false)
 
     fun turn(soft: Boolean) {
         // نغمة الدور (ملف voice-turn)

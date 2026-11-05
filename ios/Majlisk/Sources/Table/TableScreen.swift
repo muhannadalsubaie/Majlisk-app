@@ -440,7 +440,8 @@ final class GameSoundTracker {
             gameSounds(prev: p, g: g, mySeat: v.mySeat)
             // اكتملت الأكلة: صوت سحبها قبل أن تذهب لصاحبها
             if g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty {
-                DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD - 0.15) { Sounds.shared.collect() }
+                // نفس لحظة انسحاب الأوراق (تختفي بعد TRICK_HOLD بالضبط)
+                DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD) { Sounds.shared.collect() }
             }
         }
         // نغمة الدور (فورية، قبل إعلان "دورك")

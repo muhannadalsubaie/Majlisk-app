@@ -648,7 +648,7 @@ class GameSoundTracker {
         if (p != null) {
             gameSounds(p, g, v.mySeat)
             // اكتملت الأكلة: صوت سحبها قبل أن تذهب لصاحبها
-            if (g.trickNo == p.trickNo + 1 && g.lastTrick != null && g.trick.isEmpty()) main.postDelayed({ Sounds.collect() }, TRICK_HOLD_MS - 150)
+            if (g.trickNo == p.trickNo + 1 && g.lastTrick != null && g.trick.isEmpty()) main.postDelayed({ Sounds.collect() }, TRICK_HOLD_MS) // نفس لحظة انسحاب الأوراق
         }
         // نغمة الدور (فورية، قبل إعلان "دورك")
         val key = turnKey(g)
