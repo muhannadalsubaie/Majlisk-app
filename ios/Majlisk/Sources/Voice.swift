@@ -286,6 +286,8 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         cfg.mode = mode.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
         try? s.setCategory(.playAndRecord, mode: mode, options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
+        // أعلى جودة: 48 كيلوهيرتز (نفس جودة صوت المحادثة Opus)، سلكية أو بلوتوث أو مكبر
+        try? s.setPreferredSampleRate(48_000)
         try? s.setActive(true)
     }
 

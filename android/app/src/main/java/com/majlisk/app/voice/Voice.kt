@@ -68,17 +68,26 @@ object Voice {
     private var autoRetries = 0
     private var missingJob: Job? = null
 
-    private val factory: PeerConnectionFactory by lazy {
+    private val initWebRtc by lazy {
         PeerConnectionFactory.initialize(PeerConnectionFactory.InitializationOptions.builder(ctx).createInitializationOptions())
+    }
+    private fun makeFactory(usage: Int): PeerConnectionFactory {
+        initWebRtc
         val adm = JavaAudioDeviceModule.builder(ctx)
             .setUseHardwareAcousticEchoCanceler(true)
             .setUseHardwareNoiseSuppressor(true)
-            // صوت اللاعبين على قناة المكالمات: إلغاء الصدى في الجوال يعرفه ويلغيه من الميكروفون
-            // (وأصوات اللعبة تنتقل لنفس القناة وقت المحادثة: نفس المستوى، وما يسمعونها منك)
-            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(usage).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
             .createAudioDeviceModule()
-        PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
+        return PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
     }
+    /** مكبر الجوال: صوت اللاعبين على قناة المكالمات، فإلغاء الصدى في الجوال يلغيه من الميكروفون
+     *  (وأصوات اللعبة تنتقل لنفس القناة وقت المحادثة: نفس المستوى، وما يسمعونها منك) */
+    private val callFactory by lazy { makeFactory(AudioAttributes.USAGE_VOICE_COMMUNICATION) }
+    /** سماعة (سلكية أو بلوتوث): ما فيه صدى، فالصوت يطلع بجودة الوسائط الكاملة (البلوتوث بجودة الأغاني لا المكالمات) */
+    private val mediaFactory by lazy { makeFactory(AudioAttributes.USAGE_MEDIA) }
+    /** الوضع المختار عند الانضمام: سماعة أو مكبر الجوال (يبقى طول الجلسة، وتغيّره يعيد الانضمام) */
+    private var headphonesMode = false
+    private val factory: PeerConnectionFactory get() = if (headphonesMode) mediaFactory else callFactory
 
     private suspend fun request(body: JSONObject): JSONObject = Api.post("/tables/$tableId/voice", body)
     private fun desc(d: SessionDescription) = JSONObject().put("type", d.type.canonicalForm()).put("sdp", d.description)
@@ -92,6 +101,7 @@ object Voice {
                 set { copy(busy = true) }
                 tableId = id
                 myUid = uid
+                headphonesMode = headphones(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
                 try {
                     val config = PeerConnection.RTCConfiguration(listOf(PeerConnection.IceServer.builder("stun:stun.cloudflare.com:3478").createIceServer())).apply {
                         bundlePolicy = PeerConnection.BundlePolicy.MAXBUNDLE
@@ -311,6 +321,17 @@ object Voice {
      * ونمسك تركيز الصوت ونطلب ألا يخفضنا النظام حين يتكلم TalkBack، فيبقى صوت اللاعبين بنفس المستوى.
      */
     private fun route(am: AudioManager) {
+        if (headphonesMode) {
+            // سماعة: الوضع العادي بجودة الوسائط الكاملة (سلكية، أو بلوتوث بجودة الأغاني والميكروفون من الجوال)
+            if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
+                @Suppress("DEPRECATION")
+                am.isSpeakerphoneOn = false
+            }
+            am.mode = AudioManager.MODE_NORMAL
+            Sounds.callMode(false)
+            return
+        }
+        Sounds.callMode(true)
         // وضع المكالمات طول المحادثة: إلغاء الصدى في الجوال يشتغل صح (في الوضع العادي كان يرجع صدى الأصوات)،
         // وأصوات اللعبة على نفس القناة (انظر Sounds.callMode) فكلها بنفس المستوى ويتحكم فيها نفس زر الصوت
         am.mode = AudioManager.MODE_IN_COMMUNICATION
@@ -337,10 +358,23 @@ object Voice {
         if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager)
     }
 
-    /** وصّلت سماعة أو فصلتها أثناء المحادثة: نعيد اختيار مخرج الصوت */
+    /** وصّلت سماعة أو فصلتها أثناء المحادثة: لو تغيّر النوع (سماعة ↔ مكبر) نعيد الانضمام بالوضع المناسب، وإلا نعيد اختيار المخرج */
     private val deviceWatch = object : android.media.AudioDeviceCallback() {
-        override fun onAudioDevicesAdded(added: Array<out AudioDeviceInfo>?) { if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager) }
-        override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>?) { if (audioOn) route(ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager) }
+        override fun onAudioDevicesAdded(added: Array<out AudioDeviceInfo>?) = devicesChanged()
+        override fun onAudioDevicesRemoved(removed: Array<out AudioDeviceInfo>?) = devicesChanged()
+    }
+    private fun devicesChanged() {
+        if (!audioOn) return
+        val am = ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager
+        if (headphones(am) != headphonesMode) rejoin() else route(am)
+    }
+
+    /** سماعة موصولة: سلكية أو USB أو بلوتوث */
+    private fun headphones(am: AudioManager) = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any {
+        it.type in setOf(
+            AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_USB_HEADSET,
+            AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_BLE_HEADSET,
+        )
     }
     private var audioOn = false
 
@@ -351,7 +385,6 @@ object Voice {
             audioOn = true
             talking = false
             route(am)
-            Sounds.callMode(true)
             runCatching { am.registerAudioDeviceCallback(deviceWatch, android.os.Handler(android.os.Looper.getMainLooper())) }
             if (Build.VERSION.SDK_INT >= 26 && focus == null) {
                 focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
