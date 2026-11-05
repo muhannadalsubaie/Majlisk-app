@@ -1,0 +1,14 @@
+# فحص مفتاح Google Play (قراءة فقط، بدون رفع أي نسخة)
+name: Play key check
+on: workflow_dispatch
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - run: node .github/scripts/play-check.mjs | tee -a $GITHUB_STEP_SUMMARY
+        shell: bash
+        env:
+          SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
