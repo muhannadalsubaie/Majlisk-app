@@ -13,6 +13,7 @@ struct TableMenu: View {
     let onLeave: () -> Void
     let onClose: () -> Void
     @ObservedObject private var voice = Voice.shared
+    @ObservedObject private var hub = Hub.shared
     @State private var page: Page = .main
     @State private var friendState: [String: String] = [:]
 
@@ -77,7 +78,8 @@ struct TableMenu: View {
         case .invite:
             InviteFriendsSheet(tableId: view.id, seat: nil, title: "دعوة صديق") { page = .main }
         case .friends:
-            TableFriendsSheet { page = .main }
+            // قائمة الأصدقاء كاملة (الأصدقاء، الطلبات، المحظورون) من داخل الطاولة
+            FriendsScreen(hub: hub.state, navigate: { _ in page = .main }, openTable: { _ in }, inTable: true)
         case .settings:
             SettingsScreen(embedded: true) { page = .main }
         case .players:
@@ -162,47 +164,6 @@ struct TableMenu: View {
                 }
                 MButton("رجوع") { page = .players }
             }
-        }
-    }
-}
-
-/// الأصدقاء من داخل الطاولة: مين متصل الحين ووين (المتصلين أول)
-private struct TableFriendsSheet: View {
-    let onBack: () -> Void
-    @State private var friends: [Friend]?
-    @State private var failed = false
-
-    private func status(_ f: Friend) -> String {
-        if !f.online { return "غير متصل" }
-        if f.tableId == nil { return "متصل، في الرئيسية" }
-        return ["متصل، في طاولة", f.tableGame, f.tablePrivate ? "مقفلة" : ""].filter { !$0.isEmpty }.joined(separator: " ")
-    }
-
-    var body: some View {
-        Sheet(title: "الأصدقاء") {
-            if failed { Note("تعذّر تحميل الأصدقاء") }
-            else if friends == nil { BodyText("جارٍ التحميل…") }
-            else if friends!.isEmpty { Note("لا يوجد أصدقاء بعد.") }
-            else {
-                let online = friends!.filter(\.online).count
-                Note(online == 0 ? "ما فيه أحد متصل الحين" : "المتصلين: \(online)")
-                ForEach(friends!.sorted { $0.online && !$1.online }) { f in
-                    HStack(spacing: 10) {
-                        Avatar(uid: f.uid, name: f.username, size: 36)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text(f.username).bold().foregroundColor(Palette.text)
-                            Text(status(f)).font(.system(size: 14)).foregroundColor(f.online ? Palette.goldSoft : Palette.textDim)
-                        }
-                        Spacer()
-                    }
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(f.username)، \(status(f))")
-                }
-            }
-            MButton("رجوع", action: onBack)
-        }
-        .task {
-            do { friends = try await Social.listFriends().friends } catch { failed = true }
         }
     }
 }

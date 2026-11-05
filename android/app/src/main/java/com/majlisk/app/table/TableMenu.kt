@@ -104,7 +104,14 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }
         Page.Invite -> InviteFriendsDialog(v.id, seat = null, title = "دعوة صديق") { page = Page.Main }
-        Page.Friends -> TableFriendsDialog { page = Page.Main }
+        // قائمة الأصدقاء كاملة (الأصدقاء، الطلبات، المحظورون) من داخل الطاولة، بملء الشاشة
+        Page.Friends -> androidx.compose.ui.window.Dialog(
+            onDismissRequest = { page = Page.Main },
+            properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            val hub by com.majlisk.app.data.Hub.state.collectAsState()
+            com.majlisk.app.ui.FriendsScreen(hub, navigate = { page = Page.Main }, openTable = { }, inTable = true)
+        }
         Page.Settings -> MajliskDialog("إعدادات", { page = Page.Main }) {
             SettingsScreen(onBack = { page = Page.Main }, embedded = true)
         }
@@ -186,40 +193,5 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             v.spectators.forEach { s -> PrimaryButton(s.username, { conn.send("replace", "seat" to p.seat, "uid" to s.uid); page = Page.Players }) }
             SecondaryButton("رجوع", { page = Page.Players }, fill = true)
         }
-    }
-}
-
-/** الأصدقاء من داخل الطاولة: مين متصل الحين ووين (المتصلين أول) */
-@Composable
-private fun TableFriendsDialog(onBack: () -> Unit) {
-    var friends by remember { mutableStateOf<List<com.majlisk.app.data.Friend>?>(null) }
-    var failed by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { runCatching { Social.listFriends().friends }.onSuccess { friends = it }.onFailure { failed = true } }
-    fun status(f: com.majlisk.app.data.Friend): String = when {
-        !f.online -> "غير متصل"
-        f.tableId == null -> "متصل، في الرئيسية"
-        else -> listOf("متصل، في طاولة", f.tableGame, if (f.tablePrivate) "مقفلة" else "").filter { it.isNotEmpty() }.joinToString(" ")
-    }
-    MajliskDialog("الأصدقاء", onBack) {
-        val list = friends
-        when {
-            failed -> Note("تعذّر تحميل الأصدقاء")
-            list == null -> Body("جارٍ التحميل…")
-            list.isEmpty() -> Note("لا يوجد أصدقاء بعد.")
-            else -> {
-                val online = list.count { it.online }
-                Note(if (online == 0) "ما فيه أحد متصل الحين" else "المتصلين: $online")
-                list.sortedByDescending { it.online }.forEach { f ->
-                    ItemRow(Modifier.clearAndSetSemantics { contentDescription = "${f.username}، ${status(f)}" }) {
-                        com.majlisk.app.ui.Avatar(f.uid, f.username, 36.dp)
-                        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
-                            Text(f.username, color = Palette.text, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
-                            Text(status(f), color = if (f.online) Palette.goldSoft else Palette.textDim, fontSize = 14.sp)
-                        }
-                    }
-                }
-            }
-        }
-        SecondaryButton("رجوع", onBack, fill = true)
     }
 }
