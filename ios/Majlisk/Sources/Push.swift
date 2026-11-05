@@ -21,6 +21,12 @@ final class Push: NSObject, ObservableObject, UNUserNotificationCenterDelegate, 
             guard granted else { return }
             DispatchQueue.main.async { UIApplication.shared.registerForRemoteNotifications() }
         }
+        refreshToken()
+    }
+
+    /// رمز الجهاز للإشعارات (يتطلب رمز Apple أولاً): يُرسل للخادم كل مرة
+    func refreshToken() {
+        guard Messaging.messaging().apnsToken != nil else { return }
         Messaging.messaging().token { token, _ in if let token { self.upload(token) } }
     }
 

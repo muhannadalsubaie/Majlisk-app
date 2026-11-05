@@ -113,7 +113,6 @@ jobs:
           KEY_P8: ${{ secrets.ASC_KEY_P8 }}
         run: |
           KEY=$RUNNER_TEMP/k.p8; printf '%s' "$KEY_P8" > $KEY
-          # "وش الجديد": أحدث قسم مرفوع في سجل التحديثات
-          awk '/^## تحديث/{n++} n==1' CHANGELOG.md > $RUNNER_TEMP/notes.txt
-          KEY=$KEY BUILD=$((1000 + ${{ github.run_number }})) NOTES=$RUNNER_TEMP/notes.txt \
+          # بلا "وش الجديد": المختبر يفتح التطبيق على طول بدون قائمة تعديلات
+          KEY=$KEY BUILD=$((1000 + ${{ github.run_number }})) \
             node .github/scripts/asc-external.mjs | tee -a $GITHUB_STEP_SUMMARY

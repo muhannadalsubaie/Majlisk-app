@@ -1,6 +1,7 @@
 import UIKit
 import SwiftUI
 import FirebaseCore
+import FirebaseMessaging
 import GoogleSignIn
 
 @main
@@ -11,6 +12,16 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         Sounds.shared.preload()
         Sounds.shared.appOpen()
         return true
+    }
+
+    /// رمز Apple للإشعارات: نسلّمه لـ Firebase بنفسنا (بدل الربط التلقائي)، ونرسل رمز الجهاز للخادم
+    func application(_ application: UIApplication, didRegisterForRemoteNotificationsWithDeviceToken deviceToken: Data) {
+        Messaging.messaging().apnsToken = deviceToken
+        Push.shared.refreshToken()
+    }
+
+    func application(_ application: UIApplication, didFailToRegisterForRemoteNotificationsWithError error: Error) {
+        print("push register failed: \(error)")
     }
 
     func application(_ application: UIApplication, configurationForConnecting connectingSceneSession: UISceneSession, options: UIScene.ConnectionOptions) -> UISceneConfiguration {
