@@ -12,3 +12,7 @@ jobs:
         shell: bash
         env:
           SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+      - run: node .github/scripts/play-cert.mjs | tee -a $GITHUB_STEP_SUMMARY
+        shell: bash
+        env:
+          SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
