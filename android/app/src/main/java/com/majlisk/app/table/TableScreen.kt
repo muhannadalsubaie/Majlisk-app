@@ -353,6 +353,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             g.actions.bids.forEach { b -> add((if (b.type == "pass" && g.bidRound == 2) "ولا" else b.label) to { act(jsonOf("type" to "bid", "bid" to b.raw)) }) }
             g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
+            if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
             if (g.actions.chooseLock) {
                 add("مقفل" to { act(jsonOf("type" to "doubleLock", "locked" to true)) })
                 add("مفتوح" to { act(jsonOf("type" to "doubleLock", "locked" to false)) })
@@ -396,6 +397,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                     if (g.actions.canPassDouble) SecondaryButton("بس", { toHand(); act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
                 }
             }
+            // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
+            if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
             if (g.actions.chooseLock) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PrimaryButton("مقفل", { toHand(); act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))

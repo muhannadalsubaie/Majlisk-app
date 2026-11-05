@@ -70,6 +70,8 @@ struct GameActions {
     let canPassDouble: Bool
     let chooseLock: Bool
     let legal: [Card]
+    /// سوا: دورك تبدأ الأكلة وكل أوراقك مضمونة تاكل
+    var canSawa = false
 }
 
 struct GameView {
@@ -221,7 +223,8 @@ struct TableView {
                 doubleLabel: a.obj("double")?.str("label"),
                 canPassDouble: a.bool("canPassDouble"),
                 chooseLock: a.bool("chooseLock"),
-                legal: a.objs("legal").compactMap { Card($0) }
+                legal: a.objs("legal").compactMap { Card($0) },
+                canSawa: a.bool("canSawa")
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },
             secondHokmSeat: g.intOrNil("secondHokmSeat"),

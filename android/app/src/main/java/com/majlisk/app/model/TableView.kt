@@ -19,6 +19,8 @@ data class GameActions(
     val canPassDouble: Boolean,
     val chooseLock: Boolean,
     val legal: List<Card>,
+    /** سوا: دورك تبدأ الأكلة وكل أوراقك مضمونة تاكل */
+    val canSawa: Boolean = false,
 )
 
 data class GameView(
@@ -173,6 +175,7 @@ data class TableView(
                     canPassDouble = a.optBoolean("canPassDouble"),
                     chooseLock = a.optBoolean("chooseLock"),
                     legal = a.optJSONArray("legal").objects().mapNotNull { Card.from(it) },
+                    canSawa = a.optBoolean("canSawa"),
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),

@@ -259,6 +259,10 @@ struct BalootBoard: View {
                         if g.actions.canPassDouble { MButton("بس") { toHand(); act(["type": "doublePass"]) } }
                     }
                 }
+                // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
+                if g.actions.canSawa {
+                    MButton("سوا", .primary) { act(["type": "sawa"]) }
+                }
                 if g.actions.chooseLock {
                     HStack(spacing: 8) {
                         MButton("مقفل", .primary) { toHand(); act(["type": "doubleLock", "locked": true]) }
@@ -334,6 +338,7 @@ struct BalootBoard: View {
         }
         if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
+        if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
         if g.actions.chooseLock {
             out.append(("مقفل", { act(["type": "doubleLock", "locked": true]) }))
             out.append(("مفتوح", { act(["type": "doubleLock", "locked": false]) }))
