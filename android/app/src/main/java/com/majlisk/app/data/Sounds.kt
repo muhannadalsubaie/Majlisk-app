@@ -12,6 +12,8 @@ import kotlin.random.Random
  * تحترم "كتم عام لجميع الأصوات"، ومعتدلة حتى لا تغطي قارئ الشاشة.
  */
 object Sounds {
+    /** الوقت بين طقطقة كل خطوة يمشيها الحجر (نفس مهلة الخادم: الدور ما ينتقل لين يوصل الحجر) */
+    const val STEP_GAP = 0.22
     private lateinit var pool: SoundPool
     private val ids = HashMap<String, Int>()
     private val main = Handler(Looper.getMainLooper())
@@ -95,11 +97,11 @@ object Sounds {
     fun dice() = play("dice", gain = 0.9f)
     /** مشي الحجر في اللودو: نقرة لكل خطوة */
     fun steps(n: Int, at: Double = 0.0) {
-        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "step1" else "step2", at = at + i * 0.13, gain = 0.9f) }
+        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "step1" else "step2", at = at + i * STEP_GAP, gain = 0.9f) }
     }
     /** مشي حجر الجاكارو: نقرة خفيفة لكل خطوة (غير صوت اللودو) */
     fun marbleSteps(n: Int, at: Double = 0.0) {
-        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "marble1" else "marble2", at = at + i * 0.13, gain = 0.9f) }
+        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "marble1" else "marble2", at = at + i * STEP_GAP, gain = 0.9f) }
     }
 
     /** جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره */

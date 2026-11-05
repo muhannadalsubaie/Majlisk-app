@@ -949,7 +949,7 @@ final class OtherGameSounds {
                     s.jackarooCard()
                     if j.lastSteps > 0 { s.marbleSteps(j.lastSteps, at: 0.25) }
                     // أكل حجر: بعد ما يوصل الحجر
-                    if j.captures > 0 { s.capture(at: 0.25 + Double(min(max(j.lastSteps, 1), 13)) * 0.13) }
+                    if j.captures > 0 { s.capture(at: 0.25 + Double(min(max(j.lastSteps, 1), 13)) * Sounds.stepGap) }
                 }
             } else if let l, !first {
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
@@ -961,7 +961,7 @@ final class OtherGameSounds {
                     let at = rolledNow && !newTurnRoll ? 0.6 : 0
                     s.steps(l.lastSteps, at: at)
                     // أكل حجر: بعد ما يوصل الحجر
-                    if l.captures > 0 { s.capture(at: at + Double(min(max(l.lastSteps, 1), 13)) * 0.13) }
+                    if l.captures > 0 { s.capture(at: at + Double(min(max(l.lastSteps, 1), 13)) * Sounds.stepGap) }
                 }
             }
         }

@@ -3,6 +3,8 @@ import AVFoundation
 /// مؤثرات اللعبة (حزم Kenney، رخصة CC0) — نفس أصوات التطبيق الحالي وتوقيتها.
 /// تحترم "كتم عام لجميع الأصوات"، ومعتدلة حتى لا تغطي قارئ الشاشة.
 final class Sounds {
+    /// الوقت بين طقطقة كل خطوة يمشيها الحجر (نفس مهلة الخادم: الدور ما ينتقل لين يوصل الحجر)
+    static let stepGap = 0.22
     static let shared = Sounds()
     private var data: [String: Data] = [:]
     private var urls: [String: URL] = [:]
@@ -88,11 +90,11 @@ final class Sounds {
     func dice() { play("dice", gain: 0.9) }
     /// مشي الحجر في اللودو: نقرة لكل خطوة
     func steps(_ n: Int, at: Double = 0) {
-        for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "step1" : "step2", at: at + Double(i) * 0.13, gain: 0.9) }
+        for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "step1" : "step2", at: at + Double(i) * Sounds.stepGap, gain: 0.9) }
     }
     /// مشي حجر الجاكارو: نقرة خفيفة لكل خطوة (غير صوت اللودو)
     func marbleSteps(_ n: Int, at: Double = 0) {
-        for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "marble1" : "marble2", at: at + Double(i) * 0.13, gain: 0.9) }
+        for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "marble1" : "marble2", at: at + Double(i) * Sounds.stepGap, gain: 0.9) }
     }
 
     /// جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره

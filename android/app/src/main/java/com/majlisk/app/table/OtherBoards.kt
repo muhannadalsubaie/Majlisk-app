@@ -871,7 +871,7 @@ class OtherGameSounds {
                         Sounds.jackarooCard()
                         if (j.lastSteps > 0) Sounds.marbleSteps(j.lastSteps, at = 0.25)
                         // أكل حجر: بعد ما يوصل الحجر
-                        if (j.captures > 0) Sounds.capture(at = 0.25 + j.lastSteps.coerceIn(1, 13) * 0.13)
+                        if (j.captures > 0) Sounds.capture(at = 0.25 + j.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP)
                     }
                 }
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
@@ -885,7 +885,7 @@ class OtherGameSounds {
                         val at = if (rolledNow && !newTurnRoll) 0.6 else 0.0
                         Sounds.steps(l.lastSteps, at = at)
                         // أكل حجر: بعد ما يوصل الحجر
-                        if (l.captures > 0) Sounds.capture(at = at + l.lastSteps.coerceIn(1, 13) * 0.13)
+                        if (l.captures > 0) Sounds.capture(at = at + l.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP)
                     }
                 }
             }
