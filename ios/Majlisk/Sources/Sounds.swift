@@ -17,7 +17,7 @@ final class Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
     ]
 
     func preload() {
@@ -56,11 +56,10 @@ final class Sounds {
     }
 
     /// التوزيع: ثماني أوراق متتالية بدون خلط (أول التوزيع وباقي الورق)
-    func deal(newHand: Bool) {
-        for (i, n) in ["slide1", "slide2", "slide3", "slide4", "slide1", "slide2", "slide3", "slide4"].enumerated() {
-            play(n, at: Double(i) * 0.1, gain: 1)
-        }
-    }
+    func deal(newHand: Bool) { play("deal", gain: 1, vary: false) }
+
+    /// أكل حجر خصم (اللودو والجاكارو): نفس الصوت للعبتين
+    func capture(at: Double = 0) { play("capture", at: at, gain: 1, vary: false) }
 
     /// نغمة فتح التطبيق (قانون بمقام الراست)
     func appOpen() { play("app-open", vary: false) }

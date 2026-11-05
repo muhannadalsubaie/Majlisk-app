@@ -867,7 +867,12 @@ class OtherGameSounds {
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 j != null -> {
                     if ((first && !j.hasMove) || (!first && deal != null && deal != j.dealNo)) Sounds.deal(true)
-                    if (!first && j.hasMove) { Sounds.jackarooCard(); if (j.lastSteps > 0) Sounds.marbleSteps(j.lastSteps, at = 0.25) }
+                    if (!first && j.hasMove) {
+                        Sounds.jackarooCard()
+                        if (j.lastSteps > 0) Sounds.marbleSteps(j.lastSteps, at = 0.25)
+                        // أكل حجر: بعد ما يوصل الحجر
+                        if (j.captures > 0) Sounds.capture(at = 0.25 + j.lastSteps.coerceIn(1, 13) * 0.13)
+                    }
                 }
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
                 l != null && !first -> {
@@ -876,7 +881,12 @@ class OtherGameSounds {
                     // رمى ثم تحرك مباشرة (خيار واحد) أو ما فيه حركة: النرد ثم النقرات
                     val rolledNow = newTurnRoll || (moveChanged && phase != "move")
                     if (rolledNow) Sounds.dice()
-                    if (moveChanged && l.moved) Sounds.steps(l.lastSteps, at = if (rolledNow && !newTurnRoll) 0.6 else 0.0)
+                    if (moveChanged && l.moved) {
+                        val at = if (rolledNow && !newTurnRoll) 0.6 else 0.0
+                        Sounds.steps(l.lastSteps, at = at)
+                        // أكل حجر: بعد ما يوصل الحجر
+                        if (l.captures > 0) Sounds.capture(at = at + l.lastSteps.coerceIn(1, 13) * 0.13)
+                    }
                 }
             }
         }

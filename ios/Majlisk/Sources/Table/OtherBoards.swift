@@ -945,14 +945,24 @@ final class OtherGameSounds {
             } else if let j {
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 if (first && !j.hasMove) || (!first && deal != nil && deal != j.dealNo) { s.deal(newHand: true) }
-                if !first && j.hasMove { s.jackarooCard(); if j.lastSteps > 0 { s.marbleSteps(j.lastSteps, at: 0.25) } }
+                if !first && j.hasMove {
+                    s.jackarooCard()
+                    if j.lastSteps > 0 { s.marbleSteps(j.lastSteps, at: 0.25) }
+                    // أكل حجر: بعد ما يوصل الحجر
+                    if j.captures > 0 { s.capture(at: 0.25 + Double(min(max(j.lastSteps, 1), 13)) * 0.13) }
+                }
             } else if let l, !first {
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
                 let newTurnRoll = l.phase == "move" && (phase != "move" || ludoTurn != l.turn)
                 let moveChanged = l.lastSig != ludoLast && l.lastSig != "null"
                 let rolledNow = newTurnRoll || (moveChanged && phase != "move")
                 if rolledNow { s.dice() }
-                if moveChanged && l.moved { s.steps(l.lastSteps, at: rolledNow && !newTurnRoll ? 0.6 : 0) }
+                if moveChanged && l.moved {
+                    let at = rolledNow && !newTurnRoll ? 0.6 : 0
+                    s.steps(l.lastSteps, at: at)
+                    // أكل حجر: بعد ما يوصل الحجر
+                    if l.captures > 0 { s.capture(at: at + Double(min(max(l.lastSteps, 1), 13)) * 0.13) }
+                }
             }
         }
         phase = d?.phase ?? j?.phase ?? l?.phase
