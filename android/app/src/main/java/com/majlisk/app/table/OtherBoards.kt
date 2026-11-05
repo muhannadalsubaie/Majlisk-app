@@ -867,7 +867,7 @@ class OtherGameSounds {
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 j != null -> {
                     if ((first && !j.hasMove) || (!first && deal != null && deal != j.dealNo)) Sounds.deal(true)
-                    if (!first && j.hasMove) { Sounds.jackarooCard(); if (j.lastSteps > 0) Sounds.steps(j.lastSteps, at = 0.25) }
+                    if (!first && j.hasMove) { Sounds.jackarooCard(); if (j.lastSteps > 0) Sounds.marbleSteps(j.lastSteps, at = 0.25) }
                 }
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
                 l != null && !first -> {

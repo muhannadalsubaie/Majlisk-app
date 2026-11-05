@@ -945,7 +945,7 @@ final class OtherGameSounds {
             } else if let j {
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 if (first && !j.hasMove) || (!first && deal != nil && deal != j.dealNo) { s.deal(newHand: true) }
-                if !first && j.hasMove { s.jackarooCard(); if j.lastSteps > 0 { s.steps(j.lastSteps, at: 0.25) } }
+                if !first && j.hasMove { s.jackarooCard(); if j.lastSteps > 0 { s.marbleSteps(j.lastSteps, at: 0.25) } }
             } else if let l, !first {
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
                 let newTurnRoll = l.phase == "move" && (phase != "move" || ludoTurn != l.turn)

@@ -26,7 +26,7 @@ object Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -93,9 +93,13 @@ object Sounds {
     fun jackarooCard() = play("jackaroo-card", gain = 1f)
     /** لودو: رمي النرد */
     fun dice() = play("dice", gain = 0.9f)
-    /** مشي الحجر في اللودو والجاكارو: نقرة لكل خطوة */
+    /** مشي الحجر في اللودو: نقرة لكل خطوة */
     fun steps(n: Int, at: Double = 0.0) {
         repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "step1" else "step2", at = at + i * 0.13, gain = 0.9f) }
+    }
+    /** مشي حجر الجاكارو: نقرة خفيفة لكل خطوة (غير صوت اللودو) */
+    fun marbleSteps(n: Int, at: Double = 0.0) {
+        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "marble1" else "marble2", at = at + i * 0.13, gain = 0.9f) }
     }
 
     /** جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره */
@@ -108,7 +112,7 @@ object Sounds {
     fun collect() = play("slide7", gain = 1f, vary = false)
 
     fun turn(soft: Boolean) {
-        // كلمة "دورك" منطوقة (بدل النغمة)
+        // نغمة الدور (ملف voice-turn)
         play("voice-turn", gain = 1f, vary = false)
     }
 

@@ -17,7 +17,7 @@ final class Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "proj-baloot", "trump-cut", "hand-end",
     ]
 
     func preload() {
@@ -82,9 +82,13 @@ final class Sounds {
     func jackarooCard() { play("jackaroo-card", gain: 1) }
     /// لودو: رمي النرد
     func dice() { play("dice", gain: 0.9) }
-    /// مشي الحجر في اللودو والجاكارو: نقرة لكل خطوة
+    /// مشي الحجر في اللودو: نقرة لكل خطوة
     func steps(_ n: Int, at: Double = 0) {
         for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "step1" : "step2", at: at + Double(i) * 0.13, gain: 0.9) }
+    }
+    /// مشي حجر الجاكارو: نقرة خفيفة لكل خطوة (غير صوت اللودو)
+    func marbleSteps(_ n: Int, at: Double = 0) {
+        for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "marble1" : "marble2", at: at + Double(i) * 0.13, gain: 0.9) }
     }
 
     /// جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره
@@ -99,7 +103,7 @@ final class Sounds {
         // مشغّل جديد كل مرة (المحادثة الصوتية تغيّر إعدادات الصوت فيتعطل المشغّل القديم)،
         // وبصوت واضح حتى مع VoiceOver (كان خافتاً معه فما ينسمع)
         DispatchQueue.main.async { [weak self] in
-            // كلمة "دورك" منطوقة (بدل النغمة)
+            // نغمة الدور (ملف voice-turn)
             guard let self, let d = self.data["voice-turn"], let p = try? AVAudioPlayer(data: d) else { return }
             p.volume = 1
             p.play()
