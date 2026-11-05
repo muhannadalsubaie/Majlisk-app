@@ -56,6 +56,8 @@ class MainActivity : ComponentActivity() {
                 MajliskTheme { AppRoot() }
             }
         }
+        // نراقب انتقال مؤشر قارئ الشاشة (للورقة اللي لعبتها: تختفي أول ما تحرك المؤشر)
+        com.majlisk.app.a11y.A11yFocus.attach(this)
     }
 
 
