@@ -14,8 +14,17 @@ import kotlin.random.Random
 object Sounds {
     /** الوقت بين طقطقة كل خطوة يمشيها الحجر (نفس مهلة الخادم: الدور ما ينتقل لين يوصل الحجر) */
     const val STEP_GAP = 0.22
-    private lateinit var pool: SoundPool
-    private val ids = HashMap<String, Int>()
+    /** أصوات اللعبة العادية، ونسخة منها على قناة المكالمات (وقت المحادثة الصوتية) */
+    private lateinit var gamePool: SoundPool
+    private lateinit var callPool: SoundPool
+    private val gameIds = HashMap<String, Int>()
+    private val callIds = HashMap<String, Int>()
+    /** وقت المحادثة الصوتية: أصوات اللعبة على قناة المكالمات، بنفس مستوى أصوات اللاعبين،
+     *  وإلغاء الصدى في الجوال يلغيها من الميكروفون فما يسمعها الباقين منك */
+    @Volatile private var inCall = false
+    private val pool get() = if (inCall) callPool else gamePool
+    private val ids get() = if (inCall) callIds else gameIds
+    fun callMode(on: Boolean) { inCall = on }
     private val main = Handler(Looper.getMainLooper())
     private val recent = HashMap<String, Long>()
 
@@ -34,9 +43,14 @@ object Sounds {
     private var openPending = false
 
     fun init(c: Context) {
-        pool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(
+        gamePool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(
             AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(),
         ).build()
+        callPool = SoundPool.Builder().setMaxStreams(8).setAudioAttributes(
+            AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build(),
+        ).build()
+        val pool = gamePool
+        val ids = gameIds
         // نغمة الفتح قد تُطلب قبل اكتمال تحميلها: تُشغَّل لحظة جاهزيتها
         pool.setOnLoadCompleteListener { p, id, status ->
             if (status != 0) return@setOnLoadCompleteListener
@@ -45,6 +59,7 @@ object Sounds {
         }
         for (name in FILES) {
             runCatching { c.assets.openFd("sounds/$name.mp3").use { ids[name] = pool.load(it, 1) } }
+            runCatching { c.assets.openFd("sounds/$name.mp3").use { callIds[name] = callPool.load(it, 1) } }
         }
     }
 
