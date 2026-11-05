@@ -27,6 +27,9 @@ jobs:
               slug=${p##*/}
               curl -sL -A "$UA" "https://opengameart.org$p" -o p.html
               grep -q 'CC0' p.html || continue
+              for z in $(grep -oE 'https://opengameart.org/sites/default/files/[^"]+\.zip' p.html | sort -u | head -2); do
+                mkdir -p "$slug"; curl -sL -A "$UA" --max-filesize 40000000 "$z" -o "$slug/pack.zip" && (cd "$slug" && unzip -q -o pack.zip -x '__MACOSX/*' ; rm -f pack.zip) || true
+              done
               for f in $(grep -oE 'https://opengameart.org/sites/default/files/[^"]+\.(ogg|wav|mp3|flac)' p.html | sort -u | head -6); do
                 n=$(basename "$f" | tr -c 'A-Za-z0-9._-' '_')
                 mkdir -p "$slug"
@@ -36,6 +39,8 @@ jobs:
             done
           done
           rm -f s.html p.html
+          find . -type f ! \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' -o -iname '*.flac' -o -name SOURCES.txt \) -delete || true
+          find . -type f -size +15M -delete || true
           find . -type f | wc -l; cat SOURCES.txt | sort -u
       - name: Push
         run: |
