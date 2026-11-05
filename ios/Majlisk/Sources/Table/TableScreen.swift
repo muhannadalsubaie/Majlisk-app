@@ -154,11 +154,9 @@ struct BalootBoard: View {
     @AccessibilityFocusState private var focusedCard: Card?
     /// بعد ما تضغط زر شراء/دبل: الورقة اللي يروح لها المؤشر لما تختفي الأزرار
     @State private var pendingFocus: Card?
-    /// بعد ما تلعب ورقة: (الورقة اللي انلعبت، هويتها في القائمة، الورقة اللي جنبها)
-    @State private var pendingPlay: (played: Card, id: Card, target: Card)?
-    /// هوية عنصر كل ورقة عند VoiceOver: الورقة اللي جنب اللي لعبتها تاخذ نفس عنصرها،
-    /// فيبقى المؤشر في مكانه عليها بدون ما يقرأ شيء (كان المؤشر يُنقل لها فيقفز لوسط الشاشة)
-    @State private var slotIds: [Card: Card] = [:]
+    /// الورقة اللي لعبتها ومكانها في يدك: تبقى في مكانها (مخفية عن العين) والمؤشر عليها، فما يتحرك ولا يقرأ شيء
+    /// وتسمع ورقتك وباقي اللعب. تختفي أول ما تحرك المؤشر بنفسك لعنصر ثاني
+    @State private var ghost: (card: Card, index: Int)?
     @State private var prevGame: GameView?
     @State private var lastTurn: String?
 
@@ -272,20 +270,21 @@ struct BalootBoard: View {
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)
+                    let shown = withGhost(hand)
                     ZStack(alignment: .bottom) {
-                        ForEach(hand.map { HandSlot(id: elementId($0, hand), card: $0) }, id: \.id) { item in
-                            let c = item.card
-                            let k = CGFloat(hand.firstIndex(of: c) ?? 0) - CGFloat(hand.count - 1) / 2
-                            HandCard(card: c, legal: g.actions.legal.contains(c)) {
-                                // المؤشر يبقى عند أوراقك: الورقة اللي جنبها تحل محلها بصمت، فتسمع ورقتك وباقي اللعب
-                                let i = hand.firstIndex(of: c) ?? 0
-                                if let t = hand[safe: i - 1] ?? hand[safe: i + 1] { pendingPlay = (c, item.id, t) }
+                        ForEach(shown, id: \.self) { c in
+                            let i = shown.firstIndex(of: c) ?? 0
+                            let k = CGFloat(i) - CGFloat(shown.count - 1) / 2
+                            let isGhost = !hand.contains(c)
+                            HandCard(card: c, legal: g.actions.legal.contains(c), ghost: isGhost) {
+                                // المؤشر يبقى مكانه على الورقة اللي لعبتها (تبقى مخفية مكانها)، بصمت
+                                if UIAccessibility.isVoiceOverRunning, let at = hand.firstIndex(of: c) { ghost = (c, at) }
                                 act(["type": "play", "card": c.json])
                             }
                                 .accessibilityFocused($focusedCard, equals: c)
                                 .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
                                 // VoiceOver يقرأ من اليمين لليسار: هاص الأكبر أولاً
-                                .accessibilitySortPriority(Double(hand.firstIndex(of: c) ?? 0))
+                                .accessibilitySortPriority(Double(i))
                         }
                     }
                     .padding(.bottom, 6)
@@ -299,6 +298,11 @@ struct BalootBoard: View {
         }
         .onAppear { Gestures.shared.set("baloot") { read($0) }; prevGame = g; lastTurn = turnKey(g) }
         .onDisappear { Gestures.shared.clear("baloot") }
+        // حرّكت المؤشر بنفسك لعنصر ثاني: الورقة اللي لعبتها تختفي من مكانها
+        .onChange(of: focusedCard) { f in
+            guard let gh = ghost, f != gh.card else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { if let g2 = ghost, g2.card == gh.card, focusedCard != gh.card { ghost = nil } }
+        }
         .onChange(of: conn.version) { _ in
             Gestures.shared.set("baloot") { read($0) }
             settleFocus()
@@ -314,12 +318,12 @@ struct BalootBoard: View {
         }
     }
 
-    /// هوية عنصر الورقة: لو انلعبت الورقة اللي جنبها ووصلت الحالة، تاخذ هويتها هي
-    /// (في نفس الرسم اللي تختفي فيه، فما يتغير عنصر المؤشر ولا لحظة)
-    private func elementId(_ c: Card, _ hand: [Card]) -> Card {
-        if let p = pendingPlay, p.target == c, !hand.contains(p.played), !hand.contains(p.id) { return p.id }
-        if let id = slotIds[c], id != c, !hand.contains(id) { return id }
-        return c
+    /// أوراقك ومعها الورقة اللي لعبتها في نفس مكانها (لين تحرك المؤشر منها)
+    private func withGhost(_ hand: [Card]) -> [Card] {
+        guard let gh = ghost, !hand.contains(gh.card) else { return hand }
+        var out = hand
+        out.insert(gh.card, at: min(gh.index, out.count))
+        return out
     }
 
     /// أزرار الشراء والدبل تختفي بعد الضغط: المؤشر ينتقل لأوراقك (لا فوق ولا تحت)
@@ -328,13 +332,8 @@ struct BalootBoard: View {
     /// وصلت الحالة الجديدة
     private func settleFocus() {
         let hand = g.myHand
-        // الورقة اللي لعبتها راحت: الورقة اللي جنبها ورثت عنصرها (والمؤشر عليه أصلاً)، نثبّت ذلك
-        if let p = pendingPlay, !hand.contains(p.played) {
-            pendingPlay = nil
-            if hand.contains(p.target) && !hand.contains(p.id) { slotIds[p.target] = p.id }
-        }
-        // ننظف هويات أوراق ما عادت في يدك (توزيع جديد)
-        slotIds = slotIds.filter { hand.contains($0.key) && !hand.contains($0.value) }
+        // توزيع جديد: ما تبقى الورقة اللي لعبتها
+        if let gh = ghost, let p = prevGame, g.myHand.count > p.myHand.count || g.trickNo < p.trickNo { _ = gh; ghost = nil }
         // أزرار الشراء اختفت: نحط المؤشر على أوراقك
         if let t = pendingFocus, g.actions.bids.isEmpty, g.actions.doubleLabel == nil, !g.actions.canPassDouble, !g.actions.chooseLock {
             pendingFocus = nil
@@ -570,9 +569,6 @@ private struct TableCard: View {
     }
 }
 
-/// ورقة في يدك مع هوية عنصرها عند VoiceOver (قد تكون هوية الورقة اللي لعبتها جنبها)
-private struct HandSlot { let id: Card; let card: Card }
-
 /// ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر VoiceOver حين ينتهي دورك
 /// ورقة في اليد. لا نعلن "غير متاحة" كحالة (تغيّرها لحظة انتهاء دورك قد يعيد قراءة الورقة المحددة).
 /// الاسم والنوع (زر) ثابتين دائماً: تغييرهما وهي محددة كان يخلي VoiceOver يقول «زر» فجأة،
@@ -580,9 +576,12 @@ private struct HandSlot { let id: Card; let card: Card }
 private struct HandCard: View {
     let card: Card
     let legal: Bool
+    /// الورقة اللي لعبتها باقية مكانها للمؤشر بس: مخفية عن العين، ونفس اسمها (فما تنعاد قراءتها)، والضغط عليها ما يسوي شي
+    var ghost = false
     let play: () -> Void
     var body: some View {
         TableCard(card: card, width: 66, height: 96)
+            .opacity(ghost ? 0.02 : 1)
             // المسموح لعبها بإطار ذهبي فقط، فيبقى شكل المروحة واحداً
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 3))
             .contentShape(Rectangle())
@@ -594,6 +593,7 @@ private struct HandCard: View {
     }
 
     private func tap() {
+        if ghost { return }
         if legal { play() } else { Announcer.announceNow("غير متاحة") }
     }
 }
