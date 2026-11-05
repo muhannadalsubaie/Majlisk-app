@@ -286,7 +286,7 @@ struct BalootBoard: View {
                         ForEach(hand, id: \.self) { c in
                             let i = hand.firstIndex(of: c) ?? 0
                             let k = CGFloat(i) - CGFloat(hand.count - 1) / 2
-                            HandCard(card: c, legal: g.actions.legal.contains(c)) {
+                            HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions) {
                                 // لما تختفي الورقة ينتقل المؤشر لكلمة «أوراقك»
                                 if UIAccessibility.isVoiceOverRunning { playedCard = c }
                                 act(["type": "play", "card": c.json])
@@ -324,6 +324,21 @@ struct BalootBoard: View {
             lastTurn = key
             prevGame = g
         }
+    }
+
+    /// إجراءات قارئ الشاشة على أوراقك (سحب لفوق أو لتحت والمؤشر على أي ورقة): نفس أزرار الشراء والدبل الظاهرة الحين
+    private var cardActions: [(String, () -> Void)] {
+        var out: [(String, () -> Void)] = []
+        for b in g.actions.bids {
+            out.append((b.type == "pass" && g.bidRound == 2 ? "ولا" : b.label, { act(["type": "bid", "bid": b.raw]) }))
+        }
+        if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
+        if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
+        if g.actions.chooseLock {
+            out.append(("مقفل", { act(["type": "doubleLock", "locked": true]) }))
+            out.append(("مفتوح", { act(["type": "doubleLock", "locked": false]) }))
+        }
+        return out
     }
 
     /// أزرار الشراء والدبل تختفي بعد الضغط: المؤشر ينتقل لأوراقك (لا فوق ولا تحت)
@@ -583,6 +598,8 @@ private struct TableCard: View {
 private struct HandCard: View {
     let card: Card
     let legal: Bool
+    /// الشراء والدبل كإجراءات على الورقة (للمكفوفين: ما يحتاجون يروحون للأزرار)
+    var actions: [(String, () -> Void)] = []
     let play: () -> Void
     var body: some View {
         TableCard(card: card, width: 66, height: 96)
@@ -594,6 +611,9 @@ private struct HandCard: View {
             .accessibilityLabel(card.label)
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { tap() }
+            .accessibilityActions {
+                ForEach(Array(actions.enumerated()), id: \.offset) { _, a in Button(a.0) { a.1() } }
+            }
     }
 
     private func tap() {

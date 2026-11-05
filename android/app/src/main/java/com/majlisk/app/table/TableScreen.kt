@@ -348,6 +348,16 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             focusCard(hand.firstOrNull { cardKey(it) == p.second })
         }
         val toHand = { hand.lastOrNull()?.let { pending = null to cardKey(it) }; Unit }
+        // إجراءات قارئ الشاشة على أوراقك (والمؤشر على أي ورقة): نفس أزرار الشراء والدبل الظاهرة الحين
+        val cardActions = buildList {
+            g.actions.bids.forEach { b -> add((if (b.type == "pass" && g.bidRound == 2) "ولا" else b.label) to { act(jsonOf("type" to "bid", "bid" to b.raw)) }) }
+            g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
+            if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
+            if (g.actions.chooseLock) {
+                add("مقفل" to { act(jsonOf("type" to "doubleLock", "locked" to true)) })
+                add("مفتوح" to { act(jsonOf("type" to "doubleLock", "locked" to false)) })
+            }
+        }
         // بعد ما تلعب ورقة: لما تختفي من يدك ينتقل المؤشر لكلمة «أوراقك» (فوق أوراقك)
         val headingFocus = remember { FocusRequester() }
         var playedKey by remember { mutableStateOf<String?>(null) }
@@ -414,7 +424,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                             onDispose { cardFocus.remove(cardKey(c)) }
                         }
                         HandCard(
-                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f,
+                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = cardActions,
                             // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
                                 .semantics { traversalIndex = (hand.size - i).toFloat() },
@@ -586,7 +596,7 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
  * لا نعلن "غير متاحة" كحالة: تغيّرها لحظة انتهاء دورك كان يجعل قارئ الشاشة يعيد قراءة الورقة المحددة.
  */
 @Composable
-private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modifier, onPlay: () -> Unit) {
+private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modifier, actions: List<Pair<String, () -> Unit>> = emptyList(), onPlay: () -> Unit) {
     val tap = { if (legal) onPlay() else Announcer.announceNow("غير متاحة") }
     Box(
         modifier
@@ -602,6 +612,8 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modi
                 contentDescription = card.label
                 role = Role.Button
                 onClick { tap(); true }
+                // الشراء والدبل كإجراءات على الورقة (للمكفوفين: ما يحتاجون يروحون للأزرار)
+                if (actions.isNotEmpty()) customActions = actions.map { (label, run) -> CustomAccessibilityAction(label) { run(); true } }
             },
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }
