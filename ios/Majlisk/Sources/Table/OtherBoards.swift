@@ -948,6 +948,8 @@ final class OtherGameSounds {
                 // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
                 if (first && d.line.isEmpty && d.phase == "playing") || (phase != nil && phase != "playing" && d.phase == "playing") { s.dominoShuffle() }
                 else if !first && (d.lastKind == "play" || d.lastKind == "draw") { s.dominoTile() }
+                // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
+                if !first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver") { s.dominoEnd(at: 0.5) }
             } else if let j {
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 if (first && !j.hasMove) || (!first && deal != nil && deal != j.dealNo) { s.deal(newHand: true) }

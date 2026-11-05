@@ -37,7 +37,7 @@ object Sounds {
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
-        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "proj-baloot", "trump-cut", "hand-end",
+        "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
     )
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -106,6 +106,8 @@ object Sounds {
     /** الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة */
     fun dominoShuffle() = play("domino-shuffle", gain = 1f, vary = false)
     fun dominoTile() = play("domino-tile", gain = 1f)
+    /** نهاية الصكة في الدومينو: هارب هادئ */
+    fun dominoEnd(at: Double = 0.0) = play("domino-end", at = at, gain = 1f, vary = false)
     /** الجاكارو: صوت وضع الورقة */
     fun jackarooCard() = play("jackaroo-card", gain = 1f)
     /** لودو: رمي النرد */

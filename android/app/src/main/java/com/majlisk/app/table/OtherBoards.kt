@@ -865,9 +865,13 @@ class OtherGameSounds {
         if (changed) {
             when {
                 // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
-                d != null -> when {
-                    (first && d.line.isEmpty() && d.phase == "playing") || (phase != null && phase != "playing" && d.phase == "playing") -> Sounds.dominoShuffle()
-                    !first && (d.lastKind == "play" || d.lastKind == "draw") -> Sounds.dominoTile()
+                d != null -> {
+                    when {
+                        (first && d.line.isEmpty() && d.phase == "playing") || (phase != null && phase != "playing" && d.phase == "playing") -> Sounds.dominoShuffle()
+                        !first && (d.lastKind == "play" || d.lastKind == "draw") -> Sounds.dominoTile()
+                    }
+                    // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
+                    if (!first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver")) Sounds.dominoEnd(0.5)
                 }
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 j != null -> {
