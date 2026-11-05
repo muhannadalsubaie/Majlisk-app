@@ -1,0 +1,27 @@
+# تنزيل حزم أصوات مجانية (Kenney، رخصة CC0) لاختيار أصوات جديدة — يدفعها لفرع sound-samples (ما تدخل التطبيق)
+name: Sound samples
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download packs
+        run: |
+          mkdir -p out && cd out
+          for a in casino-audio impact-sounds interface-sounds rpg-audio music-jingles digital-audio ui-audio; do
+            url=$(curl -sL "https://kenney.nl/assets/$a" | grep -oE 'https://kenney\.nl/media/pages/assets/[^"]+\.zip' | head -1)
+            echo "$a -> $url"
+            [ -n "$url" ] || continue
+            curl -sL "$url" -o "$a.zip" && mkdir -p "$a" && unzip -q -o "$a.zip" -d "$a" && rm "$a.zip"
+          done
+          find . -type f \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' \) | wc -l
+          find . -type f ! \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' -o -iname '*.txt' \) -delete
+      - name: Push to sound-samples branch
+        run: |
+          cd out
+          git init -q -b sound-samples
+          git config user.name "github-actions" && git config user.email "actions@github.com"
+          git add -A && git commit -qm "Kenney CC0 sound packs"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" sound-samples
