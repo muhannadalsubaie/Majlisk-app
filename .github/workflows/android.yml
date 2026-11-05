@@ -1,7 +1,7 @@
 # بناء تطبيق الأندرويد (Kotlin) عند كل تعديل، ونشره كإصدار "android-latest" للتنزيل المباشر.
 # التوقيع بنفس مفتاح التطبيق الحالي (android/keystore/upload.jks.enc مشفّراً بـ ANDROID_KEYSTORE_PASSWORD)،
 # فتُثبَّت النسخة الجديدة فوق القديمة مباشرة. ورقم الإصدار يبدأ من 10000 ليكون أعلى من أرقام التطبيق الحالي.
-# وإن وُجد سر PLAY_SERVICE_ACCOUNT_JSON يُرفع الـ AAB إلى الاختبار الداخلي في Google Play.
+# وإن وُجد سر PLAY_SERVICE_ACCOUNT_JSON يُرفع الـ AAB إلى الاختبار المغلق (Alpha) في Google Play.
 name: Android
 
 on:
@@ -67,7 +67,7 @@ jobs:
           files: |
             majlisk.apk
             majlisk.aab
-      - name: Upload to Google Play (internal testing)
+      - name: Upload to Google Play (closed testing — Alpha)
         id: play
         if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
         continue-on-error: true
@@ -76,7 +76,7 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.majlisk.app
           releaseFiles: majlisk.aab
-          track: internal
+          track: alpha
           status: completed
       - name: Upload to Google Play as draft (app not published yet)
         if: steps.play.outcome == 'failure'
@@ -85,5 +85,5 @@ jobs:
           serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
           packageName: com.majlisk.app
           releaseFiles: majlisk.aab
-          track: internal
+          track: alpha
           status: draft
