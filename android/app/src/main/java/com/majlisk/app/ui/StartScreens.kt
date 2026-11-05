@@ -167,7 +167,7 @@ fun AuthScreen(done: () -> Unit) {
             run {
                 if (signup) {
                     AuthService.signUp(name, email.trim(), password)
-                    Announcer.announce("أهلاً ${name.trim()}، حصلت على 30 عملة ترحيبية")
+                    Announcer.announce("أهلاً ${name.trim()}، حصلت على 400 عملة ترحيبية")
                 } else {
                     AuthService.signIn(email.trim(), password)
                     Announcer.announce("تم تسجيل الدخول")
