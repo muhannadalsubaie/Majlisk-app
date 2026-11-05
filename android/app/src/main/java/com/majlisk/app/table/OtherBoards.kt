@@ -178,6 +178,8 @@ private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
             .background(Color(0xFF145036), RoundedCornerShape(16.dp))
             .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
             .clearAndSetSemantics { },
+        // المواضع محسوبة من فوق على اليسار مهما كان اتجاه الواجهة (العربية من اليمين)
+        contentAlignment = androidx.compose.ui.AbsoluteAlignment.TopLeft,
     ) {
         val W = maxWidth.value; val H = maxHeight.value
         val n = line.size

@@ -9,7 +9,6 @@ import com.android.billingclient.api.ProductDetails
 import com.android.billingclient.api.Purchase
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
-import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import com.majlisk.app.MainActivity
 import com.majlisk.app.MajliskApp
@@ -62,7 +61,12 @@ object Billing {
         val params = QueryProductDetailsParams.newBuilder().setProductList(PACKS.map {
             QueryProductDetailsParams.Product.newBuilder().setProductId(it.id).setProductType(BillingClient.ProductType.INAPP).build()
         }).build()
-        return client.queryProductDetails(params).productDetailsList.orEmpty()
+        // مكتبة الفوترة 8: النتيجة تجي في QueryProductDetailsResult
+        return suspendCancellableCoroutine { cont ->
+            client.queryProductDetailsAsync(params) { _, result ->
+                if (cont.isActive) cont.resume(result.productDetailsList.orEmpty())
+            }
+        }
     }
 
     /** الباقات بأسعارها الحقيقية من المتجر (بعملة المستخدم)، أو السعر المقترح إن تعذّر الجلب */

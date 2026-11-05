@@ -88,7 +88,7 @@ dependencies {
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("io.getstream:stream-webrtc-android:1.3.10")
     implementation("com.google.android.gms:play-services-ads:24.4.0")
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
 
     testImplementation(composeBom)
     testImplementation("junit:junit:4.13.2")
