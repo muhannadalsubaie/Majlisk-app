@@ -9,10 +9,10 @@ final class Sounds {
     private var recent: [String: Date] = [:]
 
     private let files = [
-        "card1", "card2", "card3", "card4", "slide1", "slide2", "slide3", "slide4",
+        "card1", "card2", "card3", "card4",
         "shove1", "shove2", "shove3", "shove4", "shuffle", "fan", "chips1", "chips2", "collide",
         "cup1", "slide7", "chips3", "chips4", "chips5", "chips6", "collide2", "collide3", "collide4",
-        "lay1", "lay2", "handle1", "turn", "match-win", "match-lose", "kaboot", "bid",
+        "lay1", "lay2", "handle1", "match-win", "match-lose", "kaboot", "bid",
         "app-open", "table-join", "table-leave", "proj-sira", "proj-fifty", "bid-sun", "voice-join", "voice-leave",
         "voice-pass", "voice-wala", "voice-sun", "voice-hokm", "voice-hokm2", "voice-ashkal",
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
