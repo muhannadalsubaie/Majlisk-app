@@ -16,6 +16,8 @@ struct TableScreen: View {
     let exit: () -> Void
     @StateObject private var conn: TableConnection
     @State private var menuOpen = false
+    /// الصفحة اللي تنفتح عليها القائمة (من إجراءات قارئ الشاشة على زر القائمة)
+    @State private var menuStart: TableMenuStart = .main
     @State private var chatOpen = false
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var historyOpen = false
@@ -88,7 +90,14 @@ struct TableScreen: View {
         // مع VoiceOver الشاشة ما تتمرر، فسحب الأصابع الثلاث (فوق/تحت) يوصل لإيماءات اللعبة دائماً
         Screen(fill: true, lockScroll: UIAccessibility.isVoiceOverRunning) {
             HStack(spacing: 8) {
-                SmallButton("القائمة") { menuOpen = true }
+                SmallButton("القائمة") { menuStart = .main; menuOpen = true }
+                    // قارئ الشاشة: الإجراءات (سحب لفوق أو تحت) تفتح الصفحة المطلوبة على طول
+                    .accessibilityActions {
+                        Button("اللاعبون") { menuStart = .players; menuOpen = true }
+                        Button("الأصدقاء") { menuStart = .friends; menuOpen = true }
+                        if v.ownerUid == uid { Button("دعوة صديق") { menuStart = .invite; menuOpen = true } }
+                        Button("مغادرة الطاولة") { confirmLeave = true }
+                    }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
@@ -132,7 +141,7 @@ struct TableScreen: View {
             if let d = (conn.view ?? v).domino { DominoLogView(d: d) { dominoLogOpen = false } }
         }
         .sheet(isPresented: $menuOpen) {
-            TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false })
+            TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false }, start: menuStart)
         }
         .confirm("مغادرة الطاولة", isPresented: $confirmLeave,
                  message: v.playing && v.mySeat != nil ? "المباراة جارية — سيحل روبوت مكانك. هل تريد المغادرة؟" : "هل تريد مغادرة الطاولة؟",

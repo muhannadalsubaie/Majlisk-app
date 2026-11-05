@@ -46,10 +46,20 @@ private sealed interface Page {
     data class Confirm(val ban: Boolean, val uid: String) : Page
 }
 
+/** صفحة تنفتح عليها القائمة مباشرة (من إجراءات قارئ الشاشة على زر القائمة) */
+enum class TableMenuStart { Main, Players, Invite, Friends }
+
 /** قائمة الطاولة: اللاعبون، دعوة صديق، مشاهدة إعلان، المحادثة الصوتية، الإعدادات، مغادرة */
 @Composable
-fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> Unit, onClose: () -> Unit) {
-    var page by remember { mutableStateOf<Page>(Page.Main) }
+fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> Unit, onClose: () -> Unit, start: TableMenuStart = TableMenuStart.Main) {
+    var page by remember {
+        mutableStateOf<Page>(when (start) {
+            TableMenuStart.Main -> Page.Main
+            TableMenuStart.Players -> Page.Players
+            TableMenuStart.Invite -> Page.Invite
+            TableMenuStart.Friends -> Page.Friends
+        })
+    }
     val voice by Voice.state.collectAsState()
     val isOwner = v.ownerUid == uid
     val me = v.mySeat ?: 0

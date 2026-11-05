@@ -5,6 +5,9 @@ private enum Page: Equatable {
     case replace(Int), member(String), confirm(ban: Bool, uid: String)
 }
 
+/// صفحة تنفتح عليها القائمة مباشرة (من إجراءات قارئ الشاشة على زر القائمة)
+enum TableMenuStart { case main, players, invite, friends }
+
 /// قائمة الطاولة: اللاعبون، دعوة صديق، مشاهدة إعلان، المحادثة الصوتية، الإعدادات، مغادرة
 struct TableMenu: View {
     let v: TableView
@@ -12,6 +15,7 @@ struct TableMenu: View {
     @ObservedObject var conn: TableConnection
     let onLeave: () -> Void
     let onClose: () -> Void
+    var start: TableMenuStart = .main
     @ObservedObject private var voice = Voice.shared
     @ObservedObject private var hub = Hub.shared
     @State private var page: Page = .main
@@ -39,6 +43,17 @@ struct TableMenu: View {
     private func canManage(_ u: String?) -> Bool { guard let u, !u.isEmpty else { return false }; return u != uid && !u.hasPrefix("bot-") }
 
     var body: some View {
+        pages.onAppear {
+            switch start {
+            case .main: break
+            case .players: page = .players
+            case .invite: page = .invite
+            case .friends: page = .friends
+            }
+        }
+    }
+
+    @ViewBuilder private var pages: some View {
         switch page {
         case .main:
             Sheet(title: "القائمة") {

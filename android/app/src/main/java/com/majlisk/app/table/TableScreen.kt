@@ -126,6 +126,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val closed by conn.closed.collectAsState()
     val kicked by conn.kicked.collectAsState()
     var menuOpen by remember { mutableStateOf(false) }
+    /** الصفحة اللي تنفتح عليها القائمة (من إجراءات قارئ الشاشة على زر القائمة) */
+    var menuStart by remember { mutableStateOf(TableMenuStart.Main) }
     var historyOpen by remember { mutableStateOf(false) }
     var dominoLogOpen by remember { mutableStateOf(false) }
     var confirmLeave by remember { mutableStateOf(false) }
@@ -173,7 +175,17 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     Box(Modifier.fillMaxSize().tableGestureArea()) {
         Screen(fill = true) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
-                com.majlisk.app.ui.BackButton({ menuOpen = true }, "القائمة")
+                // قارئ الشاشة: الإجراءات تفتح الصفحة المطلوبة على طول (بدون ما تدخل القائمة)
+                Box(Modifier.semantics(mergeDescendants = true) {
+                    customActions = listOfNotNull(
+                        CustomAccessibilityAction("اللاعبون") { menuStart = TableMenuStart.Players; menuOpen = true; true },
+                        CustomAccessibilityAction("الأصدقاء") { menuStart = TableMenuStart.Friends; menuOpen = true; true },
+                        if (v.ownerUid == uid) CustomAccessibilityAction("دعوة صديق") { menuStart = TableMenuStart.Invite; menuOpen = true; true } else null,
+                        CustomAccessibilityAction("مغادرة الطاولة") { confirmLeave = true; true },
+                    )
+                }) {
+                    com.majlisk.app.ui.BackButton({ menuStart = TableMenuStart.Main; menuOpen = true }, "القائمة")
+                }
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
                 if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(
@@ -212,7 +224,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
     if (dominoLogOpen && v.domino != null) DominoLogDialog(v.domino) { dominoLogOpen = false }
-    if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false })
+    if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false }, start = menuStart)
     if (confirmLeave) {
         ConfirmDialog(
             "مغادرة الطاولة",
