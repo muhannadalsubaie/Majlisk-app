@@ -13,6 +13,11 @@ import WebRTC
  * الصوت PCM ‏16-بت أحادي، WebRTC يسحب الصوت للتشغيل ونسلّمه صوت الميكروفون.
  */
 final class VoiceAudioDevice: NSObject, RTCAudioDevice {
+    /// جهاز الصوت الشغّال الآن (المحادثة الصوتية فيها): أصوات اللعب تنخلط فيه بدل ما تشتغل لحالها،
+    /// فما يعتبرها النظام "صوت ثاني" يخفضه، وتنلغى من الميكروفون مع صوت الباقين (ما يسمعونها منك)
+    private(set) static weak var active: VoiceAudioDevice?
+    /// أصوات اللعب المخلوطة مع صوت المحادثة
+    let effects = EffectMixer()
     private var unit: AudioUnit?
     private weak var delegate: RTCAudioDeviceDelegate?
 
@@ -31,6 +36,10 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     private var systemEcho: Bool {
         if #available(iOS 18.2, *) { return session.isEchoCancelledInputAvailable }
         return false
+    }
+    /// سماعة (سلكية أو بلوتوث أو USB): ما فيه صدى أصلاً، فما نحتاج أي معالجة ولا أي خفض للأصوات
+    private var headset: Bool {
+        session.currentRoute.outputs.contains { [.headphones, .bluetoothA2DP, .bluetoothHFP, .bluetoothLE, .usbAudio].contains($0.portType) }
     }
     /// الوحدة الحالية: العادية (RemoteIO) أو وحدة المكالمات (VoiceProcessingIO)
     private var plainUnit = false
@@ -66,11 +75,16 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func startPlayout() -> Bool {
         guard let unit else { return false }
         isPlaying = true
-        return AudioOutputUnitStart(unit) == noErr
+        effects.rate = session.sampleRate
+        let ok = AudioOutputUnitStart(unit) == noErr
+        if ok { VoiceAudioDevice.active = self }
+        return ok
     }
 
     func stopPlayout() -> Bool {
         isPlaying = false
+        if VoiceAudioDevice.active === self { VoiceAudioDevice.active = nil }
+        effects.clear()
         if !isRecording, let unit { AudioOutputUnitStop(unit) }
         return true
     }
@@ -78,7 +92,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func initializeRecording() -> Bool {
         // الميكروفون ينفتح أول مرة: نعيد بناء الوحدة مع الإدخال (قبلها ما نطلب الميكروفون أبداً)
         let wasPlaying = isPlaying
-        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable { try? session.setPrefersEchoCancelledInput(true) }
+        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable { try? session.setPrefersEchoCancelledInput(!headset) }
         disposeUnit()
         guard makeUnit(input: true) else { return false }
         isRecordingInitialized = true
@@ -105,7 +119,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func setTalking(_ on: Bool) {
         talking = on
         guard let unit, !plainUnit else { return }
-        var bypass: UInt32 = on ? 0 : 1
+        var bypass: UInt32 = on && !headset ? 0 : 1
         AudioUnitSetProperty(unit, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, UInt32(MemoryLayout<UInt32>.size))
     }
 
@@ -113,7 +127,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
 
     private func makeUnit(input: Bool) -> Bool {
         // iOS 18.2+: الوحدة العادية دائماً (إلغاء الصدى من النظام وقت الكلام) — بلا أي خفض للأصوات
-        let plain = systemEcho
+        let plain = systemEcho || headset
         var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: plain ? kAudioUnitSubType_RemoteIO : kAudioUnitSubType_VoiceProcessingIO,
                                              componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
         guard let comp = AudioComponentFindNext(nil, &desc) else { return false }
@@ -158,7 +172,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         }
         // المعالجة مطفأة وأنت تسمع بس
         if !plain {
-            var bypass: UInt32 = talking ? 0 : 1
+            var bypass: UInt32 = talking && !headset ? 0 : 1
             AudioUnitSetProperty(u, kAUVoiceIOProperty_BypassVoiceProcessing, kAudioUnitScope_Global, 0, &bypass, size)
         }
 
@@ -182,11 +196,15 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     private func playout(_ flags: UnsafeMutablePointer<AudioUnitRenderActionFlags>, _ ts: UnsafePointer<AudioTimeStamp>,
                          _ bus: UInt32, _ frames: UInt32, _ data: UnsafeMutablePointer<AudioBufferList>?) -> OSStatus {
         guard let data else { return noErr }
+        let list = UnsafeMutableAudioBufferListPointer(data)
         guard isPlaying, let delegate else {
-            for b in UnsafeMutableAudioBufferListPointer(data) { if let p = b.mData { memset(p, 0, Int(b.mDataByteSize)) } }
+            for b in list { if let p = b.mData { memset(p, 0, Int(b.mDataByteSize)) } }
             return noErr
         }
-        return delegate.getPlayoutData(flags, ts, Int(bus), frames, data)
+        let st = delegate.getPlayoutData(flags, ts, Int(bus), frames, data)
+        // أصوات اللعب فوق صوت المحادثة، بنفس المستوى
+        if let p = list.first?.mData { effects.mix(into: p.assumingMemoryBound(to: Int16.self), frames: Int(frames)) }
+        return st
     }
 
     /// صوت الميكروفون: نقرأه من الوحدة ونسلّمه لـ WebRTC
@@ -201,5 +219,71 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
             guard st == noErr else { return st }
             return delegate.deliverRecordedData(flags, ts, Int(bus), frames, &list, nil, nil)
         }
+    }
+}
+
+/// خلاط أصوات اللعب داخل جهاز صوت المحادثة: كل صوت PCM ‏16-بت أحادي بنفس تردد الجهاز
+final class EffectMixer {
+    private struct Playing { let samples: [Int16]; var pos: Int; let gain: Float }
+    private let lock = NSLock()
+    private var playing: [Playing] = []
+    private var cache: [String: [Int16]] = [:]
+    /// تردد جهاز الصوت (يتغير مع السماعة)
+    var rate: Double = 48000 { didSet { if rate != oldValue { cache.removeAll() } } }
+
+    /// يحوّل ملف الصوت مرة وحدة لتردد الجهاز
+    private func samples(_ name: String, _ url: URL) -> [Int16]? {
+        if let c = cache[name] { return c }
+        guard let file = try? AVAudioFile(forReading: url),
+              let out = AVAudioFormat(commonFormat: .pcmFormatInt16, sampleRate: rate, channels: 1, interleaved: true),
+              let conv = AVAudioConverter(from: file.processingFormat, to: out),
+              let src = AVAudioPCMBuffer(pcmFormat: file.processingFormat, frameCapacity: AVAudioFrameCount(file.length)) else { return nil }
+        do { try file.read(into: src) } catch { return nil }
+        let cap = AVAudioFrameCount(Double(src.frameLength) * rate / file.processingFormat.sampleRate) + 1024
+        guard let dst = AVAudioPCMBuffer(pcmFormat: out, frameCapacity: cap) else { return nil }
+        var fed = false
+        var err: NSError?
+        conv.convert(to: dst, error: &err) { _, status in
+            if fed { status.pointee = .endOfStream; return nil }
+            fed = true; status.pointee = .haveData; return src
+        }
+        guard err == nil, let ch = dst.int16ChannelData else { return nil }
+        let arr = Array(UnsafeBufferPointer(start: ch[0], count: Int(dst.frameLength)))
+        cache[name] = arr
+        return arr
+    }
+
+    func play(_ name: String, url: URL, gain: Float) {
+        guard let s = samples(name, url) else { return }
+        lock.lock()
+        playing.append(Playing(samples: s, pos: 0, gain: gain))
+        if playing.count > 12 { playing.removeFirst() }
+        lock.unlock()
+    }
+
+    func clear() {
+        lock.lock()
+        playing.removeAll()
+        lock.unlock()
+    }
+
+    /// يُستدعى من خيط الصوت: يضيف الأصوات الشغّالة فوق صوت المحادثة
+    func mix(into out: UnsafeMutablePointer<Int16>, frames: Int) {
+        guard lock.try() else { return }
+        defer { lock.unlock() }
+        if playing.isEmpty { return }
+        for i in playing.indices {
+            let p = playing[i]
+            let n = min(frames, p.samples.count - p.pos)
+            if n <= 0 { continue }
+            p.samples.withUnsafeBufferPointer { b in
+                for f in 0..<n {
+                    let v = Int32(out[f]) + Int32(Float(b[p.pos + f]) * p.gain)
+                    out[f] = Int16(clamping: v)
+                }
+            }
+            playing[i].pos += n
+        }
+        playing.removeAll { $0.pos >= $0.samples.count }
     }
 }

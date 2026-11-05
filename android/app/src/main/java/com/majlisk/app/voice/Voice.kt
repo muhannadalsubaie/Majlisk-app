@@ -72,6 +72,8 @@ object Voice {
         val adm = JavaAudioDeviceModule.builder(ctx)
             .setUseHardwareAcousticEchoCanceler(true)
             .setUseHardwareNoiseSuppressor(true)
+            // صوت اللاعبين بنفس نوع أصوات اللعبة (وسائط اللعب): نفس مستوى الصوت ونفس زر التحكم، وبجودة كاملة
+            .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
             .createAudioDeviceModule()
         PeerConnectionFactory.builder().setAudioDeviceModule(adm).createPeerConnectionFactory()
     }
@@ -307,36 +309,16 @@ object Voice {
      * ونمسك تركيز الصوت ونطلب ألا يخفضنا النظام حين يتكلم TalkBack، فيبقى صوت اللاعبين بنفس المستوى.
      */
     private fun route(am: AudioManager) {
-        // سماعة موصولة والميكروفون مغلق: وضع الصوت العادي (جودة كاملة، والبلوتوث بجودة الأغاني لا المكالمات)
-        if (!talking && headsetConnected(am)) {
-            if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
-                @Suppress("DEPRECATION")
-                am.isSpeakerphoneOn = false
-            }
-            am.mode = AudioManager.MODE_NORMAL
-            return
-        }
-        am.mode = AudioManager.MODE_IN_COMMUNICATION
-        if (Build.VERSION.SDK_INT >= 31) {
-            val devices = am.availableCommunicationDevices
-            val order = listOf(
-                AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_USB_HEADSET,
-                AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLUETOOTH_SCO, AudioDeviceInfo.TYPE_BUILTIN_SPEAKER,
-            )
-            order.firstNotNullOfOrNull { t -> devices.firstOrNull { it.type == t } }?.let { am.setCommunicationDevice(it) }
-        } else {
+        // الوضع العادي دائماً (حتى والميكروفون مفتوح): وضع المكالمات كان يحوّل صوت اللاعبين لصوت المكالمات
+        // (مستوى غير مستوى اللعبة) ويخفض أصوات اللعبة. إلغاء الصدى من ميكروفون المكالمات نفسه (VOICE_COMMUNICATION)
+        // والصوت يطلع من السماعة لو موصولة (والبلوتوث بجودة الأغاني)، وإلا من مكبر الجهاز
+        if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
             @Suppress("DEPRECATION")
-            val headset = am.isWiredHeadsetOn || am.isBluetoothScoOn || am.isBluetoothA2dpOn
-            @Suppress("DEPRECATION")
-            am.isSpeakerphoneOn = !headset
+            am.isSpeakerphoneOn = false
         }
+        am.mode = AudioManager.MODE_NORMAL
     }
 
-    private val headsetTypes = setOf(
-        AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_WIRED_HEADPHONES, AudioDeviceInfo.TYPE_USB_HEADSET,
-        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP, AudioDeviceInfo.TYPE_BLE_HEADSET,
-    )
-    private fun headsetConnected(am: AudioManager) = am.getDevices(AudioManager.GET_DEVICES_OUTPUTS).any { it.type in headsetTypes }
 
     /** الميكروفون مفتوح (نحتاج وضع المكالمات لإلغاء الصدى) */
     private var talking = false
@@ -362,7 +344,7 @@ object Voice {
             runCatching { am.registerAudioDeviceCallback(deviceWatch, android.os.Handler(android.os.Looper.getMainLooper())) }
             if (Build.VERSION.SDK_INT >= 26 && focus == null) {
                 focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
-                    .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_VOICE_COMMUNICATION).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
+                    .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
                     .setWillPauseWhenDucked(true)
                     .setOnAudioFocusChangeListener { }
                     .build()

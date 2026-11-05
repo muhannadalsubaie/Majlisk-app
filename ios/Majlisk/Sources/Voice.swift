@@ -22,8 +22,9 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     private lazy var factory: RTCPeerConnectionFactory = {
         RTCInitializeSSL()
         // الصوت من مكبر الجهاز (لا السماعة الصغيرة)، ويمتزج مع VoiceOver
+        // سماعات البلوتوث بجودة الأغاني (A2DP) والميكروفون من الجوال، بدل جودة المكالمات الضعيفة
         let cfg = RTCAudioSessionConfiguration.webRTC()
-        cfg.categoryOptions = [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers]
+        cfg.categoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
         // الاستماع بالوضع العادي: وضع المكالمات يخفض أصوات اللعب كثيراً
         cfg.mode = AVAudioSession.Mode.default.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
@@ -284,7 +285,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         let cfg = RTCAudioSessionConfiguration.webRTC()
         cfg.mode = mode.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
-        try? s.setCategory(.playAndRecord, mode: mode, options: [.defaultToSpeaker, .allowBluetoothHFP, .mixWithOthers])
+        try? s.setCategory(.playAndRecord, mode: mode, options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
         try? s.setActive(true)
     }
 

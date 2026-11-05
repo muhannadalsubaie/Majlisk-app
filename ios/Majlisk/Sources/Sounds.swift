@@ -5,6 +5,7 @@ import AVFoundation
 final class Sounds {
     static let shared = Sounds()
     private var data: [String: Data] = [:]
+    private var urls: [String: URL] = [:]
     private var playing: [AVAudioPlayer] = []
     private var recent: [String: Date] = [:]
 
@@ -26,7 +27,7 @@ final class Sounds {
         for f in files {
             if let url = Bundle.main.url(forResource: f, withExtension: "mp3", subdirectory: "Media/sounds")
                 ?? Bundle.main.url(forResource: f, withExtension: "mp3", subdirectory: "sounds"),
-               let d = try? Data(contentsOf: url) { data[f] = d }
+               let d = try? Data(contentsOf: url) { data[f] = d; urls[f] = url }
         }
     }
 
@@ -34,10 +35,14 @@ final class Sounds {
         if Prefs.muted { return }
         guard let d = data[name] else { return }
         let run = { [weak self] in
-            guard let self, let p = try? AVAudioPlayer(data: d) else { return }
+            guard let self else { return }
+            let g = gain * (vary ? Float.random(in: 0.9...1) : 1)
+            // المحادثة الصوتية شغّالة: الصوت ينخلط في صوت المحادثة نفسه، فما ينخفض لما تفتح الميكروفون
+            if let dev = VoiceAudioDevice.active, let url = self.urls[name] { dev.effects.play(name, url: url, gain: g); return }
+            guard let p = try? AVAudioPlayer(data: d) else { return }
             // بلا تغيير سرعة: AVAudioPlayer يمطّ الصوت مع الحفاظ على طبقته، فتتكرر ضربة الورقة وتتقطع.
             // التنويع بفرق بسيط في العلو فقط
-            p.volume = gain * (vary ? Float.random(in: 0.9...1) : 1)
+            p.volume = g
             p.prepareToPlay()
             p.play()
             self.playing.removeAll { !$0.isPlaying }
@@ -103,7 +108,9 @@ final class Sounds {
         // وبصوت واضح حتى مع VoiceOver (كان خافتاً معه فما ينسمع)
         DispatchQueue.main.async { [weak self] in
             // نغمة الدور (ملف voice-turn)
-            guard let self, let d = self.data["voice-turn"], let p = try? AVAudioPlayer(data: d) else { return }
+            guard let self else { return }
+            if let dev = VoiceAudioDevice.active, let url = self.urls["voice-turn"] { dev.effects.play("voice-turn", url: url, gain: 1); return }
+            guard let d = self.data["voice-turn"], let p = try? AVAudioPlayer(data: d) else { return }
             p.volume = 1
             p.play()
             self.playing.removeAll { !$0.isPlaying }
