@@ -24,4 +24,4 @@ if (!apk.ok) { console.log(`### ❌ download ${apk.status}`); process.exit(1); }
 writeFileSync('/tmp/u.apk', Buffer.from(await apk.arrayBuffer()));
 const bt = execSync('ls -d $ANDROID_HOME/build-tools/* | sort -V | tail -1').toString().trim();
 const out = execSync(`${bt}/apksigner verify --print-certs /tmp/u.apk`).toString();
-for (const l of out.split('\n')) if (/SHA-1|SHA-256/.test(l)) console.log(`### ${l.replace(/^.*(SHA-\d+)[^:]*:\s*/, '$1: ').toUpperCase().replace(/(..)(?=.)/g, '$1:')}`);
+for (const l of out.split("\n")) if (/DN|SHA-1|SHA-256|Signer/.test(l)) console.log(`RAW ${l}`);
