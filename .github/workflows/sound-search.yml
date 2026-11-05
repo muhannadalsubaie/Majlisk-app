@@ -1,0 +1,46 @@
+# بحث عن أصوات CC0 في OpenGameArt (للاختيار فقط) — تنزل لفرع sound-search
+name: Sound search
+on:
+  workflow_dispatch:
+    inputs:
+      keys:
+        description: كلمات البحث مفصولة بفاصلة
+        default: fanfare,victory,applause,win jingle,orchestral win,trumpet
+permissions:
+  contents: write
+jobs:
+  fetch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Search and download
+        env:
+          KEYS: ${{ inputs.keys }}
+        run: |
+          mkdir -p out && cd out
+          UA="Mozilla/5.0"
+          IFS=',' read -ra K <<< "$KEYS"
+          for k in "${K[@]}"; do
+            q=$(python3 -c "import urllib.parse,sys;print(urllib.parse.quote(sys.argv[1]))" "$k")
+            # النوع: صوت (13)، والرخصة CC0 (4)
+            curl -sL -A "$UA" "https://opengameart.org/art-search-advanced?keys=$q&field_art_type_tid%5B%5D=13&field_art_licenses_tid%5B%5D=4&sort_by=count&sort_order=DESC" -o s.html
+            for p in $(grep -oE 'href="/content/[^"#?]+"' s.html | cut -d'"' -f2 | sort -u | head -8); do
+              slug=${p##*/}
+              curl -sL -A "$UA" "https://opengameart.org$p" -o p.html
+              grep -q 'CC0' p.html || continue
+              for f in $(grep -oE 'https://opengameart.org/sites/default/files/[^"]+\.(ogg|wav|mp3|flac)' p.html | sort -u | head -6); do
+                n=$(basename "$f" | tr -c 'A-Za-z0-9._-' '_')
+                mkdir -p "$slug"
+                curl -sL -A "$UA" --max-filesize 6000000 "$f" -o "$slug/$n" || rm -f "$slug/$n"
+              done
+              [ -d "$slug" ] && echo "$k | https://opengameart.org$p" >> SOURCES.txt
+            done
+          done
+          rm -f s.html p.html
+          find . -type f | wc -l; cat SOURCES.txt | sort -u
+      - name: Push
+        run: |
+          cd out
+          git init -q -b sound-search
+          git config user.name "github-actions" && git config user.email "actions@github.com"
+          git add -A && git commit -qm "OpenGameArt CC0 search"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git" sound-search
