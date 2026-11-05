@@ -67,13 +67,18 @@ jobs:
           files: |
             majlisk.apk
             majlisk.aab
+      - name: Prepare Google Play key
+        if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
+        run: node .github/scripts/play-key.mjs /tmp/play-sa.json
+        env:
+          SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
       - name: Upload to Google Play (closed testing — Alpha)
         id: play
         if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
         continue-on-error: true
         uses: r0adkll/upload-google-play@v1.1.3
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: /tmp/play-sa.json
           packageName: com.majlisk.app
           releaseFiles: majlisk.aab
           track: alpha
@@ -82,7 +87,7 @@ jobs:
         if: steps.play.outcome == 'failure'
         uses: r0adkll/upload-google-play@v1.1.3
         with:
-          serviceAccountJsonPlainText: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
+          serviceAccountJson: /tmp/play-sa.json
           packageName: com.majlisk.app
           releaseFiles: majlisk.aab
           track: alpha

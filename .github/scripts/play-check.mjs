@@ -1,6 +1,8 @@
 // فحص مفتاح Google Play (قراءة فقط): يدخل بالمفتاح ويقرأ المسارات والنسخ، ثم يحذف التعديل بدون أي تغيير
 import { createSign } from 'node:crypto';
-const sa = JSON.parse(process.env.SA || '{}');
+import { fixKey } from './play-key.mjs';
+let sa = {};
+try { sa = fixKey(process.env.SA || '{}'); } catch (e) { console.log(`### ❌ ملف المفتاح غير صالح: ${e.message}`); process.exit(1); }
 if (!sa.client_email) { console.log('### ❌ السر PLAY_SERVICE_ACCOUNT_JSON غير موجود أو غير صالح'); process.exit(1); }
 console.log(`service account: ${sa.client_email}`);
 const b64u = (x) => Buffer.from(x).toString('base64url');
