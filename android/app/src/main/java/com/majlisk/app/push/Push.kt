@@ -21,6 +21,8 @@ import kotlinx.coroutines.launch
 object Push {
     /** طاولة من إشعار دعوة ضغطت عليه: الشاشة الرئيسية تقبل الدعوة وتفتح الطاولة */
     val pendingTable = MutableStateFlow<String?>(null)
+    /** انتقال من طاولة لطاولة صديق (من قائمة الأصدقاء داخل الطاولة): الشاشة الرئيسية تفتحها */
+    val switchTable = MutableStateFlow<String?>(null)
 
     fun createChannel(ctx: Context) {
         if (Build.VERSION.SDK_INT < 26) return

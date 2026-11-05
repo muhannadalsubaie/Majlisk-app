@@ -30,7 +30,7 @@ import kotlinx.coroutines.launch
 /** الأصدقاء: تبويب للقائمة مع حالة الاتصال، وتبويب للطلبات الواردة، وتبويب للمحظورين */
 @Composable
 @OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
-fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) -> Unit, inTable: Boolean = false) {
+fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     var tab by remember { mutableStateOf(0) }
     var friends by remember { mutableStateOf<List<Friend>?>(null) }
     var bans by remember { mutableStateOf<List<Friend>?>(null) }
@@ -44,11 +44,6 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
     val say: (String) -> Unit = { Announcer.announce(it) }
     // الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
     val joinFriend: (Friend) -> Unit = join@{ f ->
-        // مفتوحة من داخل طاولة: ما تقدر تدخل طاولة صديق (اطلع من طاولتك أول)
-        if (inTable) {
-            if (f.online && f.tableId != null && !f.tablePrivate) Announcer.announce("اطلع من طاولتك أول عشان تدخل طاولته")
-            return@join
-        }
         val id = f.tableId
         when {
             joining -> return@join

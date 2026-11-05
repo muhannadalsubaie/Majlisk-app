@@ -9,6 +9,8 @@ final class Push: NSObject, ObservableObject, UNUserNotificationCenterDelegate, 
     static let shared = Push()
     /// طاولة من إشعار دعوة ضغطت عليه: الشاشة الرئيسية تقبل الدعوة وتفتح الطاولة
     @Published var pendingTable: String?
+    /// انتقال من طاولة لطاولة صديق (من قائمة الأصدقاء داخل الطاولة): الشاشة الرئيسية تفتحها
+    @Published var switchTable: String?
 
     func configure() {
         UNUserNotificationCenter.current().delegate = self

@@ -5,8 +5,6 @@ struct FriendsScreen: View {
     let hub: HubState
     let navigate: (Route) -> Void
     let openTable: (String) -> Void
-    /// مفتوحة من داخل طاولة: ما تقدر تدخل طاولة صديق (اطلع من طاولتك أول)
-    var inTable = false
     @ObservedObject private var hubLive = Hub.shared
     @State private var tab = 0
     @State private var friends: [Friend]?
@@ -32,7 +30,6 @@ struct FriendsScreen: View {
     /// الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
     private func joinFriend(_ f: Friend) {
         if joining { return }
-        if inTable { if f.online && f.tableId != nil && !f.tablePrivate { say("اطلع من طاولتك أول عشان تدخل طاولته") }; return }
         // ما هو في طاولة، أو طاولته مقفلة: الضغط المطوّل لا يسوي شي (بلا تلميحات)
         guard f.online, let id = f.tableId, !f.tablePrivate else { return }
         joining = true

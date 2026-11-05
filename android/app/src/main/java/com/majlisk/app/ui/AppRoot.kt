@@ -92,6 +92,13 @@ fun AppRoot() {
             com.majlisk.app.push.Push.register()
         }
     }
+    // انتقلت لطاولة صديق من داخل طاولة: نفتحها على طول
+    val switchTo by com.majlisk.app.push.Push.switchTable.collectAsState()
+    LaunchedEffect(switchTo) {
+        val id = switchTo ?: return@LaunchedEffect
+        com.majlisk.app.push.Push.switchTable.value = null
+        tableId = id; screen = Route.Table
+    }
     // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
     val pushTable by com.majlisk.app.push.Push.pendingTable.collectAsState()
     LaunchedEffect(pushTable, user?.uid, verified, needsUsername) {

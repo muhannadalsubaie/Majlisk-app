@@ -110,7 +110,14 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             properties = androidx.compose.ui.window.DialogProperties(usePlatformDefaultWidth = false),
         ) {
             val hub by com.majlisk.app.data.Hub.state.collectAsState()
-            com.majlisk.app.ui.FriendsScreen(hub, navigate = { page = Page.Main }, openTable = { }, inTable = true)
+            // دخول طاولة صديق من هنا: تطلع من طاولتك وتنتقل لطاولته على طول
+            com.majlisk.app.ui.FriendsScreen(hub, navigate = { page = Page.Main }, openTable = { id ->
+                if (id != v.id) {
+                    conn.send("leave")
+                    com.majlisk.app.push.Push.switchTable.value = id
+                }
+                onClose()
+            })
         }
         Page.Settings -> MajliskDialog("إعدادات", { page = Page.Main }) {
             SettingsScreen(onBack = { page = Page.Main }, embedded = true)

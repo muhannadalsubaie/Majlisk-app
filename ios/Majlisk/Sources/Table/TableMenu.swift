@@ -79,7 +79,13 @@ struct TableMenu: View {
             InviteFriendsSheet(tableId: view.id, seat: nil, title: "دعوة صديق") { page = .main }
         case .friends:
             // قائمة الأصدقاء كاملة (الأصدقاء، الطلبات، المحظورون) من داخل الطاولة
-            FriendsScreen(hub: hub.state, navigate: { _ in page = .main }, openTable: { _ in }, inTable: true)
+            // دخول طاولة صديق من هنا: تطلع من طاولتك وتنتقل لطاولته على طول
+            FriendsScreen(hub: hub.state, navigate: { _ in page = .main }, openTable: { id in
+                if id == view.id { onClose(); return }
+                conn.send("leave")
+                onClose()
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { Push.shared.switchTable = id }
+            })
         case .settings:
             SettingsScreen(embedded: true) { page = .main }
         case .players:

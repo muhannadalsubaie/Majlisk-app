@@ -23,6 +23,7 @@ struct AppRoot: View {
             .onAppear { if signedIn { hub.start(); Store.recover(); Push.shared.register() } }
             // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
             .onChange(of: push.pendingTable) { _ in openPushTable() }
+            .onChange(of: push.switchTable) { id in if let id { push.switchTable = nil; open(id) } }
             .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && !session.needsVerify && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
                 if let invite = pendingInvite {
                     Sheet(title: "دعوة لطاولة") {
