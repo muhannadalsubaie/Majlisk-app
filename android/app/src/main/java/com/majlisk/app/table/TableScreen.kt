@@ -93,7 +93,6 @@ import kotlinx.coroutines.delay
 /** كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها */
 private const val TRICK_HOLD_MS = 3000L
 /** كم يبقى اسم الورقة اللي انتقل لها المؤشر بعد حركتك مخفياً (حتى تُقرأ إعلانات اللعب) */
-private const val SILENT_FOCUS_MS = 1200L
 
 @Composable
 fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
@@ -315,16 +314,12 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
 
         if (g.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
-        // مؤشر قارئ الشاشة: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب ورقة
-        // بدل ما يقفز لأعلى الشاشة، وبصمت: اسمها مخفي لحظات فتسمع إعلانات اللعب فقط، وتُقرأ عادي لما تحرك المؤشر
+        // مؤشر قارئ الشاشة: الورقة اللي لعبتها تختفي بس (ما ننقل المؤشر)، وأزرار الشراء لما تختفي ينتقل لأوراقك
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
         val cardFocus = remember { mutableMapOf<String, FocusRequester>() }
-        var silentKey by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(silentKey) { if (silentKey != null) { delay(SILENT_FOCUS_MS); silentKey = null } }
         val focusCard: (Card?) -> Unit = { c ->
             val fr = c?.let { cardFocus[cardKey(it)] }
             if (fr != null && Announcer.readerOn) {
-                silentKey = cardKey(c)
                 Announcer.interruptNextEvents()
                 runCatching { fr.requestFocus() }
             }
@@ -339,16 +334,6 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             delay(60)
             focusCard(hand.firstOrNull { cardKey(it) == p.second })
         }
-        // الورقة اللي لعبتها ومكانها: تبقى في مكانها (مخفية عن العين) والمؤشر عليها، فما يتحرك ولا يقرأ شيء
-        // وتسمع ورقتك وباقي اللعب. تختفي لما يجي دورك تلعب مرة ثانية أو يبدأ توزيع جديد
-        var ghost by remember { mutableStateOf<Pair<Card, Int>?>(null) }
-        val myPlayTurn = g.actions.legal.isNotEmpty()
-        LaunchedEffect(myPlayTurn, hand.size) {
-            val gh = ghost ?: return@LaunchedEffect
-            if (myPlayTurn || hand.any { cardKey(it) == cardKey(gh.first) } || hand.size >= 5 && g.trickNo == 0) ghost = null
-        }
-        val shown = ghost?.takeIf { gh -> hand.none { cardKey(it) == cardKey(gh.first) } }
-            ?.let { gh -> hand.toMutableList().apply { add(gh.second.coerceAtMost(size), gh.first) } } ?: hand
         val toHand = { hand.lastOrNull()?.let { pending = null to cardKey(it) }; Unit }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -395,23 +380,21 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
             Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
-                shown.forEachIndexed { i, c ->
+                hand.forEachIndexed { i, c ->
                     androidx.compose.runtime.key(cardKey(c)) {
-                        val k = i - (shown.size - 1) / 2f
-                        val isGhost = hand.none { cardKey(it) == cardKey(c) }
+                        val k = i - (hand.size - 1) / 2f
                         val fr = remember { FocusRequester() }
                         androidx.compose.runtime.DisposableEffect(Unit) {
                             cardFocus[cardKey(c)] = fr
                             onDispose { cardFocus.remove(cardKey(c)) }
                         }
                         HandCard(
-                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, silent = silentKey == cardKey(c), ghost = isGhost,
+                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f,
                             // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
-                                .semantics { traversalIndex = (shown.size - i).toFloat() },
+                                .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
-                            // المؤشر يبقى مكانه على الورقة اللي لعبتها (تبقى مخفية مكانها)، بصمت
-                            if (Announcer.readerOn) ghost = c to hand.indexOfFirst { cardKey(it) == cardKey(c) }.coerceAtLeast(0)
+                            // الورقة تختفي بس: ما ننقل المؤشر لأي مكان (نقله كان يقرأ ورقة ثانية أو "فاضي" ويقطع اللعب)
                             act(jsonOf("type" to "play", "card" to c.toJson()))
                         }
                     }
@@ -574,31 +557,25 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
 /**
  * ورقة في اليد: تبقى قابلة للتركيز حتى وهي غير مسموحة، فلا يقفز مؤشر قارئ الشاشة حين ينتهي دورك.
  * لا نعلن "غير متاحة" كحالة: تغيّرها لحظة انتهاء دورك كان يجعل قارئ الشاشة يعيد قراءة الورقة المحددة.
- * silent: انتقل لها المؤشر بعد حركتك، فلا يُقرأ اسمها حتى تنتهي إعلانات اللعب.
  */
 @Composable
-private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, silent: Boolean, modifier: Modifier, ghost: Boolean = false, onPlay: () -> Unit) {
-    // ghost: الورقة اللي لعبتها باقية مكانها للمؤشر بس: مخفية عن العين، ونفس اسمها (فما تنعاد قراءتها)، والضغط عليها ما يسوي شي
-    val tap = { if (ghost) Unit else if (legal) onPlay() else Announcer.announceNow("غير متاحة") }
+private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modifier, onPlay: () -> Unit) {
+    val tap = { if (legal) onPlay() else Announcer.announceNow("غير متاحة") }
     Box(
         modifier
             // مكانها في المروحة (تدور حول نقطة تحت اليد)، والمسموح لعبها بإطار ذهبي فقط فيبقى شكل المروحة واحداً
             .graphicsLayer {
-                alpha = if (ghost) 0.02f else 1f
                 rotationZ = fanAngle
                 transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2.6f)
             }
             .then(if (legal) Modifier.border(3.dp, Palette.goldSoft, RoundedCornerShape(6.dp)) else Modifier)
             .focusable()
-            .then(
-                // بلا أي نص (حرف خفي كان يُقرأ "مسافة")
-                if (silent) Modifier.semantics(mergeDescendants = true) { }
-                else Modifier.clickable { tap() }.semantics(mergeDescendants = true) {
-                    contentDescription = card.label
-                    role = Role.Button
-                    onClick { tap(); true }
-                },
-            ),
+            // اسم الورقة دائماً (ما نفرّغه أبداً: كان يُقرأ "فاضي" أو "مسافة")
+            .clickable { tap() }.semantics(mergeDescendants = true) {
+                contentDescription = card.label
+                role = Role.Button
+                onClick { tap(); true }
+            },
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }
 
