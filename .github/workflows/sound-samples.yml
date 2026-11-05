@@ -12,7 +12,7 @@ jobs:
           mkdir -p out && cd out
           for a in casino-audio impact-sounds interface-sounds rpg-audio music-jingles digital-audio ui-audio; do
             page=$(curl -sL -A "Mozilla/5.0" "https://kenney.nl/assets/$a")
-            echo "$a page bytes: ${#page}"; echo "$page" | grep -oiE '[^"'"'"' ]*(\.zip|download)[^"'"'"' ]*' | sort -u | head -8
+            echo "$a page bytes: ${#page}"; [ "$a" = casino-audio ] && { echo "$page" | grep -iE 'download' | head -30; echo "$page" | grep -oE '<script[^>]*src="[^"]+"' | head; }
             url=$(echo "$page" | grep -oE 'https://kenney\.nl/media/pages/assets/[^"]+\.zip' | head -1)
             echo "$a -> $url"
             [ -n "$url" ] || continue
