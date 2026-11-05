@@ -30,14 +30,15 @@ final class Sounds {
         }
     }
 
-    private func play(_ name: String, at: Double = 0, gain: Float = 0.8, rate: Float = 1, vary: Bool = true) {
+    private func play(_ name: String, at: Double = 0, gain: Float = 0.8, vary: Bool = true) {
         if Prefs.muted { return }
         guard let d = data[name] else { return }
         let run = { [weak self] in
             guard let self, let p = try? AVAudioPlayer(data: d) else { return }
-            p.volume = gain
-            p.enableRate = true
-            p.rate = rate * (vary ? Float.random(in: 0.95...1.05) : 1)
+            // بلا تغيير سرعة: AVAudioPlayer يمطّ الصوت مع الحفاظ على طبقته، فتتكرر ضربة الورقة وتتقطع.
+            // التنويع بفرق بسيط في العلو فقط
+            p.volume = gain * (vary ? Float.random(in: 0.9...1) : 1)
+            p.prepareToPlay()
             p.play()
             self.playing.removeAll { !$0.isPlaying }
             self.playing.append(p)
