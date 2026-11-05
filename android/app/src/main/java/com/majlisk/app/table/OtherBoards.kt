@@ -224,9 +224,14 @@ private fun dominoJala(conn: TableConnection, d: DominoView) = when {
     else -> Announcer.announceNow("ما تقدر تجلي، عندك قطعة تصلح")
 }
 
+/** إيماءة الجلا (من فوق لتحت): لو فيه بنك (اللعب الفردي) تسحب لك قطعة، وإلا (الفرق) تجلي */
+private fun dominoDrawOrJala(conn: TableConnection, d: DominoView) {
+    if (d.myTurn && d.canDraw) act(conn, "domino", jsonOf("type" to "draw")) else dominoJala(conn, d)
+}
+
 /**
  * سحب بإصبعين في الدومينو: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين،
- * من اليسار لليمين = سجل الجولات، من فوق لتحت = جلا
+ * من اليسار لليمين = سجل الجولات، من فوق لتحت = سحب من البنك (الفردي) أو جلا (الفرق)
  */
 @Composable
 private fun Modifier.dominoSwipes(v: TableView, d: DominoView, conn: TableConnection, openLog: () -> Unit): Modifier = twoFingerSwipes {
@@ -234,7 +239,7 @@ private fun Modifier.dominoSwipes(v: TableView, d: DominoView, conn: TableConnec
         SwipeDir.Left -> Announcer.announceNow(d.endsText)
         SwipeDir.Up -> Announcer.announceNow(dominoTurnText(v, d))
         SwipeDir.Right -> openLog()
-        SwipeDir.Down -> dominoJala(conn, d)
+        SwipeDir.Down -> dominoDrawOrJala(conn, d)
     }
 }
 

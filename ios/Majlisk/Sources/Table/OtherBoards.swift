@@ -254,8 +254,14 @@ private func dominoJala(_ conn: TableConnection, _ d: DominoView) {
     else { Announcer.announceNow("ما تقدر تجلي، عندك قطعة تصلح") }
 }
 
+/// إيماءة الجلا (من فوق لتحت): لو فيه بنك (اللعب الفردي) تسحب لك قطعة، وإلا (الفرق) تجلي
+private func dominoDrawOrJala(_ conn: TableConnection, _ d: DominoView) {
+    if d.myTurn && d.canDraw { conn.send(["type": "domino", "action": ["type": "draw"]]) }
+    else { dominoJala(conn, d) }
+}
+
 /// أعلى طاولة الدومينو: النقاط، اللاعبون، وخط اللعب.
-/// سحب بثلاث أصابع: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين، من اليسار لليمين = سجل الجولات، من فوق لتحت = جلا
+/// سحب بثلاث أصابع: من اليمين لليسار = الطرفان، من تحت لفوق = الدور عند مين، من اليسار لليمين = سجل الجولات، من فوق لتحت = سحب من البنك (الفردي) أو جلا (الفرق)
 struct DominoBoard: View {
     let v: TableView
     let d: DominoView
@@ -317,7 +323,7 @@ struct DominoBoard: View {
         case .left: Announcer.announceNow(cur.endsText)
         case .up: Announcer.announceNow(dominoTurnText(view, cur))
         case .right: openLog()
-        case .down: dominoJala(conn, cur)
+        case .down: dominoDrawOrJala(conn, cur)
         }
         return true
     }
