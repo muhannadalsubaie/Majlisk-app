@@ -11,7 +11,9 @@ jobs:
         run: |
           mkdir -p out && cd out
           for a in casino-audio impact-sounds interface-sounds rpg-audio music-jingles digital-audio ui-audio; do
-            url=$(curl -sL "https://kenney.nl/assets/$a" | grep -oE 'https://kenney\.nl/media/pages/assets/[^"]+\.zip' | head -1)
+            page=$(curl -sL -A "Mozilla/5.0" "https://kenney.nl/assets/$a")
+            echo "$a page bytes: ${#page}"; echo "$page" | grep -oiE '[^"'"'"' ]*(\.zip|download)[^"'"'"' ]*' | sort -u | head -8
+            url=$(echo "$page" | grep -oE 'https://kenney\.nl/media/pages/assets/[^"]+\.zip' | head -1)
             echo "$a -> $url"
             [ -n "$url" ] || continue
             curl -sL "$url" -o "$a.zip" && mkdir -p "$a" && unzip -q -o "$a.zip" -d "$a" && rm "$a.zip"
