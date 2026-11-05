@@ -11,13 +11,15 @@ jobs:
         run: |
           mkdir -p out && cd out
           for a in casino-audio impact-sounds interface-sounds rpg-audio music-jingles digital-audio ui-audio; do
-            page=$(curl -sL -A "Mozilla/5.0" "https://kenney.nl/assets/$a")
-            echo "$a page bytes: ${#page}"; [ "$a" = casino-audio ] && { echo "$page" | grep -iE 'download' | head -30; echo "$page" | grep -oE '<script[^>]*src="[^"]+"' | head; }
-            url=$(echo "$page" | grep -oE 'https://kenney\.nl/media/pages/assets/[^"]+\.zip' | head -1)
-            echo "$a -> $url"
+            page=$(curl -sL -c jar.txt -b jar.txt -A "Mozilla/5.0" "https://kenney.nl/assets/$a")
+            id=$(echo "$page" | grep -oE "data-download-id='[0-9a-f]+'" | head -1 | cut -d"'" -f2)
+            resp=$(curl -sL -c jar.txt -b jar.txt -A "Mozilla/5.0" -H "Referer: https://kenney.nl/assets/$a" "https://kenney.nl/download-link/$id")
+            echo "$a id=$id resp=${resp:0:300}"
+            url=$(echo "$resp" | grep -oE 'https:[^"]+' | head -1 | sed 's#\\/#/#g')
             [ -n "$url" ] || continue
-            curl -sL "$url" -o "$a.zip" && mkdir -p "$a" && unzip -q -o "$a.zip" -d "$a" && rm "$a.zip"
+            curl -sL -A "Mozilla/5.0" "$url" -o "$a.zip" && mkdir -p "$a" && unzip -q -o "$a.zip" -d "$a" && rm "$a.zip" || echo "unzip failed $a"
           done
+          rm -f jar.txt
           find . -type f \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' \) | wc -l
           find . -type f ! \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' -o -iname '*.txt' \) -delete
       - name: Push to sound-samples branch
