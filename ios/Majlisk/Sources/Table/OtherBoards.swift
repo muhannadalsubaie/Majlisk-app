@@ -193,7 +193,8 @@ private struct DominoSnake: View {
             let n = line.count
             // أكبر حجم يكفي كل القطع على طول الـ U
             let u: CGFloat = {
-                var u: CGFloat = 18
+                // أكبر من قبل (كانت 18) عشان تكون أوضح، وتصغر بس لما تكثر القطع
+                var u: CGFloat = 26
                 while u > 6 {
                     let m = u * 0.6, lh = H - 2 * m - u, lw = W - 2 * m - 2 * u
                     if CGFloat(n) * (2 * u + 2) <= 2 * lh + lw { break }
@@ -225,7 +226,7 @@ private struct DominoSnake: View {
             .frame(width: W, height: H)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 230)
+        .frame(height: 290)
         .background(Color(red: 0.08, green: 0.31, blue: 0.21)).clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
         .environment(\.layoutDirection, .leftToRight)

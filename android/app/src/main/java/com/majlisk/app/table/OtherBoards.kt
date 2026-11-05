@@ -174,7 +174,7 @@ private fun DominoSeatTag(name: String, uid: String?, count: Int, partner: Boole
 @Composable
 private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
     androidx.compose.foundation.layout.BoxWithConstraints(
-        modifier.height(230.dp)
+        modifier.height(290.dp)
             .background(Color(0xFF145036), RoundedCornerShape(16.dp))
             .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
             .clearAndSetSemantics { },
@@ -183,7 +183,8 @@ private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
     ) {
         val W = maxWidth.value; val H = maxHeight.value
         val n = line.size
-        var u = 18f
+        // أكبر من قبل (كانت 18) عشان تكون أوضح، وتصغر بس لما تكثر القطع
+        var u = 26f
         while (u > 6f) {
             val m = u * 0.6f
             if (n * (2 * u + 2) <= 2 * (H - 2 * m - u) + (W - 2 * m - 2 * u)) break

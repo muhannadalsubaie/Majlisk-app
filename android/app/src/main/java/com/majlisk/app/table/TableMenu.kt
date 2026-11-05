@@ -10,6 +10,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.Ads
 import com.majlisk.app.data.Social
@@ -33,6 +37,7 @@ private sealed interface Page {
     data object Main : Page
     data object Players : Page
     data object Invite : Page
+    data object Friends : Page
     data object Settings : Page
     data object Stop : Page
     data object ChangeGame : Page
@@ -71,6 +76,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             } else Note(if (v.isPrivate) "طاولة خاصة: الدخول بالدعوة فقط" else "طاولة عامة")
             SecondaryButton("اللاعبون", { page = Page.Players }, fill = true)
             if (isOwner) SecondaryButton("دعوة صديق", { page = Page.Invite }, fill = true)
+            SecondaryButton("الأصدقاء", { page = Page.Friends }, fill = true)
             SecondaryButton("مشاهدة إعلان (+2 🪙)", { Ads.watch() }, fill = true)
             SecondaryButton(
                 if (voice.joined) "مغادرة المحادثة الصوتية" else "الانضمام للمحادثة الصوتية",
@@ -98,6 +104,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }
         Page.Invite -> InviteFriendsDialog(v.id, seat = null, title = "دعوة صديق") { page = Page.Main }
+        Page.Friends -> TableFriendsDialog { page = Page.Main }
         Page.Settings -> MajliskDialog("إعدادات", { page = Page.Main }) {
             SettingsScreen(onBack = { page = Page.Main }, embedded = true)
         }
@@ -179,5 +186,40 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             v.spectators.forEach { s -> PrimaryButton(s.username, { conn.send("replace", "seat" to p.seat, "uid" to s.uid); page = Page.Players }) }
             SecondaryButton("رجوع", { page = Page.Players }, fill = true)
         }
+    }
+}
+
+/** الأصدقاء من داخل الطاولة: مين متصل الحين ووين (المتصلين أول) */
+@Composable
+private fun TableFriendsDialog(onBack: () -> Unit) {
+    var friends by remember { mutableStateOf<List<com.majlisk.app.data.Friend>?>(null) }
+    var failed by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { runCatching { Social.listFriends().friends }.onSuccess { friends = it }.onFailure { failed = true } }
+    fun status(f: com.majlisk.app.data.Friend): String = when {
+        !f.online -> "غير متصل"
+        f.tableId == null -> "متصل، في الرئيسية"
+        else -> listOf("متصل، في طاولة", f.tableGame, if (f.tablePrivate) "مقفلة" else "").filter { it.isNotEmpty() }.joinToString(" ")
+    }
+    MajliskDialog("الأصدقاء", onBack) {
+        val list = friends
+        when {
+            failed -> Note("تعذّر تحميل الأصدقاء")
+            list == null -> Body("جارٍ التحميل…")
+            list.isEmpty() -> Note("لا يوجد أصدقاء بعد.")
+            else -> {
+                val online = list.count { it.online }
+                Note(if (online == 0) "ما فيه أحد متصل الحين" else "المتصلين: $online")
+                list.sortedByDescending { it.online }.forEach { f ->
+                    ItemRow(Modifier.clearAndSetSemantics { contentDescription = "${f.username}، ${status(f)}" }) {
+                        com.majlisk.app.ui.Avatar(f.uid, f.username, 36.dp)
+                        androidx.compose.foundation.layout.Column(Modifier.weight(1f)) {
+                            Text(f.username, color = Palette.text, fontWeight = androidx.compose.ui.text.font.FontWeight.Bold)
+                            Text(status(f), color = if (f.online) Palette.goldSoft else Palette.textDim, fontSize = 14.sp)
+                        }
+                    }
+                }
+            }
+        }
+        SecondaryButton("رجوع", onBack, fill = true)
     }
 }
