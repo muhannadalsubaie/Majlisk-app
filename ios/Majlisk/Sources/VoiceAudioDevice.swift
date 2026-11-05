@@ -92,12 +92,15 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         // الميكروفون ينفتح أول مرة: نعيد بناء الوحدة مع الإدخال (قبلها ما نطلب الميكروفون أبداً)
         let wasPlaying = isPlaying
         systemEchoOn = false
+        disposeUnit()
         if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable {
+            // إلغاء الصدى من النظام ينطلب والجلسة متوقفة، وبعدها نشغّلها ونتأكد إنه اشتغل فعلاً
+            // (كان ينطلب والجلسة شغّالة، فبعض الأجهزة تتجاهله: صدى، ويسمعون قارئ الشاشة منك)
+            try? session.setActive(false)
             try? session.setPrefersEchoCancelledInput(true)
             try? session.setActive(true)
             systemEchoOn = session.isEchoCancelledInputEnabled
         }
-        disposeUnit()
         guard makeUnit(input: true) else { return false }
         isRecordingInitialized = true
         if wasPlaying, let unit { AudioOutputUnitStart(unit) }
