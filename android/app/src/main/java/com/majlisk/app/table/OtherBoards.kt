@@ -281,7 +281,6 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
         if (d.phase != "playing") Text(dominoTurnText(v, d),
             color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
-        if (mySeat == null) Note("أنت تشاهد هذه الطاولة.")
     }
 }
 
@@ -473,7 +472,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                     }
                 }
             }
-        } else Note("أنت تشاهد هذه الطاولة.")
+        }
     }
 
     picked?.let { h ->
@@ -711,7 +710,6 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             Text("رميت ${l.dice ?: 0}: اختر الحجر", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             l.options.forEach { o -> SecondaryButton(o.text, { act(conn, "ludo", jsonOf("type" to "move", "token" to o.token)) }, fill = true) }
         }
-        if (mySeat == null) Note("أنت تشاهد هذه الطاولة.")
     }
 }
 

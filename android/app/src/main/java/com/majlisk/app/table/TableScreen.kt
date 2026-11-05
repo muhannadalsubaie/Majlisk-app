@@ -297,7 +297,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.weight(0.8f))
-                PlayerTag(v, g, seatOf(2), faces = text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = true, modifier = Modifier.weight(3f))
+                PlayerTag(v, g, seatOf(2), faces = text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f))
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -308,7 +308,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         }
 
         if (g.phase == "matchOver" && g.outcomeStatus == "won") {
-            Text(if (g.outcomeWinner == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر", color = Palette.goldSoft,
+            // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
+            Text(if (mySeat == null) "فاز فريق ${teamName(g.outcomeWinner ?: 0)}" else if (g.outcomeWinner == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر", color = Palette.goldSoft,
                 style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         }
 
@@ -413,6 +414,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 }
             }
         }
+        // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
+        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth())
         }
     }
 }

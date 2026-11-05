@@ -309,7 +309,6 @@ struct DominoBoard: View {
                     .font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
             }
             if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
-            if mySeat == nil { Note("أنت تشاهد هذه الطاولة.") }
         }
         .onAppear { Gestures.shared.set("domino") { read($0) } }
         .onDisappear { Gestures.shared.clear("domino") }
@@ -506,7 +505,7 @@ struct JackarooBoard: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(h.label)
                 }
-            } else { Note("أنت تشاهد هذه الطاولة.") }
+            }
         }
         .onAppear { Gestures.shared.set("jackaroo") { read($0) } }
         .onDisappear { Gestures.shared.clear("jackaroo") }
@@ -752,7 +751,6 @@ struct LudoBoard: View {
                 Text("رميت \(l.dice ?? 0): اختر الحجر").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 ForEach(l.options) { o in MButton(o.text) { act(["type": "move", "token": o.token]) } }
             }
-            if mySeat == nil { Note("أنت تشاهد هذه الطاولة.") }
         }
         .onAppear { Gestures.shared.set("ludo") { read($0) }; noteRoll() }
         .onDisappear { Gestures.shared.clear("ludo") }

@@ -207,7 +207,7 @@ struct BalootBoard: View {
             GeometryReader { geo in
                 let unit = geo.size.width / 4.6
                 VStack(spacing: 6) {
-                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: text.faces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: true).frame(width: unit * 3)
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: text.faces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil).frame(width: unit * 3)
                     HStack(spacing: 6) {
                         PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: text.faces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.8)
                         trickArea.frame(width: min(unit * 3, 300), height: min(unit * 3, 300))
@@ -220,7 +220,9 @@ struct BalootBoard: View {
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
 
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
-                Text(g.outcomeWinner == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر").font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
+                // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
+                let w = g.outcomeWinner ?? 0
+                Text(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر").font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
             }
 
             if g.phase == "matchOver" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
@@ -292,6 +294,9 @@ struct BalootBoard: View {
                     // ترتيب الأوراق لـ VoiceOver داخل اليد فقط: كانت أولوياتها تُقارن بعناصر الشاشة كلها
                     // فينط المؤشر من الميكروفون لورقة واحدة ثم لوسط الطاولة
                     .accessibilityElement(children: .contain)
+                } else {
+                    // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
+                    PlayerTag(v: v, g: g, seat: 0, faces: text.faces(0), note: seatNote(g, 0))
                 }
             }
         }
