@@ -21,7 +21,7 @@ jobs:
           done
           rm -f jar.txt
           find . -type f \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' \) | wc -l
-          find . -type f ! \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' -o -iname '*.txt' \) -delete
+          chmod -R u+w . ; find . -type f ! \( -iname '*.ogg' -o -iname '*.wav' -o -iname '*.mp3' -o -iname '*.txt' \) -exec rm -f {} + || true
       - name: Push to sound-samples branch
         run: |
           cd out
