@@ -625,7 +625,8 @@ class GameSoundTracker {
         if (key != null && key != lastTurn) Sounds.turn(Announcer.readerOn)
         lastTurn = key
         // أثناء المزايدة: قارئ الشاشة يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي)
-        val bidTurn = if (g.phase == "bidding" && g.turn != v.mySeat) "${g.phase}|${g.bidRound}|${g.turn}" else null
+        // بعد التوزيع: «دور فلان» ينتظر لين تخلص مهلة التوزيع (فتنسمع ورقة الأرض كاملة)
+        val bidTurn = if (g.phase == "bidding" && !g.dealing && g.turn != v.mySeat) "${g.phase}|${g.bidRound}|${g.turn}" else null
         if (bidTurn != null && bidTurn != lastBidTurn) {
             val who = v.seats.getOrNull(g.turn)?.username ?: "مقعد ${g.turn + 1}"
             main.postDelayed({ Announcer.announce("دور $who") }, 700)

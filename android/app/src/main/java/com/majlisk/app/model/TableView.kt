@@ -46,6 +46,8 @@ data class GameView(
     val hokmBidKey: String?,
     /** من اشترى الحكم الثاني (قبل وبعد ما يحدد اللون) */
     val secondHokmSeat: Int? = null,
+    /** مهلة ما بعد التوزيع: الدور ما بدأ بعد (ما ينعلن «دور فلان» لين تخلص) */
+    val dealing: Boolean = false,
     /** شراء ما تأكد بعد: المقعد ونوعه (hokm/sun/ashkal/secondHokm) */
     val pendingBuy: Pair<Int, String>? = null,
 ) {
@@ -174,6 +176,7 @@ data class TableView(
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),
+                dealing = g.optBoolean("dealing"),
                 pendingBuy = g.optJSONObject("pendingBuy")?.let { it.optInt("seat") to it.optString("kind") },
             )
         }

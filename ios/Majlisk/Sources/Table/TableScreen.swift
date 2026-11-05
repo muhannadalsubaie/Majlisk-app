@@ -423,7 +423,8 @@ final class GameSoundTracker {
         lastTurn = key
         // أثناء الشراء: VoiceOver يقول «دور فلان» لما ينتقل الدور لغيرك (ودورك يقوله التعليق الصوتي).
         // شراء فلان (حكم/صن) ما يعيد «دور فلان» له: نعلن بس لما ينتقل الدور لشخص ثاني
-        let bidTurn: String? = g.phase == "bidding" && g.turn != v.mySeat ? "\(g.bidRound)|\(g.turn)" : nil
+        // بعد التوزيع: «دور فلان» ينتظر لين تخلص مهلة التوزيع (فتنسمع ورقة الأرض كاملة)
+        let bidTurn: String? = g.phase == "bidding" && !g.dealing && g.turn != v.mySeat ? "\(g.bidRound)|\(g.turn)" : nil
         if let bidTurn, bidTurn != lastBidTurn {
             let who = v.seat(g.turn)?.username ?? "مقعد \(g.turn + 1)"
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Announcer.announce("دور \(who)") }

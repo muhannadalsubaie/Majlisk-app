@@ -97,6 +97,8 @@ struct GameView {
     let hokmBidKey: String?
     /// من اشترى الحكم الثاني (قبل وبعد ما يحدد اللون)
     let secondHokmSeat: Int?
+    /// مهلة ما بعد التوزيع: الدور ما بدأ بعد (ما ينعلن «دور فلان» لين تخلص)
+    var dealing = false
     /// شراء ما تأكد بعد: (المقعد، hokm/sun/ashkal/secondHokm)
     var pendingBuy: (seat: Int, kind: String)? = nil
 
@@ -223,6 +225,7 @@ struct TableView {
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },
             secondHokmSeat: g.intOrNil("secondHokmSeat"),
+            dealing: g.bool("dealing"),
             pendingBuy: g.obj("pendingBuy").map { (seat: $0.int("seat"), kind: $0.str("kind")) }
         )
     }
