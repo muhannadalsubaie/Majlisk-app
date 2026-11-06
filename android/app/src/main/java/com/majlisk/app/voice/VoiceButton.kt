@@ -18,6 +18,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.CustomAccessibilityAction
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.onClick
 import androidx.compose.ui.semantics.onLongClick
 import androidx.compose.ui.semantics.role
@@ -100,6 +102,11 @@ fun VoiceButton(tableId: String, uid: String) {
                     role = Role.Button
                     onClick { toggleMute(); true }
                     onLongClick { toggleJoin(); true }
+                    // إجراءات قارئ الشاشة (مثل الآيفون): الانضمام/الخروج من المحادثة، وفتح/قفل المايك
+                    customActions = buildList {
+                        add(CustomAccessibilityAction(if (s.joined) "الخروج من المحادثة الصوتية" else "العودة للمحادثة الصوتية") { toggleJoin(); true })
+                        if (s.joined) add(CustomAccessibilityAction(if (s.muted) "فتح الميكروفون" else "قفل الميكروفون") { toggleMute(); true })
+                    }
                 } else {
                     // علامة اتجاه غير مسموعة: تخلي المؤشر يقدر يوقف هنا بدون كلام
                     contentDescription = "\u200F"
