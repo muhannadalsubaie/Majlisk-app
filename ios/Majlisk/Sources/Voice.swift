@@ -203,7 +203,10 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     }
 
     /// يطابق الأصوات المسحوبة مع قائمة المنضمين: يسحب الجدد ويغلق من غادر
-    func sync(_ list: [VoiceMember]) {
+    func sync(_ list: [VoiceMember], table: String? = nil) {
+        if let table, table != tableId { return }
+        // نفس القائمة: ما تغيّر شي (إلا لو فيه سحب فشل ينتظر إعادة المحاولة)
+        if list == members && pullRetries == 0 && table != nil { return }
         members = list
         guard isJoined, !isBusy else { return }
         // لسنا في قائمة الخادم: قد تكون حالة قديمة، أو أخرجنا الخادم فعلاً — نتحقق بعد مهلة ثم نعود مكتومين

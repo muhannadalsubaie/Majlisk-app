@@ -83,7 +83,6 @@ struct TableScreen: View {
         // يهدم الشاشات فيستدعي onDisappear. نمسحها فقط عند الخروج من الطاولة بنفسك
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
         .onReceive(NotificationCenter.default.publisher(for: .appForeground)) { _ in conn.reconnectNow(); Voice.shared.onForeground() }
-        .onChange(of: conn.view?.voice ?? []) { list in Voice.shared.sync(list) }
     }
 
     @ViewBuilder private func table(_ v: TableView) -> some View {

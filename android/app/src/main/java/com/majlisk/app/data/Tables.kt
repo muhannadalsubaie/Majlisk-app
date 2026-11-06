@@ -216,7 +216,7 @@ class TableConnection(val tableId: String) {
     private fun handle(text: String) {
         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
         when (msg.optString("type")) {
-            "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it) }
+            "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it); scope.launch { com.majlisk.app.voice.Voice.sync(it.voice, tableId) } }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             "events" -> msg.optJSONArray("events")?.let { a ->

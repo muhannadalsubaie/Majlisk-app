@@ -301,7 +301,11 @@ final class TableConnection: ObservableObject {
         guard let data = text.data(using: .utf8), let msg = (try? JSONSerialization.jsonObject(with: data)) as? JSON else { return }
         switch msg.str("type") {
         case "state":
-            if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async { self.view = parsed; self.version += 1; self.onState?(parsed) } }
+            if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async {
+                self.view = parsed; self.version += 1; self.onState?(parsed)
+                // المحادثة الصوتية تتابع المنضمين هنا (مو من الشاشة): والتطبيق في الخلفية الشاشة ما تتحدث، فما كنت تسمع من دخل جديد
+                Voice.shared.sync(parsed.voice, table: self.tableId)
+            } }
         case "events":
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)

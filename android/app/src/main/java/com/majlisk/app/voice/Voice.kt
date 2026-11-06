@@ -231,7 +231,10 @@ object Voice {
     }
 
     /** يطابق الأصوات المسحوبة مع قائمة المنضمين: يسحب الجدد ويغلق من غادر */
-    fun sync(list: List<VoiceMember>) {
+    fun sync(list: List<VoiceMember>, table: String? = null) {
+        if (table != null && table != tableId) return
+        // نفس القائمة: ما تغيّر شي (إلا لو فيه سحب فشل ينتظر إعادة المحاولة)
+        if (table != null && list == members && pullRetries == 0) return
         members = list
         val s = _state.value
         if (!s.joined || s.busy) return

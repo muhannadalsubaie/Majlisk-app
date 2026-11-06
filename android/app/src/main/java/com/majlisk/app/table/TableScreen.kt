@@ -167,7 +167,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     // كل من يدخل الطاولة ينضم للمحادثة الصوتية مستمعاً، وميكروفونه مقفل حتى يفتحه بنفسه
     // نغمة الانضمام يسمعها المنضم نفسه أول ما تفتح الطاولة (الموجودون يسمعونها من إعلان الخادم)
     LaunchedEffect(tableId) { Sounds.tableJoin(); Voice.join(tableId, uid, Voice.Mode.Auto) }
-    LaunchedEffect(v.voice) { Voice.sync(v.voice) }
+    // متابعة المنضمين للمحادثة الصوتية صارت في اتصال الطاولة نفسه (تشتغل والتطبيق في الخلفية)
 
     val leave = { conn.send("leave"); exit() }
 
