@@ -427,11 +427,18 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                     .clearAndSetSemantics {
                         if (order.isNotEmpty()) {
                             contentDescription = "أوراقك"
-                            stateDescription = "${sel?.label.orEmpty()}، ${pos + 1} من ${order.size}"
-                            progressBarRangeInfo = ProgressBarRangeInfo(pos.toFloat(), 0f..maxOf(order.size - 1, 1).toFloat(), steps = maxOf(order.size - 2, 0))
-                            setProgress { v -> handPos = v.roundToInt().coerceIn(0, order.size - 1); true }
-                            onClick { playSel(); true }
-                            if (cardActions.isNotEmpty()) customActions = cardActions.map { (label, run) -> CustomAccessibilityAction(label) { run(); true } }
+                            if (cardActions.isNotEmpty()) {
+                                // وقت القرار (صن/حكم/بس، الدبل...): السحب لفوق وتحت يتنقل بين القرارات (الإجراءات)
+                                stateDescription = "اسحب لفوق أو لتحت للقرار"
+                                customActions = cardActions.map { (label, run) -> CustomAccessibilityAction(label) { run(); true } }
+                                onClick { Announcer.announceNow("اختر القرار بالسحب لفوق أو لتحت"); true }
+                            } else {
+                                // وقت اللعب: السحب لفوق وتحت يتنقل بين الأوراق، والنقر مرتين يلعبها
+                                stateDescription = "${sel?.label.orEmpty()}، ${pos + 1} من ${order.size}"
+                                progressBarRangeInfo = ProgressBarRangeInfo(pos.toFloat(), 0f..maxOf(order.size - 1, 1).toFloat(), steps = maxOf(order.size - 2, 0))
+                                setProgress { v -> handPos = v.roundToInt().coerceIn(0, order.size - 1); true }
+                                onClick { playSel(); true }
+                            }
                         }
                     },
             ) {

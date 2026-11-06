@@ -306,18 +306,22 @@ struct BalootBoard: View {
                     // قارئ الشاشة: اليد كلها عنصر واحد ما يختفي
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel("أوراقك")
-                    .accessibilityValue(sel.map { "\($0.label)، \(pos + 1) من \(order.count)" } ?? "")
-                    .accessibilityAdjustableAction { dir in
+                    .accessibilityValue(!cardActions.isEmpty ? "اسحب لفوق أو لتحت للقرار" : sel.map { "\($0.label)، \(pos + 1) من \(order.count)" } ?? "")
+                    // وقت القرار (صن/حكم/بس، الدبل...): السحب لفوق وتحت يتنقل بين القرارات (الإجراءات)؛
+                    // غيره: يتنقل بين الأوراق
+                    .handAdjust(cardActions.isEmpty) { dir in
                         guard !order.isEmpty else { return }
                         switch dir {
                         case .increment: handPos = min(pos + 1, order.count - 1)
                         case .decrement: handPos = max(pos - 1, 0)
                         @unknown default: break
                         }
-                        // آخر اليد أو أولها: صوت خفيف بدل ما يسكت
+                        // آخر اليد أو أولها: يعيد اسم الورقة بدل ما يسكت
                         if (dir == .increment && pos == order.count - 1) || (dir == .decrement && pos == 0) { UIAccessibility.post(notification: .announcement, argument: sel?.label ?? "") }
                     }
                     .accessibilityAction {
+                        // وقت القرار: النقر مرتين بدون اختيار قرار ما يلعب ورقة
+                        guard cardActions.isEmpty else { Announcer.announceNow("اختر القرار بالسحب لفوق أو لتحت"); return }
                         guard let c = sel else { return }
                         if g.actions.legal.contains(c) {
                             // إعلان لعبك (واللي بعده) يقطع قراءة اليد
@@ -697,5 +701,13 @@ struct FlowLayout: Layout {
             }
             y += h + spacing
         }
+    }
+}
+
+
+private extension View {
+    /// اليد: قابلة للتعديل (سحب لفوق/تحت بين الأوراق) بس لما ما فيه قرار، وإلا السحب يروح للإجراءات
+    @ViewBuilder func handAdjust(_ on: Bool, _ action: @escaping (AccessibilityAdjustmentDirection) -> Void) -> some View {
+        if on { self.accessibilityAdjustableAction(action) } else { self }
     }
 }
