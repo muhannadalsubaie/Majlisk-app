@@ -294,9 +294,32 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         configureAudio(listening: nil)
     }
 
+    /// الميكروفون مفتوح (وضع التسجيل والتشغيل)
+    private var micAudio = false
+
+    override init() {
+        super.init()
+        NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.keepBluetooth()
+        }
+    }
+
+    /// iOS 27: لو اخترت من إعدادات الجوال ميكروفون السماعة، البلوتوث يحتاج وضع المكالمات (HFP)،
+    /// وبدونه الصوت ينفصل من السماعة ويرجع لسماعة الجوال. نسمح فيه بس لما ينفصل فعلاً،
+    /// فاللي يستخدم ميكروفون الجوال يبقى على جودة الأغاني (A2DP)
+    private func keepBluetooth() {
+        let s = AVAudioSession.sharedInstance()
+        guard micAudio, !s.categoryOptions.contains(.allowBluetooth) else { return }
+        let onHeadset = s.currentRoute.outputs.contains { [.headphones, .bluetoothA2DP, .bluetoothLE, .bluetoothHFP].contains($0.portType) }
+        guard !onHeadset, s.availableInputs?.contains(where: { $0.portType == .bluetoothHFP }) == true else { return }
+        try? s.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP, .mixWithOthers])
+        try? s.setActive(true)
+    }
+
     /// الصوت من مكبر الجهاز، ويمتزج مع VoiceOver دون أن يخفضه أحدهما
     private func configureAudio(listening: Bool?) {
         let s = AVAudioSession.sharedInstance()
+        micAudio = listening == false
         if listening == nil {
             try? s.setCategory(.playback, options: [.mixWithOthers])
             return
@@ -320,6 +343,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         // أعلى جودة: 48 كيلوهيرتز (نفس جودة صوت المحادثة Opus)، سلكية أو بلوتوث أو مكبر
         try? s.setPreferredSampleRate(48_000)
         try? s.setActive(true)
+        keepBluetooth()
     }
 
     // ───── RTCPeerConnectionDelegate ─────

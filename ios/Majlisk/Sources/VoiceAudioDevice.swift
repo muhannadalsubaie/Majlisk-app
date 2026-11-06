@@ -42,11 +42,14 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     private var systemEchoOn = false
     /// الوحدة الحالية: العادية (RemoteIO) أو وحدة المكالمات (VoiceProcessingIO)
     private var plainUnit = false
-    var deviceInputSampleRate: Double { session.sampleRate }
+    /// تردد ثابت بيننا وبين WebRTC: وحدة الصوت تحوّل لتردد السماعة بنفسها (بلوتوث المكالمات 16 كيلو، الأغاني 48)،
+    /// فتبديل السماعة وسط المحادثة ما يخرب الصوت
+    static let rate: Double = 48_000
+    var deviceInputSampleRate: Double { VoiceAudioDevice.rate }
     var inputIOBufferDuration: TimeInterval { session.ioBufferDuration }
     var inputNumberOfChannels: Int { 1 }
     var inputLatency: TimeInterval { session.inputLatency }
-    var deviceOutputSampleRate: Double { session.sampleRate }
+    var deviceOutputSampleRate: Double { VoiceAudioDevice.rate }
     var outputIOBufferDuration: TimeInterval { session.ioBufferDuration }
     var outputNumberOfChannels: Int { 1 }
     var outputLatency: TimeInterval { session.outputLatency }
@@ -71,7 +74,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         guard makeUnit(input: true) else { return }
         isPlayoutInitialized = true
         isRecordingInitialized = true
-        effects.setRate(session.sampleRate)
+        effects.setRate(VoiceAudioDevice.rate)
         if wasRunning, let unit { AudioOutputUnitStart(unit) }
     }
 
@@ -98,7 +101,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func startPlayout() -> Bool {
         guard let unit else { return false }
         isPlaying = true
-        effects.setRate(session.sampleRate)
+        effects.setRate(VoiceAudioDevice.rate)
         // نحوّل كل أصوات اللعب مسبقاً في الخلفية: التحويل وقت التشغيل كان على الخيط الرئيسي فيعلّق VoiceOver
         DispatchQueue.main.async { [effects] in effects.prewarm(Sounds.shared.allFiles()) }
         let ok = AudioOutputUnitStart(unit) == noErr
@@ -175,7 +178,7 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         var inputOn: UInt32 = input ? one : zero
         AudioUnitSetProperty(u, kAudioOutputUnitProperty_EnableIO, kAudioUnitScope_Input, 1, &inputOn, size)
 
-        var fmt = AudioStreamBasicDescription(mSampleRate: session.sampleRate, mFormatID: kAudioFormatLinearPCM,
+        var fmt = AudioStreamBasicDescription(mSampleRate: VoiceAudioDevice.rate, mFormatID: kAudioFormatLinearPCM,
                                               mFormatFlags: kLinearPCMFormatFlagIsSignedInteger | kLinearPCMFormatFlagIsPacked,
                                               mBytesPerPacket: 2, mFramesPerPacket: 1, mBytesPerFrame: 2, mChannelsPerFrame: 1,
                                               mBitsPerChannel: 16, mReserved: 0)
