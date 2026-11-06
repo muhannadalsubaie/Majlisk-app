@@ -25,6 +25,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.json.JSONObject
 import org.webrtc.AudioTrack
+import org.webrtc.DataChannel
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
 import org.webrtc.PeerConnection
@@ -59,6 +60,10 @@ object Voice {
     private var pc: PeerConnection? = null
     private var mic: AudioTrack? = null
     private var micSource: org.webrtc.AudioSource? = null
+    /** قناة بيانات صغيرة تخلّي الاتصال يقوم من أول لحظة (وأنت تسمع بس)، فتسمع الباقين بدون ما تفتح الميكروفون */
+    private var keep: DataChannel? = null
+    /** محاولات سحب فشلت: نعيدها بعد لحظة بدل ما ننتظر تغيّر قائمة المحادثة */
+    private var pullRetries = 0
     private var sessionId: String? = null
     /** من أسحب صوته: uid:session → mid */
     private val pulled = HashMap<String, String>()
@@ -115,8 +120,15 @@ object Voice {
                         }
                     }) ?: throw ApiError("voice-failed")
                     pc = created
-                    val r = request(JSONObject().put("op", "session"))
+                    keep = created.createDataChannel("keep", DataChannel.Init())
+                    val offer = created.createOfferAwait()
+                    created.setLocalAwait(offer)
+                    val r = request(JSONObject().put("op", "session").put("offer", desc(offer)))
                     sessionId = r.getString("sessionId")
+                    val answer = parseDesc(r.optJSONObject("answer"))
+                    if (answer != null) created.setRemoteAwait(answer)
+                    // خادم قديم ما يرد على العرض: نتراجع عنه ونكمل بالطريقة السابقة
+                    else runCatching { created.setLocalAwait(SessionDescription(SessionDescription.Type.ROLLBACK, "")) }
                     members = members.filter { it.uid != uid } + VoiceMember(uid, "", sessionId!!, muted = true, mic = false, blocked = false)
                     set { State(joined = true, muted = true, busy = false) }
                     audio(true)
@@ -253,13 +265,14 @@ object Voice {
                     val mids = gone.mapNotNull { pulled.remove(it) }
                     runCatching { request(JSONObject().put("op", "close").put("sessionId", sessionId).put("mids", org.json.JSONArray(mids))) }
                 }
+                var failed = false
                 for ((key, m) in others) {
                     if (key in pulled) continue
                     try {
                         val r = request(JSONObject().put("op", "pull").put("sessionId", sessionId).put("uid", m.uid))
                         r.optString("sessionId").takeIf { it.isNotEmpty() }?.let { sessionId = it }
-                        val mid = r.optJSONArray("tracks").objects().firstOrNull()?.optString("mid")?.takeIf { it.isNotEmpty() } ?: continue
-                        pulled[key] = mid
+                        val mid = r.optJSONArray("tracks").objects().firstOrNull()?.optString("mid")?.takeIf { it.isNotEmpty() }
+                        if (mid == null) { failed = true; continue }
                         val offer = parseDesc(r.optJSONObject("sessionDescription"))
                         if (r.optBoolean("requiresImmediateRenegotiation") && offer != null) {
                             conn.setRemoteAwait(offer)
@@ -267,8 +280,14 @@ object Voice {
                             conn.setLocalAwait(answer)
                             request(JSONObject().put("op", "renegotiate").put("sessionId", sessionId).put("answer", desc(answer)))
                         }
-                    } catch (_: Exception) { /* نحاول مع التحديث التالي */ }
+                        // ما نحسبه مسحوباً إلا بعد ما ينجح كله: لو فشل نعيد المحاولة
+                        pulled[key] = mid
+                    } catch (_: Exception) { failed = true }
                 }
+                if (failed && pullRetries < 5) {
+                    pullRetries++
+                    Session.scope.launch { delay(3000); if (_state.value.joined) sync(members) }
+                } else if (!failed) pullRetries = 0
             }
         }
     }
@@ -297,6 +316,8 @@ object Voice {
     private fun cleanup() {
         missingJob?.cancel(); missingJob = null
         pulled.clear()
+        keep?.let { runCatching { it.close(); it.dispose() } }
+        keep = null
         // الاتصال أولاً ثم الميكروفون ومصدره (المكتبة لا تتخلص من المسار المضاف بنفسها)
         pc?.let { runCatching { it.dispose() } }
         pc = null

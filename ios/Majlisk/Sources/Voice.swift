@@ -36,6 +36,10 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     private var myUid = ""
     private var pc: RTCPeerConnection?
     private var mic: RTCAudioTrack?
+    /// قناة بيانات صغيرة تخلّي الاتصال يقوم من أول لحظة (وأنت تسمع بس)، فتسمع الباقين بدون ما تفتح الميكروفون
+    private var keep: RTCDataChannel?
+    /// محاولات سحب فشلت: نعيدها بعد لحظة بدل ما ننتظر تغيّر قائمة المحادثة
+    private var pullRetries = 0
     private var sessionId: String?
     /// من أسحب صوته: uid:session → mid
     private var pulled: [String: String] = [:]
@@ -89,8 +93,17 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 config.sdpSemantics = .unifiedPlan
                 guard let conn = factory.peerConnection(with: config, constraints: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil), delegate: self) else { throw ApiError(code: "voice-failed") }
                 pc = conn
-                let r = try await request(["op": "session"])
+                keep = conn.dataChannel(forLabel: "keep", configuration: RTCDataChannelConfiguration())
+                let offer = try await conn.offer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
+                try await conn.setLocalDescription(offer)
+                let r = try await request(["op": "session", "offer": desc(offer)])
                 sessionId = r.str("sessionId")
+                if let answer = parseDesc(r.obj("answer")) {
+                    try await conn.setRemoteDescription(answer)
+                } else {
+                    // خادم قديم ما يرد على العرض: نتراجع عنه ونكمل بالطريقة السابقة
+                    try? await conn.setLocalDescription(RTCSessionDescription(type: .rollback, sdp: ""))
+                }
                 members = members.filter { $0.uid != uid } + [VoiceMember(uid: uid, username: "", sessionId: sessionId!, muted: true, mic: false, blocked: false)]
                 update(joined: true, muted: true, busy: false)
                 DispatchQueue.main.async { self.reconnecting = false }
@@ -226,20 +239,26 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 let mids = gone.compactMap { pulled.removeValue(forKey: $0) }
                 _ = try? await request(["op": "close", "sessionId": sessionId ?? "", "mids": mids])
             }
+            var failed = false
             for (key, m) in others where pulled[key] == nil {
                 do {
                     let r = try await request(["op": "pull", "sessionId": sessionId ?? "", "uid": m.uid])
                     if let s = r.strOrNil("sessionId"), !s.isEmpty { sessionId = s }
-                    guard let mid = r.objs("tracks").first?.strOrNil("mid"), !mid.isEmpty else { continue }
-                    pulled[key] = mid
+                    guard let mid = r.objs("tracks").first?.strOrNil("mid"), !mid.isEmpty else { failed = true; continue }
                     if r.bool("requiresImmediateRenegotiation"), let offer = parseDesc(r.obj("sessionDescription")) {
                         try await conn.setRemoteDescription(offer)
                         let answer = try await conn.answer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
                         try await conn.setLocalDescription(answer)
                         _ = try await request(["op": "renegotiate", "sessionId": sessionId ?? "", "answer": desc(answer)])
                     }
-                } catch { /* نحاول مع التحديث التالي */ }
+                    // ما نحسبه مسحوباً إلا بعد ما ينجح كله: لو فشل نعيد المحاولة
+                    pulled[key] = mid
+                } catch { failed = true }
             }
+            if failed && pullRetries < 5 {
+                pullRetries += 1
+                Task { try? await Task.sleep(nanoseconds: 3_000_000_000); if self.isJoined { self.syncNow() } }
+            } else if !failed { pullRetries = 0 }
         }
     }
 
@@ -263,6 +282,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     private func cleanup() {
         missingTask?.cancel(); missingTask = nil
         pulled.removeAll()
+        keep?.close(); keep = nil
         pc?.close()
         pc = nil
         mic = nil
