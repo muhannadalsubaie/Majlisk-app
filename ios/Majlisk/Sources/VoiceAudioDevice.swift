@@ -55,8 +55,12 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     var outputLatency: TimeInterval { session.outputLatency }
 
     /// الصوت طالع لسماعات (سلكية أو بلوتوث)، مو لسماعة الجوال
+    /// الصوت طالع لبلوتوث الأغاني (A2DP/LE): وحدة المكالمات ما تدعمه (ترجّع الصوت لسماعة الجوال)، فنستخدم العادية.
+    /// السلكية وبلوتوث المكالمات (HFP): وحدة المكالمات — مايك السماعة نفسها مع رفع مستوى الصوت ومعالجته،
+    /// بدونها كان صوتك يوصل للباقين بعيد وواطي
     private var headphones: Bool {
-        session.currentRoute.outputs.contains { [.headphones, .bluetoothA2DP, .bluetoothLE, .bluetoothHFP].contains($0.portType) }
+        let outs = session.currentRoute.outputs.map(\.portType)
+        return outs.contains { [.bluetoothA2DP, .bluetoothLE].contains($0) } && !outs.contains(.bluetoothHFP)
     }
 
     override init() {
@@ -260,6 +264,10 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
             var list = AudioBufferList(mNumberBuffers: 1, mBuffers: AudioBuffer(mNumberChannels: 1, mDataByteSize: UInt32(count * 2), mData: raw.baseAddress))
             let st = AudioUnitRender(unit, flags, ts, bus, frames, &list)
             guard st == noErr else { return st }
+            // الوحدة العادية (مع بلوتوث الأغاني): المايك مايك الجوال وما فيه رفع تلقائي للصوت، فنكبّره شوي
+            if plainUnit, let p = raw.baseAddress?.assumingMemoryBound(to: Int16.self) {
+                for i in 0..<count { p[i] = Int16(clamping: Int32(p[i]) * 5 / 2) }
+            }
             return delegate.deliverRecordedData(flags, ts, Int(bus), frames, &list, nil, nil)
         }
     }
