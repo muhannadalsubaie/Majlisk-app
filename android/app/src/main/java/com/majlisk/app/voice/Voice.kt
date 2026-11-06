@@ -349,29 +349,8 @@ object Voice {
      * ونمسك تركيز الصوت ونطلب ألا يخفضنا النظام حين يتكلم TalkBack، فيبقى صوت اللاعبين بنفس المستوى.
      */
     private fun route(am: AudioManager) {
-        if (headphonesMode && talking) {
-            // سماعة والمايك مفتوح: وضع المكالمات بمايك السماعة نفسها (قريب من فمك، مع معالجة ورفع الصوت).
-            // بالوضع العادي كان يستخدم أحياناً مايك الجوال بدون رفع للصوت، فيوصل صوتك للباقين بعيد
-            am.mode = AudioManager.MODE_IN_COMMUNICATION
-            if (Build.VERSION.SDK_INT >= 31) {
-                val devices = am.availableCommunicationDevices
-                val order = listOf(
-                    AudioDeviceInfo.TYPE_WIRED_HEADSET, AudioDeviceInfo.TYPE_USB_HEADSET,
-                    AudioDeviceInfo.TYPE_BLE_HEADSET, AudioDeviceInfo.TYPE_BLUETOOTH_SCO, AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
-                )
-                order.firstNotNullOfOrNull { t -> devices.firstOrNull { it.type == t } }?.let { am.setCommunicationDevice(it) }
-            } else {
-                @Suppress("DEPRECATION")
-                am.isSpeakerphoneOn = false
-                @Suppress("DEPRECATION")
-                if (!am.isWiredHeadsetOn && am.isBluetoothA2dpOn) runCatching { am.startBluetoothSco(); am.isBluetoothScoOn = true }
-            }
-            return
-        }
         if (headphonesMode) {
-            // سماعة والمايك مقفل: الوضع العادي بجودة الوسائط الكاملة (سلكية، أو بلوتوث بجودة الأغاني)
-            @Suppress("DEPRECATION")
-            if (Build.VERSION.SDK_INT < 31 && am.isBluetoothScoOn) runCatching { am.isBluetoothScoOn = false; am.stopBluetoothSco() }
+            // سماعة: الوضع العادي بجودة الوسائط الكاملة (سلكية، أو بلوتوث بجودة الأغاني والميكروفون من الجوال)
             if (Build.VERSION.SDK_INT >= 31) am.clearCommunicationDevice() else {
                 @Suppress("DEPRECATION")
                 am.isSpeakerphoneOn = false
