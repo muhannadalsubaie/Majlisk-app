@@ -74,7 +74,9 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     func startPlayout() -> Bool {
         guard let unit else { return false }
         isPlaying = true
-        effects.rate = session.sampleRate
+        effects.setRate(session.sampleRate)
+        // نحوّل كل أصوات اللعب مسبقاً في الخلفية: التحويل وقت التشغيل كان على الخيط الرئيسي فيعلّق VoiceOver
+        DispatchQueue.main.async { [effects] in effects.prewarm(Sounds.shared.allFiles()) }
         let ok = AudioOutputUnitStart(unit) == noErr
         if ok { VoiceAudioDevice.active = self }
         return ok
@@ -232,9 +234,19 @@ final class EffectMixer {
     private struct Playing { let samples: [Int16]; var pos: Int; let gain: Float }
     private let lock = NSLock()
     private var playing: [Playing] = []
+    /// التحويل (فك mp3) في خيط خلفي، مو على الخيط الرئيسي: كان يعلّق قارئ الشاشة وأنت في المحادثة
+    private let work = DispatchQueue(label: "majlisk.effects", qos: .userInitiated)
     private var cache: [String: [Int16]] = [:]
-    /// تردد جهاز الصوت (يتغير مع السماعة)
-    var rate: Double = 48000 { didSet { if rate != oldValue { cache.removeAll() } } }
+    /// تردد جهاز الصوت (يتغير مع السماعة) — يُقرأ ويُكتب في خيط التحويل بس
+    private var rate: Double = 48000
+
+    func setRate(_ r: Double) {
+        work.async { if r != self.rate { self.rate = r; self.cache.removeAll() } }
+    }
+
+    func prewarm(_ files: [(String, URL)]) {
+        work.async { for (n, u) in files { _ = self.samples(n, u) } }
+    }
 
     /// يحوّل ملف الصوت مرة وحدة لتردد الجهاز
     private func samples(_ name: String, _ url: URL) -> [Int16]? {
@@ -259,11 +271,13 @@ final class EffectMixer {
     }
 
     func play(_ name: String, url: URL, gain: Float) {
-        guard let s = samples(name, url) else { return }
-        lock.lock()
-        playing.append(Playing(samples: s, pos: 0, gain: gain))
-        if playing.count > 12 { playing.removeFirst() }
-        lock.unlock()
+        work.async {
+            guard let s = self.samples(name, url) else { return }
+            self.lock.lock()
+            self.playing.append(Playing(samples: s, pos: 0, gain: gain))
+            if self.playing.count > 12 { self.playing.removeFirst() }
+            self.lock.unlock()
+        }
     }
 
     func clear() {

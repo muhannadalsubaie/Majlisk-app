@@ -33,6 +33,9 @@ final class Sounds {
         }
     }
 
+    /// كل ملفات الأصوات المحمّلة (لتحويلها مسبقاً في جهاز صوت المحادثة)
+    func allFiles() -> [(String, URL)] { urls.map { ($0.key, $0.value) } }
+
     private func play(_ name: String, at: Double = 0, gain: Float = 0.8, vary: Bool = true) {
         if Prefs.muted { return }
         guard let d = data[name] else { return }
