@@ -165,9 +165,9 @@ fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modi
 
 /** زر الرجوع: صغير في كل الشاشات والقوائم (مع مساحة لمس كافية) */
 @Composable
-fun BackButton(onClick: () -> Unit, text: String = "رجوع") =
+fun BackButton(onClick: () -> Unit, text: String = "رجوع", modifier: Modifier = Modifier) =
     RaisedButton(
-        text, onClick, base = Palette.green700, content = Palette.text, border = Palette.gold,
+        text, onClick, modifier, base = Palette.green700, content = Palette.text, border = Palette.gold,
         minHeight = 40.dp, padding = PaddingValues(horizontal = 14.dp, vertical = 6.dp), fontSize = 14.sp,
     )
 

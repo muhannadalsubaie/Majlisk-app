@@ -176,16 +176,15 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
         Screen(fill = true) {
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                 // قارئ الشاشة: الإجراءات تفتح الصفحة المطلوبة على طول (بدون ما تدخل القائمة)
-                Box(Modifier.semantics(mergeDescendants = true) {
+                // الإجراءات على الزر نفسه (كانت على غلاف حوله، فيصير عنصر فاضي ما يفتح القائمة)
+                com.majlisk.app.ui.BackButton({ menuStart = TableMenuStart.Main; menuOpen = true }, "القائمة", Modifier.semantics {
                     customActions = listOfNotNull(
                         CustomAccessibilityAction("اللاعبون") { menuStart = TableMenuStart.Players; menuOpen = true; true },
                         CustomAccessibilityAction("الأصدقاء") { menuStart = TableMenuStart.Friends; menuOpen = true; true },
                         if (v.ownerUid == uid) CustomAccessibilityAction("دعوة صديق") { menuStart = TableMenuStart.Invite; menuOpen = true; true } else null,
                         CustomAccessibilityAction("مغادرة الطاولة") { confirmLeave = true; true },
                     )
-                }) {
-                    com.majlisk.app.ui.BackButton({ menuStart = TableMenuStart.Main; menuOpen = true }, "القائمة")
-                }
+                })
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
                 if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(
