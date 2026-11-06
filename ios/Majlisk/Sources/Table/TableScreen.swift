@@ -552,7 +552,7 @@ private struct PlayerTag: View {
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
             if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
-            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner ? 200 : 62) }
+            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner ? 200 : 62).padding(.top, 2) }
         }
             .padding(.horizontal, 4).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
@@ -568,11 +568,16 @@ private struct ProjectFaces: View {
     /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
     var maxWidth: CGFloat = 200
     var body: some View {
-        // كل ورقة فوق التي على يسارها، ومزاحة بقدر يكشف زاويتها اليسرى (رقمها ورمزها) بوضوح
-        let w: CGFloat = 24, h: CGFloat = 35
-        let step = faces.count > 1 ? min(16, (maxWidth - w) / CGFloat(faces.count - 1)) : 0
-        HStack(spacing: step - w) {
-            ForEach(Array(faces.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: w, height: h) }
+        // تحت اسم صاحبه مباشرة، كل ورقة كاملة وواضحة (بدون تراكب)، وتنزل سطر جديد لو ضاق المكان
+        let w: CGFloat = maxWidth < 100 ? 28 : 32, h: CGFloat = w * 1.45, gap: CGFloat = 3
+        let perRow = max(1, Int((maxWidth + gap) / (w + gap)))
+        let rows = stride(from: 0, to: faces.count, by: perRow).map { Array(faces[$0..<min($0 + perRow, faces.count)]) }
+        VStack(spacing: gap) {
+            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                HStack(spacing: gap) {
+                    ForEach(Array(row.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: w, height: h) }
+                }
+            }
         }
         .environment(\.layoutDirection, .leftToRight)
         .accessibilityHidden(true)

@@ -514,12 +514,16 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
-    // كل ورقة فوق التي على يسارها، ومزاحة بقدر يكشف زاويتها اليسرى (رقمها ورمزها) بوضوح
-    val w = 24f; val h = 35f
-    val step = if (faces.size > 1) minOf(16f, (maxWidth - w) / (faces.size - 1)) else 0f
-    Box(Modifier.size((w + step * (faces.size - 1)).dp, h.dp).clearAndSetSemantics { }) {
-        faces.forEachIndexed { i, c ->
-            CardFaceBox(c, Modifier.absoluteOffset(x = (i * step).dp).size(w.dp, h.dp))
+    // تحت اسم صاحبه مباشرة، كل ورقة كاملة وواضحة (بدون تراكب)، وتنزل سطر جديد لو ضاق المكان
+    val w = if (maxWidth < 100f) 28f else 32f; val h = w * 1.45f; val gap = 3f
+    val perRow = maxOf(1, ((maxWidth + gap) / (w + gap)).toInt())
+    androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        Column(Modifier.clearAndSetSemantics { }, verticalArrangement = Arrangement.spacedBy(gap.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            faces.chunked(perRow).forEach { row ->
+                Row(horizontalArrangement = Arrangement.spacedBy(gap.dp)) {
+                    row.forEach { c -> CardFaceBox(c, Modifier.size(w.dp, h.dp)) }
+                }
+            }
         }
     }
 }
