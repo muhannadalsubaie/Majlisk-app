@@ -116,7 +116,22 @@ func gameTitle(_ kind: String, _ variant: String?) -> String {
     return base
 }
 
-struct TableRow: Identifiable { let id, ownerName: String; let isPrivate: Bool; let players, people: Int; let status, kind, variant: String }
+struct TableRow: Identifiable {
+    let id, ownerName: String; let isPrivate: Bool; let players, people: Int; let status, kind, variant: String
+    /// الموجودين: (الاسم، player|bot|spectator)
+    var members: [(name: String, role: String)] = []
+
+    /// قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين
+    var membersText: String {
+        if members.isEmpty { return "القائمة غير متوفرة الحين" }
+        let players = members.filter { $0.role != "spectator" }.map { $0.role == "bot" ? "\($0.name) (روبوت)" : $0.name }
+        let specs = members.filter { $0.role == "spectator" }.map(\.name)
+        return [
+            players.isEmpty ? "ما فيه لاعبين" : "اللاعبين: " + players.joined(separator: "، "),
+            specs.isEmpty ? "ما فيه مشاهدين" : "المشاهدين: " + specs.joined(separator: "، "),
+        ].joined(separator: "\n")
+    }
+}
 
 enum Tables {
     static let errors = [
@@ -153,7 +168,10 @@ enum Tables {
                     people: (x["people"] as? NSNumber)?.intValue ?? 0,
                     status: x["status"] as? String ?? "",
                     kind: x["kind"] as? String ?? "baloot",
-                    variant: x["variant"] as? String ?? "classic"
+                    variant: x["variant"] as? String ?? "classic",
+                    members: ((x["members"] as? String).flatMap { $0.data(using: .utf8) }
+                        .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] } ?? [])
+                        .map { (name: $0["name"] as? String ?? "", role: $0["role"] as? String ?? "") }
                 )
             })
         }

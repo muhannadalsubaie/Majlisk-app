@@ -2,6 +2,7 @@ package com.majlisk.app.ui
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.PaddingValues
@@ -127,6 +128,9 @@ fun RaisedButton(
     minHeight: Dp = 52.dp,
     padding: PaddingValues = PaddingValues(horizontal = 20.dp, vertical = 12.dp),
     fontSize: TextUnit = 18.sp,
+    /** ضغطة مطولة (اختياري)، وتظهر لقارئ الشاشة إجراءً باسم longClickLabel */
+    onLongClick: (() -> Unit)? = null,
+    longClickLabel: String? = null,
 ) {
     val interaction = remember { MutableInteractionSource() }
     val pressed by interaction.collectIsPressedAsState()
@@ -143,7 +147,14 @@ fun RaisedButton(
             .shadow(if (pressed || !enabled) 1.dp else 6.dp, shape, ambientColor = Color.Black, spotColor = Color.Black)
             .background(Brush.verticalGradient(listOf(lerp(base, Color.White, 0.22f), base, lerp(base, Color.Black, 0.18f))), shape)
             .then(if (border != null) Modifier.border(1.dp, border, shape) else Modifier)
-            .clickable(interaction, ripple(), enabled = enabled, role = Role.Button, onClick = onClick)
+            .then(
+                if (onLongClick != null) Modifier.combinedClickable(
+                    interactionSource = interaction, indication = ripple(), role = Role.Button,
+                    onLongClickLabel = longClickLabel, onLongClick = onLongClick,
+                    onClick = { if (enabled) onClick() },
+                )
+                else Modifier.clickable(interaction, ripple(), enabled = enabled, role = Role.Button, onClick = onClick),
+            )
             .describe(description)
             .padding(padding),
         contentAlignment = Alignment.Center,
@@ -157,10 +168,11 @@ fun PrimaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifi
     RaisedButton(text, onClick, modifier.fillMaxWidth(), enabled = enabled, description = description)
 
 @Composable
-fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, description: String? = null, fill: Boolean = false) =
+fun SecondaryButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier, enabled: Boolean = true, description: String? = null, fill: Boolean = false, onLongClick: (() -> Unit)? = null, longClickLabel: String? = null) =
     RaisedButton(
         text, onClick, if (fill) modifier.fillMaxWidth() else modifier,
         base = Palette.green700, content = Palette.text, border = Palette.gold, enabled = enabled, description = description, minHeight = 48.dp,
+        onLongClick = onLongClick, longClickLabel = longClickLabel,
     )
 
 /** زر الرجوع: صغير في كل الشاشات والقوائم (مع مساحة لمس كافية) */

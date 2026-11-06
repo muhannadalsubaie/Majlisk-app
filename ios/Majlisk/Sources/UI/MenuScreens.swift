@@ -119,6 +119,10 @@ struct JoinTableScreen: View {
     @State private var rows: [TableRow]?
     @State private var busy = ""
     @State private var reg: ListenerRegistration?
+    /// ضغطة مطولة على طاولة: قائمة الموجودين فيها
+    @State private var showing: TableRow?
+    /// الضغطة المطولة ما تنحسب ضغطة انضمام بعد ما ترفع إصبعك
+    @State private var longPressed: String?
 
     var body: some View {
         Screen {
@@ -130,13 +134,20 @@ struct JoinTableScreen: View {
                 let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
                 MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
                         enabled: !r.isPrivate && busy != r.id, label: spoken) {
+                    if longPressed == r.id { longPressed = nil; return }
                     busy = r.id
                     Task { @MainActor in
                         do { try await Tables.join(r.id); openTable(r.id) } catch { Announcer.announce(Tables.error(error, "تعذّر الانضمام")) }
                         busy = ""
                     }
                 }
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in longPressed = r.id; showing = r })
+                .accessibilityAction(named: "عرض الموجودين") { showing = r }
             }
+        }
+        .onChange(of: showing?.id) { id in if id == nil { longPressed = nil } }
+        .alert(item: $showing) { r in
+            Alert(title: Text("الموجودين في طاولة \(r.ownerName)"), message: Text(r.membersText), dismissButton: .default(Text("تم")))
         }
         .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list) } } }
         .onDisappear { reg?.remove(); reg = nil }
@@ -146,7 +157,7 @@ struct JoinTableScreen: View {
     private func update(_ list: [TableRow]) {
         let pos = Dictionary(uniqueKeysWithValues: (rows ?? []).enumerated().map { ($1.id, $0) })
         let sorted = list.enumerated().sorted { (pos[$0.element.id] ?? -1, $0.offset) < (pos[$1.element.id] ?? -1, $1.offset) }.map(\.element)
-        let sig = { (l: [TableRow]) in l.map { "\($0.id)|\($0.ownerName)|\($0.isPrivate)|\($0.people)|\($0.status)" } }
+        let sig = { (l: [TableRow]) in l.map { "\($0.id)|\($0.ownerName)|\($0.isPrivate)|\($0.people)|\($0.status)|\($0.membersText)" } }
         if rows == nil || sig(sorted) != sig(rows!) { rows = sorted }
     }
 }

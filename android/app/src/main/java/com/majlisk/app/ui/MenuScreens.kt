@@ -149,6 +149,8 @@ private val STATUS = mapOf("waiting" to "في الانتظار", "playing" to "�
 fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     var rows by remember { mutableStateOf<List<TableRow>?>(null) }
     var busy by remember { mutableStateOf("") }
+    // ضغطة مطولة على طاولة: قائمة الموجودين فيها
+    var showing by remember { mutableStateOf<TableRow?>(null) }
     val scope = rememberCoroutineScope()
     DisposableEffect(Unit) {
         // ترتيب ثابت (الطاولة لا تتحرك من مكانها كل حركة لعب، والجديدة تظهر فوق)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ،
@@ -184,8 +186,18 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                 enabled = !r.isPrivate && busy != r.id,
                 description = spoken,
                 fill = true,
+                onLongClick = { showing = r },
+                longClickLabel = "عرض الموجودين",
             )
         } }
+    }
+    showing?.let { r ->
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { showing = null },
+            confirmButton = { androidx.compose.material3.TextButton({ showing = null }) { Text("تم") } },
+            title = { Text("الموجودين في طاولة ${r.ownerName}") },
+            text = { Text(r.membersText) },
+        )
     }
 }
 
