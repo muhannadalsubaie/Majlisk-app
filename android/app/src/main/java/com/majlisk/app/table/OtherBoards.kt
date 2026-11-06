@@ -240,10 +240,9 @@ private fun dominoDrawOrJala(conn: TableConnection, d: DominoView) {
 private fun Modifier.dominoSwipes(v: TableView, d: DominoView, conn: TableConnection, openLog: () -> Unit): Modifier = twoFingerSwipes {
     when (it) {
         SwipeDir.Left -> Announcer.announceNow(d.endsText)
-        // فوق وتحت مثل الآيفون (كانت معكوسة في الأندرويد)
-        SwipeDir.Down -> Announcer.announceNow(dominoTurnText(v, d))
+        SwipeDir.Up -> Announcer.announceNow(dominoTurnText(v, d))
         SwipeDir.Right -> openLog()
-        SwipeDir.Up -> dominoDrawOrJala(conn, d)
+        SwipeDir.Down -> dominoDrawOrJala(conn, d)
     }
 }
 
@@ -397,9 +396,8 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             when (it) {
                 SwipeDir.Left -> Announcer.announceNow(j.boardText)
                 SwipeDir.Right -> Announcer.announceNow(j.mineText)
-                // فوق وتحت مثل الآيفون (كانت معكوسة في الأندرويد)
-                SwipeDir.Down -> Announcer.announceNow(jackarooTurnText(v, j))
-                SwipeDir.Up -> posOpen = true
+                SwipeDir.Up -> Announcer.announceNow(jackarooTurnText(v, j))
+                SwipeDir.Down -> posOpen = true
             }
         },
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -650,9 +648,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     Column(
         Modifier.fillMaxWidth().twoFingerSwipes {
             when (it) {
-                // فوق وتحت مثل الآيفون (كانت معكوسة في الأندرويد)
-                SwipeDir.Up -> logOpen = true
-                SwipeDir.Down -> Announcer.announceNow(l.turnText)
+                SwipeDir.Down -> logOpen = true
+                SwipeDir.Up -> Announcer.announceNow(l.turnText)
                 SwipeDir.Left -> Announcer.announceNow(l.diceText)
                 SwipeDir.Right -> if (l.canRoll) act(conn, "ludo", jsonOf("type" to "roll")) else Announcer.announceNow(if (l.myTurn) "اختر الحجر أولاً" else l.turnText)
             }
