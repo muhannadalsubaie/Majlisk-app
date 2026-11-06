@@ -16,7 +16,9 @@ enum Announcer {
     /// ننقل مؤشر VoiceOver بعد حركتك: إعلان حركتك القادم يقطع قراءة العنصر المنقول إليه
     private static var interruptUntil = Date.distantPast
 
-    static func interruptNextEvents() { interruptUntil = Date().addingTimeInterval(3) }
+    /// بعد ما تلعب وينتقل المؤشر لـ«أوراقك»: أول إعلان يجي بعدها (ورقة اللاعب اللي بعدك) يقطع القراءة على طول،
+    /// حتى لو تأخر اللاعب (كانت المهلة ٣ ثواني بس فيروح الإعلان بالطابور ورا قراءة المؤشر)
+    static func interruptNextEvents() { interruptUntil = Date().addingTimeInterval(30) }
 
     /// إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد
     static func announceEvent(_ text: String) {

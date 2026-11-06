@@ -37,7 +37,9 @@ object Announcer {
     /** ننقل مؤشر قارئ الشاشة بعد حركتك: إعلان حركتك القادم يقطع قراءة العنصر المنقول إليه */
     @Volatile private var interruptUntil = 0L
 
-    fun interruptNextEvents() { interruptUntil = System.currentTimeMillis() + 3000 }
+    /** بعد ما تلعب وينتقل المؤشر لـ«أوراقك»: أول إعلان يجي بعدها (ورقة اللاعب اللي بعدك) يقطع القراءة على طول،
+     *  حتى لو تأخر اللاعب (كانت المهلة ٣ ثواني بس) */
+    fun interruptNextEvents() { interruptUntil = System.currentTimeMillis() + 30_000 }
 
     /** إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد */
     fun announceEvent(text: String) {
