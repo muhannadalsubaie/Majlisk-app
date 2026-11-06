@@ -9,7 +9,20 @@ data class Person(val uid: String, val username: String)
 data class VoiceMember(val uid: String, val username: String, val sessionId: String, val muted: Boolean, val mic: Boolean, val blocked: Boolean)
 data class PlayedCard(val seat: Int, val card: Card)
 data class Contract(val mode: String, val trump: String?, val buyer: Int, val qabaTo: Int)
-data class Doubling(val level: Int, val gahwa: Boolean, val locked: Boolean)
+data class Doubling(
+    val level: Int, val gahwa: Boolean, val locked: Boolean,
+    /** مين يقرر الدبل الحين: لاعب واحد، أو فريق (إلا اللي قال بس)، وما فيه أحد وقت اختيار مقفل/مفتوح */
+    val awaitingSeat: Int? = null, val awaitingTeam: Int? = null, val passed: List<Int> = emptyList(), val lockPending: Int? = null,
+) {
+    val deciders: List<Int> get() = when {
+        lockPending != null -> emptyList()
+        awaitingSeat != null -> listOf(awaitingSeat)
+        awaitingTeam != null -> listOf(awaitingTeam, awaitingTeam + 2).filter { it !in passed }
+        else -> emptyList()
+    }
+    /** اسم الخيار: دبل، ثري، فور، قهوة */
+    val label: String get() = listOf("دبل", "دبل", "ثري", "فور", "قهوة")[level.coerceIn(1, 4)]
+}
 data class Declared(val seat: Int, val kinds: List<String>, val cards: List<String>?, val cancelled: Boolean, val faces: List<Card> = emptyList())
 data class LastHand(val points: List<Int>, val kaboot: Int?)
 
@@ -151,7 +164,7 @@ data class TableView(
                 contract = g.optJSONObject("contract")?.let {
                     Contract(it.optString("mode"), it.optStringOrNull("trump"), it.optInt("buyer"), it.optInt("qabaTo"))
                 },
-                doubling = Doubling(d.optInt("level", 1), d.optBoolean("gahwa"), d.optBoolean("locked")),
+                doubling = Doubling(d.optInt("level", 1), d.optBoolean("gahwa"), d.optBoolean("locked"), d.optIntOrNull("awaitingSeat"), d.optIntOrNull("awaitingTeam"), d.optJSONArray("passed").ints(), d.optIntOrNull("lockPending")),
                 trick = played(g.optJSONArray("trick")),
                 lastTrick = g.optJSONObject("lastTrick")?.let { played(it.optJSONArray("cards")) },
                 trickNo = g.optInt("trickNo"),

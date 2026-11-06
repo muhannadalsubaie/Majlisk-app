@@ -430,6 +430,7 @@ final class GameSoundTracker {
     private var prev: GameView?
     private var lastTurn: String?
     private var lastBidTurn: String?
+    private var lastDoubleTurn: String?
 
     func update(_ v: TableView) {
         guard let g = v.game else { prev = nil; lastTurn = nil; return }
@@ -456,6 +457,20 @@ final class GameSoundTracker {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Announcer.announce("دور \(who)") }
         }
         lastBidTurn = bidTurn
+        // قرار الدبل: «دور فلان» ثم خياراته (بس أو دبل/ثري/فور/قهوة)
+        let deciders = g.phase == "doubling" ? g.doubling.deciders : []
+        let dblTurn: String? = deciders.isEmpty ? nil : "\(g.doubling.level)|\(deciders)"
+        if let dblTurn, dblTurn != lastDoubleTurn {
+            let label = g.doubling.label
+            let text: String
+            if let me = v.mySeat, deciders.contains(me) { text = "دورك، بس أو \(label)" }
+            else {
+                let names = deciders.map { v.seat($0)?.username ?? "مقعد \($0 + 1)" }
+                text = "دور \(names.joined(separator: " و"))، \(names.count > 1 ? "يختارون" : "يختار") بس أو \(label)"
+            }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.7) { Announcer.announce(text) }
+        }
+        lastDoubleTurn = dblTurn
     }
 
     private func gameSounds(prev: GameView, g: GameView, mySeat: Int?) {

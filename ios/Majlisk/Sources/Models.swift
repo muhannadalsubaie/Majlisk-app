@@ -60,7 +60,19 @@ struct Person: Equatable { let uid: String; let username: String }
 struct VoiceMember: Equatable { let uid: String; let username: String; let sessionId: String; let muted: Bool; let mic: Bool; let blocked: Bool }
 struct PlayedCard: Equatable { let seat: Int; let card: Card }
 struct Contract: Equatable { let mode: String; let trump: String?; let buyer: Int; let qabaTo: Int }
-struct Doubling: Equatable { let level: Int; let gahwa: Bool; let locked: Bool }
+struct Doubling: Equatable {
+    let level: Int; let gahwa: Bool; let locked: Bool
+    /** مين يقرر الدبل الحين: لاعب واحد، أو فريق (إلا اللي قال بس)، وما فيه أحد وقت اختيار مقفل/مفتوح */
+    var awaitingSeat: Int? = nil, awaitingTeam: Int? = nil, passed: [Int] = [], lockPending: Int? = nil
+    var deciders: [Int] {
+        if lockPending != nil { return [] }
+        if let s = awaitingSeat { return [s] }
+        guard let t = awaitingTeam else { return [] }
+        return [t, t + 2].filter { !passed.contains($0) }
+    }
+    /** اسم الخيار: دبل، ثري، فور، قهوة */
+    var label: String { ["دبل", "دبل", "ثري", "فور", "قهوة"][min(max(level, 1), 4)] }
+}
 struct Declared: Equatable { let seat: Int; let kinds: [String]; let cards: [String]?; let cancelled: Bool; var faces: [Card] = [] }
 struct LastHand: Equatable { let points: [Int]; let kaboot: Int? }
 
@@ -206,7 +218,7 @@ struct TableView {
             qaba: Card(g.obj("qaba")),
             bidRound: g.int("bidRound", 1),
             contract: g.obj("contract").map { Contract(mode: $0.str("mode"), trump: $0.strOrNil("trump"), buyer: $0.int("buyer"), qabaTo: $0.int("qabaTo")) },
-            doubling: Doubling(level: d.int("level", 1), gahwa: d.bool("gahwa"), locked: d.bool("locked")),
+            doubling: Doubling(level: d.int("level", 1), gahwa: d.bool("gahwa"), locked: d.bool("locked"), awaitingSeat: d.intOrNil("awaitingSeat"), awaitingTeam: d.intOrNil("awaitingTeam"), passed: d.ints("passed"), lockPending: d.intOrNil("lockPending")),
             trick: played(g.objs("trick")),
             lastTrick: g.obj("lastTrick").map { played($0.objs("cards")) },
             trickNo: g.int("trickNo"),

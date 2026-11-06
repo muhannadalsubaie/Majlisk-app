@@ -639,6 +639,7 @@ class GameSoundTracker {
     private var lastTurn: String? = null
     private val main = android.os.Handler(android.os.Looper.getMainLooper())
     private var lastBidTurn: String? = null
+    private var lastDoubleTurn: String? = null
 
     fun update(v: TableView) {
         val g = v.game ?: run { prev = null; lastTurn = null; return }
@@ -661,6 +662,19 @@ class GameSoundTracker {
             main.postDelayed({ Announcer.announce("دور $who") }, 700)
         }
         lastBidTurn = bidTurn
+        // قرار الدبل: «دور فلان» ثم خياراته (بس أو دبل/ثري/فور/قهوة)
+        val deciders = if (g.phase == "doubling") g.doubling.deciders else emptyList()
+        val dblTurn = if (deciders.isEmpty()) null else "${g.doubling.level}|$deciders"
+        if (dblTurn != null && dblTurn != lastDoubleTurn) {
+            val label = g.doubling.label
+            val me = v.mySeat
+            val text = if (me != null && me in deciders) "دورك، بس أو $label" else {
+                val names = deciders.map { v.seats.getOrNull(it)?.username ?: "مقعد ${it + 1}" }
+                "دور ${names.joinToString(" و")}، ${if (names.size > 1) "يختارون" else "يختار"} بس أو $label"
+            }
+            main.postDelayed({ Announcer.announce(text) }, 700)
+        }
+        lastDoubleTurn = dblTurn
     }
 }
 
