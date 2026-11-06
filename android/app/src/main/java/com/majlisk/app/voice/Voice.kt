@@ -61,6 +61,8 @@ object Voice {
     private var pc: PeerConnection? = null
     private var mic: AudioTrack? = null
     private var micSource: org.webrtc.AudioSource? = null
+    /** قناة بيانات صغيرة تخلّي الاتصال يقوم من أول لحظة (وأنت تسمع بس)، فتسمع الباقين بدون ما تفتح الميكروفون */
+    private var keep: DataChannel? = null
     /** محاولات سحب فشلت: نعيدها بعد لحظة بدل ما ننتظر تغيّر قائمة المحادثة */
     private var pullRetries = 0
     private var sessionId: String? = null
@@ -119,9 +121,15 @@ object Voice {
                         }
                     }) ?: throw ApiError("voice-failed")
                     pc = created
-                    // جلسة استماع فاضية: الاتصال يقوم مع أول صوت نسحبه (بعرض منّا وجواب مباشر)
-                    val r = request(JSONObject().put("op", "session"))
+                    keep = created.createDataChannel("keep", DataChannel.Init())
+                    val offer = created.createOfferAwait()
+                    created.setLocalAwait(offer)
+                    val r = request(JSONObject().put("op", "session").put("offer", desc(offer)))
                     sessionId = r.getString("sessionId")
+                    val answer = parseDesc(r.optJSONObject("answer"))
+                    if (answer != null) created.setRemoteAwait(answer)
+                    // خادم قديم ما يرد على العرض: نتراجع عنه ونكمل بالطريقة السابقة
+                    else runCatching { created.setLocalAwait(SessionDescription(SessionDescription.Type.ROLLBACK, "")) }
                     members = members.filter { it.uid != uid } + VoiceMember(uid, "", sessionId!!, muted = true, mic = false, blocked = false)
                     set { State(joined = true, muted = true, busy = false) }
                     audio(true)
@@ -316,6 +324,8 @@ object Voice {
     private fun cleanup() {
         missingJob?.cancel(); missingJob = null
         pulled.clear()
+        keep?.let { runCatching { it.close(); it.dispose() } }
+        keep = null
         // الاتصال أولاً ثم الميكروفون ومصدره (المكتبة لا تتخلص من المسار المضاف بنفسها)
         pc?.let { runCatching { it.dispose() } }
         pc = null
