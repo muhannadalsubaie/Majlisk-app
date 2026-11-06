@@ -176,7 +176,7 @@ data class JackarooView(
 
 // ───── لودو ─────
 
-data class LudoOption(val token: Int, val text: String)
+data class LudoOption(val token: Int, val text: String, val die: Int = 0)
 
 data class LudoView(
     val seats: List<Int>,
@@ -210,6 +210,8 @@ data class LudoView(
     val turnText: String = "",
     val diceText: String = "",
     val canRoll: Boolean = false,
+    /** الأرقام المتجمعة بانتظار الحركة (الستة ومعها اللي بعدها) */
+    val pool: List<Int> = emptyList(),
 ) {
     fun home(owner: Int) = tokens.getOrNull(owner).orEmpty().count { it == FINISH }
 
@@ -233,7 +235,7 @@ data class LudoView(
                 lastSeat = last?.optIntOrNull("seat"),
                 winner = s.optIntOrNull("winner"),
                 teams = s.optJSONObject("rules")?.optBoolean("teams") == true,
-                moveSig = "${s.opt("lastMove")}|${s.optInt("turn")}|${s.optString("phase")}|${s.opt("dice")}",
+                moveSig = "${s.opt("lastMove")}|${s.optInt("turn")}|${s.optString("phase")}|${s.opt("dice")}|${s.opt("pool")}",
                 moved = last?.optJSONObject("token") != null,
                 lastSig = "${s.opt("lastMove")}",
                 captures = last?.optJSONArray("captured")?.length() ?: 0,
@@ -242,7 +244,7 @@ data class LudoView(
                     if (from == null || to == null) 0 else if (from == -1) 1 else to - from
                 } ?: 0,
                 myTurn = ui.optBoolean("myTurn"),
-                options = ui.optJSONArray("options").objects().map { LudoOption(it.optInt("token"), it.optString("text")) },
+                options = ui.optJSONArray("options").objects().map { LudoOption(it.optInt("token"), it.optString("text"), it.optInt("die", s.optInt("dice"))) },
                 movableOwner = ui.optInt("movableOwner", -1),
                 boardText = ui.optString("boardText"),
                 mineText = ui.optString("mineText"),
@@ -252,6 +254,7 @@ data class LudoView(
                 turnText = ui.optString("turnText"),
                 diceText = ui.optString("diceText"),
                 canRoll = ui.optBoolean("canRoll"),
+                pool = ui.optJSONArray("pool").ints(),
             )
         }
     }

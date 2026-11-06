@@ -657,8 +657,29 @@ struct LudoBoard: View {
     @State private var prevLast: String?
     /// السجل: يفتح بسحبة إصبعين من فوق لتحت (بدون زر)
     @State private var logOpen = false
+    /// قارئ الشاشة شغّال: يبقى كل شي زي ما هو (الإيماءة وأزرار الاختيار)
+    @Environment(\.accessibilityVoiceOverEnabled) private var reader
+    /// الرقم اللي اختاره (لما يكون عنده أكثر من رقم، مثل ستة وثلاثة): الحجر اللي يلمسه يمشي فيه
+    @State private var pickedDie: Int?
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
+
+    /// لمس حجر على اللوحة: يتحرك بالرقم المختار (أو أول رقم يقدر يمشيه)
+    private func tapBoard(_ at: CGPoint, _ size: CGSize) {
+        guard l.myTurn, l.phase == "move", !l.options.isEmpty else { return }
+        let U = min(size.width, size.height) / 15
+        let movable = Set(l.options.map(\.token))
+        let hits = ludoTokenPoints(size, l, v.mySeat ?? 0)
+            .filter { $0.owner == l.movableOwner && movable.contains($0.index) }
+            .map { (t: $0, d: hypot($0.point.x - at.x, $0.point.y - at.y)) }
+            .filter { $0.d < U * 0.9 }
+            .sorted { $0.d < $1.d }
+        guard let hit = hits.first?.t else { return }
+        let opts = l.options.filter { $0.token == hit.index }
+        let o = opts.first { $0.die == pickedDie } ?? opts.first!
+        pickedDie = nil
+        act(["type": "move", "token": o.token, "die": o.die])
+    }
 
     /// زاوية لون اللاعب بعد تدوير اللوحة: (فوق؟، يسار؟)
     private func corner(_ o: Int, _ mySeat: Int?) -> (top: Bool, left: Bool) {
@@ -673,9 +694,7 @@ struct LudoBoard: View {
         let n = o < names.count ? names[o] : ""
         let turn = l.turn == o && l.phase != "over"
         let left = corner(o, mySeat).left
-        let dice = DiceView(value: rolls[o], color: LUDO_COLORS[o], size: 40)
-            .rotationEffect(.degrees(Double(rollTicks[o] ?? 0) * 360))
-            .animation(.easeOut(duration: 0.45), value: rollTicks[o] ?? 0)
+        let dice = myDice(o, mySeat: mySeat)
         HStack(spacing: 8) {
             // النرد جهة اللوحة: لاعب اليسار نرده يمين صورته، ولاعب اليمين يسارها
             if !left { dice }
@@ -693,6 +712,34 @@ struct LudoBoard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(rolls[o].map { "، آخر رمية \($0)" } ?? "")\(turn ? "، عليه الدور" : "")")
+    }
+
+    /// النرد جنب الاسم. لك (بدون قارئ الشاشة): تضغطه وترمي، ولو عندك أكثر من رقم تختار الرقم منه
+    @ViewBuilder private func myDice(_ o: Int, mySeat: Int?) -> some View {
+        let mine = o == mySeat && !reader
+        let distinct = l.pool.reduce(into: [Int]()) { if !$0.contains($1) { $0.append($1) } }
+        if mine && l.myTurn && l.phase == "move" && distinct.count > 1 {
+            // أكثر من رقم: كل رقم نرد صغير، تختار واحد ثم تلمس الحجر
+            let usable = Set(l.options.map(\.die))
+            HStack(spacing: 4) {
+                ForEach(distinct, id: \.self) { d in
+                    let on = (pickedDie ?? l.options.first?.die) == d
+                    DiceView(value: d, color: LUDO_COLORS[o], size: 32)
+                        .padding(2)
+                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(on ? Palette.gold : .clear, lineWidth: 3))
+                        .opacity(usable.contains(d) ? 1 : 0.4)
+                        .onTapGesture { if usable.contains(d) { pickedDie = d } }
+                }
+            }
+        } else {
+            let canTap = mine && l.canRoll
+            DiceView(value: canTap && l.pool.isEmpty ? nil : rolls[o], color: LUDO_COLORS[o], size: canTap ? 46 : 40)
+                .rotationEffect(.degrees(Double(rollTicks[o] ?? 0) * 360))
+                .animation(.easeOut(duration: 0.45), value: rollTicks[o] ?? 0)
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
+                .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
+                .onTapGesture { if canTap { act(["type": "roll"]) } }
+        }
     }
 
     @ViewBuilder private func cornerRow(top: Bool, names: [String], mySeat: Int?, partner: Int) -> some View {
@@ -731,6 +778,11 @@ struct LudoBoard: View {
                 drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [])
             }
             .aspectRatio(1, contentMode: .fit).frame(maxWidth: boardSide(360))
+            // بدون قارئ الشاشة: تلمس الحجر اللي تبيه ويتحرك
+            .overlay(GeometryReader { geo in
+                Color.clear.contentShape(Rectangle())
+                    .gesture(SpatialTapGesture().onEnded { e in if !reader { tapBoard(e.location, geo.size) } })
+            })
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
             cornerRow(top: false, names: names, mySeat: mySeat, partner: partner)
@@ -743,14 +795,18 @@ struct LudoBoard: View {
             } else {
                 HStack(spacing: 12) {
                     DiceView(value: l.phase == "move" ? l.dice : l.lastRoll, color: l.turn < 4 ? LUDO_COLORS[l.turn] : Palette.gold)
-                    if l.myTurn && l.phase == "roll" { MButton("ارمِ النرد", .primary, fill: false) { act(["type": "roll"]) } }
+                    // زر الرمي لقارئ الشاشة بس؛ غيره يضغط النرد اللي جنب اسمه
+                    if l.myTurn && l.phase == "roll" && reader { MButton("ارمِ النرد", .primary, fill: false) { act(["type": "roll"]) } }
+                    if l.myTurn && !reader && l.phase == "roll" { Text(l.pool.isEmpty ? "اضغط النرد عند اسمك" : "رميت ستة، اضغط النرد مرة ثانية").foregroundColor(Palette.goldSoft) }
+                    if l.myTurn && !reader && l.phase == "move" { Text("المس الحجر اللي تبي تحركه").foregroundColor(Palette.goldSoft) }
                     if !l.myTurn { Text("دور \(l.turn < names.count ? names[l.turn] : "")").foregroundColor(Palette.textDim).accessibilityHidden(true) }
                 }
                 .frame(maxWidth: .infinity)
             }
-            if l.myTurn && l.phase == "move" && l.options.count > 1 {
-                Text("رميت \(l.dice ?? 0): اختر الحجر").font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
-                ForEach(l.options) { o in MButton(o.text) { act(["type": "move", "token": o.token]) } }
+            // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
+            if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
+                Text(l.prompt.isEmpty ? "اختر الحجر" : l.prompt).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                ForEach(l.options) { o in MButton(o.text) { act(["type": "move", "token": o.token, "die": o.die]) } }
             }
         }
         .onAppear { Gestures.shared.set("ludo") { read($0) }; noteRoll() }
@@ -841,6 +897,33 @@ private let HOME_CELLS: [[Cell]] = [
 private let YARDS: [Cell] = [(0, 0), (0, 9), (9, 9), (9, 0)]
 private let YARD_SPOTS: [Cell] = [(1.5, 1.5), (1.5, 3.5), (3.5, 1.5), (3.5, 3.5)]
 private let CENTER_SPOT: [Cell] = [(7, 6.25), (6.25, 7), (7, 7.75), (7.75, 7)]
+
+/// مكان كل حجر على اللوحة (نفس حساب الرسم، مع إزاحة الأحجار المتكدسة)
+private func ludoTokenPoints(_ size: CGSize, _ l: LudoView, _ bottom: Int) -> [(owner: Int, index: Int, point: CGPoint)] {
+    let U = min(size.width, size.height) / 15
+    let turns = (3 - bottom + 4) % 4
+    func rot(_ cell: Cell) -> Cell { var p = cell; for _ in 0..<turns { p = (p.1, 14 - p.0) }; return p }
+    func xy(_ cell: Cell) -> CGPoint { let (r, c) = rot(cell); return CGPoint(x: c * U + U / 2, y: r * U + U / 2) }
+    var out: [(owner: Int, index: Int, point: CGPoint)] = []
+    var seen: [String: Int] = [:]
+    for o in l.seats {
+        let row = o < l.tokens.count ? l.tokens[o] : []
+        for (i, p) in row.enumerated() {
+            let cell: Cell
+            if p == -1 { cell = (YARDS[o].0 + YARD_SPOTS[i].0 - 0.5, YARDS[o].1 + YARD_SPOTS[i].1 - 0.5) }
+            else if p == LudoView.FINISH { cell = CENTER_SPOT[o] }
+            else if p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 { cell = HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
+            else if p > LudoView.LAST_TRACK { cell = ((HOME_CELLS[o][4].0 + CENTER_SPOT[o].0) / 2, (HOME_CELLS[o][4].1 + CENTER_SPOT[o].1) / 2) }
+            else { cell = TRACK_CELLS[LudoView.absPos(o, p)] }
+            let pt = xy(cell)
+            let key = "\(Int(pt.x)),\(Int(pt.y))"
+            let n = seen[key] ?? 0
+            seen[key] = n + 1
+            out.append((o, i, CGPoint(x: pt.x + CGFloat(n) * U * 0.18, y: pt.y - CGFloat(n) * U * 0.18)))
+        }
+    }
+    return out
+}
 
 private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ bottom: Int, _ movable: [(Int, Int)]) {
     let U = min(size.width, size.height) / 15

@@ -5,6 +5,8 @@ package com.majlisk.app.table
 // لقارئ الشاشة: كل قطعة/ورقة/خيار زر بنص واضح، والضغط على اللوحة يقرأها كاملة، وحركات الجميع يعلنها الخادم.
 // سحب بإصبعين: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = (الطرفان والنقاط) أو (أحجارك).
 
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -603,6 +605,29 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         prev[0] = l.phase; prev[1] = l.turn; prev[2] = l.lastSig
     }
 
+    // قارئ الشاشة شغّال: يبقى كل شي زي ما هو (الإيماءة وأزرار الاختيار)
+    val reader = Announcer.readerOn
+    // الرقم اللي اختاره (لما يكون عنده أكثر من رقم، مثل ستة وثلاثة): الحجر اللي يلمسه يمشي فيه
+    var pickedDie by remember { mutableStateOf<Int?>(null) }
+    val doRoll = { act(conn, "ludo", jsonOf("type" to "roll")) }
+    // لمس حجر على اللوحة: يتحرك بالرقم المختار (أو أول رقم يقدر يمشيه)
+    val tapBoard = { at: Offset, w: Float ->
+        if (l.myTurn && l.phase == "move" && l.options.isNotEmpty()) {
+            val U = w / 15f
+            val movable = l.options.map { it.token }.toSet()
+            val hit = ludoTokenPoints(w, l, mySeat ?: 0)
+                .filter { it.first == l.movableOwner && it.second in movable }
+                .map { it to (it.third - at).getDistance() }
+                .filter { it.second < U * 0.9f }
+                .minByOrNull { it.second }?.first
+            if (hit != null) {
+                val opts = l.options.filter { it.token == hit.second }
+                val o = opts.firstOrNull { it.die == pickedDie } ?: opts.first()
+                pickedDie = null
+                act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die))
+            }
+        }
+    }
     // السجل (من فوق لتحت): قائمة فيها كل لاعب وأحجاره في أي خانة، تتنقل فيها
     var logOpen by remember { mutableStateOf(false) }
     if (logOpen) {
@@ -650,8 +675,29 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             androidx.compose.runtime.LaunchedEffect(tick) {
                 if (tick > 0) { spin.snapTo(0f); spin.animateTo(360f, androidx.compose.animation.core.tween(450)) }
             }
+            val mine = o == mySeat && !reader
+            val distinct = l.pool.distinct()
             val dice: @Composable () -> Unit = {
-                Box(Modifier.graphicsLayer { rotationZ = spin.value }) { Dice(roll, LUDO_COLORS[o], 40) }
+                if (mine && l.myTurn && l.phase == "move" && distinct.size > 1) {
+                    // أكثر من رقم: كل رقم نرد صغير، تختار واحد ثم تلمس الحجر
+                    val usable = l.options.map { it.die }.toSet()
+                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        distinct.forEach { d ->
+                            val on = (pickedDie ?: l.options.firstOrNull()?.die) == d
+                            Box(
+                                Modifier.border(3.dp, if (on) Palette.gold else Color.Transparent, RoundedCornerShape(8.dp)).padding(2.dp)
+                                    .graphicsLayer { alpha = if (d in usable) 1f else 0.4f }
+                                    .clickable(enabled = d in usable) { pickedDie = d },
+                            ) { Dice(d, LUDO_COLORS[o], 32) }
+                        }
+                    }
+                } else {
+                    val canTap = mine && l.canRoll
+                    Box(
+                        Modifier.graphicsLayer { rotationZ = spin.value }
+                            .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp).clickable { doRoll() } else Modifier),
+                    ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
+                }
             }
             Row(
                 Modifier.semantics(mergeDescendants = true) {
@@ -691,7 +737,11 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             contentAlignment = Alignment.Center,
         ) {
             val movable = if (l.myTurn && l.phase == "move") l.options.map { l.movableOwner to it.token } else emptyList()
-            Canvas(Modifier.widthIn(max = boardSide(360)).fillMaxWidth().aspectRatio(1f)) { drawLudo(l, mySeat ?: 0, movable) }
+            // بدون قارئ الشاشة: تلمس الحجر اللي تبيه ويتحرك
+            Canvas(
+                Modifier.widthIn(max = boardSide(360)).fillMaxWidth().aspectRatio(1f)
+                    .pointerInput(l.moveSig, reader) { if (!reader) detectTapGestures { tapBoard(it, size.width.toFloat()) } },
+            ) { drawLudo(l, mySeat ?: 0, movable) }
         }
         cornerRow(false)
         if (l.phase == "over") {
@@ -703,13 +753,17 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         } else {
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
                 Dice(if (l.phase == "move") l.dice else l.lastRoll, LUDO_COLORS.getOrElse(l.turn) { Palette.gold })
-                if (l.myTurn && l.phase == "roll") PrimaryButton("ارمِ النرد", { act(conn, "ludo", jsonOf("type" to "roll")) })
+                // زر الرمي لقارئ الشاشة بس؛ غيره يضغط النرد اللي جنب اسمه
+                if (l.myTurn && l.phase == "roll" && reader) PrimaryButton("ارمِ النرد", { act(conn, "ludo", jsonOf("type" to "roll")) })
+                if (l.myTurn && !reader && l.phase == "roll") Text(if (l.pool.isEmpty()) "اضغط النرد عند اسمك" else "رميت ستة، اضغط النرد مرة ثانية", color = Palette.goldSoft)
+                if (l.myTurn && !reader && l.phase == "move") Text("المس الحجر اللي تبي تحركه", color = Palette.goldSoft)
                 if (!l.myTurn) Text("دور ${names.getOrElse(l.turn) { "" }}", color = Palette.textDim, modifier = Modifier.clearAndSetSemantics { })
             }
         }
-        if (l.myTurn && l.phase == "move" && l.options.size > 1) {
-            Text("رميت ${l.dice ?: 0}: اختر الحجر", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            l.options.forEach { o -> SecondaryButton(o.text, { act(conn, "ludo", jsonOf("type" to "move", "token" to o.token)) }, fill = true) }
+        // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
+        if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
+            Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
+            l.options.forEach { o -> SecondaryButton(o.text, { act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, fill = true) }
         }
     }
 }
@@ -755,6 +809,33 @@ private val HOME_CELLS: List<List<Pair<Float, Float>>> = listOf(
 private val YARDS = listOf(0f to 0f, 0f to 9f, 9f to 9f, 9f to 0f)
 private val YARD_SPOTS = listOf(1.5f to 1.5f, 1.5f to 3.5f, 3.5f to 1.5f, 3.5f to 3.5f)
 private val CENTER_SPOT = listOf(7f to 6.25f, 6.25f to 7f, 7f to 7.75f, 7.75f to 7f)
+
+/** مكان كل حجر على اللوحة (نفس حساب الرسم، مع إزاحة الأحجار المتكدسة): (اللون، رقم الحجر، النقطة) */
+private fun ludoTokenPoints(width: Float, l: LudoView, bottom: Int): List<Triple<Int, Int, Offset>> {
+    val U = width / 15f
+    val turns = (3 - bottom + 4) % 4
+    fun rot(cell: Pair<Float, Float>): Pair<Float, Float> { var p = cell; repeat(turns) { p = p.second to 14f - p.first }; return p }
+    fun xy(cell: Pair<Float, Float>): Offset { val (r, c) = rot(cell); return Offset(c * U + U / 2, r * U + U / 2) }
+    val out = mutableListOf<Triple<Int, Int, Offset>>()
+    val seen = HashMap<String, Int>()
+    for (o in l.seats) {
+        l.tokens.getOrNull(o).orEmpty().forEachIndexed { i, p ->
+            val cell = when {
+                p == -1 -> (YARDS[o].first + YARD_SPOTS[i].first - 0.5f) to (YARDS[o].second + YARD_SPOTS[i].second - 0.5f)
+                p == LudoView.FINISH -> CENTER_SPOT[o]
+                p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
+                p > LudoView.LAST_TRACK -> ((HOME_CELLS[o][4].first + CENTER_SPOT[o].first) / 2) to ((HOME_CELLS[o][4].second + CENTER_SPOT[o].second) / 2)
+                else -> TRACK_CELLS[LudoView.absPos(o, p)]
+            }
+            val pt = xy(cell)
+            val key = "${pt.x.toInt()},${pt.y.toInt()}"
+            val n = seen[key] ?: 0
+            seen[key] = n + 1
+            out += Triple(o, i, Offset(pt.x + n * U * 0.18f, pt.y - n * U * 0.18f))
+        }
+    }
+    return out
+}
 
 private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int, Int>>) {
     val U = size.minDimension / 15f

@@ -139,7 +139,7 @@ struct JackarooView {
 
 // ───── لودو ─────
 
-struct LudoOption: Identifiable { var id: Int { token }; let token: Int; let text: String }
+struct LudoOption: Identifiable { var id: Int { token * 10 + die }; let token: Int; let die: Int; let text: String }
 
 struct LudoView {
     /// المسار الرئيسي 0..51، ممر المنزل 52..57، المنزل 58
@@ -173,6 +173,8 @@ struct LudoView {
     let positions: [(name: String, color: Int, tokens: [String])]
     let turnText: String, diceText: String
     let canRoll: Bool
+    /// الأرقام المتجمعة بانتظار الحركة (الستة ومعها اللي بعدها)
+    let pool: [Int]
 
     func home(_ o: Int) -> Int { o < tokens.count ? tokens[o].filter { $0 == LudoView.FINISH }.count : 0 }
 
@@ -181,19 +183,20 @@ struct LudoView {
         self.log = log
         positions = ui.objs("positions").map { (name: $0.str("name"), color: $0.int("color"), tokens: $0.strs("tokens")) }
         turnText = ui.str("turnText"); diceText = ui.str("diceText"); canRoll = ui.bool("canRoll")
+        pool = ui.ints("pool")
         seats = s.ints("seats")
         tokens = s.arr("tokens").map { (($0 as? [Any]) ?? []).map { ($0 as? NSNumber)?.intValue ?? -1 } }
         turn = s.int("turn"); phase = s.str("phase")
         dice = s.intOrNil("dice"); lastRoll = last?.intOrNil("roll"); winner = s.intOrNil("winner")
         lastSeat = last?.intOrNil("seat")
         teams = s.obj("rules")?.bool("teams") ?? false
-        moveSig = jsonSig(s["lastMove"]) + "|\(s.int("turn"))|\(s.str("phase"))|\(s.intOrNil("dice") ?? -1)"
+        moveSig = jsonSig(s["lastMove"]) + "|\(s.int("turn"))|\(s.str("phase"))|\(s.intOrNil("dice") ?? -1)|\(s.ints("pool"))"
         moved = last?.obj("token") != nil
         lastSig = jsonSig(s["lastMove"])
         captures = last?.objs("captured").count ?? 0
         if let f = last?.intOrNil("from"), let t = last?.intOrNil("to") { lastSteps = f == -1 ? 1 : t - f } else { lastSteps = 0 }
         myTurn = ui.bool("myTurn")
-        options = ui.objs("options").map { LudoOption(token: $0.int("token"), text: $0.str("text")) }
+        options = ui.objs("options").map { LudoOption(token: $0.int("token"), die: $0.int("die", s.int("dice")), text: $0.str("text")) }
         movableOwner = ui.int("movableOwner", -1)
         boardText = ui.str("boardText"); mineText = ui.str("mineText"); prompt = ui.str("prompt")
     }
