@@ -1,5 +1,10 @@
 package com.majlisk.app.table
 
+import kotlin.math.roundToInt
+import androidx.compose.ui.semantics.stateDescription
+import androidx.compose.ui.semantics.setProgress
+import androidx.compose.ui.semantics.progressBarRangeInfo
+import androidx.compose.ui.semantics.ProgressBarRangeInfo
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -324,12 +329,14 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
 
         // مؤشر قارئ الشاشة: بعد ما تلعب ورقة ينتقل لكلمة «أوراقك»، وأزرار الشراء لما تختفي ينتقل لأوراقك
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
-        val cardFocus = remember { mutableMapOf<String, FocusRequester>() }
+        // يدك عنصر واحد لقارئ الشاشة: تسحب لفوق أو لتحت بين الأوراق، والنقر مرتين يلعب الورقة.
+        // بعد ما تلعب العنصر نفسه باقي، فالمؤشر ما يقفز ويوقف على الورقة اللي جنبها
+        val handFocus = remember { FocusRequester() }
+        var handPos by remember { mutableStateOf(0) }
         val focusCard: (Card?) -> Unit = { c ->
-            val fr = c?.let { cardFocus[cardKey(it)] }
-            if (fr != null && Announcer.readerOn) {
+            if (c != null && Announcer.readerOn) {
                 Announcer.interruptNextEvents()
-                runCatching { fr.requestFocus() }
+                runCatching { handFocus.requestFocus() }
             }
         }
         // بعد ما تضغط زر شراء/دبل يختفي: المؤشر يروح لأوراقك (ما ينط فوق ولا تحت)
@@ -353,18 +360,6 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 add("مقفل" to { act(jsonOf("type" to "doubleLock", "locked" to true)) })
                 add("مفتوح" to { act(jsonOf("type" to "doubleLock", "locked" to false)) })
             }
-        }
-        // بعد ما تلعب ورقة: لما تختفي من يدك ينتقل المؤشر لكلمة «أوراقك» (فوق أوراقك)
-        val headingFocus = remember { FocusRequester() }
-        var playedKey by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(hand.map(::cardKey)) {
-            val k = playedKey ?: return@LaunchedEffect
-            if (hand.any { cardKey(it) == k }) return@LaunchedEffect
-            playedKey = null
-            delay(50)
-            // إعلان اللعب التالي يقطع قراءة الكلمة
-            Announcer.interruptNextEvents()
-            runCatching { headingFocus.requestFocus() }
         }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -409,25 +404,44 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                     ProjectFaces(mine)
                 }
             }
-            Text("أوراقك", color = Color.Transparent, modifier = Modifier.size(1.dp).focusRequester(headingFocus).focusable())
+            // ترتيب القراءة: من اليمين لليسار (هاص الأكبر أولاً)
+            val order = hand.reversed()
+            val pos = if (order.isEmpty()) 0 else handPos.coerceIn(0, order.size - 1)
+            val sel = order.getOrNull(pos)
+            val playSel = {
+                sel?.let { c ->
+                    if (g.actions.legal.contains(c)) {
+                        // إعلان لعبك (واللي بعده) يقطع قراءة اليد
+                        Announcer.interruptNextEvents()
+                        handPos = pos
+                        act(jsonOf("type" to "play", "card" to c.toJson()))
+                    } else Announcer.announceNow("غير متاحة")
+                }
+                Unit
+            }
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
-            // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
-            Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
+            // قارئ الشاشة: اليد كلها عنصر واحد ما يختفي (مثل شريط التمرير: سحب لفوق/تحت يتنقل بين الأوراق)
+            Box(
+                Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp)
+                    .focusRequester(handFocus).focusable()
+                    .clearAndSetSemantics {
+                        if (order.isNotEmpty()) {
+                            contentDescription = "أوراقك"
+                            stateDescription = "${sel?.label.orEmpty()}، ${pos + 1} من ${order.size}"
+                            progressBarRangeInfo = ProgressBarRangeInfo(pos.toFloat(), 0f..maxOf(order.size - 1, 1).toFloat(), steps = maxOf(order.size - 2, 0))
+                            setProgress { v -> handPos = v.roundToInt().coerceIn(0, order.size - 1); true }
+                            onClick { playSel(); true }
+                            if (cardActions.isNotEmpty()) customActions = cardActions.map { (label, run) -> CustomAccessibilityAction(label) { run(); true } }
+                        }
+                    },
+            ) {
                 hand.forEachIndexed { i, c ->
                     androidx.compose.runtime.key(cardKey(c)) {
                         val k = i - (hand.size - 1) / 2f
-                        val fr = remember { FocusRequester() }
-                        androidx.compose.runtime.DisposableEffect(Unit) {
-                            cardFocus[cardKey(c)] = fr
-                            onDispose { cardFocus.remove(cardKey(c)) }
-                        }
                         HandCard(
                             c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = cardActions,
-                            // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
-                                .semantics { traversalIndex = (hand.size - i).toFloat() },
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp),
                         ) {
-                            if (Announcer.readerOn) playedKey = cardKey(c)
                             act(jsonOf("type" to "play", "card" to c.toJson()))
                         }
                     }

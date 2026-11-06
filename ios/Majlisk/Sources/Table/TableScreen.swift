@@ -160,12 +160,14 @@ struct BalootBoard: View {
     @State private var releasedTrick: Int?
     /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
     /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
-    @AccessibilityFocusState private var focusedCard: Card?
     /// بعد ما تضغط زر شراء/دبل: الورقة اللي يروح لها المؤشر لما تختفي الأزرار
     @State private var pendingFocus: Card?
     /// بعد ما تلعب ورقة: المؤشر ينتقل لكلمة «أوراقك» (فوق أوراقك) لما تختفي الورقة
-    @AccessibilityFocusState private var handHeading: Bool
-    @State private var playedCard: Card?
+    /// يدك عنصر واحد لقارئ الشاشة: تسحب لفوق أو لتحت بين الأوراق، والنقر مرتين يلعب الورقة.
+    /// بعد ما تلعب العنصر نفسه باقي، فالمؤشر ما يقفز ويوقف على الورقة اللي جنبها
+    @AccessibilityFocusState private var handFocused: Bool
+    /// مكان المؤشر داخل يدك (بترتيب القراءة)
+    @State private var handPos = 0
     @State private var prevGame: GameView?
     @State private var lastTurn: String?
 
@@ -281,32 +283,53 @@ struct BalootBoard: View {
                         .frame(maxWidth: .infinity)
                         .accessibilityHidden(true)
                     }
-                    Text("أوراقك").font(.system(size: 1)).foregroundColor(.clear)
-                        .accessibilityFocused($handHeading)
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)
+                    // ترتيب القراءة: من اليمين لليسار (هاص الأكبر أولاً)
+                    let order = Array(hand.reversed())
+                    let pos = order.isEmpty ? 0 : min(handPos, order.count - 1)
+                    let sel = order.isEmpty ? nil : order[pos]
                     ZStack(alignment: .bottom) {
                         ForEach(hand, id: \.self) { c in
                             let i = hand.firstIndex(of: c) ?? 0
                             let k = CGFloat(i) - CGFloat(hand.count - 1) / 2
                             HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions) {
-                                // لما تختفي الورقة ينتقل المؤشر لكلمة «أوراقك»
-                                if UIAccessibility.isVoiceOverRunning { playedCard = c }
                                 act(["type": "play", "card": c.json])
                             }
-                                .accessibilityFocused($focusedCard, equals: c)
                                 .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
-                                // VoiceOver يقرأ من اليمين لليسار: هاص الأكبر أولاً
-                                .accessibilitySortPriority(Double(i))
                         }
                     }
                     .padding(.bottom, 6)
                     .frame(maxWidth: .infinity, minHeight: 132, alignment: .bottom)
                     .environment(\.layoutDirection, .leftToRight)
-                    // ترتيب الأوراق لـ VoiceOver داخل اليد فقط: كانت أولوياتها تُقارن بعناصر الشاشة كلها
-                    // فينط المؤشر من الميكروفون لورقة واحدة ثم لوسط الطاولة
-                    .accessibilityElement(children: .contain)
+                    // قارئ الشاشة: اليد كلها عنصر واحد ما يختفي
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("أوراقك")
+                    .accessibilityValue(sel.map { "\($0.label)، \(pos + 1) من \(order.count)" } ?? "")
+                    .accessibilityAdjustableAction { dir in
+                        guard !order.isEmpty else { return }
+                        switch dir {
+                        case .increment: handPos = min(pos + 1, order.count - 1)
+                        case .decrement: handPos = max(pos - 1, 0)
+                        @unknown default: break
+                        }
+                        // آخر اليد أو أولها: صوت خفيف بدل ما يسكت
+                        if (dir == .increment && pos == order.count - 1) || (dir == .decrement && pos == 0) { UIAccessibility.post(notification: .announcement, argument: sel?.label ?? "") }
+                    }
+                    .accessibilityAction {
+                        guard let c = sel else { return }
+                        if g.actions.legal.contains(c) {
+                            // إعلان لعبك (واللي بعده) يقطع قراءة اليد
+                            Announcer.interruptNextEvents()
+                            handPos = pos
+                            act(["type": "play", "card": c.json])
+                        } else { Announcer.announceNow("غير متاحة") }
+                    }
+                    .accessibilityActions {
+                        ForEach(Array(cardActions.enumerated()), id: \.offset) { _, a in Button(a.0) { a.1() } }
+                    }
+                    .accessibilityFocused($handFocused)
                 } else {
                     // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
                     PlayerTag(v: v, g: g, seat: 0, faces: text.faces(0), note: seatNote(g, 0))
@@ -352,15 +375,6 @@ struct BalootBoard: View {
     /// وصلت الحالة الجديدة
     private func settleFocus() {
         let hand = g.myHand
-        // توزيع جديد: ما تبقى الورقة اللي لعبتها
-        // الورقة اللي لعبتها راحت من يدك: المؤشر لكلمة «أوراقك»، وإعلان اللعب التالي يقطع قراءتها
-        if let c = playedCard, !hand.contains(c) {
-            playedCard = nil
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) {
-                Announcer.interruptNextEvents()
-                handHeading = true
-            }
-        }
         // أزرار الشراء اختفت: نحط المؤشر على أوراقك
         if let t = pendingFocus, g.actions.bids.isEmpty, g.actions.doubleLabel == nil, !g.actions.canPassDouble, !g.actions.chooseLock {
             pendingFocus = nil
@@ -368,7 +382,7 @@ struct BalootBoard: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
                 // إعلان اللعب التالي يقطع قراءة اسم الورقة
                 Announcer.interruptNextEvents()
-                focusedCard = t
+                handFocused = true
             }
         }
     }
