@@ -93,14 +93,8 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         let wasPlaying = isPlaying
         systemEchoOn = false
         disposeUnit()
-        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable {
-            // إلغاء الصدى من النظام ينطلب والجلسة متوقفة، وبعدها نشغّلها ونتأكد إنه اشتغل فعلاً
-            // (كان ينطلب والجلسة شغّالة، فبعض الأجهزة تتجاهله: صدى، ويسمعون قارئ الشاشة منك)
-            try? session.setActive(false)
-            try? session.setPrefersEchoCancelledInput(true)
-            try? session.setActive(true)
-            systemEchoOn = session.isEchoCancelledInputEnabled
-        }
+        // إلغاء الصدى من وحدة المكالمات (مو من النظام): نطفّي تفضيل النظام عشان ما تنعالج مرتين
+        if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable { try? session.setPrefersEchoCancelledInput(false) }
         guard makeUnit(input: true) else { return false }
         isRecordingInitialized = true
         if wasPlaying, let unit { AudioOutputUnitStart(unit) }
@@ -135,8 +129,10 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     private func makeUnit(input: Bool) -> Bool {
         // iOS 18.2+: الوحدة العادية دائماً (إلغاء الصدى من النظام وقت الكلام) — بلا أي خفض للأصوات
         // مع الميكروفون: الوحدة العادية بس لو إلغاء الصدى من النظام اشتغل فعلاً، وإلا وحدة المكالمات (تلغي الصدى أكيد)
-        // بدون ميكروفون: الوحدة العادية دائماً (ما تحتاج إلغاء صدى، وتشتغل مع وضع الوسائط فيطلع الصوت من السماعتين)
-        let plain = input ? systemEchoOn : true
+        // بدون ميكروفون: الوحدة العادية (ما تحتاج إلغاء صدى، وتشتغل مع وضع الوسائط فيطلع الصوت من السماعتين).
+        // مع الميكروفون: وحدة المكالمات من Apple دائماً — إلغاء الصدى «من النظام» في iOS 26 و27 يقول إنه شغّال
+        // وفي بعض الأجهزة ما يلغي الصدى فعلياً. أصوات اللعبة تمر في نفس الوحدة فما تنخفض وما يسمعها الباقين
+        let plain = !input
         var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: plain ? kAudioUnitSubType_RemoteIO : kAudioUnitSubType_VoiceProcessingIO,
                                              componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
         guard let comp = AudioComponentFindNext(nil, &desc) else { return false }
