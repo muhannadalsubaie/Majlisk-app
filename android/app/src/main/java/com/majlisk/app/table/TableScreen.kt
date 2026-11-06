@@ -309,13 +309,13 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.weight(0.8f))
-                PlayerTag(v, g, seatOf(2), faces = text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f))
+                PlayerTag(v, g, seatOf(2), faces = g.sawaHands?.getOrNull(seatOf(2)) ?: text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f))
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PlayerTag(v, g, seatOf(1), faces = text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.8f))
                 Box(Modifier.weight(3f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
-                PlayerTag(v, g, seatOf(3), faces = text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.8f))
             }
         }
 
@@ -434,7 +434,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
         }
         // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
-        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth())
+        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = g.sawaHands?.getOrNull(seatOf(0)) ?: text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth())
         }
     }
 }
@@ -648,6 +648,8 @@ class GameSoundTracker {
             gameSounds(p, g, v.mySeat)
             // اكتملت الأكلة: صوت سحبها قبل أن تذهب لصاحبها
             if (g.trickNo == p.trickNo + 1 && g.lastTrick != null && g.trick.isEmpty()) main.postDelayed({ Sounds.collect() }, TRICK_HOLD_MS) // نفس لحظة انسحاب الأوراق
+            // «سوا»: انتهى كشف الأوراق، تتجمع وتنحسب الصكة
+            if (p.sawaHands != null && g.sawaHands == null) Sounds.collect()
         }
         // نغمة الدور (فورية، قبل إعلان "دورك")
         val key = turnKey(g)

@@ -176,6 +176,11 @@ struct BalootBoard: View {
     private var shownTrick: [PlayedCard] {
         g.trick.isEmpty && g.trickNo > 0 && releasedTrick != g.trickNo ? (g.lastTrick ?? g.trick) : g.trick
     }
+    /// قدام كل لاعب: أوراقه الباقية مكشوفة بعد «سوا» (ثانيتين قبل ما تنحسب الصكة)، وإلا أوراق مشروعه
+    private func shownFaces(_ seat: Int) -> [Card] {
+        if let h = g.sawaHands, seat < h.count { return h[seat] }
+        return text.faces(seat)
+    }
     private var text: BalootText { BalootText(view: v, g: g, shownTrick: shownTrick) }
 
     private func act(_ a: JSON) { conn.send(["type": "action", "action": a]) }
@@ -217,11 +222,11 @@ struct BalootBoard: View {
             GeometryReader { geo in
                 let unit = geo.size.width / 4.6
                 VStack(spacing: 6) {
-                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: text.faces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil).frame(width: unit * 3)
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil).frame(width: unit * 3)
                     HStack(spacing: 6) {
-                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: text.faces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.8)
+                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.8)
                         trickArea.frame(width: min(unit * 3, 300), height: min(unit * 3, 300))
-                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: text.faces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.8)
+                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.8)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -310,7 +315,7 @@ struct BalootBoard: View {
                     .accessibilityElement(children: .contain)
                 } else {
                     // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
-                    PlayerTag(v: v, g: g, seat: 0, faces: text.faces(0), note: seatNote(g, 0))
+                    PlayerTag(v: v, g: g, seat: 0, faces: shownFaces(0), note: seatNote(g, 0))
                 }
             }
         }
@@ -435,6 +440,8 @@ final class GameSoundTracker {
         prev = g
         if let p {
             gameSounds(prev: p, g: g, mySeat: v.mySeat)
+            // «سوا»: انتهى كشف الأوراق، تتجمع وتنحسب الصكة
+            if p.sawaHands != nil && g.sawaHands == nil { Sounds.shared.collect() }
             // اكتملت الأكلة: صوت سحبها قبل أن تذهب لصاحبها
             if g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty {
                 // نفس لحظة انسحاب الأوراق (تختفي بعد TRICK_HOLD بالضبط)

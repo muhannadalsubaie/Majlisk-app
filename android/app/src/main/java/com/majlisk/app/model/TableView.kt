@@ -67,6 +67,8 @@ data class GameView(
     val dealing: Boolean = false,
     /** شراء ما تأكد بعد: المقعد ونوعه (hokm/sun/ashkal/secondHokm) */
     val pendingBuy: Pair<Int, String>? = null,
+    /** «سوا»: أوراق الكل الباقية مكشوفة (كل لاعب قدامه أوراقه) لين تنحسب الصكة */
+    val sawaHands: List<List<Card>>? = null,
 ) {
     val myTurn: Boolean
         get() = actions.bids.isNotEmpty() || actions.doubleLabel != null || actions.canPassDouble || actions.chooseLock || actions.legal.isNotEmpty()
@@ -197,6 +199,9 @@ data class TableView(
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),
                 dealing = g.optBoolean("dealing"),
                 pendingBuy = g.optJSONObject("pendingBuy")?.let { it.optInt("seat") to it.optString("kind") },
+                sawaHands = g.optJSONObject("sawaReveal")?.optJSONArray("hands")?.let { hs ->
+                    (0 until hs.length()).map { i -> hs.optJSONArray(i).objects().mapNotNull { Card.from(it) } }
+                },
             )
         }
 
