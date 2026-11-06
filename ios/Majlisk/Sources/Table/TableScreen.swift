@@ -15,9 +15,9 @@ struct TableScreen: View {
     let uid: String
     let exit: () -> Void
     @StateObject private var conn: TableConnection
-    @State private var menuOpen = false
     /// الصفحة اللي تنفتح عليها القائمة (من إجراءات قارئ الشاشة على زر القائمة)
-    @State private var menuStart: TableMenuStart = .main
+    /// القائمة مفتوحة على أي صفحة (عنصر وحده بدل قيمتين: الإجراءات كانت تفتح القائمة الرئيسية بدل الصفحة المطلوبة)
+    @State private var menuSheet: TableMenuStart?
     @State private var chatOpen = false
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var historyOpen = false
@@ -89,12 +89,12 @@ struct TableScreen: View {
         // مع VoiceOver الشاشة ما تتمرر، فسحب الأصابع الثلاث (فوق/تحت) يوصل لإيماءات اللعبة دائماً
         Screen(fill: true, lockScroll: UIAccessibility.isVoiceOverRunning) {
             HStack(spacing: 8) {
-                SmallButton("القائمة") { menuStart = .main; menuOpen = true }
+                SmallButton("القائمة") { menuSheet = .main }
                     // قارئ الشاشة: الإجراءات (سحب لفوق أو تحت) تفتح الصفحة المطلوبة على طول
                     .accessibilityActions {
-                        Button("اللاعبون") { menuStart = .players; menuOpen = true }
-                        Button("الأصدقاء") { menuStart = .friends; menuOpen = true }
-                        if v.ownerUid == uid { Button("دعوة صديق") { menuStart = .invite; menuOpen = true } }
+                        Button("اللاعبون") { menuSheet = .players }
+                        Button("الأصدقاء") { menuSheet = .friends }
+                        if v.ownerUid == uid { Button("دعوة صديق") { menuSheet = .invite } }
                         Button("مغادرة الطاولة") { confirmLeave = true }
                     }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
@@ -139,8 +139,8 @@ struct TableScreen: View {
         .sheet(isPresented: $dominoLogOpen) {
             if let d = (conn.view ?? v).domino { DominoLogView(d: d) { dominoLogOpen = false } }
         }
-        .sheet(isPresented: $menuOpen) {
-            TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuOpen = false; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuOpen = false }, start: menuStart)
+        .sheet(item: $menuSheet) { start in
+            TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuSheet = nil }, start: start)
         }
         .confirm("مغادرة الطاولة", isPresented: $confirmLeave,
                  message: v.playing && v.mySeat != nil ? "المباراة جارية — سيحل روبوت مكانك. هل تريد المغادرة؟" : "هل تريد مغادرة الطاولة؟",

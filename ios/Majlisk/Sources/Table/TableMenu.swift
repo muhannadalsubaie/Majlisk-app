@@ -6,7 +6,7 @@ private enum Page: Equatable {
 }
 
 /// صفحة تنفتح عليها القائمة مباشرة (من إجراءات قارئ الشاشة على زر القائمة)
-enum TableMenuStart { case main, players, invite, friends }
+enum TableMenuStart: Identifiable { case main, players, invite, friends; var id: Self { self } }
 
 /// قائمة الطاولة: اللاعبون، دعوة صديق، مشاهدة إعلان، المحادثة الصوتية، الإعدادات، مغادرة
 struct TableMenu: View {
