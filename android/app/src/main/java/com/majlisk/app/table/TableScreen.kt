@@ -546,12 +546,7 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
             .clickable { reads.getValue(SwipeDir.Left)() }
             .semantics(mergeDescendants = true) {
                 contentDescription = "وسط الطاولة: ${text.trick()}"
-                customActions = listOfNotNull(
-                    CustomAccessibilityAction("أوراق الطاولة") { reads.getValue(SwipeDir.Left)(); true },
-                    if (text.contractHidden) null else CustomAccessibilityAction("نوع اللعب") { reads.getValue(SwipeDir.Right)(); true },
-                    CustomAccessibilityAction("المشاريع") { reads.getValue(SwipeDir.Up)(); true },
-                    CustomAccessibilityAction("دور مين") { reads.getValue(SwipeDir.Down)(); true },
-                )
+                // النقر مرتين يعيد قراءة أوراق الطاولة؛ باقي القراءات بالإيماءات (الإجراءات للشراء والمايك والقائمة بس)
             },
         contentAlignment = Alignment.Center,
     ) {

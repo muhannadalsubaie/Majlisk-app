@@ -417,10 +417,8 @@ struct BalootBoard: View {
         .accessibilityLabel("وسط الطاولة: \(text.trick())")
         .accessibilityAddTraits(.isButton)
         .onTapGesture { _ = read(.left) }
-        .accessibilityAction(named: "أوراق الطاولة") { _ = read(.left) }
-        .accessibilityAction(named: "نوع اللعب") { _ = read(.right) }
-        .accessibilityAction(named: "المشاريع") { _ = read(.up) }
-        .accessibilityAction(named: "دور مين") { _ = read(.down) }
+        // النقر مرتين يعيد قراءة أوراق الطاولة؛ باقي القراءات بالإيماءات (الإجراءات للشراء والمايك والقائمة بس)
+        .accessibilityAction { _ = read(.left) }
     }
 
 
