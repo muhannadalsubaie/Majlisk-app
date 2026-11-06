@@ -63,12 +63,18 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         super.init()
         // ركّبت السماعات أو فصلتها والميكروفون مفتوح: نبدّل الوحدة (عادية مع السماعات، المكالمات مع سماعة الجوال عشان الصدى)
         NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
-            self?.routeChanged()
+            // ننتظر السماعة تستقر (البلوتوث يتنقل بين أكثر من مسار ورا بعض لما ينفتح المايك):
+            // التبديل وسط فتح المايك كان يفشّله، فتحتاج تحاول مرتين وثلاث
+            self?.pendingRoute?.cancel()
+            let work = DispatchWorkItem { self?.routeChanged() }
+            self?.pendingRoute = work
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.6, execute: work)
         }
     }
+    private var pendingRoute: DispatchWorkItem?
 
     private func routeChanged() {
-        guard isRecordingInitialized, unit != nil, headphones != plainUnit else { return }
+        guard isRecordingInitialized, isRecording, unit != nil, headphones != plainUnit else { return }
         let wasRunning = isPlaying || isRecording
         disposeUnit()
         guard makeUnit(input: true) else { return }

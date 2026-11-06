@@ -244,19 +244,27 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             }
             var failed = false
             for (key, m) in others where pulled[key] == nil {
+                // مكان استقبال جديد لصوته، وعرض منّا والخادم يرد بجواب مباشر — نفس طريقة فتح الميكروفون
+                // (اللي كانت تصلّح السماع): بدونها ما تسمع أحد لين تفتح المايك وتقفله
+                let txInit = RTCRtpTransceiverInit()
+                txInit.direction = .recvOnly
+                guard let tx = conn.addTransceiver(of: .audio, init: txInit) else { failed = true; continue }
+                var offered = false
                 do {
-                    let r = try await request(["op": "pull", "sessionId": sessionId ?? "", "uid": m.uid])
+                    let offer = try await conn.offer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
+                    try await conn.setLocalDescription(offer)
+                    offered = true
+                    let r = try await request(["op": "pull", "sessionId": sessionId ?? "", "uid": m.uid, "offer": desc(offer), "mid": tx.mid])
                     if let s = r.strOrNil("sessionId"), !s.isEmpty { sessionId = s }
-                    guard let mid = r.objs("tracks").first?.strOrNil("mid"), !mid.isEmpty else { failed = true; continue }
-                    if r.bool("requiresImmediateRenegotiation"), let offer = parseDesc(r.obj("sessionDescription")) {
-                        try await conn.setRemoteDescription(offer)
-                        let answer = try await conn.answer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
-                        try await conn.setLocalDescription(answer)
-                        _ = try await request(["op": "renegotiate", "sessionId": sessionId ?? "", "answer": desc(answer)])
-                    }
+                    guard let answer = parseDesc(r.obj("sessionDescription")), answer.type == .answer else { throw ApiError(code: "voice-failed") }
+                    try await conn.setRemoteDescription(answer)
                     // ما نحسبه مسحوباً إلا بعد ما ينجح كله: لو فشل نعيد المحاولة
-                    pulled[key] = mid
-                } catch { failed = true }
+                    pulled[key] = tx.mid
+                } catch {
+                    failed = true
+                    if offered { try? await conn.setLocalDescription(RTCSessionDescription(type: .rollback, sdp: "")) }
+                    tx.stopInternal()
+                }
             }
             if failed && pullRetries < 5 {
                 pullRetries += 1
@@ -311,9 +319,18 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         let s = AVAudioSession.sharedInstance()
         guard micAudio, !s.categoryOptions.contains(.allowBluetooth) else { return }
         let onHeadset = s.currentRoute.outputs.contains { [.headphones, .bluetoothA2DP, .bluetoothLE, .bluetoothHFP].contains($0.portType) }
-        guard !onHeadset, s.availableInputs?.contains(where: { $0.portType == .bluetoothHFP }) == true else { return }
+        guard !onHeadset, let bt = s.availableInputs?.first(where: { $0.portType == .bluetoothHFP }) else { return }
+        // نتذكر هالسماعة: المرة الجاية نفتح المايك عليها مباشرة بدون ما ينفصل الصوت أول
+        var known = UserDefaults.standard.stringArray(forKey: "hfpHeadsets") ?? []
+        if !known.contains(bt.portName) { known.append(bt.portName); UserDefaults.standard.set(known, forKey: "hfpHeadsets") }
         try? s.setCategory(.playAndRecord, mode: .default, options: [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP, .mixWithOthers])
         try? s.setActive(true)
+    }
+
+    /// سماعة بلوتوث متصلة سبق إن احتاجت وضع المكالمات (مختار لها ميكروفون السماعة)
+    private var knownHFPHeadset: Bool {
+        let known = UserDefaults.standard.stringArray(forKey: "hfpHeadsets") ?? []
+        return AVAudioSession.sharedInstance().availableInputs?.contains { $0.portType == .bluetoothHFP && known.contains($0.portName) } == true
     }
 
     /// الصوت من مكبر الجهاز، ويمتزج مع VoiceOver دون أن يخفضه أحدهما
@@ -339,7 +356,9 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         let cfg = RTCAudioSessionConfiguration.webRTC()
         cfg.mode = mode.rawValue
         RTCAudioSessionConfiguration.setWebRTC(cfg)
-        try? s.setCategory(.playAndRecord, mode: mode, options: [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers])
+        var opts: AVAudioSession.CategoryOptions = [.defaultToSpeaker, .allowBluetoothA2DP, .mixWithOthers]
+        if knownHFPHeadset { opts.insert(.allowBluetooth) }
+        try? s.setCategory(.playAndRecord, mode: mode, options: opts)
         // أعلى جودة: 48 كيلوهيرتز (نفس جودة صوت المحادثة Opus)، سلكية أو بلوتوث أو مكبر
         try? s.setPreferredSampleRate(48_000)
         try? s.setActive(true)

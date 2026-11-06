@@ -28,6 +28,7 @@ import org.webrtc.AudioTrack
 import org.webrtc.DataChannel
 import org.webrtc.MediaConstraints
 import org.webrtc.MediaStream
+import org.webrtc.MediaStreamTrack
 import org.webrtc.PeerConnection
 import org.webrtc.PeerConnectionFactory
 import org.webrtc.RtpReceiver
@@ -271,21 +272,25 @@ object Voice {
                 var failed = false
                 for ((key, m) in others) {
                     if (key in pulled) continue
+                    // مكان استقبال جديد لصوته، وعرض منّا والخادم يرد بجواب مباشر — نفس طريقة فتح الميكروفون
+                    // (اللي كانت تصلّح السماع): بدونها ما تسمع أحد لين تفتح المايك وتقفله
+                    val tx = conn.addTransceiver(MediaStreamTrack.MediaType.MEDIA_TYPE_AUDIO, RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.RECV_ONLY))
+                    var offered = false
                     try {
-                        val r = request(JSONObject().put("op", "pull").put("sessionId", sessionId).put("uid", m.uid))
+                        val offer = conn.createOfferAwait()
+                        conn.setLocalAwait(offer)
+                        offered = true
+                        val r = request(JSONObject().put("op", "pull").put("sessionId", sessionId).put("uid", m.uid).put("offer", desc(offer)).put("mid", tx.mid))
                         r.optString("sessionId").takeIf { it.isNotEmpty() }?.let { sessionId = it }
-                        val mid = r.optJSONArray("tracks").objects().firstOrNull()?.optString("mid")?.takeIf { it.isNotEmpty() }
-                        if (mid == null) { failed = true; continue }
-                        val offer = parseDesc(r.optJSONObject("sessionDescription"))
-                        if (r.optBoolean("requiresImmediateRenegotiation") && offer != null) {
-                            conn.setRemoteAwait(offer)
-                            val answer = conn.createAnswerAwait()
-                            conn.setLocalAwait(answer)
-                            request(JSONObject().put("op", "renegotiate").put("sessionId", sessionId).put("answer", desc(answer)))
-                        }
+                        val answer = parseDesc(r.optJSONObject("sessionDescription"))?.takeIf { it.type == SessionDescription.Type.ANSWER } ?: throw ApiError("voice-failed")
+                        conn.setRemoteAwait(answer)
                         // ما نحسبه مسحوباً إلا بعد ما ينجح كله: لو فشل نعيد المحاولة
-                        pulled[key] = mid
-                    } catch (_: Exception) { failed = true }
+                        pulled[key] = tx.mid
+                    } catch (_: Exception) {
+                        failed = true
+                        if (offered) runCatching { conn.setLocalAwait(SessionDescription(SessionDescription.Type.ROLLBACK, "")) }
+                        runCatching { tx.stop() }
+                    }
                 }
                 if (failed && pullRetries < 5) {
                     pullRetries++
