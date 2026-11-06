@@ -163,11 +163,10 @@ struct BalootBoard: View {
     /// بعد ما تضغط زر شراء/دبل: الورقة اللي يروح لها المؤشر لما تختفي الأزرار
     @State private var pendingFocus: Card?
     /// بعد ما تلعب ورقة: المؤشر ينتقل لكلمة «أوراقك» (فوق أوراقك) لما تختفي الورقة
-    /// يدك عنصر واحد لقارئ الشاشة: تسحب لفوق أو لتحت بين الأوراق، والنقر مرتين يلعب الورقة.
-    /// بعد ما تلعب العنصر نفسه باقي، فالمؤشر ما يقفز ويوقف على الورقة اللي جنبها
-    @AccessibilityFocusState private var handFocused: Bool
-    /// مكان المؤشر داخل يدك (بترتيب القراءة)
-    @State private var handPos = 0
+    /// مؤشر قارئ الشاشة على مكان في يدك (مو على ورقة بعينها): المكان يبقى بعد ما تلعب
+    @AccessibilityFocusState private var slotFocus: Int?
+    /// مكان الورقة اللي لعبتها: لو كانت آخر ورقة في اليد (مكانها يختفي) ننقل المؤشر للي قبلها
+    @State private var playedPos: Int?
     @State private var prevGame: GameView?
     @State private var lastTurn: String?
 
@@ -286,54 +285,34 @@ struct BalootBoard: View {
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)
-                    // ترتيب القراءة: من اليمين لليسار (هاص الأكبر أولاً)
-                    let order = Array(hand.reversed())
-                    let pos = order.isEmpty ? 0 : min(handPos, order.count - 1)
-                    let sel = order.isEmpty ? nil : order[pos]
+                    // كل ورقة عنصر لحالها (تتنقل بينها يمين ويسار)، بس العنصر مربوط بمكانه في اليد مو بالورقة:
+                    // لما تلعب ورقة يبقى مكانها (ويصير فيه الورقة اللي جنبها) فالمؤشر ما يقفز
                     ZStack(alignment: .bottom) {
-                        ForEach(hand, id: \.self) { c in
-                            let i = hand.firstIndex(of: c) ?? 0
+                        ForEach(0..<hand.count, id: \.self) { i in
+                            let c = hand[i]
                             let k = CGFloat(i) - CGFloat(hand.count - 1) / 2
-                            HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions) {
+                            HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions,
+                                     // وقت اللعب: سحب لفوق/تحت ينقلك للورقة اللي بعدها/قبلها (وقت القرار يروح للإجراءات)
+                                     step: cardActions.isEmpty ? { dir in
+                                         // ترتيب القراءة من اليمين لليسار: "بعدها" = المكان الأصغر
+                                         let to = dir == .increment ? i - 1 : i + 1
+                                         if to >= 0 && to < hand.count { slotFocus = to } else { Announcer.announceNow(c.label) }
+                                     } : nil) {
+                                // إعلان لعبك (واللي بعده) يقطع قراءة الورقة
+                                if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents(); playedPos = i }
                                 act(["type": "play", "card": c.json])
                             }
+                                .accessibilityFocused($slotFocus, equals: i)
                                 .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
+                                // VoiceOver يقرأ من اليمين لليسار: هاص الأكبر أولاً
+                                .accessibilitySortPriority(Double(i))
                         }
                     }
                     .padding(.bottom, 6)
                     .frame(maxWidth: .infinity, minHeight: 132, alignment: .bottom)
                     .environment(\.layoutDirection, .leftToRight)
-                    // قارئ الشاشة: اليد كلها عنصر واحد ما يختفي
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("أوراقك")
-                    .accessibilityValue(!cardActions.isEmpty ? "اسحب لفوق أو لتحت للقرار" : sel.map { "\($0.label)، \(pos + 1) من \(order.count)" } ?? "")
-                    // وقت القرار (صن/حكم/بس، الدبل...): السحب لفوق وتحت يتنقل بين القرارات (الإجراءات)؛
-                    // غيره: يتنقل بين الأوراق
-                    .handAdjust(cardActions.isEmpty) { dir in
-                        guard !order.isEmpty else { return }
-                        switch dir {
-                        case .increment: handPos = min(pos + 1, order.count - 1)
-                        case .decrement: handPos = max(pos - 1, 0)
-                        @unknown default: break
-                        }
-                        // آخر اليد أو أولها: يعيد اسم الورقة بدل ما يسكت
-                        if (dir == .increment && pos == order.count - 1) || (dir == .decrement && pos == 0) { UIAccessibility.post(notification: .announcement, argument: sel?.label ?? "") }
-                    }
-                    .accessibilityAction {
-                        // وقت القرار: النقر مرتين بدون اختيار قرار ما يلعب ورقة
-                        guard cardActions.isEmpty else { Announcer.announceNow("اختر القرار بالسحب لفوق أو لتحت"); return }
-                        guard let c = sel else { return }
-                        if g.actions.legal.contains(c) {
-                            // إعلان لعبك (واللي بعده) يقطع قراءة اليد
-                            Announcer.interruptNextEvents()
-                            handPos = pos
-                            act(["type": "play", "card": c.json])
-                        } else { Announcer.announceNow("غير متاحة") }
-                    }
-                    .accessibilityActions {
-                        ForEach(Array(cardActions.enumerated()), id: \.offset) { _, a in Button(a.0) { a.1() } }
-                    }
-                    .accessibilityFocused($handFocused)
+                    // ترتيب الأوراق لـ VoiceOver داخل اليد فقط
+                    .accessibilityElement(children: .contain)
                 } else {
                     // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
                     PlayerTag(v: v, g: g, seat: 0, faces: text.faces(0), note: seatNote(g, 0))
@@ -379,6 +358,11 @@ struct BalootBoard: View {
     /// وصلت الحالة الجديدة
     private func settleFocus() {
         let hand = g.myHand
+        // لعبت آخر ورقة في اليد: مكانها اختفى، ننقل المؤشر للمكان اللي قبله
+        if let p = playedPos, hand.count < p + 1 || hand.count == 0 {
+            playedPos = nil
+            if hand.count > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { slotFocus = hand.count - 1 } }
+        } else if playedPos != nil, prevGame.map({ $0.myHand.count != hand.count }) == true { playedPos = nil }
         // أزرار الشراء اختفت: نحط المؤشر على أوراقك
         if let t = pendingFocus, g.actions.bids.isEmpty, g.actions.doubleLabel == nil, !g.actions.canPassDouble, !g.actions.chooseLock {
             pendingFocus = nil
@@ -386,7 +370,7 @@ struct BalootBoard: View {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.06) {
                 // إعلان اللعب التالي يقطع قراءة اسم الورقة
                 Announcer.interruptNextEvents()
-                handFocused = true
+                slotFocus = max(g.myHand.count - 1, 0)
             }
         }
     }
@@ -643,6 +627,8 @@ private struct HandCard: View {
     let legal: Bool
     /// الشراء والدبل كإجراءات على الورقة (للمكفوفين: ما يحتاجون يروحون للأزرار)
     var actions: [(String, () -> Void)] = []
+    /// سحب لفوق/تحت على الورقة (وقت اللعب): ينقلك للورقة اللي بعدها/قبلها
+    var step: ((AccessibilityAdjustmentDirection) -> Void)? = nil
     let play: () -> Void
     var body: some View {
         TableCard(card: card, width: 66, height: 96)
@@ -657,6 +643,7 @@ private struct HandCard: View {
             .accessibilityActions {
                 ForEach(Array(actions.enumerated()), id: \.offset) { _, a in Button(a.0) { a.1() } }
             }
+            .modifier(StepAdjust(step: step))
     }
 
     private func tap() {
@@ -705,9 +692,10 @@ struct FlowLayout: Layout {
 }
 
 
-private extension View {
-    /// اليد: قابلة للتعديل (سحب لفوق/تحت بين الأوراق) بس لما ما فيه قرار، وإلا السحب يروح للإجراءات
-    @ViewBuilder func handAdjust(_ on: Bool, _ action: @escaping (AccessibilityAdjustmentDirection) -> Void) -> some View {
-        if on { self.accessibilityAdjustableAction(action) } else { self }
+/// سحب لفوق/تحت على الورقة بس لما يكون فيه خطوة (وقت اللعب)؛ وقت القرار السحب يروح للإجراءات
+private struct StepAdjust: ViewModifier {
+    let step: ((AccessibilityAdjustmentDirection) -> Void)?
+    func body(content: Content) -> some View {
+        if let step { content.accessibilityAdjustableAction(step) } else { content }
     }
 }

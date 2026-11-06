@@ -329,15 +329,19 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
 
         // مؤشر قارئ الشاشة: بعد ما تلعب ورقة ينتقل لكلمة «أوراقك»، وأزرار الشراء لما تختفي ينتقل لأوراقك
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
-        // يدك عنصر واحد لقارئ الشاشة: تسحب لفوق أو لتحت بين الأوراق، والنقر مرتين يلعب الورقة.
-        // بعد ما تلعب العنصر نفسه باقي، فالمؤشر ما يقفز ويوقف على الورقة اللي جنبها
-        val handFocus = remember { FocusRequester() }
-        var handPos by remember { mutableStateOf(0) }
-        val focusCard: (Card?) -> Unit = { c ->
-            if (c != null && Announcer.readerOn) {
-                Announcer.interruptNextEvents()
-                runCatching { handFocus.requestFocus() }
-            }
+        // كل ورقة عنصر لحالها (تتنقل بينها يمين ويسار)، بس العنصر مربوط بمكانه في اليد مو بالورقة:
+        // لما تلعب ورقة يبقى مكانها (ويصير فيه الورقة اللي جنبها) فالمؤشر ما يقفز
+        val slotFocus = remember { mutableMapOf<Int, FocusRequester>() }
+        val focusSlot: (Int) -> Unit = { i ->
+            slotFocus[i]?.let { fr -> if (Announcer.readerOn) { Announcer.interruptNextEvents(); runCatching { fr.requestFocus() } } }
+        }
+        val focusCard: (Card?) -> Unit = { c -> if (c != null) focusSlot(hand.size - 1) }
+        // لعبت آخر ورقة في اليد (مكانها يختفي): المؤشر للمكان اللي قبله
+        var playedPos by remember { mutableStateOf<Int?>(null) }
+        LaunchedEffect(hand.size) {
+            val p = playedPos ?: return@LaunchedEffect
+            playedPos = null
+            if (p >= hand.size && hand.isNotEmpty()) { delay(50); focusSlot(hand.size - 1) }
         }
         // بعد ما تضغط زر شراء/دبل يختفي: المؤشر يروح لأوراقك (ما ينط فوق ولا تحت)
         // pending: (null، الورقة اللي يروح لها المؤشر)
@@ -404,51 +408,25 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                     ProjectFaces(mine)
                 }
             }
-            // ترتيب القراءة: من اليمين لليسار (هاص الأكبر أولاً)
-            val order = hand.reversed()
-            val pos = if (order.isEmpty()) 0 else handPos.coerceIn(0, order.size - 1)
-            val sel = order.getOrNull(pos)
-            val playSel = {
-                sel?.let { c ->
-                    if (g.actions.legal.contains(c)) {
-                        // إعلان لعبك (واللي بعده) يقطع قراءة اليد
-                        Announcer.interruptNextEvents()
-                        handPos = pos
-                        act(jsonOf("type" to "play", "card" to c.toJson()))
-                    } else Announcer.announceNow("غير متاحة")
-                }
-                Unit
-            }
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
-            // قارئ الشاشة: اليد كلها عنصر واحد ما يختفي (مثل شريط التمرير: سحب لفوق/تحت يتنقل بين الأوراق)
-            Box(
-                Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp)
-                    .focusRequester(handFocus).focusable()
-                    .clearAndSetSemantics {
-                        if (order.isNotEmpty()) {
-                            contentDescription = "أوراقك"
-                            if (cardActions.isNotEmpty()) {
-                                // وقت القرار (صن/حكم/بس، الدبل...): السحب لفوق وتحت يتنقل بين القرارات (الإجراءات)
-                                stateDescription = "اسحب لفوق أو لتحت للقرار"
-                                customActions = cardActions.map { (label, run) -> CustomAccessibilityAction(label) { run(); true } }
-                                onClick { Announcer.announceNow("اختر القرار بالسحب لفوق أو لتحت"); true }
-                            } else {
-                                // وقت اللعب: السحب لفوق وتحت يتنقل بين الأوراق، والنقر مرتين يلعبها
-                                stateDescription = "${sel?.label.orEmpty()}، ${pos + 1} من ${order.size}"
-                                progressBarRangeInfo = ProgressBarRangeInfo(pos.toFloat(), 0f..maxOf(order.size - 1, 1).toFloat(), steps = maxOf(order.size - 2, 0))
-                                setProgress { v -> handPos = v.roundToInt().coerceIn(0, order.size - 1); true }
-                                onClick { playSel(); true }
-                            }
-                        }
-                    },
-            ) {
+            // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
+            Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
                 hand.forEachIndexed { i, c ->
-                    androidx.compose.runtime.key(cardKey(c)) {
+                    // مربوط بالمكان (i) مو بالورقة
+                    androidx.compose.runtime.key(i) {
                         val k = i - (hand.size - 1) / 2f
+                        val fr = remember { FocusRequester() }
+                        androidx.compose.runtime.DisposableEffect(Unit) {
+                            slotFocus[i] = fr
+                            onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
+                        }
                         HandCard(
                             c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = cardActions,
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp),
+                            // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
+                                .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
+                            if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i }
                             act(jsonOf("type" to "play", "card" to c.toJson()))
                         }
                     }
