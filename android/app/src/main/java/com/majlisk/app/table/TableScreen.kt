@@ -245,18 +245,14 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
     val act: (org.json.JSONObject) -> Unit = { conn.send(jsonOf("type" to "action", "action" to it)) }
 
     // بعد آخر ورقة في الأكلة: نبقي الأوراق الأربع ظاهرة لحظة قبل أن تذهب لصاحبها
-    var heldTrick by remember { mutableStateOf<Int?>(null) }
-    var lastTrickNo by remember { mutableStateOf<Int?>(null) }
+    // الحساب فوري في نفس الإطار (بدون انتظار تأثير جانبي)، فما تختفي أوراق الأكلة وترجع
+    var releasedTrick by remember { mutableStateOf(g.trickNo) }
     LaunchedEffect(g.trickNo) {
-        val prev = lastTrickNo
-        lastTrickNo = g.trickNo
-        if (prev != null && g.trickNo == prev + 1 && g.lastTrick != null && g.trick.isEmpty()) {
-            heldTrick = g.trickNo
-            delay(TRICK_HOLD_MS)
-            heldTrick = null
-        }
+        val n = g.trickNo
+        delay(TRICK_HOLD_MS)
+        releasedTrick = n
     }
-    val shownTrick: List<PlayedCard> = if (heldTrick == g.trickNo && g.trick.isEmpty() && g.lastTrick != null) g.lastTrick else g.trick
+    val shownTrick: List<PlayedCard> = if (g.trick.isEmpty() && g.trickNo > 0 && releasedTrick != g.trickNo) (g.lastTrick ?: g.trick) else g.trick
     val text = BalootText(v, g, shownTrick)
 
     // إعلان "دورك" عند بداية كل دور (حتى لو جاك الدور مرتين ورا بعض، مثل لما تاكل الأكلة)

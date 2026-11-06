@@ -157,7 +157,8 @@ struct BalootBoard: View {
     let g: GameView
     let uid: String
     @ObservedObject var conn: TableConnection
-    @State private var heldTrick: Int?
+    /// آخر أكلة انتهت مهلة عرضها (بعدها تختفي أوراقها). الحساب فوري في نفس الإطار، فما تختفي الأوراق وترجع
+    @State private var releasedTrick: Int?
     /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
     /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
     @AccessibilityFocusState private var focusedCard: Card?
@@ -173,7 +174,7 @@ struct BalootBoard: View {
     private var me: Int { v.mySeat ?? 0 }
     private var myTeam: Int { teamOf(me) }
     private var shownTrick: [PlayedCard] {
-        heldTrick == g.trickNo && g.trick.isEmpty && g.lastTrick != nil ? g.lastTrick! : g.trick
+        g.trick.isEmpty && g.trickNo > 0 && releasedTrick != g.trickNo ? (g.lastTrick ?? g.trick) : g.trick
     }
     private var text: BalootText { BalootText(view: v, g: g, shownTrick: shownTrick) }
 
@@ -313,12 +314,12 @@ struct BalootBoard: View {
                 }
             }
         }
-        .onAppear { Gestures.shared.set("baloot") { read($0) }; prevGame = g; lastTurn = turnKey(g) }
+        .onAppear { Gestures.shared.set("baloot") { read($0) }; prevGame = g; lastTurn = turnKey(g); releasedTrick = g.trickNo }
         .onDisappear { Gestures.shared.clear("baloot") }
         .onChange(of: conn.version) { _ in
             Gestures.shared.set("baloot") { read($0) }
             settleFocus()
-            if let p = prevGame, g.trickNo == p.trickNo + 1, g.lastTrick != nil, g.trick.isEmpty { holdTrick() }
+            if let p = prevGame, g.trickNo != p.trickNo { holdTrick() }
             // إعلان "دورك" مرة واحدة عند بداية الدور
             // النغمة أولاً (فورية)، ثم الإعلان
             // الجرس أولاً، ثم "دورك" بعد لحظة: VoiceOver يخفض الأصوات وهو يتكلم فكان يغطي الجرس
@@ -376,8 +377,7 @@ struct BalootBoard: View {
     /// بعد آخر ورقة في الأكلة: نبقي الأوراق الأربع ظاهرة لحظة قبل أن تذهب لصاحبها
     private func holdTrick() {
         let n = g.trickNo
-        heldTrick = n
-        DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD) { if heldTrick == n { heldTrick = nil } }
+        DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD) { releasedTrick = n }
     }
 
     /// وسط الطاولة: الوصول له يقرأ كل الأوراق ومن لعبها، والنقر مرتين يعيد قراءتها.
