@@ -278,6 +278,14 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
             try? s.setCategory(.playback, options: [.mixWithOthers])
             return
         }
+        // استماع بس (الميكروفون ما انفتح): وضع الوسائط العادي، فالصوت يطلع من السماعتين (فوق وتحت) بجودة كاملة.
+        // وضع المكالمات (يحتاجه الميكروفون) يطلّع الصوت من السماعة اللي تحت بس
+        if listening == true {
+            try? s.setCategory(.playback, mode: .default, options: [.mixWithOthers])
+            try? s.setPreferredSampleRate(48_000)
+            try? s.setActive(true)
+            return
+        }
         // استماع فقط (الميكروفون مقفل): الوضع العادي، فتبقى أصوات الورق والتعليق بصوتها الكامل.
         // الميكروفون مفتوح: وضع المكالمات (يلغي الصدى حتى لا يسمعك الباقون مرتين)، وهو يخفض الأصوات شوي
         // الوضع العادي دائماً: إلغاء الصدى من جهاز الصوت نفسه، ووضع المكالمات يخفض الأصوات

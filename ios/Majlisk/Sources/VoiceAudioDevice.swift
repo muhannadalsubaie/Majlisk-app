@@ -135,7 +135,8 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     private func makeUnit(input: Bool) -> Bool {
         // iOS 18.2+: الوحدة العادية دائماً (إلغاء الصدى من النظام وقت الكلام) — بلا أي خفض للأصوات
         // مع الميكروفون: الوحدة العادية بس لو إلغاء الصدى من النظام اشتغل فعلاً، وإلا وحدة المكالمات (تلغي الصدى أكيد)
-        let plain = input ? systemEchoOn : systemEcho
+        // بدون ميكروفون: الوحدة العادية دائماً (ما تحتاج إلغاء صدى، وتشتغل مع وضع الوسائط فيطلع الصوت من السماعتين)
+        let plain = input ? systemEchoOn : true
         var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: plain ? kAudioUnitSubType_RemoteIO : kAudioUnitSubType_VoiceProcessingIO,
                                              componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
         guard let comp = AudioComponentFindNext(nil, &desc) else { return false }
