@@ -51,6 +51,30 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     var outputNumberOfChannels: Int { 1 }
     var outputLatency: TimeInterval { session.outputLatency }
 
+    /// الصوت طالع لسماعات (سلكية أو بلوتوث)، مو لسماعة الجوال
+    private var headphones: Bool {
+        session.currentRoute.outputs.contains { [.headphones, .bluetoothA2DP, .bluetoothLE, .bluetoothHFP].contains($0.portType) }
+    }
+
+    override init() {
+        super.init()
+        // ركّبت السماعات أو فصلتها والميكروفون مفتوح: نبدّل الوحدة (عادية مع السماعات، المكالمات مع سماعة الجوال عشان الصدى)
+        NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            self?.routeChanged()
+        }
+    }
+
+    private func routeChanged() {
+        guard isRecordingInitialized, unit != nil, headphones != plainUnit else { return }
+        let wasRunning = isPlaying || isRecording
+        disposeUnit()
+        guard makeUnit(input: true) else { return }
+        isPlayoutInitialized = true
+        isRecordingInitialized = true
+        effects.setRate(session.sampleRate)
+        if wasRunning, let unit { AudioOutputUnitStart(unit) }
+    }
+
     func initialize(with delegate: RTCAudioDeviceDelegate) -> Bool {
         self.delegate = delegate
         isInitialized = true
@@ -134,7 +158,9 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         // بدون ميكروفون: الوحدة العادية (ما تحتاج إلغاء صدى، وتشتغل مع وضع الوسائط فيطلع الصوت من السماعتين).
         // مع الميكروفون: وحدة المكالمات من Apple دائماً — إلغاء الصدى «من النظام» في iOS 26 و27 يقول إنه شغّال
         // وفي بعض الأجهزة ما يلغي الصدى فعلياً. أصوات اللعبة تمر في نفس الوحدة فما تنخفض وما يسمعها الباقين
-        let plain = !input
+        // مع سماعات (سلكية أو بلوتوث) ما فيه صدى أصلاً: الوحدة العادية حتى والميكروفون مفتوح.
+        // وحدة المكالمات ما تدعم بلوتوث الأغاني (A2DP)، فكانت ترجّع الصوت لسماعة الجوال، وتخفض قارئ الشاشة مع كل كلام
+        let plain = !input || headphones
         var desc = AudioComponentDescription(componentType: kAudioUnitType_Output, componentSubType: plain ? kAudioUnitSubType_RemoteIO : kAudioUnitSubType_VoiceProcessingIO,
                                              componentManufacturer: kAudioUnitManufacturer_Apple, componentFlags: 0, componentFlagsMask: 0)
         guard let comp = AudioComponentFindNext(nil, &desc) else { return false }
