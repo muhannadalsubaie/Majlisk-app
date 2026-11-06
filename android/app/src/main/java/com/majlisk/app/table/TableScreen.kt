@@ -420,21 +420,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                             slotFocus[i] = fr
                             onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
                         }
-                        // وقت اللعب: إجراءات فيها أوراقك («العب شايب هاص»...) تختار منها وتنلعب بدون ما تتحرك من مكانك
-                        // (دورك: المسموحة بس؛ غيره: كلها). وقت القرار: الإجراءات للقرار (صن/حكم/بس، الدبل...)
-                        val playActions: List<Pair<String, () -> Unit>> = if (cardActions.isNotEmpty()) cardActions else {
-                            val legalNow = hand.filter { g.actions.legal.contains(it) }
-                            (if (legalNow.isNotEmpty()) legalNow else hand).reversed().map { x ->
-                                "العب ${x.label}" to {
-                                    if (g.actions.legal.contains(x)) {
-                                        Announcer.interruptNextEvents(); playedPos = i
-                                        act(jsonOf("type" to "play", "card" to x.toJson()))
-                                    } else Announcer.announceNow("غير متاحة")
-                                }
-                            }
-                        }
                         HandCard(
-                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = playActions,
+                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = cardActions,
                             // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
                             modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
                                 .semantics { traversalIndex = (hand.size - i).toFloat() },

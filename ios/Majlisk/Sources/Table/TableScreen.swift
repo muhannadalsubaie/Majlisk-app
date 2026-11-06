@@ -291,13 +291,8 @@ struct BalootBoard: View {
                         ForEach(0..<hand.count, id: \.self) { i in
                             let c = hand[i]
                             let k = CGFloat(i) - CGFloat(hand.count - 1) / 2
-                            HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions,
-                                     // وقت اللعب: سحب لفوق/تحت ينقلك للورقة اللي بعدها/قبلها (وقت القرار يروح للإجراءات)
-                                     step: cardActions.isEmpty ? { dir in
-                                         // ترتيب القراءة من اليمين لليسار: "بعدها" = المكان الأصغر
-                                         let to = dir == .increment ? i - 1 : i + 1
-                                         if to >= 0 && to < hand.count { slotFocus = to } else { Announcer.announceNow(c.label) }
-                                     } : nil) {
+                            // التنقل بين الأوراق بالسحب يمين ويسار؛ الإجراءات للقرار بس (صن/حكم/بس، الدبل...)
+                            HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions) {
                                 // إعلان لعبك (واللي بعده) يقطع قراءة الورقة
                                 if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents(); playedPos = i }
                                 act(["type": "play", "card": c.json])
