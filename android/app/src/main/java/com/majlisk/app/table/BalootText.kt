@@ -77,7 +77,16 @@ class BalootText(private val view: TableView, private val g: GameView, private v
             else "$who: ${d.kinds.joinToString(" و")}"
         }.toMutableList()
         g.balootSeat?.let { lines += "${if (it == mySeat) "أنت" else name(it)}: بلوت" }
-        return if (lines.isEmpty()) "لا توجد مشاريع معلنة" else lines.joinToString(". ")
+        val projects = if (lines.isEmpty()) "لا توجد مشاريع معلنة" else lines.joinToString(". ")
+        return if (g.phase == "playing") "$projects. ${tricks()}" else projects
+    }
+
+    /** عدد الأكلات لكل فريق في الصكة الحالية (لنا ولهم، وللمشاهد بأسماء الفريقين) */
+    fun tricks(): String {
+        val a = g.tricksWon.getOrElse(0) { 0 }; val b = g.tricksWon.getOrElse(1) { 0 }
+        if (mySeat == null) return "الأكلات: فريق ${name(0)} و${name(2)} $a، فريق ${name(1)} و${name(3)} $b"
+        val mine = if (teamOf(me) == 0) a else b; val theirs = if (teamOf(me) == 0) b else a
+        return "الأكلات: لنا $mine، لهم $theirs"
     }
 
     /** أوراق مشروع هذا المقعد المكشوفة (في اللفة الثانية فقط) */

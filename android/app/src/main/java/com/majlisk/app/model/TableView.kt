@@ -36,6 +36,8 @@ data class GameView(
     val trick: List<PlayedCard>,
     val lastTrick: List<PlayedCard>?,
     val trickNo: Int,
+    /** كم أكلة لكل فريق في الصكة الحالية */
+    val tricksWon: List<Int> = listOf(0, 0),
     val lastHand: LastHand?,
     val outcomeStatus: String,
     val outcomeWinner: Int?,
@@ -153,6 +155,7 @@ data class TableView(
                 trick = played(g.optJSONArray("trick")),
                 lastTrick = g.optJSONObject("lastTrick")?.let { played(it.optJSONArray("cards")) },
                 trickNo = g.optInt("trickNo"),
+                tricksWon = g.optJSONArray("tricksWon")?.let { a -> List(a.length()) { a.optInt(it) } } ?: listOf(0, 0),
                 lastHand = g.optJSONObject("lastHand")?.let { LastHand(it.optJSONArray("points").ints(), it.optIntOrNull("kaboot")) },
                 outcomeStatus = outcome.optString("status", "ongoing"),
                 outcomeWinner = outcome.optIntOrNull("winner"),

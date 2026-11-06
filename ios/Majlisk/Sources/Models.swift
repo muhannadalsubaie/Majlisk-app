@@ -87,6 +87,8 @@ struct GameView {
     let trick: [PlayedCard]
     let lastTrick: [PlayedCard]?
     let trickNo: Int
+    /// كم أكلة لكل فريق في الصكة الحالية
+    var tricksWon: [Int] = [0, 0]
     let lastHand: LastHand?
     let outcomeStatus: String
     let outcomeWinner: Int?
@@ -208,6 +210,7 @@ struct TableView {
             trick: played(g.objs("trick")),
             lastTrick: g.obj("lastTrick").map { played($0.objs("cards")) },
             trickNo: g.int("trickNo"),
+            tricksWon: g.ints("tricksWon"),
             lastHand: g.obj("lastHand").map { LastHand(points: $0.ints("points"), kaboot: $0.intOrNil("kaboot")) },
             outcomeStatus: outcome.str("status", "ongoing"),
             outcomeWinner: outcome.intOrNil("winner"),

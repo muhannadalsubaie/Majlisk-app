@@ -73,7 +73,16 @@ struct BalootText {
             return "\(who): \(d.kinds.joined(separator: " و"))"
         }
         if let b = g.balootSeat { lines.append("\(b == mySeat ? "أنت" : name(b)): بلوت") }
-        return lines.isEmpty ? "لا توجد مشاريع معلنة" : lines.joined(separator: ". ")
+        let projects = lines.isEmpty ? "لا توجد مشاريع معلنة" : lines.joined(separator: ". ")
+        return g.phase == "playing" ? "\(projects). \(tricks())" : projects
+    }
+
+    /// عدد الأكلات لكل فريق في الصكة الحالية (لنا ولهم، وللمشاهد بأسماء الفريقين)
+    func tricks() -> String {
+        let w = g.tricksWon, a = w.count > 0 ? w[0] : 0, b = w.count > 1 ? w[1] : 0
+        if mySeat == nil { return "الأكلات: فريق \(name(0)) و\(name(2)) \(a)، فريق \(name(1)) و\(name(3)) \(b)" }
+        let mine = teamOf(me) == 0 ? a : b, theirs = teamOf(me) == 0 ? b : a
+        return "الأكلات: لنا \(mine)، لهم \(theirs)"
     }
 
     /// دور مين الآن، وفي أي مرحلة
