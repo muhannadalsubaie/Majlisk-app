@@ -243,28 +243,23 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 _ = try? await request(["op": "close", "sessionId": sessionId ?? "", "mids": mids])
             }
             var failed = false
+            // الخدمة تبي الاتصال قايم قبل ما نسحب أي صوت («Session appears to be disconnected»): ننتظره شوي
+            for _ in 0..<25 where conn.connectionState != .connected { try? await Task.sleep(nanoseconds: 200_000_000) }
             for (key, m) in others where pulled[key] == nil {
-                // مكان استقبال جديد لصوته، وعرض منّا والخادم يرد بجواب مباشر — نفس طريقة فتح الميكروفون
-                // (اللي كانت تصلّح السماع): بدونها ما تسمع أحد لين تفتح المايك وتقفله
-                let txInit = RTCRtpTransceiverInit()
-                txInit.direction = .recvOnly
-                guard let tx = conn.addTransceiver(of: .audio, init: txInit) else { failed = true; continue }
-                var offered = false
                 do {
-                    let offer = try await conn.offer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
-                    try await conn.setLocalDescription(offer)
-                    offered = true
-                    let r = try await request(["op": "pull", "sessionId": sessionId ?? "", "uid": m.uid, "offer": desc(offer), "mid": tx.mid])
+                    // السحب: الخدمة ترسل عرض (مكان صوته) ونرد بجواب. أي عرض يرجع نجاوب عليه (حتى لو ما قالت لازم)
+                    let r = try await request(["op": "pull", "sessionId": sessionId ?? "", "uid": m.uid])
                     if let s = r.strOrNil("sessionId"), !s.isEmpty { sessionId = s }
-                    guard let answer = parseDesc(r.obj("sessionDescription")), answer.type == .answer else { throw ApiError(code: "voice-failed") }
-                    try await conn.setRemoteDescription(answer)
+                    guard let mid = r.objs("tracks").first?.strOrNil("mid"), !mid.isEmpty else { failed = true; continue }
+                    if let offer = parseDesc(r.obj("sessionDescription")), offer.type == .offer {
+                        try await conn.setRemoteDescription(offer)
+                        let answer = try await conn.answer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
+                        try await conn.setLocalDescription(answer)
+                        _ = try await request(["op": "renegotiate", "sessionId": sessionId ?? "", "answer": desc(answer)])
+                    }
                     // ما نحسبه مسحوباً إلا بعد ما ينجح كله: لو فشل نعيد المحاولة
-                    pulled[key] = tx.mid
-                } catch {
-                    failed = true
-                    if offered { try? await conn.setLocalDescription(RTCSessionDescription(type: .rollback, sdp: "")) }
-                    tx.stopInternal()
-                }
+                    pulled[key] = mid
+                } catch { failed = true }
             }
             if failed && pullRetries < 5 {
                 pullRetries += 1
