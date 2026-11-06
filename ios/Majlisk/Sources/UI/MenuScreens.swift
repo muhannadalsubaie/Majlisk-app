@@ -127,8 +127,8 @@ struct JoinTableScreen: View {
             else if rows!.isEmpty { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
             ForEach(rows ?? []) { r in
                 let game = gameTitle(r.kind, r.variant)
-                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد اللاعبين \(r.players) من 4، \(STATUS[r.status] ?? "")"
-                MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · \(r.players)/4 · \(STATUS[r.status] ?? "")",
+                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
+                MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
                         enabled: !r.isPrivate && busy != r.id, label: spoken) {
                     busy = r.id
                     Task { @MainActor in
@@ -146,7 +146,7 @@ struct JoinTableScreen: View {
     private func update(_ list: [TableRow]) {
         let pos = Dictionary(uniqueKeysWithValues: (rows ?? []).enumerated().map { ($1.id, $0) })
         let sorted = list.enumerated().sorted { (pos[$0.element.id] ?? -1, $0.offset) < (pos[$1.element.id] ?? -1, $1.offset) }.map(\.element)
-        let sig = { (l: [TableRow]) in l.map { "\($0.id)|\($0.ownerName)|\($0.isPrivate)|\($0.players)|\($0.status)" } }
+        let sig = { (l: [TableRow]) in l.map { "\($0.id)|\($0.ownerName)|\($0.isPrivate)|\($0.people)|\($0.status)" } }
         if rows == nil || sig(sorted) != sig(rows!) { rows = sorted }
     }
 }

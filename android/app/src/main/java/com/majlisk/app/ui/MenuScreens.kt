@@ -157,7 +157,7 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
             val old = rows
             val pos = old.orEmpty().withIndex().associate { it.value.id to it.index }
             val sorted = new.sortedBy { pos[it.id] ?: -1 }
-            if (old == null || sorted.map { it.copy(people = 0) } != old.map { it.copy(people = 0) }) rows = sorted
+            if (old == null || sorted != old) rows = sorted
         }
         onDispose { reg.remove() }
     }
@@ -169,9 +169,9 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         }
         rows?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
-            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else ""}عدد اللاعبين ${r.players} من 4، ${STATUS[r.status].orEmpty()}"
+            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else ""}عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}"
             SecondaryButton(
-                "${if (r.isPrivate) "🔒 " else ""}طاولة ${r.ownerName} · $game · ${r.players}/4 · ${STATUS[r.status].orEmpty()}",
+                "${if (r.isPrivate) "🔒 " else ""}طاولة ${r.ownerName} · $game · الموجودين ${r.people} · ${STATUS[r.status].orEmpty()}",
                 {
                     busy = r.id
                     scope.launch {
