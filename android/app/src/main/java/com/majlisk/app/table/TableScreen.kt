@@ -274,8 +274,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
     val reads = mapOf(
         SwipeDir.Left to { Announcer.announceNow(text.trick()) },
         SwipeDir.Right to { val c = text.contract(); if (c.isNotEmpty()) Announcer.announceNow(c) },
-        SwipeDir.Up to { Announcer.announceNow(text.projects()) },
-        SwipeDir.Down to { Announcer.announceNow(text.turn()) },
+        // من تحت لفوق = الدور عند مين (مثل باقي الألعاب)، ومن فوق لتحت = المشاريع
+        SwipeDir.Up to { Announcer.announceNow(text.turn()) },
+        SwipeDir.Down to { Announcer.announceNow(text.projects()) },
     )
 
     Column(Modifier.fillMaxWidth().twoFingerSwipes { reads[it]?.invoke() }, verticalArrangement = Arrangement.spacedBy(10.dp)) {
