@@ -200,9 +200,10 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
             AudioUnitSetProperty(u, kAudioOutputUnitProperty_SetInputCallback, kAudioUnitScope_Global, 1, &rec, UInt32(MemoryLayout<AURenderCallbackStruct>.size))
         }
 
-        // "خفض الأصوات الثانية" على أقل مستوى: الورق والتعليق وVoiceOver ما تنخفض وأنت تتكلم
+        // "خفض الأصوات الثانية" على أقل مستوى، و«الخفض الذكي» من Apple: ينزّل VoiceOver بهدوء وقت الكلام بس،
+        // بدل الطلوع والنزول السريع مع كل كلمة (كان يطلع تقطيع في قارئ الشاشة، خصوصاً في iOS 27)
         if !plain, #available(iOS 17.0, *) {
-            var duck = AUVoiceIOOtherAudioDuckingConfiguration(mEnableAdvancedDucking: false, mDuckingLevel: .min)
+            var duck = AUVoiceIOOtherAudioDuckingConfiguration(mEnableAdvancedDucking: true, mDuckingLevel: .min)
             AudioUnitSetProperty(u, kAUVoiceIOProperty_OtherAudioDuckingConfiguration, kAudioUnitScope_Global, 0, &duck,
                                  UInt32(MemoryLayout<AUVoiceIOOtherAudioDuckingConfiguration>.size))
         }
