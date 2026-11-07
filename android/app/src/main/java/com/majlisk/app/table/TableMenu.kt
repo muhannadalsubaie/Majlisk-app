@@ -133,7 +133,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 val u = v.seatUids.getOrNull(i)
                 val muted = if (u != null && u in v.voiceBlocked) "، مكتوم" else ""
                 val s = v.seats.getOrNull(i)
-                val vt = if (s == null || s.isBot) "" else voiceTag(u)
+                // انقطع اتصاله: ما نكتب حالة المحادثة
+                val vt = if (s == null || s.isBot || s.away) "" else voiceTag(u)
                 ItemRow {
                     if (canManage(u)) SecondaryButton(seatLabel(i) + vt + muted, { page = Page.Member(u!!) }, modifier = Modifier.weight(1f))
                     else Text(seatLabel(i) + vt, color = Palette.text, modifier = Modifier.weight(1f))

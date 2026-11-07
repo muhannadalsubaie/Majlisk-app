@@ -107,7 +107,8 @@ struct TableMenu: View {
                 ForEach(0..<4, id: \.self) { i in
                     let u = view.seatUid(i)
                     let muted = !u.isEmpty && view.voiceBlocked.contains(u) ? "، مكتوم" : ""
-                    let vt = view.seat(i).map { $0.isBot ? "" : voiceTag(u) } ?? ""
+                    // انقطع اتصاله: ما نكتب حالة المحادثة
+                    let vt = view.seat(i).map { $0.isBot || $0.away ? "" : voiceTag(u) } ?? ""
                     ItemRow {
                         if canManage(u) { MButton(seatLabel(i) + vt + muted) { page = .member(u) } }
                         else { Text(seatLabel(i) + vt).frame(maxWidth: .infinity, alignment: .leading) }
