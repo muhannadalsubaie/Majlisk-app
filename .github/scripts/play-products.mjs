@@ -57,9 +57,18 @@ for (const p of PACKS) {
   }
   if (!r.ok) { failed = true; console.log(`- ❌ ${p.sku}: ${r.status} ${JSON.stringify(r.body).slice(0, 800)}`); continue; }
   // تفعيل خيار الشراء
-  const act = await api(`/onetimeproducts/${p.sku}/purchaseOptions:batchUpdateStates`, 'POST', {
-    requests: [{ activatePurchaseOptionRequest: { packageName: PKG, productId: p.sku, purchaseOptionId: 'buy', latencyTolerance: LT } }],
-  });
+  const body = { requests: [{ activatePurchaseOptionRequest: { packageName: PKG, productId: p.sku, purchaseOptionId: 'buy', latencyTolerance: LT } }] };
+  let act = { ok: false, status: 0, body: '' };
+  for (const path of [
+    `/oneTimeProducts/${p.sku}/purchaseOptions:batchUpdateStates`,
+    `/oneTimeProducts/${p.sku}/purchaseOptions/-:batchUpdateStates`,
+    `/onetimeproducts/${p.sku}/purchaseOptions/-:batchUpdateStates`,
+    `/oneTimeProducts/-/purchaseOptions/-:batchUpdateStates`,
+  ]) {
+    act = await api(path, 'POST', body);
+    console.log(`  (تفعيل ${path}: ${act.status})`);
+    if (act.status !== 404) break;
+  }
   if (act.ok) console.log(`- ✅ ${p.sku}: جاهز ومفعّل (${p.sar} ر.س، ${regions.length} دولة)`);
   else { failed = true; console.log(`- ⚠️ ${p.sku}: انضاف لكن التفعيل فشل: ${act.status} ${JSON.stringify(act.body).slice(0, 600)}`); }
 }
