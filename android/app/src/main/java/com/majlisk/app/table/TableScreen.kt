@@ -528,15 +528,23 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
-    // تحت اسم صاحبه مباشرة، كل ورقة كاملة وواضحة (بدون تراكب)، وتنزل سطر جديد لو ضاق المكان
-    val w = if (maxWidth < 100f) 28f else 32f; val h = w * 1.45f; val gap = 3f
-    val perRow = maxOf(1, ((maxWidth + gap) / (w + gap)).toInt())
+    // تحت اسم صاحبه: الأوراق مروحة مثل اليد (كل ورقة فوق اللي على يسارها، فيبان رمزها في زاويتها)
+    val n = faces.size
+    val w = if (maxWidth < 100f) 30f else 36f; val h = w * 1.45f
+    val step = if (n > 1) minOf(w * 0.5f, maxOf(9f, (maxWidth - w - 12f) / (n - 1))) else 0f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-        Column(Modifier.clearAndSetSemantics { }, verticalArrangement = Arrangement.spacedBy(gap.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-            faces.chunked(perRow).forEach { row ->
-                Row(horizontalArrangement = Arrangement.spacedBy(gap.dp)) {
-                    row.forEach { c -> CardFaceBox(c, Modifier.size(w.dp, h.dp)) }
-                }
+        Box(
+            Modifier.clearAndSetSemantics { }.size((w + step * maxOf(n - 1, 0) + 14f).dp, (h + 10f).dp),
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            faces.forEachIndexed { i, c ->
+                val k = i - (n - 1) / 2f
+                CardFaceBox(c, Modifier.size(w.dp, h.dp)
+                    .absoluteOffset(x = (k * step).dp)
+                    .graphicsLayer {
+                        rotationZ = k * 7f
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2.4f)
+                    })
             }
         }
     }

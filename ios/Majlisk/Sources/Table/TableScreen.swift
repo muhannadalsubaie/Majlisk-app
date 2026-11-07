@@ -596,17 +596,19 @@ private struct ProjectFaces: View {
     /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
     var maxWidth: CGFloat = 200
     var body: some View {
-        // تحت اسم صاحبه مباشرة، كل ورقة كاملة وواضحة (بدون تراكب)، وتنزل سطر جديد لو ضاق المكان
-        let w: CGFloat = maxWidth < 100 ? 28 : 32, h: CGFloat = w * 1.45, gap: CGFloat = 3
-        let perRow = max(1, Int((maxWidth + gap) / (w + gap)))
-        let rows = stride(from: 0, to: faces.count, by: perRow).map { Array(faces[$0..<min($0 + perRow, faces.count)]) }
-        VStack(spacing: gap) {
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: gap) {
-                    ForEach(Array(row.enumerated()), id: \.offset) { _, c in TableCard(card: c, width: w, height: h) }
-                }
+        // تحت اسم صاحبه: الأوراق مروحة مثل اليد (كل ورقة فوق اللي على يسارها، فيبان رمزها في زاويتها)
+        let n = faces.count
+        let w: CGFloat = maxWidth < 100 ? 30 : 36, h: CGFloat = w * 1.45
+        let step: CGFloat = n > 1 ? min(w * 0.5, max(9, (maxWidth - w - 12) / CGFloat(n - 1))) : 0
+        ZStack(alignment: .bottom) {
+            ForEach(0..<n, id: \.self) { i in
+                let k = CGFloat(i) - CGFloat(n - 1) / 2
+                TableCard(card: faces[i], width: w, height: h)
+                    .rotationEffect(.degrees(Double(k) * 7), anchor: UnitPoint(x: 0.5, y: 2.4))
+                    .offset(x: k * step)
             }
         }
+        .frame(width: w + step * CGFloat(max(n - 1, 0)) + 14, height: h + 10, alignment: .bottom)
         .environment(\.layoutDirection, .leftToRight)
         .accessibilityHidden(true)
     }
