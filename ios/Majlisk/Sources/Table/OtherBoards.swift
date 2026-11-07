@@ -657,6 +657,7 @@ struct LudoBoard: View {
     @State private var rolls: [Int: Int] = [:]
     @State private var rollTicks: [Int: Int] = [:]
     @State private var prevPhase: String?
+    @State private var prevRollSeq = 0
     @State private var prevTurn: Int?
     @State private var prevLast: String?
     /// السجل: يفتح بسحبة إصبعين من فوق لتحت (بدون زر)
@@ -762,6 +763,16 @@ struct LudoBoard: View {
 
     /// رمية جديدة: نحدّث نرد صاحبها ونزيد عدّاده فيتدحرج
     private func noteRoll() {
+        // السيرفر الجديد يرسل آخر رمية مع عدّادها: النرد الجديد يطلع على طول ويحل محل القديم
+        if l.rollSeq > 0 {
+            if l.rollSeq != prevRollSeq, let s = l.rolledSeat, let r = l.rolledValue {
+                rolls[s] = r
+                if prevRollSeq != 0 { rollTicks[s, default: 0] += 1 }
+            }
+            prevRollSeq = l.rollSeq
+            prevPhase = l.phase; prevTurn = l.turn; prevLast = l.lastSig
+            return
+        }
         if l.phase == "move", let d = l.dice, prevPhase != "move" || prevTurn != l.turn {
             rolls[l.turn] = d; rollTicks[l.turn, default: 0] += 1
         } else if let s = l.lastSeat, let r = l.lastRoll, l.lastSig != prevLast, prevPhase != "move", prevPhase != nil {

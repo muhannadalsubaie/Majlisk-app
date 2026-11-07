@@ -601,8 +601,18 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     val rolls = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
     // عدّاد رميات لكل لاعب: يزيد مع كل رمية جديدة فيتدحرج نرده
     val rollTicks = remember { androidx.compose.runtime.mutableStateMapOf<Int, Int>() }
-    val prev = remember { arrayOf<Any?>(null, null, null) } // المرحلة، الدور، آخر حركة
+    val prev = remember { arrayOf<Any?>(null, null, null, 0) } // المرحلة، الدور، آخر حركة، عدّاد الرميات
     androidx.compose.runtime.LaunchedEffect(l.moveSig) {
+        // السيرفر الجديد يرسل آخر رمية مع عدّادها: النرد الجديد يطلع على طول ويحل محل القديم
+        if (l.rollSeq > 0) {
+            val pSeq = prev[3] as Int
+            if (l.rollSeq != pSeq && l.rolledSeat != null && l.rolledValue != null) {
+                rolls[l.rolledSeat] = l.rolledValue
+                if (pSeq != 0) rollTicks[l.rolledSeat] = (rollTicks[l.rolledSeat] ?: 0) + 1
+            }
+            prev[0] = l.phase; prev[1] = l.turn; prev[2] = l.lastSig; prev[3] = l.rollSeq
+            return@LaunchedEffect
+        }
         val (pPhase, pTurn, pLast) = Triple(prev[0] as String?, prev[1] as Int?, prev[2] as String?)
         if (l.phase == "move" && l.dice != null && (pPhase != "move" || pTurn != l.turn)) {
             rolls[l.turn] = l.dice; rollTicks[l.turn] = (rollTicks[l.turn] ?: 0) + 1
@@ -635,6 +645,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             }
         }
     }
+    val latestTap = androidx.compose.runtime.rememberUpdatedState(tapBoard)
     // السجل (من فوق لتحت): قائمة فيها كل لاعب وأحجاره في أي خانة، تتنقل فيها
     var logOpen by remember { mutableStateOf(false) }
     if (logOpen) {
@@ -747,7 +758,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             // بدون قارئ الشاشة: تلمس الحجر اللي تبيه ويتحرك
             Canvas(
                 Modifier.widthIn(max = ludoSide()).fillMaxWidth().aspectRatio(1f)
-                    .pointerInput(l.moveSig, reader) { if (!reader) detectTapGestures { tapBoard(it, size.width.toFloat()) } },
+                    // اللمس يستخدم آخر حالة دائماً (ما يعلق على حالة قديمة لو تغيّرت بدون ما تتغير البصمة)
+                    .pointerInput(reader) { if (!reader) detectTapGestures { latestTap.value(it, size.width.toFloat()) } },
             ) { drawLudo(l, mySeat ?: 0, movable) }
         }
         cornerRow(false)

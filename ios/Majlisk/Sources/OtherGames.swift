@@ -175,6 +175,8 @@ struct LudoView {
     let canRoll: Bool
     /// الأرقام المتجمعة بانتظار الحركة (الستة ومعها اللي بعدها)
     let pool: [Int]
+    /// آخر رمية من السيرفر: مين رماها وكم، وعدّادها (يزيد مع كل رمية)
+    let rolledSeat: Int?, rolledValue: Int?, rollSeq: Int
 
     func home(_ o: Int) -> Int { o < tokens.count ? tokens[o].filter { $0 == LudoView.FINISH }.count : 0 }
 
@@ -184,13 +186,15 @@ struct LudoView {
         positions = ui.objs("positions").map { (name: $0.str("name"), color: $0.int("color"), tokens: $0.strs("tokens")) }
         turnText = ui.str("turnText"); diceText = ui.str("diceText"); canRoll = ui.bool("canRoll")
         pool = ui.ints("pool")
+        let rolled = s.obj("lastRolled")
+        rolledSeat = rolled?.intOrNil("seat"); rolledValue = rolled?.intOrNil("roll"); rollSeq = rolled?.int("seq") ?? 0
         seats = s.ints("seats")
         tokens = s.arr("tokens").map { (($0 as? [Any]) ?? []).map { ($0 as? NSNumber)?.intValue ?? -1 } }
         turn = s.int("turn"); phase = s.str("phase")
         dice = s.intOrNil("dice"); lastRoll = last?.intOrNil("roll"); winner = s.intOrNil("winner")
         lastSeat = last?.intOrNil("seat")
         teams = s.obj("rules")?.bool("teams") ?? false
-        moveSig = jsonSig(s["lastMove"]) + "|\(s.int("turn"))|\(s.str("phase"))|\(s.intOrNil("dice") ?? -1)|\(s.ints("pool"))"
+        moveSig = jsonSig(s["lastMove"]) + "|\(s.int("turn"))|\(s.str("phase"))|\(s.intOrNil("dice") ?? -1)|\(s.ints("pool"))|\(s.obj("lastRolled")?.int("seq") ?? 0)"
         moved = last?.obj("token") != nil
         lastSig = jsonSig(s["lastMove"])
         captures = last?.objs("captured").count ?? 0
