@@ -28,19 +28,40 @@ const details = edit.ok ? await api(`/edits/${edit.body.id}/details`) : { body: 
 if (edit.ok) await api(`/edits/${edit.body.id}`, 'DELETE');
 const lang = details.body?.defaultLanguage || 'ar';
 console.log(`default language: ${lang}`);
+// الواجهة الجديدة (monetization.onetimeproducts): خيار شراء «buy» متوافق مع مكتبة الدفع، بسعر بالريال محوّل لكل الدول
+const LT = 'PRODUCT_UPDATE_LATENCY_TOLERANCE_LATENCY_TOLERANT';
+const money = (cur, v) => ({ currencyCode: cur, units: String(Math.floor(v)), nanos: Math.round((v - Math.floor(v)) * 1e9) });
 let failed = false;
 for (const p of PACKS) {
-  const product = {
-    packageName: PKG, sku: p.sku, status: 'active', purchaseType: 'managedUser', defaultLanguage: lang,
-    defaultPrice: { priceMicros: String(Math.round(p.sar * 1_000_000)), currency: 'SAR' },
-    listings: { [lang]: { title: p.title, description: p.desc } },
-  };
-  const exists = (await api(`/inappproducts/${p.sku}`)).ok;
-  const r = exists
-    ? await api(`/inappproducts/${p.sku}?autoConvertMissingPrices=true&allowMissing=true`, 'PUT', product)
-    : await api(`/inappproducts?autoConvertMissingPrices=true`, 'POST', product);
-  if (r.ok) console.log(`- ✅ ${p.sku}: ${exists ? 'تحدّث' : 'انضاف'} (${p.sar} ر.س)`);
-  else { failed = true; console.log(`- ❌ ${p.sku}: ${r.status} ${JSON.stringify(r.body).slice(0, 500)}`); }
+  const conv = await api('/pricing:convertRegionPrices', 'POST', { price: money('SAR', p.sar) });
+  if (!conv.ok) console.log(`  (تحويل الأسعار: ${conv.status} ${JSON.stringify(conv.body).slice(0, 300)})`);
+  const version = conv.body?.regionVersion?.version || '2022/02';
+  const regions = Object.values(conv.body?.convertedRegionPrices ?? {}).map((r) => ({ regionCode: r.regionCode, price: r.price, availability: 'AVAILABLE' }));
+  if (!regions.some((r) => r.regionCode === 'SA')) regions.push({ regionCode: 'SA', price: money('SAR', p.sar), availability: 'AVAILABLE' });
+  const other = conv.body?.convertedOtherRegionsPrice;
+  const product = (regs) => ({
+    packageName: PKG, productId: p.sku,
+    listings: [{ languageCode: lang, title: p.title, description: p.desc }],
+    purchaseOptions: [{
+      purchaseOptionId: 'buy',
+      buyOption: { legacyCompatible: true, multiQuantityEnabled: false },
+      regionalPricingAndAvailabilityConfigs: regs,
+      ...(other?.usdPrice && other?.eurPrice ? { newRegionsConfig: { usdPrice: other.usdPrice, eurPrice: other.eurPrice, availability: 'AVAILABLE' } } : {}),
+    }],
+  });
+  const q = `allowMissing=true&updateMask=listings,purchaseOptions&regionsVersion.version=${encodeURIComponent(version)}&latencyTolerance=${LT}`;
+  let r = await api(`/onetimeproducts/${p.sku}?${q}`, 'PATCH', product(regions));
+  if (!r.ok) {
+    console.log(`  (كل الدول: ${r.status} ${JSON.stringify(r.body).slice(0, 600)}) — نجرب السعودية بس`);
+    r = await api(`/onetimeproducts/${p.sku}?${q}`, 'PATCH', product([{ regionCode: 'SA', price: money('SAR', p.sar), availability: 'AVAILABLE' }]));
+  }
+  if (!r.ok) { failed = true; console.log(`- ❌ ${p.sku}: ${r.status} ${JSON.stringify(r.body).slice(0, 800)}`); continue; }
+  // تفعيل خيار الشراء
+  const act = await api(`/onetimeproducts/${p.sku}/purchaseOptions:batchUpdateStates`, 'POST', {
+    requests: [{ activatePurchaseOptionRequest: { packageName: PKG, productId: p.sku, purchaseOptionId: 'buy', latencyTolerance: LT } }],
+  });
+  if (act.ok) console.log(`- ✅ ${p.sku}: جاهز ومفعّل (${p.sar} ر.س، ${regions.length} دولة)`);
+  else { failed = true; console.log(`- ⚠️ ${p.sku}: انضاف لكن التفعيل فشل: ${act.status} ${JSON.stringify(act.body).slice(0, 600)}`); }
 }
 if (failed) process.exit(1);
 console.log('### ✅ باقات العملات جاهزة في Google Play');
