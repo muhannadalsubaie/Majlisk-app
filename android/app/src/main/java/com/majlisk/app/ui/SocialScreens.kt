@@ -65,7 +65,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                         }
                         when (st) {
                             "accepted" -> { com.majlisk.app.data.Tables.join(id); profileOf = null; openTable(id) }
-                            "rejected" -> say("رفض ${f.username} طلب الانضمام، تقدر تحاول بعد ${minutesText(mins)}")
+                            "rejected" -> say("رفض ${f.username} طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد ${minutesText(mins)}")
                             "waiting" -> say("عندك طلب انضمام معلّق عند ${f.username}، تقدر ترسل طلب جديد بعد ${minutesText(mins)}")
                             else -> say("انتهى طلب الانضمام بدون رد من ${f.username}")
                         }

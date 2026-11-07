@@ -58,7 +58,7 @@ struct FriendsScreen: View {
                 }
                 switch st {
                 case "accepted": try await Tables.join(id); profileOf = nil; openTable(id)
-                case "rejected": say("رفض \(f.username) طلب الانضمام، تقدر تحاول بعد \(minutesText(mins))")
+                case "rejected": say("رفض \(f.username) طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد \(minutesText(mins))")
                 case "waiting": say("عندك طلب انضمام معلّق عند \(f.username)، تقدر ترسل طلب جديد بعد \(minutesText(mins))")
                 default: say("انتهى طلب الانضمام بدون رد من \(f.username)")
                 }
