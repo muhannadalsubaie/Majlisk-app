@@ -189,42 +189,83 @@ private struct DominoSeatTag: View {
  * أول الخط (الطرف اليسار) فوق على اليسار، وآخره (الطرف اليمين) فوق على اليمين.
  * كل ما كثرت القطع تصغر عشان تكفي الطاولة كلها بلا صفوف.
  */
+/// قطعة بمكانها على الطاولة (من فوق يسار) وكيف تنرسم
+private struct DominoSpot { let rect: CGRect; let vertical: Bool; let tile: Tile }
+
+/// خط اللعب يبدأ من الوسط: أول قطعة بالطول في منتصف الطاولة، والسلسلة تمشي يمين ويسار بخط عرضي.
+/// اليمين لما يوصل حافة الطاولة يطلع لفوق ثم يرجع يسار، واليسار ينزل لتحت ثم يرجع يمين.
+/// الدبل ينحط بالعرض عكس اتجاه الخط. يرجع nil لو ما كفت الطاولة بهالحجم (فنصغّر القطع).
+private func dominoSpiral(_ line: [PlacedTile], _ W: CGFloat, _ H: CGFloat, _ u: CGFloat) -> [DominoSpot]? {
+    if line.isEmpty { return [] }
+    let f = line.firstIndex { $0.side == "first" } ?? 0
+    let S = u, L = 2 * u, g: CGFloat = 2, m = u * 0.5
+    let cx = W / 2, cy = H / 2
+    let c0 = CGRect(x: cx - S / 2, y: cy - L / 2, width: S, height: L)
+    let first = orient(line[f])
+    var out = [DominoSpot(rect: c0, vertical: true, tile: Tile(a: first.a, b: first.b))]
+    func fits(_ r: CGRect) -> Bool { r.minX >= m && r.minY >= m && r.maxX <= W - m && r.maxY <= H - m }
+    func run(_ tiles: [PlacedTile], _ side: Int) -> Bool {
+        let turns: [(Int, Int)] = side > 0 ? [(1, 0), (0, -1), (-1, 0)] : [(-1, 0), (0, 1), (1, 0)]
+        var ti = 0, d = turns[0], last = c0, c = cy
+        for p in tiles {
+            let t = orient(p)
+            // الرقم الداخلي يلاصق القطعة اللي قبله (جهة الوسط)
+            let inner = side > 0 ? t.a : t.b, outer = side > 0 ? t.b : t.a
+            let dbl = t.a == t.b
+            var r: CGRect
+            if d.1 == 0 {
+                let w = dbl ? S : L, h = dbl ? L : S
+                r = CGRect(x: d.0 > 0 ? last.maxX + g : last.minX - g - w, y: c - h / 2, width: w, height: h)
+            } else {
+                let w = dbl ? L : S, h = dbl ? S : L
+                r = CGRect(x: c - w / 2, y: d.1 > 0 ? last.maxY + g : last.minY - g - h, width: w, height: h)
+            }
+            if !fits(r) {
+                // وصل الحافة: يلف (قطعة عمودية على آخر الخط)
+                if ti + 1 >= turns.count { return false }
+                switch d {
+                case (1, 0): r = CGRect(x: last.maxX - S, y: last.minY - g - L, width: S, height: L)
+                case (0, -1): r = CGRect(x: last.minX - g - L, y: last.minY, width: L, height: S)
+                case (-1, 0): r = CGRect(x: last.minX, y: last.maxY + g, width: S, height: L)
+                default: r = CGRect(x: last.maxX + g, y: last.maxY - S, width: L, height: S)
+                }
+                if !fits(r) { return false }
+                ti += 1; d = turns[ti]
+                c = d.1 != 0 ? r.minX + S / 2 : r.minY + S / 2
+            }
+            // الرسم: الأفقية a يمين و b يسار، العمودية a فوق و b تحت
+            let tile: Tile = d.0 > 0 ? Tile(a: outer, b: inner) : d.0 < 0 ? Tile(a: inner, b: outer)
+                : d.1 < 0 ? Tile(a: outer, b: inner) : Tile(a: inner, b: outer)
+            out.append(DominoSpot(rect: r, vertical: r.height > r.width, tile: tile))
+            last = r
+        }
+        return true
+    }
+    if !run(Array(line[(f + 1)...]), 1) { return nil }
+    if !run(Array(line[..<f].reversed()), -1) { return nil }
+    return out
+}
+
 private struct DominoSnake: View {
     let line: [PlacedTile]
     var body: some View {
         GeometryReader { geo in
             let W = geo.size.width, H = geo.size.height
-            let n = line.count
-            // أكبر حجم يكفي كل القطع على طول الـ U
-            let u: CGFloat = {
-                // أكبر من قبل (كانت 18) عشان تكون أوضح، وتصغر بس لما تكثر القطع
+            // أكبر حجم يكفي كل القطع، وتصغر بس لما تكثر
+            let fit: (CGFloat, [DominoSpot]) = {
                 var u: CGFloat = 26
-                while u > 6 {
-                    let m = u * 0.6, lh = H - 2 * m - u, lw = W - 2 * m - 2 * u
-                    if CGFloat(n) * (2 * u + 2) <= 2 * lh + lw { break }
+                while u > 7 {
+                    if let s = dominoSpiral(line, W, H, u) { return (u, s) }
                     u -= 0.5
                 }
-                return u
+                return (u, dominoSpiral(line, W, H, u) ?? [])
             }()
-            let m = u * 0.6, g: CGFloat = 2
-            let lh = H - 2 * m - u, lw = W - 2 * m - 2 * u
             ZStack(alignment: .topLeading) {
                 if line.isEmpty {
                     Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(width: W, height: H)
                 }
-                ForEach(Array(line.enumerated()), id: \.offset) { i, p in
-                    let t = orient(p)
-                    let dist = CGFloat(i) * (2 * u + g) + u
-                    if dist <= lh {
-                        // العمود اليسار نازل: أول القطعة فوق
-                        DominoTileView(t: t, vertical: true, unit: u).position(x: m + u / 2, y: m + dist)
-                    } else if dist <= lh + lw {
-                        // الأسفل من اليسار لليمين
-                        DominoTileView(t: Tile(a: t.b, b: t.a), vertical: false, unit: u).position(x: m + u + (dist - lh), y: H - m - u / 2)
-                    } else {
-                        // العمود اليمين طالع: أول القطعة تحت
-                        DominoTileView(t: Tile(a: t.b, b: t.a), vertical: true, unit: u).position(x: W - m - u / 2, y: H - m - u - (dist - lh - lw))
-                    }
+                ForEach(Array(fit.1.enumerated()), id: \.offset) { _, s in
+                    DominoTileView(t: s.tile, vertical: s.vertical, unit: fit.0).position(x: s.rect.midX, y: s.rect.midY)
                 }
             }
             .frame(width: W, height: H)

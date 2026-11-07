@@ -168,11 +168,73 @@ private fun DominoSeatTag(name: String, uid: String?, count: Int, partner: Boole
     }
 }
 
+/** قطعة بمكانها على الطاولة (dp من فوق يسار) وكيف تنرسم */
+private class DominoSpot(val x: Float, val y: Float, val vertical: Boolean, val tile: Tile)
+
 /**
- * خط اللعب على شكل حرف U: يبدأ من فوق على اليسار وينزل، يمشي على الأسفل، ويطلع يمين لين فوق.
- * أول الخط (الطرف اليسار) فوق على اليسار، وآخره (الطرف اليمين) فوق على اليمين.
- * كل ما كثرت القطع تصغر عشان تكفي الطاولة كلها بلا صفوف.
+ * خط اللعب يبدأ من الوسط: أول قطعة بالطول في منتصف الطاولة، والسلسلة تمشي يمين ويسار بخط عرضي.
+ * اليمين لما يوصل حافة الطاولة يطلع لفوق ثم يرجع يسار، واليسار ينزل لتحت ثم يرجع يمين.
+ * الدبل ينحط بالعرض عكس اتجاه الخط. يرجع null لو ما كفت الطاولة بهالحجم (فنصغّر القطع).
  */
+private fun dominoSpiral(line: List<PlacedTile>, W: Float, H: Float, u: Float): List<DominoSpot>? {
+    if (line.isEmpty()) return emptyList()
+    val f = line.indexOfFirst { it.side == "first" }.let { if (it < 0) 0 else it }
+    val S = u; val L = 2 * u; val g = 2f; val m = u * 0.5f
+    val cx = W / 2; val cy = H / 2
+    val out = mutableListOf<DominoSpot>()
+    val c0x = cx - S / 2; val c0y = cy - L / 2
+    val first = orient(line[f])
+    out += DominoSpot(c0x, c0y, true, Tile(first.a, first.b))
+    fun fits(x: Float, y: Float, w: Float, h: Float) = x >= m && y >= m && x + w <= W - m && y + h <= H - m
+    fun run(tiles: List<PlacedTile>, side: Int): Boolean {
+        val turns = if (side > 0) listOf(1 to 0, 0 to -1, -1 to 0) else listOf(-1 to 0, 0 to 1, 1 to 0)
+        var ti = 0; var d = turns[0]
+        var lx = c0x; var ly = c0y; var lw = S; var lh = L
+        var c = cy
+        for (p in tiles) {
+            val t = orient(p)
+            // الرقم الداخلي يلاصق القطعة اللي قبله (جهة الوسط)
+            val inner = if (side > 0) t.a else t.b
+            val outer = if (side > 0) t.b else t.a
+            val dbl = t.a == t.b
+            var x: Float; var y: Float; var w: Float; var h: Float
+            if (d.second == 0) {
+                w = if (dbl) S else L; h = if (dbl) L else S
+                x = if (d.first > 0) lx + lw + g else lx - g - w; y = c - h / 2
+            } else {
+                w = if (dbl) L else S; h = if (dbl) S else L
+                y = if (d.second > 0) ly + lh + g else ly - g - h; x = c - w / 2
+            }
+            if (!fits(x, y, w, h)) {
+                // وصل الحافة: يلف (قطعة عمودية على آخر الخط)
+                if (ti + 1 >= turns.size) return false
+                when (d) {
+                    1 to 0 -> { x = lx + lw - S; y = ly - g - L; w = S; h = L }
+                    0 to -1 -> { x = lx - g - L; y = ly; w = L; h = S }
+                    -1 to 0 -> { x = lx; y = ly + lh + g; w = S; h = L }
+                    else -> { x = lx + lw + g; y = ly + lh - S; w = L; h = S }
+                }
+                if (!fits(x, y, w, h)) return false
+                ti++; d = turns[ti]
+                c = if (d.second != 0) x + S / 2 else y + S / 2
+            }
+            // الرسم: الأفقية a يمين و b يسار، العمودية a فوق و b تحت
+            val tile = when {
+                d.first > 0 -> Tile(outer, inner)
+                d.first < 0 -> Tile(inner, outer)
+                d.second < 0 -> Tile(outer, inner)
+                else -> Tile(inner, outer)
+            }
+            out += DominoSpot(x, y, h > w, tile)
+            lx = x; ly = y; lw = w; lh = h
+        }
+        return true
+    }
+    if (!run(line.subList(f + 1, line.size), 1)) return null
+    if (!run(line.subList(0, f).reversed(), -1)) return null
+    return out
+}
+
 @Composable
 private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
     androidx.compose.foundation.layout.BoxWithConstraints(
@@ -184,29 +246,12 @@ private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
         contentAlignment = androidx.compose.ui.AbsoluteAlignment.TopLeft,
     ) {
         val W = maxWidth.value; val H = maxHeight.value
-        val n = line.size
-        // أكبر من قبل (كانت 18) عشان تكون أوضح، وتصغر بس لما تكثر القطع
+        // أكبر حجم يكفي كل القطع، وتصغر بس لما تكثر
         var u = 26f
-        while (u > 6f) {
-            val m = u * 0.6f
-            if (n * (2 * u + 2) <= 2 * (H - 2 * m - u) + (W - 2 * m - 2 * u)) break
-            u -= 0.5f
-        }
-        val m = u * 0.6f; val g = 2f
-        val lh = H - 2 * m - u; val lw = W - 2 * m - 2 * u
+        var spots = dominoSpiral(line, W, H, u)
+        while (spots == null && u > 7f) { u -= 0.5f; spots = dominoSpiral(line, W, H, u) }
         if (line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim, modifier = Modifier.align(Alignment.Center))
-        line.forEachIndexed { i, p ->
-            val t = orient(p)
-            val dist = i * (2 * u + g) + u
-            when {
-                // العمود اليسار نازل: أول القطعة فوق
-                dist <= lh -> DominoTileView(t, true, u, modifier = Modifier.absoluteOffset((m).dp, (m + dist - u).dp))
-                // الأسفل من اليسار لليمين
-                dist <= lh + lw -> DominoTileView(Tile(t.b, t.a), false, u, modifier = Modifier.absoluteOffset((m + u + (dist - lh) - u).dp, (H - m - u).dp))
-                // العمود اليمين طالع: أول القطعة تحت
-                else -> DominoTileView(Tile(t.b, t.a), true, u, modifier = Modifier.absoluteOffset((W - m - u).dp, (H - m - u - (dist - lh - lw) - u).dp))
-            }
-        }
+        spots.orEmpty().forEach { s -> DominoTileView(s.tile, s.vertical, u, modifier = Modifier.absoluteOffset(s.x.dp, s.y.dp)) }
     }
 }
 
