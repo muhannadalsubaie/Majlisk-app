@@ -31,8 +31,8 @@ struct TableMenu: View {
 
     private func seatLabel(_ i: Int) -> String {
         guard let s = view.seat(i) else { return "مقعد فارغ" }
-        // قائمة اللاعبين: الاسم بس (ومعه حالة المحادثة الصوتية)؛ الروبوت يتوضح إنه روبوت
-        return s.username + (s.isBot ? "، روبوت" : "")
+        // قائمة اللاعبين: الاسم (ومعه حالة المحادثة الصوتية)؛ الروبوت يتوضح، واللي انقطع اتصاله
+        return s.username + (s.isBot ? "، روبوت" : "") + (s.away ? "، انقطع اتصاله" : "")
     }
     private func nameOf(_ u: String) -> String? {
         if let i = view.seatUids.firstIndex(of: u), let s = view.seat(i) { return s.username }

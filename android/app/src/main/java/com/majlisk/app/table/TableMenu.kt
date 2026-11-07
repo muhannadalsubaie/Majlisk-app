@@ -68,8 +68,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
         if (u.isNullOrEmpty()) "" else if (v.voice.any { it.uid == u }) "، في المحادثة الصوتية" else "، خارج المحادثة الصوتية"
     fun seatLabel(i: Int): String {
         val s = v.seats.getOrNull(i) ?: return "مقعد فارغ"
-        // قائمة اللاعبين: الاسم بس (ومعه حالة المحادثة الصوتية)؛ الروبوت يتوضح إنه روبوت
-        return s.username + if (s.isBot) "، روبوت" else ""
+        // قائمة اللاعبين: الاسم (ومعه حالة المحادثة الصوتية)؛ الروبوت يتوضح، واللي انقطع اتصاله
+        return s.username + (if (s.isBot) "، روبوت" else "") + (if (s.away) "، انقطع اتصاله" else "")
     }
     fun nameOf(u: String) = v.seats.getOrNull(v.seatUids.indexOf(u))?.username ?: v.spectators.find { it.uid == u }?.username
     // أي حاضر حقيقي غيرك: تضغطه فتظهر خياراته
