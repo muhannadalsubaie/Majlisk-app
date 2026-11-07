@@ -255,8 +255,10 @@ private fun dominoSpiral(line: List<PlacedTile>, W: Float, H: Float, u: Float): 
 
 @Composable
 private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
+    // الطاولة كبيرة: تاخذ المساحة الفاضية في الشاشة (طولها حسب طول الجوال)
+    val boardH = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 435).coerceIn(260, 480)
     androidx.compose.foundation.layout.BoxWithConstraints(
-        modifier.height(290.dp)
+        modifier.height(boardH.dp)
             .background(Color(0xFF145036), RoundedCornerShape(16.dp))
             .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
             .clearAndSetSemantics { },
@@ -331,12 +333,12 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             DominoSeatTag(names.getOrElse(seat) { "" }, v.seatUids.getOrNull(seat), d.handCounts.getOrElse(seat) { 0 }, partner, d.turn == seat && d.phase == "playing", m)
         }
         top?.let { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { seatTag(it, Modifier) } }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
             // في الواجهة العربية أول عنصر يصير يمين
-            right?.let { seatTag(it, Modifier.width(66.dp)) }
+            right?.let { seatTag(it, Modifier.width(54.dp)) }
             // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
             DominoSnake(d.line, Modifier.weight(1f))
-            left?.let { seatTag(it, Modifier.width(66.dp)) }
+            left?.let { seatTag(it, Modifier.width(54.dp)) }
         }
         // المشاهد: اللاعب الرابع تحت في النص (الأربعة متقابلين)
         if (mySeat == null) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { seatTag(0, Modifier) }

@@ -271,7 +271,8 @@ private struct DominoSnake: View {
             .frame(width: W, height: H)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 290)
+        // الطاولة كبيرة: تاخذ المساحة الفاضية في الشاشة (طولها حسب طول الجوال)
+        .frame(height: min(max(UIScreen.main.bounds.height - 435, 260), 480))
         .background(Color(red: 0.08, green: 0.31, blue: 0.21)).clipShape(RoundedRectangle(cornerRadius: 16))
         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
         .environment(\.layoutDirection, .leftToRight)
@@ -338,12 +339,12 @@ struct DominoBoard: View {
             }
             // الأربعة متقابلين: فوق في النص، ويمين ويسار جنب الطاولة، وتحت في النص (للمشاهد)
             if let top { seatTag(top).frame(maxWidth: .infinity, alignment: .center) }
-            HStack(alignment: .center, spacing: 6) {
-                if let right { seatTag(right).frame(width: 66) }
+            HStack(alignment: .center, spacing: 2) {
+                if let right { seatTag(right).frame(width: 54) }
                 // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
                 DominoSnake(line: d.line)
                     .accessibilityHidden(true)
-                if let left { seatTag(left).frame(width: 66) }
+                if let left { seatTag(left).frame(width: 54) }
             }
             if mySeat == nil { seatTag(0).frame(maxWidth: .infinity, alignment: .center) }
             if let e = d.ends {
