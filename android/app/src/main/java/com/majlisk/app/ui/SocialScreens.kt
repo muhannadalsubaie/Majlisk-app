@@ -54,18 +54,20 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                 joining = true
                 scope.launch {
                     try {
-                        var st = com.majlisk.app.data.Tables.requestJoin(id)
+                        var (st, mins) = com.majlisk.app.data.Tables.requestJoin(id)
                         if (st == "pending") say("أُرسل طلب الانضمام إلى ${f.username}، ننتظر موافقته")
+                        // ننتظر رده طول مدة الطلب (5 دقائق): قبول = ندخل على طول
                         var n = 0
-                        while (st == "pending" && n < 45) {
+                        while (st == "pending" && n < 155) {
                             kotlinx.coroutines.delay(2000)
-                            st = runCatching { com.majlisk.app.data.Tables.joinRequestStatus(id) }.getOrDefault(st)
+                            runCatching { com.majlisk.app.data.Tables.joinRequestStatus(id) }.getOrNull()?.let { st = it.first; mins = it.second }
                             n++
                         }
                         when (st) {
                             "accepted" -> { com.majlisk.app.data.Tables.join(id); profileOf = null; openTable(id) }
-                            "ignored" -> say("تجاهل ${f.username} طلب الانضمام")
-                            else -> say("ما رد ${f.username} على طلب الانضمام")
+                            "rejected" -> say("رفض ${f.username} طلب الانضمام، تقدر تحاول بعد ${minutesText(mins)}")
+                            "waiting" -> say("عندك طلب انضمام معلّق عند ${f.username}، تقدر ترسل طلب جديد بعد ${minutesText(mins)}")
+                            else -> say("انتهى طلب الانضمام بدون رد من ${f.username}")
                         }
                     } catch (e: Exception) {
                         say(com.majlisk.app.data.Tables.error(e, "تعذّر إرسال طلب الانضمام"))
@@ -198,4 +200,12 @@ private fun friendStatus(f: Friend): String = when {
     !f.online -> "غير متصل"
     f.tableId != null -> listOf("متصل، في طاولة", f.tableGame, if (f.tablePrivate) "مقفلة" else "").filter { it.isNotEmpty() }.joinToString(" ")
     else -> "متصل، في الرئيسية"
+}
+
+/** «دقيقة» / «دقيقتين» / «3 دقائق» / «11 دقيقة» */
+fun minutesText(m: Int): String = when {
+    m <= 1 -> "دقيقة"
+    m == 2 -> "دقيقتين"
+    m <= 10 -> "$m دقائق"
+    else -> "$m دقيقة"
 }

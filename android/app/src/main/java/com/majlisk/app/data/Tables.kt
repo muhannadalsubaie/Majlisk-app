@@ -61,6 +61,7 @@ object Tables {
         "no-username" to "اختر اسم مستخدم أولاً",
         "table-full" to "الطاولة ممتلئة",
         "banned" to "مالك الطاولة حظرك من هذه الطاولة",
+        "join-rejected" to "رفض مالك الطاولة طلب انضمامك، تقدر تحاول بعد نصف ساعة من طلبك",
         "banned-by-owner" to "مالك هذه الطاولة حظرك، فلا يمكنك دخول طاولاته",
         "kicked" to "أُخرجت من هذه الطاولة، ويمكنك العودة إليها بعد ساعة من طردك. يمكنك دخول أي طاولة أخرى الآن",
         "not-found" to "الطاولة غير موجودة",
@@ -76,8 +77,9 @@ object Tables {
 
     suspend fun join(id: String) { Api.post("/tables/$id/join") }
     /** طلب انضمام لطاولة خاصة (يوصل للمالك تنبيه)، وحالته: pending / accepted / ignored */
-    suspend fun requestJoin(id: String): String = Api.post("/tables/$id/join-request").optString("status")
-    suspend fun joinRequestStatus(id: String): String = Api.post("/tables/$id/join-request/status").optString("status")
+    /** الحالة وكم دقيقة باقية (للمعلّق والمرفوض) */
+    suspend fun requestJoin(id: String): Pair<String, Int> = Api.post("/tables/$id/join-request").let { it.optString("status") to it.optInt("minutes") }
+    suspend fun joinRequestStatus(id: String): Pair<String, Int> = Api.post("/tables/$id/join-request/status").let { it.optString("status") to it.optInt("minutes") }
 
     suspend fun deleteAccount() { Api.post("/me/delete") }
 

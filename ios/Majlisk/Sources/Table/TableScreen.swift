@@ -142,10 +142,13 @@ struct TableScreen: View {
             if let d = (conn.view ?? v).domino { DominoLogView(d: d) { dominoLogOpen = false } }
         }
         // طلب انضمام لطاولتك الخاصة من صديق
-        .alert(item: $conn.joinRequest) { r in
-            Alert(title: Text("\(r.name) طلب الانضمام"),
-                  primaryButton: .default(Text("موافق")) { conn.send(["type": "joinAnswer", "uid": r.uid, "accept": true]) },
-                  secondaryButton: .cancel(Text("تجاهل")) { conn.send(["type": "joinAnswer", "uid": r.uid, "accept": false]) })
+        // قبول: يدخل على طول؛ تجاهل: يبقى طلبه معلّق 5 دقائق؛ رفض: ما يقدر يدخل أو يطلب نصف ساعة
+        .alert(conn.joinRequest.map { "\($0.name) طلب الانضمام" } ?? "",
+               isPresented: Binding(get: { conn.joinRequest != nil }, set: { if !$0 { conn.joinRequest = nil } }),
+               presenting: conn.joinRequest) { r in
+            Button("قبول") { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "accept", "accept": true]) }
+            Button("تجاهل", role: .cancel) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "ignore", "accept": false]) }
+            Button("رفض", role: .destructive) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "reject", "accept": false]) }
         }
         .sheet(item: $menuSheet) { start in
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuSheet = nil }, start: start)

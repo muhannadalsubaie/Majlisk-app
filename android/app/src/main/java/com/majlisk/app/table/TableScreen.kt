@@ -233,11 +233,13 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     if (dominoLogOpen && v.domino != null) DominoLogDialog(v.domino) { dominoLogOpen = false }
     // طلب انضمام لطاولتك الخاصة من صديق
     joinRequest?.let { (rid, rname) ->
-        val answer = { ok: Boolean -> conn.send(jsonOf("type" to "joinAnswer", "uid" to rid, "accept" to ok)); conn.joinRequest.value = null }
-        // نافذة في منتصف الشاشة (بنفس شكل التطبيق): فلان طلب الانضمام، موافق أو تجاهل
-        com.majlisk.app.ui.MajliskDialog("$rname طلب الانضمام", { answer(false) }) {
-            com.majlisk.app.ui.PrimaryButton("موافق", { answer(true) })
-            com.majlisk.app.ui.SecondaryButton("تجاهل", { answer(false) }, fill = true)
+        val answer = { a: String -> conn.send(jsonOf("type" to "joinAnswer", "uid" to rid, "answer" to a, "accept" to (a == "accept"))); conn.joinRequest.value = null }
+        // نافذة في منتصف الشاشة (بنفس شكل التطبيق): فلان طلب الانضمام
+        // قبول: يدخل على طول؛ تجاهل: يبقى طلبه معلّق 5 دقائق؛ رفض: ما يقدر يدخل أو يطلب نصف ساعة
+        com.majlisk.app.ui.MajliskDialog("$rname طلب الانضمام", { answer("ignore") }) {
+            com.majlisk.app.ui.PrimaryButton("قبول", { answer("accept") })
+            com.majlisk.app.ui.SecondaryButton("تجاهل", { answer("ignore") }, fill = true)
+            com.majlisk.app.ui.DangerButton("رفض", { answer("reject") })
         }
     }
     if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false }, start = menuStart)

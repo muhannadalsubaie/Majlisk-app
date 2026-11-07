@@ -47,18 +47,20 @@ struct FriendsScreen: View {
         Task { @MainActor in
             defer { joining = false }
             do {
-                var st = try await Tables.requestJoin(id)
+                var (st, mins) = try await Tables.requestJoin(id)
                 if st == "pending" { say("أُرسل طلب الانضمام إلى \(f.username)، ننتظر موافقته") }
+                // ننتظر رده طول مدة الطلب (5 دقائق): قبول = ندخل على طول
                 var n = 0
-                while st == "pending" && n < 45 {
+                while st == "pending" && n < 155 {
                     try? await Task.sleep(nanoseconds: 2_000_000_000)
-                    st = (try? await Tables.joinRequestStatus(id)) ?? st
+                    if let r = try? await Tables.joinRequestStatus(id) { (st, mins) = r }
                     n += 1
                 }
                 switch st {
                 case "accepted": try await Tables.join(id); profileOf = nil; openTable(id)
-                case "ignored": say("تجاهل \(f.username) طلب الانضمام")
-                default: say("ما رد \(f.username) على طلب الانضمام")
+                case "rejected": say("رفض \(f.username) طلب الانضمام، تقدر تحاول بعد \(minutesText(mins))")
+                case "waiting": say("عندك طلب انضمام معلّق عند \(f.username)، تقدر ترسل طلب جديد بعد \(minutesText(mins))")
+                default: say("انتهى طلب الانضمام بدون رد من \(f.username)")
                 }
             } catch { say(Tables.error(error, "تعذّر إرسال طلب الانضمام")) }
         }
@@ -169,4 +171,11 @@ struct FriendsScreen: View {
             if let f = toRemove { Task { @MainActor in try? await Social.removeFriend(f.uid); refresh() } }
         }
     }
+}
+
+/// «دقيقة» / «دقيقتين» / «3 دقائق» / «11 دقيقة»
+func minutesText(_ m: Int) -> String {
+    if m <= 1 { return "دقيقة" }
+    if m == 2 { return "دقيقتين" }
+    return m <= 10 ? "\(m) دقائق" : "\(m) دقيقة"
 }

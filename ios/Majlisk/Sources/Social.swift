@@ -139,6 +139,7 @@ enum Tables {
         "no-username": "اختر اسم مستخدم أولاً",
         "table-full": "الطاولة ممتلئة",
         "banned": "مالك الطاولة حظرك من هذه الطاولة",
+        "join-rejected": "رفض مالك الطاولة طلب انضمامك، تقدر تحاول بعد نصف ساعة من طلبك",
         "banned-by-owner": "مالك هذه الطاولة حظرك، فلا يمكنك دخول طاولاته",
         "kicked": "أُخرجت من هذه الطاولة، ويمكنك العودة إليها بعد ساعة من طردك. يمكنك دخول أي طاولة أخرى الآن",
         "not-found": "الطاولة غير موجودة",
@@ -153,8 +154,9 @@ enum Tables {
     }
     static func join(_ id: String) async throws { try await Api.post("/tables/\(id)/join") }
     /// طلب انضمام لطاولة خاصة (يوصل للمالك تنبيه)، وحالته: pending / accepted / ignored
-    static func requestJoin(_ id: String) async throws -> String { try await Api.post("/tables/\(id)/join-request").str("status") }
-    static func joinRequestStatus(_ id: String) async throws -> String { try await Api.post("/tables/\(id)/join-request/status").str("status") }
+    /// الحالة وكم دقيقة باقية (للمعلّق والمرفوض)
+    static func requestJoin(_ id: String) async throws -> (String, Int) { let r = try await Api.post("/tables/\(id)/join-request"); return (r.str("status"), r.int("minutes")) }
+    static func joinRequestStatus(_ id: String) async throws -> (String, Int) { let r = try await Api.post("/tables/\(id)/join-request/status"); return (r.str("status"), r.int("minutes")) }
     static func deleteAccount() async throws { try await Api.post("/me/delete") }
 
     /// الطاولات النشطة (أحدث 50) — تتحدث مباشرة
