@@ -31,14 +31,8 @@ struct TableMenu: View {
 
     private func seatLabel(_ i: Int) -> String {
         guard let s = view.seat(i) else { return "مقعد فارغ" }
-        let me = view.mySeat ?? 0
-        let tags = [
-            i == view.mySeat ? "أنت" : nil,
-            s.isBot ? "روبوت" : nil,
-            s.away ? "انقطع اتصاله" : nil,
-            view.mySeat != nil && i != view.mySeat && teamOf(i) == teamOf(me) ? "شريكك" : nil,
-        ].compactMap { $0 }
-        return s.username + (tags.isEmpty ? "" : " (\(tags.joined(separator: "، ")))")
+        // قائمة اللاعبين: الاسم بس (ومعه حالة المحادثة الصوتية)؛ الروبوت يتوضح إنه روبوت
+        return s.username + (s.isBot ? "، روبوت" : "")
     }
     private func nameOf(_ u: String) -> String? {
         if let i = view.seatUids.firstIndex(of: u), let s = view.seat(i) { return s.username }
@@ -127,8 +121,8 @@ struct TableMenu: View {
                 SectionTitle("المشاهدون")
                 if view.spectators.isEmpty { Note("لا يوجد مشاهدون") }
                 ForEach(view.spectators, id: \.uid) { s in
-                    if canManage(s.uid) { MButton("\(s.username) (مشاهد)\(voiceTag(s.uid))\(view.voiceBlocked.contains(s.uid) ? "، مكتوم" : "")") { page = .member(s.uid) } }
-                    else { BodyText("\(s.username)\(s.uid == uid ? " (أنت)" : "")\(voiceTag(s.uid))") }
+                    if canManage(s.uid) { MButton("\(s.username)\(voiceTag(s.uid))\(view.voiceBlocked.contains(s.uid) ? "، مكتوم" : "")") { page = .member(s.uid) } }
+                    else { BodyText("\(s.username)\(voiceTag(s.uid))") }
                 }
                 MButton("رجوع") { page = .main }
             }
