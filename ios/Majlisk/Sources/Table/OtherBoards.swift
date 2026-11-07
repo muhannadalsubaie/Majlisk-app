@@ -257,7 +257,7 @@ private struct DominoSnake: View {
             let W = geo.size.width, H = geo.size.height
             // أكبر حجم يكفي كل القطع، وتصغر بس لما تكثر
             let fit: (CGFloat, [DominoSpot]) = {
-                var u: CGFloat = 26
+                var u: CGFloat = 32
                 while u > 7 {
                     if let s = dominoSpiral(line, W, H, u) { return (u, s) }
                     u -= 0.5

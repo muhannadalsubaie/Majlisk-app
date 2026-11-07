@@ -267,7 +267,7 @@ private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
     ) {
         val W = maxWidth.value; val H = maxHeight.value
         // أكبر حجم يكفي كل القطع، وتصغر بس لما تكثر
-        var u = 26f
+        var u = 32f
         var spots = dominoSpiral(line, W, H, u)
         while (spots == null && u > 7f) { u -= 0.5f; spots = dominoSpiral(line, W, H, u) }
         if (line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim, modifier = Modifier.align(Alignment.Center))
