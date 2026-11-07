@@ -51,7 +51,7 @@ class TableShots {
                             BackButton({}, "القائمة")
                             Text("طاولة ${if (v.kind == "domino") "دومينو ${v.optTarget}" else gameTitle(v.kind, v.variant)} — المالك ${v.ownerName}", color = Palette.textDim, modifier = Modifier.weight(1f), textAlign = TextAlign.End)
                         }
-                        if (v.hasGame && v.ludo != null) Spacer(Modifier.weight(1f))
+                        if (v.hasGame && (v.ludo != null || v.jackaroo != null)) Spacer(Modifier.weight(1f))
                         when {
                             !v.hasGame -> com.majlisk.app.table.SeatsLobby(v, "u1", conn)
                             v.game != null -> com.majlisk.app.table.BalootBoard(v, v.game!!, "u1", conn)

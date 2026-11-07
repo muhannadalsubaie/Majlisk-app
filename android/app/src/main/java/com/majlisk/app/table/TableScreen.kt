@@ -203,8 +203,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             }
             if (!connected) Note("انقطع الاتصال — جارٍ إعادة المحاولة…")
 
-            // اللودو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
-            if (v.hasGame && v.domino == null && v.jackaroo == null && v.ludo != null) Spacer(Modifier.weight(1f))
+            // اللودو والجاكارو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
+            if (v.hasGame && v.domino == null && (v.jackaroo != null || v.ludo != null)) Spacer(Modifier.weight(1f))
             when {
                 !v.hasGame -> SeatsLobby(v, uid, conn)
                 v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid) { dominoLogOpen = true }

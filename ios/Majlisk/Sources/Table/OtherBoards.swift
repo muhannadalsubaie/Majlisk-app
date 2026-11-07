@@ -10,6 +10,10 @@ import SwiftUI
 private func boardSide(_ full: CGFloat) -> CGFloat {
     min(full, max(170, UIScreen.main.bounds.height - 550))
 }
+/// لوحة الجاكارو كبيرة: تاخذ عرض الشاشة لو فيه مكان بالطول
+private func jkSide() -> CGFloat {
+    min(440, max(220, UIScreen.main.bounds.height - 490))
+}
 /// لوحة اللودو أكبر (شلنا النرد الكبير اللي تحتها): تاخذ عرض الشاشة لو فيه مكان بالطول
 private func ludoSide() -> CGFloat {
     min(440, max(200, UIScreen.main.bounds.height - 440))
@@ -485,30 +489,32 @@ struct JackarooBoard: View {
         let usLabel = mySeat == nil ? "فريق \(names[0])" : "فريقك"
         let themLabel = mySeat == nil ? "فريق \(names[1])" : "الخصم"
         VStack(spacing: 10) {
-            if j.teams {
-                HStack(spacing: 10) {
-                    ScoreTile(label: usLabel, value: "\(j.safeCount(myTeam))/8", mine: true)
-                    ScoreTile(label: themLabel, value: "\(j.safeCount(1 - myTeam))/8", mine: false)
-                }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("في منطقة الأمان: \(usLabel) \(j.safeCount(myTeam)) من 8، \(themLabel) \(j.safeCount(1 - myTeam)) من 8")
-            } else {
-                // كل واحد لنفسه: كم حجر دخّل كل لاعب
-                HStack(spacing: 8) {
-                    ForEach(j.active, id: \.self) { o in
-                        ScoreTile(label: o == mySeat ? "أنت" : names[o], value: "\(j.safeOf(o))/4", mine: o == mySeat)
+            // مربعات صغيرة فوق: لكل لاعب كم حجر دخّل منطقة الأمان من أحجاره الأربعة
+            HStack(spacing: 6) {
+                ForEach(j.active, id: \.self) { o in
+                    VStack(spacing: 0) {
+                        Text(o == mySeat ? "أنت" : names[o]).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1)
+                        Text("\(j.safeOf(o))/4").font(.system(size: 15, weight: .bold)).foregroundColor(Palette.goldSoft)
                     }
+                    .padding(.vertical, 3).padding(.horizontal, 4)
+                    .frame(width: 72)
+                    .background(Color.black.opacity(0.13)).clipShape(RoundedRectangle(cornerRadius: 8))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(JK_COLORS[o], lineWidth: 1.5))
                 }
-                .accessibilityElement(children: .ignore)
-                .accessibilityLabel("في منطقة الأمان: " + j.active.map { "\($0 == mySeat ? "أنت" : names[$0]) \(j.safeOf($0)) من 4" }.joined(separator: "، "))
             }
-            // اللاعبون حول اللوحة مثل البلوت: أنت تحت، اللي قدامك (شريكك) فوق، واللي يمينك ويسارك على الجنبين
+            .frame(maxWidth: .infinity)
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("في منطقة الأمان: " + j.active.map { "\($0 == mySeat ? "أنت" : names[$0]) \(j.safeOf($0)) من 4" }.joined(separator: "، ")
+                + (j.teams ? "، فريقك \(j.safeCount(myTeam)) من 8" : ""))
+            // اللاعبون: اليسار واللي قدامك (شريكك) واليمين فوق اللوحة، وأنت تحت؛ واللوحة كبيرة في النص
             let me = mySeat ?? 0
             let at: (Int) -> Int? = { rel in let s = (me + rel) % 4; return j.active.contains(s) ? s : nil }
-            seatTag(at(2), names: names, mySeat: mySeat)
-            HStack(spacing: 0) {
-                let sides = at(1) != nil || at(3) != nil
-                if sides { seatTag(at(1), names: names, mySeat: mySeat).frame(width: 62) }
+            HStack(alignment: .bottom) {
+                seatTag(at(1), names: names, mySeat: mySeat).frame(maxWidth: .infinity, alignment: .leading)
+                seatTag(at(2), names: names, mySeat: mySeat).frame(maxWidth: .infinity, alignment: .center)
+                seatTag(at(3), names: names, mySeat: mySeat).frame(maxWidth: .infinity, alignment: .trailing)
+            }
+            .environment(\.layoutDirection, .leftToRight)
             // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
             Group {
                 ZStack {
@@ -527,13 +533,10 @@ struct JackarooBoard: View {
                     }
                     .accessibilityHidden(true)
                 }
-                .aspectRatio(1, contentMode: .fit).frame(maxWidth: boardSide(340))
+                .aspectRatio(1, contentMode: .fit).frame(maxWidth: jkSide())
             }
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
-                if sides { seatTag(at(3), names: names, mySeat: mySeat).frame(width: 62) }
-            }
-            .environment(\.layoutDirection, .leftToRight)
             seatTag(at(0), names: names, mySeat: mySeat)
             if j.phase == "over" {
                 let w = j.winnerTeam ?? 0

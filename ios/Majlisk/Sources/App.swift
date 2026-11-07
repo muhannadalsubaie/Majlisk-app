@@ -117,7 +117,10 @@ struct DemoTable: View {
                     Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 if let d = v.domino { DominoBoard(v: v, d: d, conn: conn, isOwner: true) {} }
-                else if let j = v.jackaroo { JackarooBoard(v: v, j: j, conn: conn, isOwner: true) }
+                else if let j = v.jackaroo {
+                    Spacer(minLength: 0)
+                    JackarooBoard(v: v, j: j, conn: conn, isOwner: true)
+                }
                 else if let l = v.ludo {
                     Spacer(minLength: 0)
                     LudoBoard(v: v, l: l, conn: conn, isOwner: true)

@@ -467,26 +467,28 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
         },
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        if (j.teams) Row(
+        // مربعات صغيرة فوق: لكل لاعب كم حجر دخّل منطقة الأمان من أحجاره الأربعة
+        Row(
             Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-                contentDescription = "في منطقة الأمان: $usLabel ${j.safeCount(myTeam)} من 8، $themLabel ${j.safeCount(1 - myTeam)} من 8"
+                contentDescription = "في منطقة الأمان: " + j.active.joinToString("، ") { "${if (it == mySeat) "أنت" else names[it]} ${j.safeOf(it)} من 4" } +
+                    if (j.teams) "، فريقك ${j.safeCount(myTeam)} من 8" else ""
             },
-            horizontalArrangement = Arrangement.spacedBy(10.dp),
-        ) {
-            ScoreTile(usLabel, "${j.safeCount(myTeam)}/8", true, Modifier.weight(1f).clearAndSetSemantics { })
-            ScoreTile(themLabel, "${j.safeCount(1 - myTeam)}/8", false, Modifier.weight(1f).clearAndSetSemantics { })
-        } else Row(
-            // كل واحد لنفسه: كم حجر دخّل كل لاعب
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-                contentDescription = "في منطقة الأمان: " + j.active.joinToString("، ") { "${if (it == mySeat) "أنت" else names[it]} ${j.safeOf(it)} من 4" }
-            },
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
         ) {
             j.active.forEach { o ->
-                ScoreTile(if (o == mySeat) "أنت" else names[o], "${j.safeOf(o)}/4", o == mySeat, Modifier.weight(1f).clearAndSetSemantics { })
+                Column(
+                    Modifier.width(72.dp).clearAndSetSemantics { }
+                        .background(Color(0x22000000), RoundedCornerShape(8.dp))
+                        .border(1.5.dp, JK_COLORS[o], RoundedCornerShape(8.dp))
+                        .padding(vertical = 3.dp, horizontal = 4.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(if (o == mySeat) "أنت" else names.getOrElse(o) { "" }, color = Palette.textDim, fontSize = 10.sp, maxLines = 1)
+                    Text("${j.safeOf(o)}/4", color = Palette.goldSoft, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
             }
         }
-        // اللاعبون حول اللوحة مثل البلوت: أنت تحت، اللي قدامك (شريكك) فوق، واللي يمينك ويسارك على الجنبين
+        // اللاعبون: اليسار واللي قدامك (شريكك) واليمين فوق اللوحة، وأنت تحت؛ واللوحة كبيرة في النص
         val me = mySeat ?: 0
         val at = { rel: Int -> ((me + rel) % 4).takeIf { it in j.active } }
         val tag: @Composable (Int?) -> Unit = { seat ->
@@ -497,17 +499,19 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                     spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق${if (j.turn == seat && j.phase == "playing") "، عليه الدور" else ""}")
             }
         }
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { tag(at(2)) }
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-            val sides = at(1) != null || at(3) != null
-            if (sides) Box(Modifier.width(62.dp), contentAlignment = Alignment.Center) { tag(at(1)) }
+            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { tag(at(1)) }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { tag(at(2)) }
+                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { tag(at(3)) }
+            }
+        }
         // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
         Box(
-            Modifier.weight(1f).clearAndSetSemantics { },
+            Modifier.fillMaxWidth().clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.widthIn(max = boardSide(340)).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
+            Canvas(Modifier.widthIn(max = jkSide()).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
             // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
             Row(Modifier.clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
                 j.centerCards.forEachIndexed { i, c ->
@@ -520,9 +524,6 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                     ) { Text("${c.rank}${c.symbol}", color = if (c.red) Color(0xFFC62828) else Color(0xFF1A1A1A), fontSize = 15.sp, fontWeight = FontWeight.Bold) }
                 }
             }
-        }
-            if (sides) Box(Modifier.width(62.dp), contentAlignment = Alignment.Center) { tag(at(3)) }
-        }
         }
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { tag(at(0)) }
         if (j.phase == "over") {
@@ -569,6 +570,13 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             SecondaryButton("إلغاء", { picked = null }, fill = true)
         }
     }
+}
+
+/** لوحة الجاكارو كبيرة: تاخذ عرض الشاشة لو فيه مكان بالطول */
+@Composable
+private fun jkSide(): androidx.compose.ui.unit.Dp {
+    val h = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp
+    return minOf(440, maxOf(220, h - 490)).dp
 }
 
 /** حجم لوحة اللودو والجاكارو: يتكيّف مع طول شاشة الجوال، فتكفي الطاولة كلها صفحة وحدة بلا تمرير */
