@@ -467,43 +467,22 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
         },
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        // مربعات صغيرة فوق: لكل لاعب كم حجر دخّل منطقة الأمان من أحجاره الأربعة
-        Row(
-            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
-                contentDescription = "في منطقة الأمان: " + j.active.joinToString("، ") { "${if (it == mySeat) "أنت" else names[it]} ${j.safeOf(it)} من 4" } +
-                    if (j.teams) "، فريقك ${j.safeCount(myTeam)} من 8" else ""
-            },
-            horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
-        ) {
+        // مربعات فوق اللوحة بلون كل لاعب: اسمه وكم حجر دخّل منطقة الأمان من أحجاره الأربعة (وإطار ذهبي لما يكون دوره)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
             j.active.forEach { o ->
+                val turn = j.turn == o && j.phase == "playing"
+                val who = if (o == mySeat) "أنت" else names.getOrElse(o) { "" }
                 Column(
-                    Modifier.width(72.dp).clearAndSetSemantics { }
-                        .background(Color(0x22000000), RoundedCornerShape(8.dp))
-                        .border(1.5.dp, JK_COLORS[o], RoundedCornerShape(8.dp))
-                        .padding(vertical = 3.dp, horizontal = 4.dp),
+                    Modifier.width(84.dp)
+                        .clearAndSetSemantics { contentDescription = "$who، ${JK_COLOR_NAMES[o].removePrefix("ال")}، ${j.safeOf(o)} من 4${if (turn) "، عليه الدور" else ""}" }
+                        .background(if (turn) Palette.gold.copy(alpha = 0.18f) else JK_COLORS[o].copy(alpha = 0.18f), RoundedCornerShape(10.dp))
+                        .border(if (turn) 3.dp else 2.dp, if (turn) Palette.gold else JK_COLORS[o], RoundedCornerShape(10.dp))
+                        .padding(vertical = 6.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(if (o == mySeat) "أنت" else names.getOrElse(o) { "" }, color = Palette.textDim, fontSize = 10.sp, maxLines = 1)
-                    Text("${j.safeOf(o)}/4", color = Palette.goldSoft, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text(who, color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Text("${j.safeOf(o)}/4", color = Palette.goldSoft, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
-            }
-        }
-        // اللاعبون: اليسار واللي قدامك (شريكك) واليمين فوق اللوحة، وأنت تحت؛ واللوحة كبيرة في النص
-        val me = mySeat ?: 0
-        val at = { rel: Int -> ((me + rel) % 4).takeIf { it in j.active } }
-        val tag: @Composable (Int?) -> Unit = { seat ->
-            if (seat != null) {
-                val n = names.getOrElse(seat) { "" }
-                val partner = j.teams && mySeat != null && seat == (mySeat + 2) % 4
-                JkSeatTag(n, v.seatUids.getOrNull(seat), JK_COLORS[seat], j.handCounts.getOrElse(seat) { 0 }, j.turn == seat && j.phase == "playing",
-                    spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق${if (j.turn == seat && j.phase == "playing") "، عليه الدور" else ""}")
-            }
-        }
-        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Bottom) {
-                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterStart) { tag(at(1)) }
-                Box(Modifier.weight(1f), contentAlignment = Alignment.Center) { tag(at(2)) }
-                Box(Modifier.weight(1f), contentAlignment = Alignment.CenterEnd) { tag(at(3)) }
             }
         }
         // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
@@ -525,7 +504,6 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                 }
             }
         }
-        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { tag(at(0)) }
         if (j.phase == "over") {
             val w = j.winnerTeam ?: 0
             val wonText = if (!j.teams) (if (j.winner == mySeat && mySeat != null) "🎉 فزت!" else "فاز ${names.getOrElse(j.winner ?: 0) { "" }}")

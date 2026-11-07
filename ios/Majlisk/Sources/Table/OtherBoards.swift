@@ -489,32 +489,25 @@ struct JackarooBoard: View {
         let usLabel = mySeat == nil ? "فريق \(names[0])" : "فريقك"
         let themLabel = mySeat == nil ? "فريق \(names[1])" : "الخصم"
         VStack(spacing: 10) {
-            // مربعات صغيرة فوق: لكل لاعب كم حجر دخّل منطقة الأمان من أحجاره الأربعة
-            HStack(spacing: 6) {
+            // مربعات فوق اللوحة بلون كل لاعب: اسمه وكم حجر دخّل منطقة الأمان من أحجاره الأربعة (وإطار ذهبي لما يكون دوره)
+            HStack(spacing: 8) {
                 ForEach(j.active, id: \.self) { o in
+                    let turn = j.turn == o && j.phase == "playing"
+                    let who = o == mySeat ? "أنت" : names[o]
+                    let color = JK_COLOR_NAMES[o].hasPrefix("ال") ? String(JK_COLOR_NAMES[o].dropFirst(2)) : JK_COLOR_NAMES[o]
                     VStack(spacing: 0) {
-                        Text(o == mySeat ? "أنت" : names[o]).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1)
-                        Text("\(j.safeOf(o))/4").font(.system(size: 15, weight: .bold)).foregroundColor(Palette.goldSoft)
+                        Text(who).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
+                        Text("\(j.safeOf(o))/4").font(.system(size: 22, weight: .bold)).foregroundColor(Palette.goldSoft)
                     }
-                    .padding(.vertical, 3).padding(.horizontal, 4)
-                    .frame(width: 72)
-                    .background(Color.black.opacity(0.13)).clipShape(RoundedRectangle(cornerRadius: 8))
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(JK_COLORS[o], lineWidth: 1.5))
+                    .padding(.vertical, 6).padding(.horizontal, 4)
+                    .frame(width: 84)
+                    .background((turn ? Palette.gold : JK_COLORS[o]).opacity(0.18)).clipShape(RoundedRectangle(cornerRadius: 10))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : JK_COLORS[o], lineWidth: turn ? 3 : 2))
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("\(who)، \(color)، \(j.safeOf(o)) من 4\(turn ? "، عليه الدور" : "")")
                 }
             }
             .frame(maxWidth: .infinity)
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("في منطقة الأمان: " + j.active.map { "\($0 == mySeat ? "أنت" : names[$0]) \(j.safeOf($0)) من 4" }.joined(separator: "، ")
-                + (j.teams ? "، فريقك \(j.safeCount(myTeam)) من 8" : ""))
-            // اللاعبون: اليسار واللي قدامك (شريكك) واليمين فوق اللوحة، وأنت تحت؛ واللوحة كبيرة في النص
-            let me = mySeat ?? 0
-            let at: (Int) -> Int? = { rel in let s = (me + rel) % 4; return j.active.contains(s) ? s : nil }
-            HStack(alignment: .bottom) {
-                seatTag(at(1), names: names, mySeat: mySeat).frame(maxWidth: .infinity, alignment: .leading)
-                seatTag(at(2), names: names, mySeat: mySeat).frame(maxWidth: .infinity, alignment: .center)
-                seatTag(at(3), names: names, mySeat: mySeat).frame(maxWidth: .infinity, alignment: .trailing)
-            }
-            .environment(\.layoutDirection, .leftToRight)
             // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
             Group {
                 ZStack {
@@ -537,7 +530,6 @@ struct JackarooBoard: View {
             }
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
-            seatTag(at(0), names: names, mySeat: mySeat)
             if j.phase == "over" {
                 let w = j.winnerTeam ?? 0
                 let wonText = !j.teams ? (j.winner != nil && j.winner == mySeat ? "🎉 فزت!" : "فاز \(names[j.winner ?? 0])")
