@@ -65,6 +65,9 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
     val me = v.mySeat ?: 0
     val scope = rememberCoroutineScope()
 
+    /** بجانب اسم كل لاعب (غير الروبوت): في المحادثة الصوتية أو خارجها */
+    fun voiceTag(u: String?): String =
+        if (u.isNullOrEmpty()) "" else if (v.voice.any { it.uid == u }) "، في المحادثة الصوتية" else "، خارج المحادثة الصوتية"
     fun seatLabel(i: Int): String {
         val s = v.seats.getOrNull(i) ?: return "مقعد فارغ"
         val tags = listOfNotNull(
@@ -136,10 +139,11 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             (0..3).forEach { i ->
                 val u = v.seatUids.getOrNull(i)
                 val muted = if (u != null && u in v.voiceBlocked) "، مكتوم" else ""
+                val s = v.seats.getOrNull(i)
+                val vt = if (s == null || s.isBot) "" else voiceTag(u)
                 ItemRow {
-                    if (canManage(u)) SecondaryButton(seatLabel(i) + muted, { page = Page.Member(u!!) }, modifier = Modifier.weight(1f))
-                    else Text(seatLabel(i), color = Palette.text, modifier = Modifier.weight(1f))
-                    val s = v.seats.getOrNull(i)
+                    if (canManage(u)) SecondaryButton(seatLabel(i) + vt + muted, { page = Page.Member(u!!) }, modifier = Modifier.weight(1f))
+                    else Text(seatLabel(i) + vt, color = Palette.text, modifier = Modifier.weight(1f))
                     // المالك يستبدل المقعد الفاضي أو الروبوت، أو نفسه (حتى أثناء اللعب: يصير مشاهد ويبقى المالك)
                     if (isOwner && !canManage(u) && (s == null || s.isBot || i == v.mySeat)) {
                         com.majlisk.app.ui.SmallButton("استبدال", { page = Page.Replace(i) },
@@ -150,8 +154,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             Text("المشاهدون", color = Palette.goldSoft)
             if (v.spectators.isEmpty()) Note("لا يوجد مشاهدون")
             v.spectators.forEach { s ->
-                if (canManage(s.uid)) SecondaryButton("${s.username} (مشاهد)${if (s.uid in v.voiceBlocked) "، مكتوم" else ""}", { page = Page.Member(s.uid) }, fill = true)
-                else Body("${s.username}${if (s.uid == uid) " (أنت)" else ""}")
+                if (canManage(s.uid)) SecondaryButton("${s.username} (مشاهد)${voiceTag(s.uid)}${if (s.uid in v.voiceBlocked) "، مكتوم" else ""}", { page = Page.Member(s.uid) }, fill = true)
+                else Body("${s.username}${if (s.uid == uid) " (أنت)" else ""}${voiceTag(s.uid)}")
             }
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }

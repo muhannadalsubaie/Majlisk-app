@@ -24,6 +24,11 @@ struct TableMenu: View {
     private var view: TableView { conn.view ?? v }
     private var isOwner: Bool { view.ownerUid == uid }
 
+    /// بجانب اسم كل لاعب (غير الروبوت): في المحادثة الصوتية أو خارجها
+    private func voiceTag(_ u: String) -> String {
+        u.isEmpty ? "" : view.voice.contains(where: { $0.uid == u }) ? "، في المحادثة الصوتية" : "، خارج المحادثة الصوتية"
+    }
+
     private func seatLabel(_ i: Int) -> String {
         guard let s = view.seat(i) else { return "مقعد فارغ" }
         let me = view.mySeat ?? 0
@@ -108,9 +113,10 @@ struct TableMenu: View {
                 ForEach(0..<4, id: \.self) { i in
                     let u = view.seatUid(i)
                     let muted = !u.isEmpty && view.voiceBlocked.contains(u) ? "، مكتوم" : ""
+                    let vt = view.seat(i).map { $0.isBot ? "" : voiceTag(u) } ?? ""
                     ItemRow {
-                        if canManage(u) { MButton(seatLabel(i) + muted) { page = .member(u) } }
-                        else { Text(seatLabel(i)).frame(maxWidth: .infinity, alignment: .leading) }
+                        if canManage(u) { MButton(seatLabel(i) + vt + muted) { page = .member(u) } }
+                        else { Text(seatLabel(i) + vt).frame(maxWidth: .infinity, alignment: .leading) }
                         let s = view.seat(i)
                         // المالك يستبدل المقعد الفاضي أو الروبوت، أو نفسه (حتى أثناء اللعب: يصير مشاهد ويبقى المالك)
                         if isOwner && !canManage(u) && (s == nil || s!.isBot || i == view.mySeat) {
@@ -121,8 +127,8 @@ struct TableMenu: View {
                 SectionTitle("المشاهدون")
                 if view.spectators.isEmpty { Note("لا يوجد مشاهدون") }
                 ForEach(view.spectators, id: \.uid) { s in
-                    if canManage(s.uid) { MButton("\(s.username) (مشاهد)\(view.voiceBlocked.contains(s.uid) ? "، مكتوم" : "")") { page = .member(s.uid) } }
-                    else { BodyText("\(s.username)\(s.uid == uid ? " (أنت)" : "")") }
+                    if canManage(s.uid) { MButton("\(s.username) (مشاهد)\(voiceTag(s.uid))\(view.voiceBlocked.contains(s.uid) ? "، مكتوم" : "")") { page = .member(s.uid) } }
+                    else { BodyText("\(s.username)\(s.uid == uid ? " (أنت)" : "")\(voiceTag(s.uid))") }
                 }
                 MButton("رجوع") { page = .main }
             }
