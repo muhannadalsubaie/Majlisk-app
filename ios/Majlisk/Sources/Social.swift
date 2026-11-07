@@ -120,6 +120,8 @@ struct TableRow: Identifiable {
     let id, ownerName: String; let isPrivate: Bool; let players, people: Int; let status, kind, variant: String
     /// الموجودين: (الاسم، player|bot|spectator)
     var members: [(name: String, role: String)] = []
+    /// نتيجة اللعب الجاري (فاضي إذا ما فيه لعب)
+    var score: String = ""
 
     /// قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين
     var membersText: String {
@@ -129,7 +131,9 @@ struct TableRow: Identifiable {
         return [
             players.isEmpty ? "ما فيه لاعبين" : "اللاعبين: " + players.joined(separator: "، "),
             specs.isEmpty ? "ما فيه مشاهدين" : "المشاهدين: " + specs.joined(separator: "، "),
-        ].joined(separator: "\n")
+            // اللعب جاري: نتيجة الصكة
+            status == "playing" && !score.isEmpty ? score : nil,
+        ].compactMap { $0 }.joined(separator: "\n")
     }
 }
 
@@ -176,7 +180,8 @@ enum Tables {
                     variant: x["variant"] as? String ?? "classic",
                     members: ((x["members"] as? String).flatMap { $0.data(using: .utf8) }
                         .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] } ?? [])
-                        .map { (name: $0["name"] as? String ?? "", role: $0["role"] as? String ?? "") }
+                        .map { (name: $0["name"] as? String ?? "", role: $0["role"] as? String ?? "") },
+                    score: x["score"] as? String ?? ""
                 )
             })
         }

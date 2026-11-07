@@ -42,15 +42,19 @@ data class TableRow(
     val status: String, val kind: String, val variant: String,
     /** الموجودين: (الاسم، player|bot|spectator) */
     val members: List<Pair<String, String>> = emptyList(),
+    /** نتيجة اللعب الجاري (فاضي إذا ما فيه لعب) */
+    val score: String = "",
 ) {
     /** قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين */
     val membersText: String get() {
         if (members.isEmpty()) return "القائمة غير متوفرة الحين"
         val players = members.filter { it.second != "spectator" }.map { if (it.second == "bot") "${it.first} (روبوت)" else it.first }
         val specs = members.filter { it.second == "spectator" }.map { it.first }
-        return listOf(
+        return listOfNotNull(
             if (players.isEmpty()) "ما فيه لاعبين" else "اللاعبين: " + players.joinToString("، "),
             if (specs.isEmpty()) "ما فيه مشاهدين" else "المشاهدين: " + specs.joinToString("، "),
+            // اللعب جاري: نتيجة الصكة
+            if (status == "playing" && score.isNotEmpty()) score else null,
         ).joinToString("\n")
     }
 }
@@ -103,6 +107,7 @@ object Tables {
                             val a = org.json.JSONArray(d.getString("members") ?: "[]")
                             (0 until a.length()).map { a.getJSONObject(it).let { o -> o.optString("name") to o.optString("role") } }
                         }.getOrDefault(emptyList()),
+                        score = d.getString("score").orEmpty(),
                     )
                 })
             }
