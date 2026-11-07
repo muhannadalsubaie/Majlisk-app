@@ -55,11 +55,11 @@ class TableShots {
                         when {
                             !v.hasGame -> com.majlisk.app.table.SeatsLobby(v, "u1", conn)
                             v.game != null -> com.majlisk.app.table.BalootBoard(v, v.game!!, "u1", conn)
-                            v.domino != null -> DominoBoard(v, v.domino!!, conn, true) {}
+                            v.domino != null -> DominoBoard(v, v.domino!!, conn, true, Modifier.weight(1f)) {}
                             v.jackaroo != null -> JackarooBoard(v, v.jackaroo!!, conn, true)
                             v.ludo != null -> LudoBoard(v, v.ludo!!, conn, true)
                         }
-                        Spacer(Modifier.weight(1f))
+                        if (v.domino == null) Spacer(Modifier.weight(1f))
                         v.domino?.let { com.majlisk.app.table.DominoHand(v, it, conn) {} }
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
                             ChatButton(conn) {}

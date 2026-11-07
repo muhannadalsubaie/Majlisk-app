@@ -204,9 +204,11 @@ private func dominoSpiral(_ line: [PlacedTile], _ W: CGFloat, _ H: CGFloat, _ u:
     let f = line.firstIndex { $0.side == "first" } ?? 0
     let S = u, L = 2 * u, g: CGFloat = 2, m = u * 0.5
     let cx = W / 2, cy = H / 2
-    let c0 = CGRect(x: cx - S / 2, y: cy - L / 2, width: S, height: L)
     let first = orient(line[f])
-    var out = [DominoSpot(rect: c0, vertical: true, tile: Tile(a: first.a, b: first.b))]
+    // أول قطعة: الدبل بالطول، وغير الدبل بالعرض (الأفقية تنرسم a يمين و b يسار)
+    let firstDbl = first.a == first.b
+    let c0 = firstDbl ? CGRect(x: cx - S / 2, y: cy - L / 2, width: S, height: L) : CGRect(x: cx - L / 2, y: cy - S / 2, width: L, height: S)
+    var out = [DominoSpot(rect: c0, vertical: firstDbl, tile: firstDbl ? Tile(a: first.a, b: first.b) : Tile(a: first.b, b: first.a))]
     func fits(_ r: CGRect) -> Bool { r.minX >= m && r.minY >= m && r.maxX <= W - m && r.maxY <= H - m }
     func run(_ tiles: [PlacedTile], _ side: Int) -> Bool {
         let turns: [(Int, Int)] = side > 0 ? [(1, 0), (0, -1), (-1, 0)] : [(-1, 0), (0, 1), (1, 0)]
@@ -265,20 +267,12 @@ private struct DominoSnake: View {
                 return (u, dominoSpiral(line, W, H, u) ?? [])
             }()
             ZStack(alignment: .topLeading) {
-                if line.isEmpty {
-                    Text("الطاولة فارغة").foregroundColor(Palette.textDim).frame(width: W, height: H)
-                }
                 ForEach(Array(fit.1.enumerated()), id: \.offset) { _, s in
                     DominoTileView(t: s.tile, vertical: s.vertical, unit: fit.0).position(x: s.rect.midX, y: s.rect.midY)
                 }
             }
             .frame(width: W, height: H)
         }
-        .frame(maxWidth: .infinity)
-        // الطاولة كبيرة: تاخذ المساحة الفاضية في الشاشة (طولها حسب طول الجوال)
-        .frame(height: min(max(UIScreen.main.bounds.height - 435, 260), 480))
-        .background(Color(red: 0.08, green: 0.31, blue: 0.21)).clipShape(RoundedRectangle(cornerRadius: 16))
-        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.33), lineWidth: 1))
         .environment(\.layoutDirection, .leftToRight)
     }
 }
@@ -323,34 +317,49 @@ struct DominoBoard: View {
     var body: some View {
         let names = seatNames(v)
         let mySeat = v.mySeat
-        VStack(spacing: 10) {
-            HStack(spacing: 10) {
+        VStack(spacing: 8) {
+            // النتيجة: شريط صغير «فريقك 10 — الخصم 0» (أو نقاط كل لاعب في الفردي)
+            HStack {
                 ForEach(Array(d.scores.enumerated()), id: \.offset) { side, n in
-                    ScoreTile(label: side < d.sideNames.count ? d.sideNames[side] : "", value: "\(n)", mine: side == d.mySide)
+                    let mine = side == d.mySide
+                    Text("\(mine && d.players == 4 ? "فريقك" : (side < d.sideNames.count ? d.sideNames[side] : "")) \(n)")
+                        .font(.system(size: 15, weight: .bold)).foregroundColor(mine ? Palette.gold : Palette.text).lineLimit(1)
+                        .frame(maxWidth: .infinity)
                 }
             }
+            .frame(height: 36)
+            .background(Color(red: 0.09, green: 0.24, blue: 0.17)).clipShape(Capsule())
+            .overlay(Capsule().stroke(Color(red: 0.17, green: 0.35, blue: 0.27), lineWidth: 1))
             .accessibilityElement(children: .ignore).accessibilityLabel(d.scoreText)
-            // اللاعبون حول الطاولة: المقابل فوق، والباقين يمين ويسار (مثل البلوت)، والقطع في النص
+            // الطاولة تملأ باقي الشاشة، واللاعبين على حوافها: اللي قدامك فوق، والباقين يمين ويسار، وأنت تحت
             let me = mySeat ?? 0
             let others = (1..<max(d.players, 2)).map { (me + $0) % d.players }
             let top: Int? = d.players == 4 ? others[1] : d.players == 2 ? others[0] : nil
             let right: Int? = d.players >= 3 ? others[0] : nil
             let left: Int? = d.players == 4 ? others[2] : d.players == 3 ? others[1] : nil
-            let seatTag = { (seat: Int) -> DominoSeatTag in
-                let partner = mySeat != nil && d.players == 4 && seat == (me + 2) % 4
-                return DominoSeatTag(name: names[seat], uid: v.seatUid(seat), count: seat < d.handCounts.count ? d.handCounts[seat] : 0,
-                                     partner: partner, turn: d.turn == seat && d.phase == "playing")
-            }
-            // الأربعة متقابلين: فوق في النص، ويمين ويسار جنب الطاولة، وتحت في النص (للمشاهد)
-            if let top { seatTag(top).frame(maxWidth: .infinity, alignment: .center) }
-            HStack(alignment: .center, spacing: 2) {
-                if let right { seatTag(right).frame(width: 54) }
-                // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
+            ZStack {
+                // المفرش
+                RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.11, green: 0.35, blue: 0.24))
+                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.gold.opacity(0.4), lineWidth: 1))
+                    .padding(.vertical, 20).padding(.horizontal, 8)
+                // القطع: داخل المفرش بعيد عن صور اللاعبين
                 DominoSnake(line: d.line)
+                    .padding(.vertical, 70).padding(.horizontal, 44)
                     .accessibilityHidden(true)
-                if let left { seatTag(left).frame(width: 54) }
+                if d.line.isEmpty { Text("الطاولة فارغة").foregroundColor(Palette.textDim) }
+                VStack {
+                    if let top { seatChip(top, names: names, mySeat: mySeat) }
+                    Spacer(minLength: 0)
+                    seatChip(mySeat ?? 0, names: names, mySeat: mySeat)
+                }
+                HStack {
+                    if let left { seatChip(left, names: names, mySeat: mySeat).frame(width: 64) }
+                    Spacer(minLength: 0)
+                    if let right { seatChip(right, names: names, mySeat: mySeat).frame(width: 64) }
+                }
             }
-            if mySeat == nil { seatTag(0).frame(maxWidth: .infinity, alignment: .center) }
+            .environment(\.layoutDirection, .leftToRight)
+            .frame(height: dominoBoardHeight())
             if let e = d.ends {
                 Text("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")")
                     .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
@@ -363,6 +372,33 @@ struct DominoBoard: View {
         }
         .onAppear { Gestures.shared.set("domino") { read($0) } }
         .onDisappear { Gestures.shared.clear("domino") }
+    }
+
+    /// لاعب على حافة الطاولة: صورته بإطار (ذهبي أعرض لما يكون دوره)، وتحته الاسم وكم قطعة
+    @ViewBuilder private func seatChip(_ seat: Int, names: [String], mySeat: Int?) -> some View {
+        let me = mySeat ?? 0
+        let partner = mySeat != nil && d.players == 4 && seat == (me + 2) % 4
+        let turn = d.turn == seat && d.phase == "playing"
+        let n = seat == mySeat ? "أنت" : (seat < names.count ? names[seat] : "")
+        let count = seat < d.handCounts.count ? d.handCounts[seat] : 0
+        VStack(spacing: 2) {
+            Avatar(uid: v.seatUid(seat), name: n, size: 32)
+                .padding(3)
+                .background(Circle().fill(Color(red: 0.09, green: 0.24, blue: 0.17)))
+                .overlay(Circle().stroke(Palette.gold.opacity(turn ? 1 : 0.7), lineWidth: turn ? 3 : 2))
+            Text("\(n) · \(count)").font(.system(size: 11, weight: .bold)).foregroundColor(turn ? Palette.gold : Palette.text).lineLimit(1)
+                .padding(.horizontal, 6).padding(.vertical, 1)
+                .background(Color(red: 0.06, green: 0.16, blue: 0.12).opacity(0.8)).clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel("\(n)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")")
+    }
+
+    /// طول الطاولة: باقي الشاشة بعد الأزرار والنتيجة وقطعك والميكروفون (صفحة وحدة بدون تمرير)
+    private func dominoBoardHeight() -> CGFloat {
+        let win = UIApplication.shared.connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first
+        let safe = (win?.safeAreaInsets.top ?? 47) + (win?.safeAreaInsets.bottom ?? 34)
+        return min(max(UIScreen.main.bounds.height - safe - 400, 260), 620)
     }
 
     private func read(_ raw: SwipeDir) -> Bool {

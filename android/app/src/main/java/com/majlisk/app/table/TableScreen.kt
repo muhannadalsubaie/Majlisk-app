@@ -207,7 +207,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             if (v.hasGame && v.domino == null && (v.jackaroo != null || v.ludo != null)) Spacer(Modifier.weight(1f))
             when {
                 !v.hasGame -> SeatsLobby(v, uid, conn)
-                v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid) { dominoLogOpen = true }
+                // الدومينو: الطاولة تملأ المساحة الباقية بالضبط (صفحة وحدة بدون تمرير)
+                v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid, Modifier.weight(1f)) { dominoLogOpen = true }
                 v.jackaroo != null -> JackarooBoard(v, v.jackaroo, conn, v.ownerUid == uid)
                 v.ludo != null -> LudoBoard(v, v.ludo, conn, v.ownerUid == uid)
                 v.game != null -> BalootBoard(v, v.game, uid, conn)
@@ -215,7 +216,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب قارئ الشاشة
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
             // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
-            Spacer(Modifier.weight(1f))
+            if (v.domino == null) Spacer(Modifier.weight(1f))
             // الدومينو: قطعك تحت فوق الميكروفون
             v.domino?.let { DominoHand(v, it, conn) { dominoLogOpen = true } }
             // زر الدردشة الكتابية جنب الميكروفون في نفس الصف (يختفي إن أطفأتها من الإعدادات)

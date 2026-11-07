@@ -200,14 +200,18 @@ private fun dominoSpiral(line: List<PlacedTile>, W: Float, H: Float, u: Float): 
     val S = u; val L = 2 * u; val g = 2f; val m = u * 0.5f
     val cx = W / 2; val cy = H / 2
     val out = mutableListOf<DominoSpot>()
-    val c0x = cx - S / 2; val c0y = cy - L / 2
     val first = orient(line[f])
-    out += DominoSpot(c0x, c0y, true, Tile(first.a, first.b))
+    // أول قطعة: الدبل بالطول، وغير الدبل بالعرض
+    val firstDbl = first.a == first.b
+    val c0w = if (firstDbl) S else L; val c0h = if (firstDbl) L else S
+    val c0x = cx - c0w / 2; val c0y = cy - c0h / 2
+    // الأفقية تنرسم a يمين و b يسار: الرقم اليسار (a في الخط) جهة اليسار
+    out += DominoSpot(c0x, c0y, firstDbl, if (firstDbl) Tile(first.a, first.b) else Tile(first.b, first.a))
     fun fits(x: Float, y: Float, w: Float, h: Float) = x >= m && y >= m && x + w <= W - m && y + h <= H - m
     fun run(tiles: List<PlacedTile>, side: Int): Boolean {
         val turns = if (side > 0) listOf(1 to 0, 0 to -1, -1 to 0) else listOf(-1 to 0, 0 to 1, 1 to 0)
         var ti = 0; var d = turns[0]
-        var lx = c0x; var ly = c0y; var lw = S; var lh = L
+        var lx = c0x; var ly = c0y; var lw = c0w; var lh = c0h
         var c = cy
         for (p in tiles) {
             val t = orient(p)
@@ -255,13 +259,8 @@ private fun dominoSpiral(line: List<PlacedTile>, W: Float, H: Float, u: Float): 
 
 @Composable
 private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
-    // الطاولة كبيرة: تاخذ المساحة الفاضية في الشاشة (طولها حسب طول الجوال)
-    val boardH = (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp - 435).coerceIn(260, 480)
     androidx.compose.foundation.layout.BoxWithConstraints(
-        modifier.height(boardH.dp)
-            .background(Color(0xFF145036), RoundedCornerShape(16.dp))
-            .border(1.dp, Color(0x55D4AF37), RoundedCornerShape(16.dp))
-            .clearAndSetSemantics { },
+        modifier.clearAndSetSemantics { },
         // المواضع محسوبة من فوق على اليسار مهما كان اتجاه الواجهة (العربية من اليمين)
         contentAlignment = androidx.compose.ui.AbsoluteAlignment.TopLeft,
     ) {
@@ -270,7 +269,6 @@ private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
         var u = 32f
         var spots = dominoSpiral(line, W, H, u)
         while (spots == null && u > 7f) { u -= 0.5f; spots = dominoSpiral(line, W, H, u) }
-        if (line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim, modifier = Modifier.align(Alignment.Center))
         spots.orEmpty().forEach { s -> DominoTileView(s.tile, s.vertical, u, modifier = Modifier.absoluteOffset(s.x.dp, s.y.dp)) }
     }
 }
@@ -314,36 +312,71 @@ private fun Modifier.dominoSwipes(v: TableView, d: DominoView, conn: TableConnec
 /** أعلى طاولة الدومينو: النقاط، اللاعبون، وخط اللعب */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boolean, openLog: () -> Unit) {
+fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boolean, modifier: Modifier = Modifier, openLog: () -> Unit) {
     val mySeat = v.mySeat
     val names = names(v)
 
-    Column(Modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = d.scoreText }, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            d.scores.forEachIndexed { side, n -> ScoreTile(d.sideNames.getOrElse(side) { "" }, "$n", side == d.mySide, Modifier.weight(1f).clearAndSetSemantics { }) }
+    Column(modifier.fillMaxWidth().dominoSwipes(v, d, conn, openLog), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // النتيجة: شريط صغير «فريقك 10 — الخصم 0» (أو نقاط كل لاعب في الفردي)
+        Row(
+            Modifier.fillMaxWidth().height(36.dp)
+                .background(Color(0xFF173D2C), RoundedCornerShape(18.dp))
+                .border(1.dp, Color(0xFF2C5A44), RoundedCornerShape(18.dp))
+                .semantics(mergeDescendants = true) { contentDescription = d.scoreText },
+            horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
+        ) {
+            d.scores.forEachIndexed { side, n ->
+                val mine = side == d.mySide
+                Text("${if (mine && d.players == 4) "فريقك" else d.sideNames.getOrElse(side) { "" }} $n",
+                    color = if (mine) Palette.gold else Palette.text, fontSize = 15.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                    modifier = Modifier.clearAndSetSemantics { })
+            }
         }
-        // اللاعبون حول الطاولة: المقابل فوق، والباقين يمين ويسار (مثل البلوت)، والقطع في النص
+        // الطاولة تملأ باقي الشاشة، واللاعبين على حوافها: اللي قدامك فوق، والباقين يمين ويسار، وأنت تحت
         val me = mySeat ?: 0
         val others = (1 until maxOf(d.players, 2)).map { (me + it) % d.players }
         val top = when (d.players) { 4 -> others[1]; 2 -> others[0]; else -> null }
         val right = if (d.players >= 3) others[0] else null
         val left = when (d.players) { 4 -> others[2]; 3 -> others[1]; else -> null }
-        val seatTag: @Composable (Int, Modifier) -> Unit = { seat, m ->
+        val bottom = mySeat ?: 0
+        val seatChip: @Composable (Int, Modifier) -> Unit = { seat, m ->
             val partner = mySeat != null && d.players == 4 && seat == (me + 2) % 4
-            DominoSeatTag(names.getOrElse(seat) { "" }, v.seatUids.getOrNull(seat), d.handCounts.getOrElse(seat) { 0 }, partner, d.turn == seat && d.phase == "playing", m)
+            val turn = d.turn == seat && d.phase == "playing"
+            val n = if (seat == mySeat) "أنت" else names.getOrElse(seat) { "" }
+            val count = d.handCounts.getOrElse(seat) { 0 }
+            Column(
+                m.clearAndSetSemantics { contentDescription = "$n${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}" },
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Box(
+                    Modifier.size(40.dp).background(Color(0xFF173D2C), androidx.compose.foundation.shape.CircleShape)
+                        .border(if (turn) 3.dp else 2.dp, Palette.gold.copy(alpha = if (turn) 1f else 0.7f), androidx.compose.foundation.shape.CircleShape)
+                        .padding(3.dp),
+                    contentAlignment = Alignment.Center,
+                ) { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(seat), n, 32.dp) }
+                Text("$n · $count", color = if (turn) Palette.gold else Palette.text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                    modifier = Modifier.background(Color(0xCC0F2A1E), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp))
+            }
         }
-        top?.let { Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { seatTag(it, Modifier) } }
-        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
-            // في الواجهة العربية أول عنصر يصير يمين
-            right?.let { seatTag(it, Modifier.width(54.dp)) }
-            // الطاولة: للعين فقط، لمسها ما يقرأ شي (الطرفان بالإيماءة)
-            DominoSnake(d.line, Modifier.weight(1f))
-            left?.let { seatTag(it, Modifier.width(54.dp)) }
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+            Box(Modifier.fillMaxWidth().weight(1f)) {
+                // المفرش
+                Box(
+                    Modifier.fillMaxSize().padding(vertical = 20.dp, horizontal = 8.dp)
+                        .background(Color(0xFF1B5A3C), RoundedCornerShape(18.dp))
+                        .border(1.dp, Palette.gold.copy(alpha = 0.4f), RoundedCornerShape(18.dp)),
+                )
+                // القطع: داخل المفرش بعيد عن صور اللاعبين
+                DominoSnake(d.line, Modifier.fillMaxSize().padding(top = 70.dp, bottom = 70.dp, start = 44.dp, end = 44.dp))
+                if (d.line.isEmpty()) Text("الطاولة فارغة", color = Palette.textDim, modifier = Modifier.align(Alignment.Center))
+                top?.let { seatChip(it, Modifier.align(Alignment.TopCenter)) }
+                left?.let { seatChip(it, Modifier.align(Alignment.CenterStart).width(64.dp)) }
+                right?.let { seatChip(it, Modifier.align(Alignment.CenterEnd).width(64.dp)) }
+                seatChip(bottom, Modifier.align(Alignment.BottomCenter))
+            }
         }
-        // المشاهد: اللاعب الرابع تحت في النص (الأربعة متقابلين)
-        if (mySeat == null) Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { seatTag(0, Modifier) }
         d.ends?.let { (left, right) ->
-            Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft,
+            Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft, fontWeight = FontWeight.Bold,
                 modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
         }
         if (d.phase != "playing") Text(dominoTurnText(v, d),
