@@ -10,6 +10,10 @@ import SwiftUI
 private func boardSide(_ full: CGFloat) -> CGFloat {
     min(full, max(170, UIScreen.main.bounds.height - 550))
 }
+/// لوحة اللودو أكبر (شلنا النرد الكبير اللي تحتها): تاخذ عرض الشاشة لو فيه مكان بالطول
+private func ludoSide() -> CGFloat {
+    min(440, max(200, UIScreen.main.bounds.height - 440))
+}
 /// قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة
 private var dominoUnit: CGFloat { UIScreen.main.bounds.height < 740 ? 15 : 18 }
 
@@ -777,7 +781,7 @@ struct LudoBoard: View {
             Canvas { ctx, size in
                 drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [])
             }
-            .aspectRatio(1, contentMode: .fit).frame(maxWidth: boardSide(360))
+            .aspectRatio(1, contentMode: .fit).frame(maxWidth: ludoSide())
             // بدون قارئ الشاشة: تلمس الحجر اللي تبيه ويتحرك
             .overlay(GeometryReader { geo in
                 Color.clear.contentShape(Rectangle())
@@ -793,15 +797,8 @@ struct LudoBoard: View {
                     .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
                 if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
             } else {
-                HStack(spacing: 12) {
-                    DiceView(value: l.phase == "move" ? l.dice : l.lastRoll, color: l.turn < 4 ? LUDO_COLORS[l.turn] : Palette.gold)
-                    // زر الرمي لقارئ الشاشة بس؛ غيره يضغط النرد اللي جنب اسمه
-                    if l.myTurn && l.phase == "roll" && reader { MButton("ارمِ النرد", .primary, fill: false) { act(["type": "roll"]) } }
-                    if l.myTurn && !reader && l.phase == "roll" { Text(l.pool.isEmpty ? "اضغط النرد عند اسمك" : "رميت ستة، اضغط النرد مرة ثانية").foregroundColor(Palette.goldSoft) }
-                    if l.myTurn && !reader && l.phase == "move" { Text("المس الحجر اللي تبي تحركه").foregroundColor(Palette.goldSoft) }
-                    if !l.myTurn { Text("دور \(l.turn < names.count ? names[l.turn] : "")").foregroundColor(Palette.textDim).accessibilityHidden(true) }
-                }
-                .frame(maxWidth: .infinity)
+                // النرد الكبير تحت اللوحة انشال (النرد جنب اسمك يكفي)؛ زر الرمي لقارئ الشاشة بس
+                if l.myTurn && l.phase == "roll" && reader { MButton("ارمِ النرد", .primary, fill: false) { act(["type": "roll"]) }.frame(maxWidth: .infinity) }
             }
             // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
             if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {

@@ -495,6 +495,13 @@ private fun boardSide(full: Int): androidx.compose.ui.unit.Dp {
     return minOf(full, maxOf(170, h - 550)).dp
 }
 
+/** لوحة اللودو أكبر (شلنا النرد الكبير اللي تحتها): تاخذ عرض الشاشة لو فيه مكان بالطول */
+@Composable
+private fun ludoSide(): androidx.compose.ui.unit.Dp {
+    val h = androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp
+    return minOf(440, maxOf(200, h - 440)).dp
+}
+
 /** قطع الدومينو على الطاولة: أصغر شوي في الجوالات القصيرة */
 @Composable
 private fun dominoUnit(): Float = if (androidx.compose.ui.platform.LocalConfiguration.current.screenHeightDp < 740) 15f else 18f
@@ -739,7 +746,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             val movable = if (l.myTurn && l.phase == "move") l.options.map { l.movableOwner to it.token } else emptyList()
             // بدون قارئ الشاشة: تلمس الحجر اللي تبيه ويتحرك
             Canvas(
-                Modifier.widthIn(max = boardSide(360)).fillMaxWidth().aspectRatio(1f)
+                Modifier.widthIn(max = ludoSide()).fillMaxWidth().aspectRatio(1f)
                     .pointerInput(l.moveSig, reader) { if (!reader) detectTapGestures { tapBoard(it, size.width.toFloat()) } },
             ) { drawLudo(l, mySeat ?: 0, movable) }
         }
@@ -751,14 +758,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
         } else {
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally)) {
-                Dice(if (l.phase == "move") l.dice else l.lastRoll, LUDO_COLORS.getOrElse(l.turn) { Palette.gold })
-                // زر الرمي لقارئ الشاشة بس؛ غيره يضغط النرد اللي جنب اسمه
-                if (l.myTurn && l.phase == "roll" && reader) PrimaryButton("ارمِ النرد", { act(conn, "ludo", jsonOf("type" to "roll")) })
-                if (l.myTurn && !reader && l.phase == "roll") Text(if (l.pool.isEmpty()) "اضغط النرد عند اسمك" else "رميت ستة، اضغط النرد مرة ثانية", color = Palette.goldSoft)
-                if (l.myTurn && !reader && l.phase == "move") Text("المس الحجر اللي تبي تحركه", color = Palette.goldSoft)
-                if (!l.myTurn) Text("دور ${names.getOrElse(l.turn) { "" }}", color = Palette.textDim, modifier = Modifier.clearAndSetSemantics { })
-            }
+            // النرد الكبير تحت اللوحة انشال (النرد جنب اسمك يكفي)؛ زر الرمي لقارئ الشاشة بس
+            if (l.myTurn && l.phase == "roll" && reader) PrimaryButton("ارمِ النرد", { act(conn, "ludo", jsonOf("type" to "roll")) })
         }
         // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
         if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
