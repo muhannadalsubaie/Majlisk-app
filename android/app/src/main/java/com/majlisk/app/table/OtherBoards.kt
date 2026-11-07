@@ -150,6 +150,24 @@ private fun orient(p: PlacedTile): Tile {
     return if (p.side == "right") Tile(inner, p.outer) else Tile(p.outer, inner)
 }
 
+/** لاعب حول لوحة الجاكارو: صورته بإطار لونه، واسمه وكم ورقة معه، وإطار ذهبي لما يكون دوره */
+@Composable
+private fun JkSeatTag(name: String, uid: String?, color: Color, count: Int, turn: Boolean, spoken: String) {
+    Column(
+        Modifier
+            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(10.dp))
+            .background(if (turn) Palette.gold.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(10.dp))
+            .padding(4.dp)
+            .clearAndSetSemantics { contentDescription = spoken },
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(2.dp),
+    ) {
+        Box(Modifier.border(2.dp, color, androidx.compose.foundation.shape.CircleShape).padding(2.dp)) { com.majlisk.app.ui.Avatar(uid, name, 32.dp) }
+        Text(name, color = Palette.text, fontSize = 12.sp, fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1)
+        Text("$count أوراق", color = Palette.textDim, fontSize = 11.sp)
+    }
+}
+
 /** لاعب على طاولة الدومينو: صورته واسمه وكم قطعة معه، بإطار ذهبي لما يكون دوره */
 @Composable
 private fun DominoSeatTag(name: String, uid: String?, count: Int, partner: Boolean, turn: Boolean, modifier: Modifier) {
@@ -447,7 +465,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
         },
         verticalArrangement = Arrangement.spacedBy(10.dp),
     ) {
-        Row(
+        if (j.teams) Row(
             Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
                 contentDescription = "في منطقة الأمان: $usLabel ${j.safeCount(myTeam)} من 8، $themLabel ${j.safeCount(1 - myTeam)} من 8"
             },
@@ -455,10 +473,36 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
         ) {
             ScoreTile(usLabel, "${j.safeCount(myTeam)}/8", true, Modifier.weight(1f).clearAndSetSemantics { })
             ScoreTile(themLabel, "${j.safeCount(1 - myTeam)}/8", false, Modifier.weight(1f).clearAndSetSemantics { })
+        } else Row(
+            // كل واحد لنفسه: كم حجر دخّل كل لاعب
+            Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
+                contentDescription = "في منطقة الأمان: " + j.active.joinToString("، ") { "${if (it == mySeat) "أنت" else names[it]} ${j.safeOf(it)} من 4" }
+            },
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            j.active.forEach { o ->
+                ScoreTile(if (o == mySeat) "أنت" else names[o], "${j.safeOf(o)}/4", o == mySeat, Modifier.weight(1f).clearAndSetSemantics { })
+            }
         }
+        // اللاعبون حول اللوحة مثل البلوت: أنت تحت، اللي قدامك (شريكك) فوق، واللي يمينك ويسارك على الجنبين
+        val me = mySeat ?: 0
+        val at = { rel: Int -> ((me + rel) % 4).takeIf { it in j.active } }
+        val tag: @Composable (Int?) -> Unit = { seat ->
+            if (seat != null) {
+                val n = names.getOrElse(seat) { "" }
+                val partner = j.teams && mySeat != null && seat == (mySeat + 2) % 4
+                JkSeatTag(n, v.seatUids.getOrNull(seat), JK_COLORS[seat], j.handCounts.getOrElse(seat) { 0 }, j.turn == seat && j.phase == "playing",
+                    spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق${if (j.turn == seat && j.phase == "playing") "، عليه الدور" else ""}")
+            }
+        }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { tag(at(2)) }
+        androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            val sides = at(1) != null || at(3) != null
+            if (sides) Box(Modifier.width(62.dp), contentAlignment = Alignment.Center) { tag(at(1)) }
         // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
         Box(
-            Modifier.fillMaxWidth().clearAndSetSemantics { },
+            Modifier.weight(1f).clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
             Canvas(Modifier.widthIn(max = boardSide(340)).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
@@ -475,23 +519,15 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                 }
             }
         }
-        // اللاعبون: كل اثنين في صف، فتكفي الطاولة صفحة وحدة
-        names.chunked(2).forEachIndexed { row, pair ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                pair.forEachIndexed { col, n ->
-                    val seat = row * 2 + col
-                    val partner = mySeat != null && seat == (mySeat + 2) % 4
-                    Box(Modifier.weight(1f)) {
-                        PlayerLine("${if (seat == mySeat) "$n (أنت)" else n}${if (partner) " (شريكك)" else ""}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق",
-                            j.turn == seat && j.phase == "playing", JK_COLORS[seat],
-                            spoken = "${if (seat == mySeat) "أنت" else n}${if (partner) "، شريكك" else ""}، ${JK_COLOR_NAMES[seat]}، ${j.handCounts.getOrElse(seat) { 0 }} أوراق", avatar = v.seatUids.getOrNull(seat) to n)
-                    }
-                }
-            }
+            if (sides) Box(Modifier.width(62.dp), contentAlignment = Alignment.Center) { tag(at(3)) }
         }
+        }
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { tag(at(0)) }
         if (j.phase == "over") {
             val w = j.winnerTeam ?: 0
-            Text(if (mySeat == null) "فاز فريق ${names[w]} و${names[w + 2]}" else if (w == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر",
+            val wonText = if (!j.teams) (if (j.winner == mySeat && mySeat != null) "🎉 فزت!" else "فاز ${names.getOrElse(j.winner ?: 0) { "" }}")
+                else if (mySeat == null) "فاز فريق ${names[w]} و${names[w + 2]}" else if (w == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر"
+            Text(wonText,
                 color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
         }
@@ -581,13 +617,14 @@ private fun jackarooPositions(j: JackarooView, mySeat: Int?): List<Triple<String
     val out = mutableListOf<Triple<String, Int, List<String>>>()
     if (mySeat != null) {
         val (title, lines) = splitMarbles(j.mineText)
-        out += Triple(title, if (title.startsWith("أحجارك")) mySeat else (mySeat + 2) % 4, lines)
+        out += Triple(title, if (title.startsWith("أحجارك") || !j.teams) mySeat else (mySeat + 2) % 4, lines)
     }
     val start = mySeat ?: 0
     for (k in 0 until 4) {
         val seat = (start + k) % 4
-        if (seat == mySeat || seat >= all.size) continue
-        val (title, lines) = splitMarbles(all[seat])
+        val idx = j.active.indexOf(seat)
+        if (seat == mySeat || idx < 0 || idx >= all.size) continue
+        val (title, lines) = splitMarbles(all[idx])
         out += Triple(title, seat, lines)
     }
     return out
@@ -607,7 +644,7 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
     drawCircle(Color(0xFF0B241B), (R + 30) * k, Offset(c * k, c * k))
     drawCircle(Color(0x33D4AF37), (R + 30) * k, Offset(c * k, c * k), style = Stroke(1f * k))
     for (p in 0 until L) {
-        val owner = (0..3).firstOrNull { start(it) == p }
+        val owner = (0..3).firstOrNull { start(it) == p && it in j.active }
         drawCircle(if (owner != null) JK_COLORS[owner] else Color(0x33FFFFFF), (if (owner != null) 6f else 3.5f) * k, at(p.toFloat()))
         // رقم الخانة (ثابت للجميع، نفس الرقم اللي ينقال في الإعلان) داخل الدائرة جنب كل نقطة
         val tp = at(p.toFloat(), R - 12)
@@ -616,7 +653,7 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
             color = android.graphics.Color.argb(190, 255, 255, 255)
         })
     }
-    for (o in 0..3) {
+    for (o in j.active) {
         for (s in 0 until 4) drawCircle(JK_COLORS[o], 5f * k, at((start(o) - 1).toFloat(), R - 16 - s * 14), style = Stroke(1.5f * k))
         j.marbles.getOrNull(o).orEmpty().forEachIndexed { i, m ->
             val p = when (m.zone) {

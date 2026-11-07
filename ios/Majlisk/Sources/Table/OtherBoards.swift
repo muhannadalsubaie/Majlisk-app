@@ -484,12 +484,30 @@ struct JackarooBoard: View {
         let usLabel = mySeat == nil ? "فريق \(names[0])" : "فريقك"
         let themLabel = mySeat == nil ? "فريق \(names[1])" : "الخصم"
         VStack(spacing: 10) {
-            HStack(spacing: 10) {
-                ScoreTile(label: usLabel, value: "\(j.safeCount(myTeam))/8", mine: true)
-                ScoreTile(label: themLabel, value: "\(j.safeCount(1 - myTeam))/8", mine: false)
+            if j.teams {
+                HStack(spacing: 10) {
+                    ScoreTile(label: usLabel, value: "\(j.safeCount(myTeam))/8", mine: true)
+                    ScoreTile(label: themLabel, value: "\(j.safeCount(1 - myTeam))/8", mine: false)
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("في منطقة الأمان: \(usLabel) \(j.safeCount(myTeam)) من 8، \(themLabel) \(j.safeCount(1 - myTeam)) من 8")
+            } else {
+                // كل واحد لنفسه: كم حجر دخّل كل لاعب
+                HStack(spacing: 8) {
+                    ForEach(j.active, id: \.self) { o in
+                        ScoreTile(label: o == mySeat ? "أنت" : names[o], value: "\(j.safeOf(o))/4", mine: o == mySeat)
+                    }
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel("في منطقة الأمان: " + j.active.map { "\($0 == mySeat ? "أنت" : names[$0]) \(j.safeOf($0)) من 4" }.joined(separator: "، "))
             }
-            .accessibilityElement(children: .ignore)
-            .accessibilityLabel("في منطقة الأمان: \(usLabel) \(j.safeCount(myTeam)) من 8، \(themLabel) \(j.safeCount(1 - myTeam)) من 8")
+            // اللاعبون حول اللوحة مثل البلوت: أنت تحت، اللي قدامك (شريكك) فوق، واللي يمينك ويسارك على الجنبين
+            let me = mySeat ?? 0
+            let at: (Int) -> Int? = { rel in let s = (me + rel) % 4; return j.active.contains(s) ? s : nil }
+            seatTag(at(2), names: names, mySeat: mySeat)
+            HStack(spacing: 0) {
+                let sides = at(1) != nil || at(3) != nil
+                if sides { seatTag(at(1), names: names, mySeat: mySeat).frame(width: 62) }
             // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
             Group {
                 ZStack {
@@ -512,20 +530,15 @@ struct JackarooBoard: View {
             }
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
-            // اللاعبون: كل اثنين في صف، فتكفي الطاولة صفحة وحدة
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
-            ForEach(0..<4, id: \.self) { seat in
-                let partner = mySeat != nil && seat == (mySeat! + 2) % 4
-                let n = names[seat]
-                let cards = seat < j.handCounts.count ? j.handCounts[seat] : 0
-                PlayerLine(text: "\(seat == mySeat ? "\(n) (أنت)" : n)\(partner ? " (شريكك)" : "")، \(cards) أوراق",
-                           turn: j.turn == seat && j.phase == "playing", color: JK_COLORS[seat],
-                           spoken: "\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق", avatar: (v.seatUid(seat), n))
+                if sides { seatTag(at(3), names: names, mySeat: mySeat).frame(width: 62) }
             }
-            }
+            .environment(\.layoutDirection, .leftToRight)
+            seatTag(at(0), names: names, mySeat: mySeat)
             if j.phase == "over" {
                 let w = j.winnerTeam ?? 0
-                Text(mySeat == nil ? "فاز فريق \(names[w]) و\(names[w + 2])" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")
+                let wonText = !j.teams ? (j.winner != nil && j.winner == mySeat ? "🎉 فزت!" : "فاز \(names[j.winner ?? 0])")
+                    : mySeat == nil ? "فاز فريق \(names[w]) و\(names[w + 2])" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر"
+                Text(wonText)
                     .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
                 if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
             }
@@ -579,6 +592,27 @@ struct JackarooBoard: View {
                 }
                 MButton("إلغاء") { picked = nil }
             }
+        }
+    }
+
+    /// لاعب حول اللوحة: صورته بإطار لونه، واسمه وكم ورقة معه، وإطار ذهبي لما يكون دوره
+    @ViewBuilder private func seatTag(_ seat: Int?, names: [String], mySeat: Int?) -> some View {
+        if let seat {
+            let n = names[seat]
+            let cards = seat < j.handCounts.count ? j.handCounts[seat] : 0
+            let partner = j.teams && mySeat != nil && seat == (mySeat! + 2) % 4
+            let turn = j.turn == seat && j.phase == "playing"
+            VStack(spacing: 2) {
+                Avatar(uid: v.seatUid(seat), name: n, size: 32)
+                    .padding(2).overlay(Circle().stroke(JK_COLORS[seat], lineWidth: 2))
+                Text(n).font(.system(size: 12, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
+                Text("\(cards) أوراق").font(.system(size: 11)).foregroundColor(Palette.textDim)
+            }
+            .padding(4)
+            .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel("\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق\(turn ? "، عليه الدور" : "")")
         }
     }
 
@@ -636,12 +670,12 @@ func jackarooPositions(_ j: JackarooView, mySeat: Int?) -> [(title: String, colo
     if let me = mySeat {
         let m = splitMarbles(j.mineText)
         // تلعب بأحجار شريكك بعد ما خلصت أحجارك
-        out.append((m.title, m.title.hasPrefix("أحجارك") ? me : (me + 2) % 4, m.lines))
+        out.append((m.title, m.title.hasPrefix("أحجارك") || !j.teams ? me : (me + 2) % 4, m.lines))
     }
     for k in 0..<4 {
         let seat = (start + k) % 4
-        if seat == mySeat || seat >= all.count { continue }
-        let p = splitMarbles(all[seat])
+        guard seat != mySeat, let idx = j.active.firstIndex(of: seat), idx < all.count else { continue }
+        let p = splitMarbles(all[idx])
         out.append((p.title, seat, p.lines))
     }
     return out
@@ -662,12 +696,12 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
     ctx.fill(dot(CGPoint(x: c * k, y: c * k), (R + 30) * k), with: .color(Color(red: 0.04, green: 0.14, blue: 0.11)))
     ctx.stroke(dot(CGPoint(x: c * k, y: c * k), (R + 30) * k), with: .color(Palette.gold.opacity(0.2)), lineWidth: 1)
     for p in 0..<L {
-        let owner = (0...3).first { start($0) == p }
+        let owner = (0...3).first { start($0) == p && j.active.contains($0) }
         ctx.fill(dot(at(CGFloat(p)), (owner != nil ? 6 : 3.5) * k), with: .color(owner.map { JK_COLORS[$0] } ?? Color.white.opacity(0.2)))
         // رقم الخانة (ثابت للجميع، نفس الرقم اللي ينقال في الإعلان) داخل الدائرة جنب كل نقطة
         ctx.draw(Text("\(p)").font(.system(size: 6.5 * k, weight: .semibold)).foregroundColor(Color.white.opacity(0.75)), at: at(CGFloat(p), R - 12))
     }
-    for o in 0...3 {
+    for o in j.active {
         for s in 0..<4 { ctx.stroke(dot(at(CGFloat(start(o) - 1), R - 16 - CGFloat(s) * 14), 5 * k), with: .color(JK_COLORS[o]), lineWidth: 1.5 * k) }
         let row = o < j.marbles.count ? j.marbles[o] : []
         for (i, m) in row.enumerated() {

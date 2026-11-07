@@ -98,8 +98,14 @@ struct JackarooView {
     let boardText: String, mineText: String, prompt: String
     /// الأوراق الملعوبة في هذا التوزيع بالترتيب
     let pile: [JackarooCard]
-    /// أوراق اللفة الحالية في وسط الطاولة: تتجمع حتى أربع، ثم تنمسح وتبدأ اللفة التالية
-    var centerCards: [JackarooCard] { pile.isEmpty ? [] : Array(pile.suffix((pile.count - 1) % 4 + 1)) }
+    /// المقاعد اللي تلعب (لاعبين أو ثلاثة أو أربعة)، وفريقين أو كل واحد لنفسه، والفائز في الفردي
+    let active: [Int]
+    let teams: Bool
+    let winner: Int?
+    /// أوراق اللفة الحالية في وسط الطاولة: تتجمع حتى عدد اللاعبين، ثم تنمسح وتبدأ اللفة التالية
+    var centerCards: [JackarooCard] { pile.isEmpty ? [] : Array(pile.suffix((pile.count - 1) % max(active.count, 1) + 1)) }
+    /// عدد أحجار لاعب في منطقة الأمان
+    func safeOf(_ o: Int) -> Int { o < marbles.count ? marbles[o].filter { $0.zone == "safe" }.count : 0 }
 
     func safeCount(_ team: Int) -> Int {
         [team, team + 2].reduce(0) { n, o in n + (o < marbles.count ? marbles[o].filter { $0.zone == "safe" }.count : 0) }
@@ -108,6 +114,10 @@ struct JackarooView {
     init(_ s: JSON, _ ui: JSON, mySeat: Int?) {
         let rules = s.obj("rules") ?? [:]
         phase = s.str("phase"); turn = s.int("turn"); winnerTeam = s.intOrNil("winnerTeam")
+        let seats = s.ints("seats")
+        active = seats.isEmpty ? [0, 1, 2, 3] : seats
+        teams = (s["teams"] as? Bool ?? true) && active.count == 4
+        winner = s.intOrNil("winner")
         dealNo = s.int("dealNo"); segment = rules.int("segment", 19)
         marbles = s.arr("marbles").map { (($0 as? [Any]) ?? []).compactMap { $0 as? JSON }.map { Marble(zone: $0.str("zone"), pos: $0.int("pos")) } }
         let hands = s.arr("hands").map { ($0 as? [Any]) ?? [] }

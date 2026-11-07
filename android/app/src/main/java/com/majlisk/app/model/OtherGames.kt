@@ -121,9 +121,18 @@ data class JackarooView(
     val prompt: String,
     /** الأوراق الملعوبة في هذا التوزيع بالترتيب */
     val pile: List<JackarooCard> = emptyList(),
+    /** المقاعد اللي تلعب (لاعبين أو ثلاثة أو أربعة) */
+    val active: List<Int> = listOf(0, 1, 2, 3),
+    /** فريقين (أربعة لاعبين)؛ غير كذا كل واحد لنفسه */
+    val teams: Boolean = true,
+    /** الفائز في اللعب الفردي */
+    val winner: Int? = null,
 ) {
-    /** أوراق اللفة الحالية في وسط الطاولة: تتجمع حتى أربع، ثم تنمسح وتبدأ اللفة التالية */
-    val centerCards: List<JackarooCard> get() = if (pile.isEmpty()) emptyList() else pile.takeLast((pile.size - 1) % 4 + 1)
+    /** أوراق اللفة الحالية في وسط الطاولة: تتجمع حتى عدد اللاعبين، ثم تنمسح وتبدأ اللفة التالية */
+    val centerCards: List<JackarooCard> get() = if (pile.isEmpty()) emptyList() else pile.takeLast((pile.size - 1) % active.size.coerceAtLeast(1) + 1)
+
+    /** عدد أحجار لاعب في منطقة الأمان */
+    fun safeOf(o: Int) = marbles.getOrNull(o).orEmpty().count { it.zone == "safe" }
 
     /** عدد أحجار الفريق في منطقة الأمان */
     fun safeCount(team: Int) = listOf(team, team + 2).sumOf { o -> marbles.getOrNull(o).orEmpty().count { it.zone == "safe" } }
@@ -139,6 +148,9 @@ data class JackarooView(
                 phase = s.optString("phase"),
                 turn = s.optInt("turn"),
                 winnerTeam = s.optIntOrNull("winnerTeam"),
+                active = s.optJSONArray("seats")?.let { a -> (0 until a.length()).map { a.optInt(it) } } ?: listOf(0, 1, 2, 3),
+                teams = s.optBoolean("teams", true) && (s.optJSONArray("seats")?.length() ?: 4) == 4,
+                winner = s.optIntOrNull("winner"),
                 dealNo = s.optInt("dealNo"),
                 segment = rules.optInt("segment", 19),
                 marbles = s.optJSONArray("marbles").mapIndexed { a, i ->
