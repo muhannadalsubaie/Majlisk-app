@@ -47,8 +47,31 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
         val id = f.tableId
         when {
             joining -> return@join
-            // ما هو في طاولة، أو طاولته مقفلة: الضغط المطوّل لا يسوي شي (بلا تلميحات)
-            !f.online || id == null || f.tablePrivate -> Unit
+            // ما هو في طاولة: الضغط المطوّل لا يسوي شي (بلا تلميحات)
+            !f.online || id == null -> Unit
+            // طاولته خاصة: يوصل له تنبيه «فلان يريد الانضمام»، وننتظر رده (موافق = ندخل على طول)
+            f.tablePrivate -> {
+                joining = true
+                scope.launch {
+                    try {
+                        var st = com.majlisk.app.data.Tables.requestJoin(id)
+                        if (st == "pending") say("أُرسل طلب الانضمام إلى ${f.username}، ننتظر موافقته")
+                        var n = 0
+                        while (st == "pending" && n < 45) {
+                            kotlinx.coroutines.delay(2000)
+                            st = runCatching { com.majlisk.app.data.Tables.joinRequestStatus(id) }.getOrDefault(st)
+                            n++
+                        }
+                        when (st) {
+                            "accepted" -> { com.majlisk.app.data.Tables.join(id); profileOf = null; openTable(id) }
+                            "ignored" -> say("تجاهل ${f.username} طلب الانضمام")
+                            else -> say("ما رد ${f.username} على طلب الانضمام")
+                        }
+                    } catch (e: Exception) {
+                        say(com.majlisk.app.data.Tables.error(e, "تعذّر إرسال طلب الانضمام"))
+                    } finally { joining = false }
+                }
+            }
             else -> {
                 joining = true
                 scope.launch {
@@ -157,7 +180,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
         val status = friendStatus(f)
         MajliskDialog(f.username, { profileOf = null }) {
             Body(status)
-            if (f.online && f.tableId != null && !f.tablePrivate) PrimaryButton("دخول طاولته", { joinFriend(f) }, enabled = !joining)
+            if (f.online && f.tableId != null) PrimaryButton(if (f.tablePrivate) "طلب انضمام" else "دخول طاولته", { joinFriend(f) }, enabled = !joining)
             DangerButton("حذف من الأصدقاء", { profileOf = null; toRemove = f })
             SecondaryButton("رجوع", { profileOf = null }, fill = true)
         }

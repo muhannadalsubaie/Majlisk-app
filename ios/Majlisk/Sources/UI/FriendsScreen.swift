@@ -30,12 +30,37 @@ struct FriendsScreen: View {
     /// الدخول لطاولة الصديق (ضغط مطوّل على اسمه، أو من ملفه)
     private func joinFriend(_ f: Friend) {
         if joining { return }
-        // ما هو في طاولة، أو طاولته مقفلة: الضغط المطوّل لا يسوي شي (بلا تلميحات)
-        guard f.online, let id = f.tableId, !f.tablePrivate else { return }
+        // ما هو في طاولة: الضغط المطوّل لا يسوي شي (بلا تلميحات). طاولته خاصة: طلب انضمام
+        guard f.online, let id = f.tableId else { return }
+        if f.tablePrivate { requestJoin(f, id); return }
         joining = true
         Task { @MainActor in
             do { try await Tables.join(id); profileOf = nil; openTable(id) } catch { say(Tables.error(error, "تعذّر الانضمام")) }
             joining = false
+        }
+    }
+
+    /// طاولته خاصة: يوصل له تنبيه «فلان يريد الانضمام»، وننتظر رده (موافق = ندخل على طول)
+    private func requestJoin(_ f: Friend, _ id: String) {
+        if joining { return }
+        joining = true
+        Task { @MainActor in
+            defer { joining = false }
+            do {
+                var st = try await Tables.requestJoin(id)
+                if st == "pending" { say("أُرسل طلب الانضمام إلى \(f.username)، ننتظر موافقته") }
+                var n = 0
+                while st == "pending" && n < 45 {
+                    try? await Task.sleep(nanoseconds: 2_000_000_000)
+                    st = (try? await Tables.joinRequestStatus(id)) ?? st
+                    n += 1
+                }
+                switch st {
+                case "accepted": try await Tables.join(id); profileOf = nil; openTable(id)
+                case "ignored": say("تجاهل \(f.username) طلب الانضمام")
+                default: say("ما رد \(f.username) على طلب الانضمام")
+                }
+            } catch { say(Tables.error(error, "تعذّر إرسال طلب الانضمام")) }
         }
     }
 
@@ -129,8 +154,8 @@ struct FriendsScreen: View {
         .sheet(item: $profileOf) { f in
             Sheet(title: f.username) {
                 BodyText(status(f))
-                if f.online && f.tableId != nil && !f.tablePrivate {
-                    MButton("دخول طاولته", .primary, enabled: !joining) { joinFriend(f) }
+                if f.online && f.tableId != nil {
+                    MButton(f.tablePrivate ? "طلب انضمام" : "دخول طاولته", .primary, enabled: !joining) { joinFriend(f) }
                 }
                 MButton("حذف من الأصدقاء", .danger) {
                     profileOf = nil

@@ -130,6 +130,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val connected by conn.connected.collectAsState()
     val closed by conn.closed.collectAsState()
     val kicked by conn.kicked.collectAsState()
+    val joinRequest by conn.joinRequest.collectAsState()
     var menuOpen by remember { mutableStateOf(false) }
     /** الصفحة اللي تنفتح عليها القائمة (من إجراءات قارئ الشاشة على زر القائمة) */
     var menuStart by remember { mutableStateOf(TableMenuStart.Main) }
@@ -228,6 +229,16 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
     if (dominoLogOpen && v.domino != null) DominoLogDialog(v.domino) { dominoLogOpen = false }
+    // طلب انضمام لطاولتك الخاصة من صديق
+    joinRequest?.let { (rid, rname) ->
+        val answer = { ok: Boolean -> conn.send(jsonOf("type" to "joinAnswer", "uid" to rid, "accept" to ok)); conn.joinRequest.value = null }
+        androidx.compose.material3.AlertDialog(
+            onDismissRequest = { answer(false) },
+            title = { androidx.compose.material3.Text("$rname يريد الانضمام") },
+            confirmButton = { androidx.compose.material3.TextButton({ answer(true) }) { androidx.compose.material3.Text("موافق") } },
+            dismissButton = { androidx.compose.material3.TextButton({ answer(false) }) { androidx.compose.material3.Text("تجاهل") } },
+        )
+    }
     if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false }, start = menuStart)
     if (confirmLeave) {
         ConfirmDialog(

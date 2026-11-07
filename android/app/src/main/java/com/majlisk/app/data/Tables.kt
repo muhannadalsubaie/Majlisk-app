@@ -75,6 +75,9 @@ object Tables {
         Api.post("/tables", jsonOf("isPrivate" to isPrivate, "kind" to kind, "variant" to variant)).getString("id")
 
     suspend fun join(id: String) { Api.post("/tables/$id/join") }
+    /** طلب انضمام لطاولة خاصة (يوصل للمالك تنبيه)، وحالته: pending / accepted / ignored */
+    suspend fun requestJoin(id: String): String = Api.post("/tables/$id/join-request").optString("status")
+    suspend fun joinRequestStatus(id: String): String = Api.post("/tables/$id/join-request/status").optString("status")
 
     suspend fun deleteAccount() { Api.post("/me/delete") }
 
@@ -133,6 +136,8 @@ class TableConnection(val tableId: String) {
     /** أخرجه المالك أو حظره: لا نعيد الاتصال */
     private val _kicked = MutableStateFlow<String?>(null)
     val kicked: StateFlow<String?> = _kicked
+    /** للمالك: صديق يطلب الانضمام لطاولته الخاصة (uid، الاسم) — موافق / تجاهل */
+    val joinRequest = MutableStateFlow<Pair<String, String>?>(null)
 
     // ───── الدردشة الكتابية ─────
     /** مقعدك (لتمييز رسائلك وعدم قراءتها عليك) */
@@ -247,6 +252,7 @@ class TableConnection(val tableId: String) {
                 val spoken = if (voices.isEmpty()) events else events.filterNot { e -> BID_LINE.any { it.matches(e) } }
                 if (spoken.isNotEmpty()) Announcer.announceEvent(spoken.joinToString("، "))
             }
+            "joinRequest" -> scope.launch { joinRequest.value = msg.optString("uid") to msg.optString("name") }
             "chat" -> {
                 val mode = ChatSettings.mode.value
                 if (mode == ChatMode.OFF) return

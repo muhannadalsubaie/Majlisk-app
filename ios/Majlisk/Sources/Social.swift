@@ -152,6 +152,9 @@ enum Tables {
         try await Api.post("/tables", ["isPrivate": isPrivate, "kind": kind, "variant": variant]).str("id")
     }
     static func join(_ id: String) async throws { try await Api.post("/tables/\(id)/join") }
+    /// طلب انضمام لطاولة خاصة (يوصل للمالك تنبيه)، وحالته: pending / accepted / ignored
+    static func requestJoin(_ id: String) async throws -> String { try await Api.post("/tables/\(id)/join-request").str("status") }
+    static func joinRequestStatus(_ id: String) async throws -> String { try await Api.post("/tables/\(id)/join-request/status").str("status") }
     static func deleteAccount() async throws { try await Api.post("/me/delete") }
 
     /// الطاولات النشطة (أحدث 50) — تتحدث مباشرة
@@ -201,6 +204,8 @@ final class ChatSettings: ObservableObject {
     func set(_ m: ChatMode) { Prefs.chatMode = m.rawValue; mode = m }
 }
 
+struct JoinRequest: Identifiable, Equatable { let uid: String; let name: String; var id: String { uid } }
+
 final class TableConnection: ObservableObject {
     let tableId: String
     @Published private(set) var view: TableView?
@@ -210,6 +215,8 @@ final class TableConnection: ObservableObject {
     @Published private(set) var closed = false
     /// أخرجه المالك أو حظره: لا نعيد الاتصال
     @Published private(set) var kicked: String?
+    /// للمالك: صديق يطلب الانضمام لطاولته الخاصة (موافق / تجاهل)
+    @Published var joinRequest: JoinRequest?
     /// يُستدعى مع كل حالة تصل (حتى والتطبيق في الخلفية): لأصوات اللعب
     var onState: ((TableView) -> Void)?
 
@@ -340,6 +347,9 @@ final class TableConnection: ObservableObject {
             // (يقول بس «دور فلان» مع تغيّر الدور)، ويبقى ما سواها مثل «ورقة الأرض لفلان»
             let spoken = voices.isEmpty ? events : events.filter { !isBidLine($0) }
             if !spoken.isEmpty { Announcer.announceEvent(spoken.joined(separator: "، ")) }
+        case "joinRequest":
+            let r = JoinRequest(uid: msg.str("uid"), name: msg.str("name"))
+            DispatchQueue.main.async { self.joinRequest = r }
         case "chat":
             let mode = ChatSettings.shared.mode
             guard mode != .off else { return }

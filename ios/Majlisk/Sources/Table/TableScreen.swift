@@ -139,6 +139,12 @@ struct TableScreen: View {
         .sheet(isPresented: $dominoLogOpen) {
             if let d = (conn.view ?? v).domino { DominoLogView(d: d) { dominoLogOpen = false } }
         }
+        // طلب انضمام لطاولتك الخاصة من صديق
+        .alert(item: $conn.joinRequest) { r in
+            Alert(title: Text("\(r.name) يريد الانضمام"),
+                  primaryButton: .default(Text("موافق")) { conn.send(["type": "joinAnswer", "uid": r.uid, "accept": true]) },
+                  secondaryButton: .cancel(Text("تجاهل")) { conn.send(["type": "joinAnswer", "uid": r.uid, "accept": false]) })
+        }
         .sheet(item: $menuSheet) { start in
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuSheet = nil }, start: start)
         }
