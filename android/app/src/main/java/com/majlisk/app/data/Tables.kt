@@ -252,7 +252,12 @@ class TableConnection(val tableId: String) {
                 val spoken = if (voices.isEmpty()) events else events.filterNot { e -> BID_LINE.any { it.matches(e) } }
                 if (spoken.isNotEmpty()) Announcer.announceEvent(spoken.joinToString("، "))
             }
-            "joinRequest" -> scope.launch { joinRequest.value = msg.optString("uid") to msg.optString("name") }
+            "joinRequest" -> scope.launch {
+                val name = msg.optString("name")
+                joinRequest.value = msg.optString("uid") to name
+                // قارئ الشاشة يقرأ الطلب على طول
+                Announcer.announceNow("$name طلب الانضمام")
+            }
             "chat" -> {
                 val mode = ChatSettings.mode.value
                 if (mode == ChatMode.OFF) return

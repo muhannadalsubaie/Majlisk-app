@@ -234,12 +234,11 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     // طلب انضمام لطاولتك الخاصة من صديق
     joinRequest?.let { (rid, rname) ->
         val answer = { ok: Boolean -> conn.send(jsonOf("type" to "joinAnswer", "uid" to rid, "accept" to ok)); conn.joinRequest.value = null }
-        androidx.compose.material3.AlertDialog(
-            onDismissRequest = { answer(false) },
-            title = { androidx.compose.material3.Text("$rname يريد الانضمام") },
-            confirmButton = { androidx.compose.material3.TextButton({ answer(true) }) { androidx.compose.material3.Text("موافق") } },
-            dismissButton = { androidx.compose.material3.TextButton({ answer(false) }) { androidx.compose.material3.Text("تجاهل") } },
-        )
+        // نافذة في منتصف الشاشة (بنفس شكل التطبيق): فلان طلب الانضمام، موافق أو تجاهل
+        com.majlisk.app.ui.MajliskDialog("$rname طلب الانضمام", { answer(false) }) {
+            com.majlisk.app.ui.PrimaryButton("موافق", { answer(true) })
+            com.majlisk.app.ui.SecondaryButton("تجاهل", { answer(false) }, fill = true)
+        }
     }
     if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false }, start = menuStart)
     if (confirmLeave) {

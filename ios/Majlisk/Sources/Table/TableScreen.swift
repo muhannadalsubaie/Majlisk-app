@@ -143,7 +143,7 @@ struct TableScreen: View {
         }
         // طلب انضمام لطاولتك الخاصة من صديق
         .alert(item: $conn.joinRequest) { r in
-            Alert(title: Text("\(r.name) يريد الانضمام"),
+            Alert(title: Text("\(r.name) طلب الانضمام"),
                   primaryButton: .default(Text("موافق")) { conn.send(["type": "joinAnswer", "uid": r.uid, "accept": true]) },
                   secondaryButton: .cancel(Text("تجاهل")) { conn.send(["type": "joinAnswer", "uid": r.uid, "accept": false]) })
         }

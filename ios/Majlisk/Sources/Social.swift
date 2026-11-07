@@ -349,7 +349,11 @@ final class TableConnection: ObservableObject {
             if !spoken.isEmpty { Announcer.announceEvent(spoken.joined(separator: "، ")) }
         case "joinRequest":
             let r = JoinRequest(uid: msg.str("uid"), name: msg.str("name"))
-            DispatchQueue.main.async { self.joinRequest = r }
+            DispatchQueue.main.async {
+                self.joinRequest = r
+                // قارئ الشاشة يقرأ الطلب على طول
+                Announcer.announceNow("\(r.name) طلب الانضمام")
+            }
         case "chat":
             let mode = ChatSettings.shared.mode
             guard mode != .off else { return }
