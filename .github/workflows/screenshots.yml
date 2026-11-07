@@ -36,7 +36,7 @@ jobs:
           git checkout --orphan shots-android
           git rm -rf -q . || true
           cp /tmp/out/*.png . 2>/dev/null || true
-          git add -A && git commit -qm "shots" && git push -f origin shots-android || true
+          git add *.png && git commit -qm "shots" && git push -f origin shots-android || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -97,7 +97,7 @@ jobs:
           git checkout --orphan shots-ios
           git rm -rf -q . || true
           cp /tmp/out/*.png . 2>/dev/null || true
-          git add -A && git commit -qm "shots" && git push -f origin shots-ios || true
+          git add *.png && git commit -qm "shots" && git push -f origin shots-ios || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:

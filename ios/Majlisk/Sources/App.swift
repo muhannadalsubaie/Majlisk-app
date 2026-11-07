@@ -118,7 +118,10 @@ struct DemoTable: View {
                 }
                 if let d = v.domino { DominoBoard(v: v, d: d, conn: conn, isOwner: true) {} }
                 else if let j = v.jackaroo { JackarooBoard(v: v, j: j, conn: conn, isOwner: true) }
-                else if let l = v.ludo { LudoBoard(v: v, l: l, conn: conn, isOwner: true) }
+                else if let l = v.ludo {
+                    Spacer(minLength: 0)
+                    LudoBoard(v: v, l: l, conn: conn, isOwner: true)
+                }
                 Spacer(minLength: 0)
                 if let d = v.domino { DominoHand(v: v, d: d, conn: conn) }
                 HStack { Spacer(); ChatButton(conn: conn) {} }

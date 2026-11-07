@@ -111,6 +111,8 @@ struct TableScreen: View {
             } else if let j = v.jackaroo {
                 JackarooBoard(v: v, j: j, conn: conn, isOwner: v.ownerUid == uid)
             } else if let l = v.ludo {
+                // اللودو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
+                Spacer(minLength: 0)
                 LudoBoard(v: v, l: l, conn: conn, isOwner: v.ownerUid == uid)
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
