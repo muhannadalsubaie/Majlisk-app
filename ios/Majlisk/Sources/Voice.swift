@@ -183,13 +183,14 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 let initTx = RTCRtpTransceiverInit()
                 initTx.direction = .sendOnly
                 guard let tx = conn.addTransceiver(with: track, init: initTx) else { throw ApiError(code: "voice-failed") }
-                let offer = try await conn.offer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil))
+                let offer = VoiceSaver.sdp(try await conn.offer(for: RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)))
                 try await conn.setLocalDescription(offer)
                 let r = try await request(["op": "publish", "sessionId": sessionId ?? "", "offer": desc(offer), "mid": tx.mid])
                 // الخادم أنشأ جلسة جديدة (انتهت جلسة الاستماع لخمولها)
                 if let s = r.strOrNil("sessionId"), !s.isEmpty { sessionId = s }
                 guard let answer = parseDesc(r.obj("answer")) else { throw ApiError(code: "voice-failed") }
-                try await conn.setRemoteDescription(answer)
+                try await conn.setRemoteDescription(VoiceSaver.sdp(answer))
+                VoiceSaver.capBitrate(tx.sender)
                 update(muted: false, busy: false)
                 DispatchQueue.main.async { Sounds.shared.micToggle(true) }
                 Announcer.announce("الميكروفون مفتوح")
@@ -382,5 +383,38 @@ final class SerialQueue {
     func run(_ work: @escaping () async -> Void) {
         let prev = tail
         tail = Task { await prev?.value; await work() }
+    }
+}
+
+/// توفير استهلاك الصوت (يقلل فاتورة خادم الصوت تقريباً 75%):
+/// - DTX: الساكت ما يرسل صوت (إشارة صغيرة كل شوي بس)، ولما يتكلم يرجع الإرسال فوراً. السماع ما يتأثر.
+/// - جودة 24 كيلوبت للكلام بدل الافتراضي.
+/// للرجوع للإعدادات السابقة: enabled = false
+enum VoiceSaver {
+    static let enabled = true
+    static let maxBitrateBps = 24_000
+
+    static func sdp(_ d: RTCSessionDescription) -> RTCSessionDescription {
+        enabled ? RTCSessionDescription(type: d.type, sdp: munge(d.sdp)) : d
+    }
+
+    /// يضيف usedtx و maxaveragebitrate لسطر fmtp حق Opus
+    static func munge(_ sdp: String) -> String {
+        guard let r = sdp.range(of: #"a=rtpmap:(\d+) opus/48000"#, options: [.regularExpression, .caseInsensitive]) else { return sdp }
+        let pt = sdp[r].dropFirst("a=rtpmap:".count).prefix { $0.isNumber }
+        let nl = sdp.contains("\r\n") ? "\r\n" : "\n"
+        return sdp.components(separatedBy: nl).map { line -> String in
+            guard line.hasPrefix("a=fmtp:\(pt) ") else { return line }
+            let l = line.replacingOccurrences(of: #";?usedtx=\d"#, with: "", options: .regularExpression)
+                .replacingOccurrences(of: #";?maxaveragebitrate=\d+"#, with: "", options: .regularExpression)
+            return l + ";usedtx=1;maxaveragebitrate=\(maxBitrateBps)"
+        }.joined(separator: nl)
+    }
+
+    static func capBitrate(_ sender: RTCRtpSender) {
+        guard enabled else { return }
+        let p = sender.parameters
+        for e in p.encodings { e.maxBitrateBps = NSNumber(value: maxBitrateBps) }
+        sender.parameters = p
     }
 }

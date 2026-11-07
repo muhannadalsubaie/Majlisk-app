@@ -209,12 +209,13 @@ object Voice {
                     val track = factory.createAudioTrack("mic", source)
                     mic = track
                     val tx = conn.addTransceiver(track, RtpTransceiver.RtpTransceiverInit(RtpTransceiver.RtpTransceiverDirection.SEND_ONLY))
-                    val offer = conn.createOfferAwait()
+                    val offer = VoiceSaver.sdp(conn.createOfferAwait())
                     conn.setLocalAwait(offer)
                     val r = request(JSONObject().put("op", "publish").put("sessionId", sessionId).put("offer", desc(offer)).put("mid", tx.mid))
                     // الخادم أنشأ جلسة جديدة (انتهت جلسة الاستماع لخمولها)
                     r.optString("sessionId").takeIf { it.isNotEmpty() }?.let { sessionId = it }
-                    conn.setRemoteAwait(parseDesc(r.getJSONObject("answer"))!!)
+                    conn.setRemoteAwait(VoiceSaver.sdp(parseDesc(r.getJSONObject("answer"))!!))
+                    VoiceSaver.capBitrate(tx.sender)
                     set { copy(muted = false, busy = false) }
                     setTalking(true)
                     com.majlisk.app.data.Sounds.micToggle(true)
@@ -492,4 +493,40 @@ private open class PeerObserver : PeerConnection.Observer {
     override fun onDataChannel(p0: org.webrtc.DataChannel?) {}
     override fun onRenegotiationNeeded() {}
     override fun onAddTrack(p0: RtpReceiver?, p1: Array<out MediaStream>?) {}
+}
+
+/**
+ * توفير استهلاك الصوت (يقلل فاتورة خادم الصوت تقريباً 75%):
+ * - DTX: الساكت ما يرسل صوت (إشارة صغيرة كل شوي بس)، ولما يتكلم يرجع الإرسال فوراً. السماع ما يتأثر.
+ * - جودة 24 كيلوبت للكلام بدل الافتراضي (حوالي 32 + زيادات).
+ * للرجوع للإعدادات السابقة: ENABLED = false
+ */
+object VoiceSaver {
+    const val ENABLED = true
+    const val MAX_BITRATE_BPS = 24_000
+
+    fun sdp(d: SessionDescription): SessionDescription =
+        if (!ENABLED) d else SessionDescription(d.type, munge(d.description))
+
+    /** يضيف usedtx و maxaveragebitrate لسطر fmtp حق Opus */
+    fun munge(sdp: String): String {
+        val pt = Regex("a=rtpmap:(\\d+) opus/48000", RegexOption.IGNORE_CASE).find(sdp)?.groupValues?.get(1) ?: return sdp
+        val nl = if (sdp.contains("\r\n")) "\r\n" else "\n"
+        return sdp.split(nl).joinToString(nl) { line ->
+            if (!line.startsWith("a=fmtp:$pt ")) line
+            else {
+                val l = line.replace(Regex(";?usedtx=\\d"), "").replace(Regex(";?maxaveragebitrate=\\d+"), "")
+                l + ";usedtx=1;maxaveragebitrate=$MAX_BITRATE_BPS"
+            }
+        }
+    }
+
+    fun capBitrate(sender: org.webrtc.RtpSender?) {
+        if (!ENABLED || sender == null) return
+        runCatching {
+            val p = sender.parameters
+            p.encodings.forEach { it.maxBitrateBps = MAX_BITRATE_BPS }
+            sender.setParameters(p)
+        }
+    }
 }
