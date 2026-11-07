@@ -149,7 +149,8 @@ struct JoinTableScreen: View {
         .alert(item: $showing) { r in
             Alert(title: Text("الموجودين في طاولة \(r.ownerName)"), message: Text(r.membersText), dismissButton: .default(Text("تم")))
         }
-        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list) } } }
+        // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
+        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list.filter { !$0.isPrivate }) } } }
         .onDisappear { reg?.remove(); reg = nil }
     }
 

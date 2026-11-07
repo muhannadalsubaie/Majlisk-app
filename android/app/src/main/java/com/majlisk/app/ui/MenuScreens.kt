@@ -155,7 +155,9 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     DisposableEffect(Unit) {
         // ترتيب ثابت (الطاولة لا تتحرك من مكانها كل حركة لعب، والجديدة تظهر فوق)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ،
         // حتى لا يعيد قارئ الشاشة قراءة الطاولة المحددة كل شوي
-        val reg = Tables.listen { new ->
+        // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
+        val reg = Tables.listen { all ->
+            val new = all.filter { !it.isPrivate }
             val old = rows
             val pos = old.orEmpty().withIndex().associate { it.value.id to it.index }
             val sorted = new.sortedBy { pos[it.id] ?: -1 }
