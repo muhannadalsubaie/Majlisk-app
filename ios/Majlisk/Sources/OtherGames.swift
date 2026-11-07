@@ -142,8 +142,8 @@ struct JackarooView {
 struct LudoOption: Identifiable { var id: Int { token * 10 + die }; let token: Int; let die: Int; let text: String }
 
 struct LudoView {
-    /// المسار الرئيسي 0..51، ممر المنزل 52..57، المنزل 58
-    static let FINISH = 58, LAST_TRACK = 51
+    /// المسار 0..50 (51 خانة)، ممر المنزل 51..55 (5 خانات)، المنزل 56
+    static let FINISH = 56, LAST_TRACK = 50
     static let STARTS = [0, 13, 26, 39]
     static let SAFE: Set<Int> = [0, 8, 13, 21, 26, 34, 39, 47]
     static func absPos(_ owner: Int, _ p: Int) -> Int { (STARTS[owner] + p) % 52 }

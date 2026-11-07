@@ -216,9 +216,9 @@ data class LudoView(
     fun home(owner: Int) = tokens.getOrNull(owner).orEmpty().count { it == FINISH }
 
     companion object {
-        /** المسار الرئيسي 0..51، ممر المنزل 52..57، المنزل 58 */
-        const val FINISH = 58
-        const val LAST_TRACK = 51
+        /** المسار 0..50 (51 خانة)، ممر المنزل 51..55 (5 خانات)، المنزل 56 */
+        const val FINISH = 56
+        const val LAST_TRACK = 50
         val STARTS = listOf(0, 13, 26, 39)
         val SAFE = setOf(0, 8, 13, 21, 26, 34, 39, 47)
         fun absPos(owner: Int, p: Int) = (STARTS[owner] + p) % 52
