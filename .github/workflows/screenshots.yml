@@ -7,6 +7,10 @@ name: Screenshots
 on:
   workflow_dispatch:
 
+# الصور تنحفظ بعد في فرع shots-<المنصة> (للمراجعة بدون تنزيل الـ Artifacts)
+permissions:
+  contents: write
+
 jobs:
   android:
     runs-on: ubuntu-latest
@@ -23,6 +27,16 @@ jobs:
           chmod +x gradlew
           ./gradlew testDebugUnitTest --tests com.majlisk.app.TableShots --no-daemon --stacktrace
           ls -la app/build/shots
+      - name: Save to branch
+        if: always()
+        run: |
+          set -e
+          mkdir -p /tmp/out && cp android/app/build/shots/*.png /tmp/out/ 2>/dev/null || true
+          git config user.name "majlisk-shots"; git config user.email "shots@users.noreply.github.com"
+          git checkout --orphan shots-android
+          git rm -rf -q . || true
+          cp /tmp/out/*.png . 2>/dev/null || true
+          git add -A && git commit -qm "shots" && git push -f origin shots-android || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -74,6 +88,16 @@ jobs:
             xcrun simctl io "$UDID" screenshot "shots/ios-$g.png"
           done
           ls -la shots
+      - name: Save to branch
+        if: always()
+        run: |
+          set -e
+          mkdir -p /tmp/out && cp ios/shots/*.png /tmp/out/ 2>/dev/null || true
+          git config user.name "majlisk-shots"; git config user.email "shots@users.noreply.github.com"
+          git checkout --orphan shots-ios
+          git rm -rf -q . || true
+          cp /tmp/out/*.png . 2>/dev/null || true
+          git add -A && git commit -qm "shots" && git push -f origin shots-ios || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
