@@ -684,7 +684,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         // عند كل لون: صورة اللاعب الدائرية واسمه، وجنبها النرد بآخر رقم رماه (يتحرك أول ما يرمي)
         val label: @Composable (Int) -> Unit = { o ->
             val n = names.getOrElse(o) { "" }
-            val roll = rolls[o]
+            // آخر رمية من السيرفر مباشرة (تتحدث على طول لكل اللاعبين)، وإلا آخر رمية محفوظة له
+            val roll = if (l.rollSeq > 0 && l.rolledSeat == o && l.rolledValue != null) l.rolledValue else rolls[o]
             val turn = l.turn == o && l.phase != "over"
             val left = corner(o).second
             // دحرجة النرد مع كل رمية جديدة

@@ -669,6 +669,12 @@ struct LudoBoard: View {
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
 
+    /// النرد اللي يطلع جنب اللاعب: آخر رمية من السيرفر مباشرة (تتحدث على طول لكل اللاعبين)، وإلا آخر رمية محفوظة له
+    private func shownRoll(_ o: Int) -> Int? {
+        if l.rollSeq > 0, l.rolledSeat == o, let r = l.rolledValue { return r }
+        return rolls[o]
+    }
+
     /// لمس حجر على اللوحة: يتحرك بالرقم المختار (أو أول رقم يقدر يمشيه)
     private func tapBoard(_ at: CGPoint, _ size: CGSize) {
         guard l.myTurn, l.phase == "move", !l.options.isEmpty else { return }
@@ -716,7 +722,7 @@ struct LudoBoard: View {
             if left { dice }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(rolls[o].map { "، آخر رمية \($0)" } ?? "")\(turn ? "، عليه الدور" : "")")
+        .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turn ? "، عليه الدور" : "")")
     }
 
     /// النرد جنب الاسم. لك (بدون قارئ الشاشة): تضغطه وترمي، ولو عندك أكثر من رقم تختار الرقم منه
@@ -738,9 +744,9 @@ struct LudoBoard: View {
             }
         } else {
             let canTap = mine && l.canRoll
-            DiceView(value: canTap && l.pool.isEmpty ? nil : rolls[o], color: LUDO_COLORS[o], size: canTap ? 46 : 40)
-                .rotationEffect(.degrees(Double(rollTicks[o] ?? 0) * 360))
-                .animation(.easeOut(duration: 0.45), value: rollTicks[o] ?? 0)
+            DiceView(value: canTap && l.pool.isEmpty ? nil : shownRoll(o), color: LUDO_COLORS[o], size: canTap ? 46 : 40)
+                .rotationEffect(.degrees(Double(l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0)) * 360))
+                .animation(.easeOut(duration: 0.45), value: l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0))
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
                 .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
                 .onTapGesture { if canTap { act(["type": "roll"]) } }
