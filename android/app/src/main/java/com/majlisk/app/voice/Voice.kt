@@ -9,7 +9,6 @@ import android.os.Build
 import com.majlisk.app.MainActivity
 import com.majlisk.app.MajliskApp
 import com.majlisk.app.a11y.Announcer
-import com.majlisk.app.data.Session
 import com.majlisk.app.data.Sounds
 import com.majlisk.app.model.VoiceMember
 import com.majlisk.app.model.objects
@@ -56,6 +55,12 @@ object Voice {
 
     private val ctx: Context get() = MajliskApp.instance
     private val lock = Mutex()
+    /**
+     * كل شغل الصوت (WebRTC والطلبات) على خيط خاص فيه، مو على خيط الشاشة: إنشاء الاتصال وإغلاقه يعلّق
+     * لحظات، وكان يعلّق الشاشة معه (تضغط الورقة وما تنلعب) كل ما أحد دخل أو طلع من المحادثة الصوتية
+     */
+    @OptIn(kotlinx.coroutines.ExperimentalCoroutinesApi::class)
+    private val voiceScope = kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.SupervisorJob() + kotlinx.coroutines.Dispatchers.IO.limitedParallelism(1))
     private var tableId: String? = null
     private var myUid = ""
     private var pc: PeerConnection? = null
@@ -101,7 +106,7 @@ object Voice {
 
     /** الانضمام: جلسة استماع فقط بلا ميكروفون — لا يُطلب إذن الميكروفون حتى تفتحه بنفسك */
     fun join(id: String, uid: String, mode: Mode = Mode.Manual) {
-        Session.scope.launch {
+        voiceScope.launch {
             lock.withLock {
                 if (_state.value.joined || _state.value.busy) return@launch
                 set { copy(busy = true) }
@@ -144,7 +149,7 @@ object Voice {
                     if (retry) {
                         autoRetries++
                         val wait = 5000L * autoRetries
-                        Session.scope.launch { delay(wait); if (!_state.value.joined && tableId == id) join(id, uid, mode) }
+                        voiceScope.launch { delay(wait); if (!_state.value.joined && tableId == id) join(id, uid, mode) }
                     }
                     if (mode == Mode.Manual) Announcer.announce(when (code) {
                         "voice-not-configured" -> "المحادثة الصوتية غير مفعّلة بعد"
@@ -160,7 +165,7 @@ object Voice {
 
     fun leave(quiet: Boolean = false) {
         if (_state.value.joined) leaving = true
-        Session.scope.launch {
+        voiceScope.launch {
             lock.withLock {
                 try {
                     if (!_state.value.joined) return@launch
@@ -188,17 +193,17 @@ object Voice {
             setTalking(!muted)
             com.majlisk.app.data.Sounds.micToggle(!muted)
             Announcer.announce(if (muted) "الميكروفون مغلق" else "الميكروفون مفتوح")
-            Session.scope.launch { runCatching { request(JSONObject().put("op", "mute").put("sessionId", sessionId).put("muted", muted)) } }
+            voiceScope.launch { runCatching { request(JSONObject().put("op", "mute").put("sessionId", sessionId).put("muted", muted)) } }
             return
         }
         if (muted) return
-        Session.scope.launch {
+        voiceScope.launch {
             lock.withLock {
                 val conn = pc ?: return@launch
                 if (sessionId == null || mic != null) return@launch
                 set { copy(busy = true) }
                 try {
-                    val granted = MainActivity.current?.requestMicPermission() ?: false
+                    val granted = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { MainActivity.current?.requestMicPermission() ?: false }
                     if (!granted) {
                         set { copy(busy = false, muted = true) }
                         Announcer.announce("لم يُسمح باستخدام الميكروفون. فعّله من إعدادات الجهاز للتطبيق")
@@ -219,7 +224,7 @@ object Voice {
                     set { copy(muted = false, busy = false) }
                     setTalking(true)
                     com.majlisk.app.data.Sounds.micToggle(true)
-                    MainActivity.current?.requestNotificationsOnce()
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { MainActivity.current?.requestNotificationsOnce() }
                     background(on = true, withMic = true)
                     Announcer.announce("الميكروفون مفتوح")
                 } catch (e: Exception) {
@@ -243,7 +248,7 @@ object Voice {
         // لسنا في قائمة الخادم: قد تكون حالة قديمة وصلت قبل تسجيل انضمامنا، أو أخرجنا الخادم فعلاً.
         // نتحقق بعد مهلة من آخر قائمة وصلت، ثم نعود مكتومين.
         if (members.none { it.uid == myUid }) {
-            if (!leaving && missingJob == null) missingJob = Session.scope.launch {
+            if (!leaving && missingJob == null) missingJob = voiceScope.launch {
                 delay(4000)
                 missingJob = null
                 val st = _state.value
@@ -259,7 +264,7 @@ object Voice {
             setTalking(false)
             Announcer.announce("كتمك مالك الطاولة في المحادثة الصوتية")
         }
-        Session.scope.launch {
+        voiceScope.launch {
             lock.withLock {
                 val conn = pc ?: return@launch
                 if (sessionId == null) return@launch
@@ -294,7 +299,7 @@ object Voice {
                 }
                 if (failed && pullRetries < 5) {
                     pullRetries++
-                    Session.scope.launch { delay(3000); if (_state.value.joined) sync(members) }
+                    voiceScope.launch { delay(3000); if (_state.value.joined) sync(members) }
                 } else if (!failed) pullRetries = 0
             }
         }
@@ -313,7 +318,7 @@ object Voice {
         val id = tableId ?: return
         rejoining = true
         set { copy(reconnecting = true) }
-        Session.scope.launch {
+        voiceScope.launch {
             lock.withLock { cleanup() }
             join(id, myUid, Mode.Rejoin)
             delay(1000)
