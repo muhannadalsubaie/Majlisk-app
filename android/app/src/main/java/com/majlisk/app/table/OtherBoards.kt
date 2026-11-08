@@ -800,6 +800,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             }
             val mine = o == mySeat && !reader
             val distinct = l.pool.distinct()
+            // رميات هالدور (للي عليه الدور بس)
+            val pool = if (turn) l.pool else emptyList()
             val dice: @Composable () -> Unit = {
                 if (mine && l.myTurn && l.phase == "move" && distinct.size > 1) {
                     // أكثر من رقم: كل رقم نرد صغير، تختار واحد ثم تلمس الحجر
@@ -816,15 +818,21 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                     }
                 } else {
                     val canTap = mine && l.canRoll
-                    Box(
-                        Modifier.graphicsLayer { rotationZ = spin.value }
-                            .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp).clickable { doRoll() } else Modifier),
-                    ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
+                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Box(
+                            Modifier.graphicsLayer { rotationZ = spin.value }
+                                .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp).clickable { doRoll() } else Modifier),
+                        ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
+                        // الرميات اللي عنده هالدور (ستة ثم ستة ثم ثلاثة...): نرد صغير لكل وحدة، تختفي لما يلعبها
+                        if (pool.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                            pool.forEach { Dice(it, LUDO_COLORS[o], 20) }
+                        }
+                    }
                 }
             }
             Row(
                 Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (turn) "، عليه الدور" else ""}"
+                    contentDescription = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (pool.size > 1) "، رمياته ${pool.joinToString(" و")}" else ""}${if (turn) "، عليه الدور" else ""}"
                 },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

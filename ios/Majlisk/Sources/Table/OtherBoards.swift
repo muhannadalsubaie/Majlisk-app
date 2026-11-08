@@ -829,8 +829,11 @@ struct LudoBoard: View {
             if left { dice }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turn ? "، عليه الدور" : "")")
+        .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turnPool(o).count > 1 ? "، رمياته " + turnPool(o).map(String.init).joined(separator: " و") : "")\(turn ? "، عليه الدور" : "")")
     }
+
+    /// رميات هالدور (للي عليه الدور بس)
+    private func turnPool(_ o: Int) -> [Int] { l.turn == o && l.phase != "over" ? l.pool : [] }
 
     /// النرد جنب الاسم. لك (بدون قارئ الشاشة): تضغطه وترمي، ولو عندك أكثر من رقم تختار الرقم منه
     @ViewBuilder private func myDice(_ o: Int, mySeat: Int?) -> some View {
@@ -851,12 +854,21 @@ struct LudoBoard: View {
             }
         } else {
             let canTap = mine && l.canRoll
-            DiceView(value: canTap && l.pool.isEmpty ? nil : shownRoll(o), color: LUDO_COLORS[o], size: canTap ? 46 : 40)
-                .rotationEffect(.degrees(Double(l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0)) * 360))
-                .animation(.easeOut(duration: 0.45), value: l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0))
-                .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
-                .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
-                .onTapGesture { if canTap { act(["type": "roll"]) } }
+            let pool = turnPool(o)
+            VStack(spacing: 4) {
+                DiceView(value: canTap && l.pool.isEmpty ? nil : shownRoll(o), color: LUDO_COLORS[o], size: canTap ? 46 : 40)
+                    .rotationEffect(.degrees(Double(l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0)) * 360))
+                    .animation(.easeOut(duration: 0.45), value: l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0))
+                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
+                    .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
+                    .onTapGesture { if canTap { act(["type": "roll"]) } }
+                // الرميات اللي عنده هالدور (ستة ثم ستة ثم ثلاثة...): نرد صغير لكل وحدة، تختفي لما يلعبها
+                if !pool.isEmpty {
+                    HStack(spacing: 3) {
+                        ForEach(Array(pool.enumerated()), id: \.offset) { _, d in DiceView(value: d, color: LUDO_COLORS[o], size: 20) }
+                    }
+                }
+            }
         }
     }
 
