@@ -57,7 +57,13 @@ func teamOf(_ seat: Int) -> Int { seat % 2 }
 
 struct SeatInfo: Equatable { let username: String; let isBot: Bool; let away: Bool }
 struct Person: Equatable { let uid: String; let username: String }
-struct VoiceMember: Equatable { let uid: String; let username: String; let sessionId: String; let muted: Bool; let mic: Bool; let blocked: Bool }
+struct VoiceMember: Equatable {
+    let uid: String; let username: String; let sessionId: String; let muted: Bool; let mic: Bool; let blocked: Bool
+    /// قائمة المحادثة الصوتية (من الحالة كاملة، أو من رسالة «voice» الخفيفة)
+    static func list(_ a: [JSON]) -> [VoiceMember] {
+        a.map { VoiceMember(uid: $0.str("uid"), username: $0.str("username"), sessionId: $0.str("sessionId"), muted: $0.bool("muted"), mic: $0.bool("mic"), blocked: $0.bool("blocked")) }
+    }
+}
 struct PlayedCard: Equatable { let seat: Int; let card: Card }
 struct Contract: Equatable { let mode: String; let trump: String?; let buyer: Int; let qabaTo: Int }
 struct Doubling: Equatable {
@@ -149,7 +155,7 @@ struct TableView {
     let seats: [SeatInfo?]
     let seatUids: [String]
     let spectators: [Person]
-    let voice: [VoiceMember]
+    var voice: [VoiceMember]
     let voiceBlocked: [String]
     let game: GameView?
     let kind: String
@@ -184,9 +190,7 @@ struct TableView {
         seats = o.arr("seats").map { ($0 as? JSON).map { SeatInfo(username: $0.str("username"), isBot: $0.bool("isBot"), away: $0.bool("away")) } }
         seatUids = o.strs("seatUids")
         spectators = o.objs("spectators").map { Person(uid: $0.str("uid"), username: $0.str("username")) }
-        voice = o.objs("voice").map {
-            VoiceMember(uid: $0.str("uid"), username: $0.str("username"), sessionId: $0.str("sessionId"), muted: $0.bool("muted"), mic: $0.bool("mic"), blocked: $0.bool("blocked"))
-        }
+        voice = VoiceMember.list(o.objs("voice"))
         voiceBlocked = o.strs("voiceBlocked")
         game = o.obj("game").map(TableView.parseGame)
         kind = o.str("kind", "baloot")

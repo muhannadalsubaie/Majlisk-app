@@ -194,7 +194,7 @@ class TableConnection(val tableId: String) {
                 if (token != null) {
                     val done = CompletableDeferred<Unit>()
                     ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/tables/$tableId/ws", token)).build(), object : WebSocketListener() {
-                        override fun onOpen(webSocket: WebSocket, response: Response) { _connected.value = true; retry = 0; webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString()) }
+                        override fun onOpen(webSocket: WebSocket, response: Response) { _connected.value = true; retry = 0; webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString()); webSocket.send("{\"type\":\"caps\",\"voice\":true}") }
                         override fun onMessage(webSocket: WebSocket, text: String) { lastHeard = System.currentTimeMillis(); if (text != "pong") handle(text) }
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
@@ -245,6 +245,12 @@ class TableConnection(val tableId: String) {
     private fun handle(text: String) {
         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
         when (msg.optString("type")) {
+            // المحادثة الصوتية من غرفتها المستقلة: نحدّث القائمة بس (بدون الطاولة كاملة)
+            "voice" -> {
+                val list = com.majlisk.app.model.parseVoice(msg.optJSONArray("voice"))
+                _view.value?.let { v -> val next = v.copy(voice = list); _view.value = next; onState?.invoke(next) }
+                scope.launch { com.majlisk.app.voice.Voice.sync(list, tableId) }
+            }
             "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it); scope.launch { com.majlisk.app.voice.Voice.sync(it.voice, tableId) } }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)

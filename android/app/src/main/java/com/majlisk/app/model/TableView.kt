@@ -7,6 +7,11 @@ import org.json.JSONObject
 data class SeatInfo(val username: String, val isBot: Boolean, val away: Boolean)
 data class Person(val uid: String, val username: String)
 data class VoiceMember(val uid: String, val username: String, val sessionId: String, val muted: Boolean, val mic: Boolean, val blocked: Boolean)
+
+/** قائمة المحادثة الصوتية (من الحالة كاملة، أو من رسالة «voice» الخفيفة) */
+fun parseVoice(a: org.json.JSONArray?): List<VoiceMember> = a.objects().map {
+    VoiceMember(it.optString("uid"), it.optString("username"), it.optString("sessionId"), it.optBoolean("muted"), it.optBoolean("mic"), it.optBoolean("blocked"))
+}
 data class PlayedCard(val seat: Int, val card: Card)
 data class Contract(val mode: String, val trump: String?, val buyer: Int, val qabaTo: Int)
 data class Doubling(
@@ -132,9 +137,7 @@ data class TableView(
             },
             seatUids = o.optJSONArray("seatUids").mapIndexed { a, i -> a.optString(i, "") },
             spectators = o.optJSONArray("spectators").objects().map { Person(it.optString("uid"), it.optString("username")) },
-            voice = o.optJSONArray("voice").objects().map {
-                VoiceMember(it.optString("uid"), it.optString("username"), it.optString("sessionId"), it.optBoolean("muted"), it.optBoolean("mic"), it.optBoolean("blocked"))
-            },
+            voice = parseVoice(o.optJSONArray("voice")),
             voiceBlocked = o.optJSONArray("voiceBlocked").mapIndexed { a, i -> a.optString(i) },
             game = o.optJSONObject("game")?.let(::parseGame),
             kind = o.optString("kind", "baloot"),

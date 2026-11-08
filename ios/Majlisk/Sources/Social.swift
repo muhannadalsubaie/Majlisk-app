@@ -271,6 +271,7 @@ final class TableConnection: ObservableObject {
                     self.ws = ws
                     ws.resume()
                     ws.send(.string(self.chatPrefMessage())) { _ in }
+                    ws.send(.string("{\"type\":\"caps\",\"voice\":true}")) { _ in }
                     // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
                     self.lastHeard = Date()
                     let ping = Task { [weak self] in
@@ -338,6 +339,15 @@ final class TableConnection: ObservableObject {
                 // المحادثة الصوتية تتابع المنضمين هنا (مو من الشاشة): والتطبيق في الخلفية الشاشة ما تتحدث، فما كنت تسمع من دخل جديد
                 Voice.shared.sync(parsed.voice, table: self.tableId)
             } }
+        case "voice":
+            // المحادثة الصوتية من غرفتها المستقلة: نحدّث القائمة بس (بدون الطاولة كاملة)
+            let list = VoiceMember.list(msg.objs("voice"))
+            DispatchQueue.main.async {
+                guard var v = self.view else { return }
+                v.voice = list
+                self.view = v; self.version += 1; self.onState?(v)
+                Voice.shared.sync(list, table: self.tableId)
+            }
         case "events":
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
