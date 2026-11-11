@@ -38,7 +38,7 @@ object Sounds {
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
-    )
+    ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
 
@@ -113,13 +113,11 @@ object Sounds {
     /** لودو: رمي النرد */
     fun dice() = play("dice", gain = 0.9f)
     /** مشي الحجر في اللودو: نقرة لكل خطوة */
-    fun steps(n: Int, at: Double = 0.0) {
-        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "step1" else "step2", at = at + i * STEP_GAP, gain = 0.9f) }
-    }
+    // النقرة الوحدة قصيرة جداً (٥٠ جزء من الألف من الثانية): تشغيلها نقرة نقرة كان يضيّع أغلبها في أندرويد
+    // (تنسمع نقرة وحدة أو ولا شي). الحين كل عدد خطوات ملف واحد جاهز فيه النقرات كلها بنفس التوقيت
+    fun steps(n: Int, at: Double = 0.0) = play("steps-${n.coerceIn(1, 13)}", at = at, gain = 0.9f, vary = false)
     /** مشي حجر الجاكارو: نقرة خفيفة لكل خطوة (غير صوت اللودو) */
-    fun marbleSteps(n: Int, at: Double = 0.0) {
-        repeat(n.coerceIn(1, 13)) { i -> play(if (i % 2 == 0) "marble1" else "marble2", at = at + i * STEP_GAP, gain = 0.9f) }
-    }
+    fun marbleSteps(n: Int, at: Double = 0.0) = play("marbles-${n.coerceIn(1, 13)}", at = at, gain = 0.9f, vary = false)
 
     /** جرس خفيف لك أنت لما تفتح الميكروفون أو تسكّره */
     fun micToggle(open: Boolean) = play(if (open) "mic-on" else "mic-off", gain = 0.8f, vary = false)
