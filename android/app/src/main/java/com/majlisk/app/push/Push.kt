@@ -24,12 +24,22 @@ object Push {
     /** انتقال من طاولة لطاولة صديق (من قائمة الأصدقاء داخل الطاولة): الشاشة الرئيسية تفتحها */
     val switchTable = MutableStateFlow<String?>(null)
 
+    /** قناة الإشعارات بصوت التطبيق. صوت القناة ما يتغير بعد إنشائها، فالقناة الجديدة باسم جديد والقديمة تنحذف */
+    const val CHANNEL = "invites2"
+
     fun createChannel(ctx: Context) {
         if (Build.VERSION.SDK_INT < 26) return
         val nm = ctx.getSystemService(NotificationManager::class.java)
-        nm.createNotificationChannel(NotificationChannel("invites", "دعوات اللعب", NotificationManager.IMPORTANCE_HIGH).apply {
+        val sound = android.net.Uri.parse("android.resource://${ctx.packageName}/${com.majlisk.app.R.raw.notify}")
+        val attrs = android.media.AudioAttributes.Builder()
+            .setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(android.media.AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+        nm.createNotificationChannel(NotificationChannel(CHANNEL, "دعوات اللعب", NotificationManager.IMPORTANCE_HIGH).apply {
             description = "لما يدعوك صديق للعب"
+            setSound(sound, attrs)
         })
+        // القناة القديمة (بصوت الجوال الافتراضي)
+        runCatching { nm.deleteNotificationChannel("invites") }
     }
 
     /** يرسل رمز هذا الجهاز للخادم (بعد تسجيل الدخول) */

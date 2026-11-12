@@ -47,7 +47,7 @@
         </service>
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_channel_id"
-            android:value="invites" />
+            android:value="invites2" />
 
         <!-- المحادثة الصوتية في الخلفية -->
         <service
