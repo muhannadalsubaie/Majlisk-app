@@ -15,6 +15,10 @@ on:
         description: نشر النسخة (رابط التنزيل وGoogle Play) — أطفئه للتأكد من البناء فقط
         type: boolean
         default: true
+      play:
+        description: رفع النسخة إلى Google Play (أطفئه لنشر ملف APK بس)
+        type: boolean
+        default: true
 
 concurrency: android-build
 
@@ -68,13 +72,13 @@ jobs:
             majlisk.apk
             majlisk.aab
       - name: Prepare Google Play key
-        if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
+        if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || (inputs.publish && inputs.play))
         run: node .github/scripts/play-key.mjs /tmp/play-sa.json
         env:
           SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
       - name: Upload to Google Play (closed testing — Alpha)
         id: play
-        if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || inputs.publish)
+        if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || (inputs.publish && inputs.play))
         continue-on-error: true
         uses: r0adkll/upload-google-play@v1.1.3
         with:
