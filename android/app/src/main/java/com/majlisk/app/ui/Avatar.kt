@@ -28,6 +28,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.majlisk.app.data.Usernames
 import com.majlisk.app.net.Api
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -135,6 +136,53 @@ fun ProfileScreen(profile: com.majlisk.app.data.Profile?, onBack: () -> Unit) {
             }
         }, enabled = !busy, fill = true)
         Note("صورتك تطلع دائرية جنب اسمك في الطاولات وعند أصدقائك.")
+        RenameSection(profile?.username.orEmpty())
+    }
+}
+
+/** تغيير اسم المستخدم: مرة كل ستة أشهر، والاسم القديم يصير متاح لغيرك */
+@Composable
+private fun RenameSection(current: String) {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    // متى يقدر يغيّر (0 = الحين)، null = ما وصل الرد بعد
+    var nextAt by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf<Long?>(null) }
+    var open by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    var name by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var error by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf("") }
+    var busy by androidx.compose.runtime.remember { androidx.compose.runtime.mutableStateOf(false) }
+    androidx.compose.runtime.LaunchedEffect(current) {
+        runCatching { Api.post("/profile/rename", org.json.JSONObject().put("check", true)) }
+            .onSuccess { nextAt = it.optLong("nextAt", 0L) }
+    }
+    val wait = nextAt?.let { it - System.currentTimeMillis() }?.takeIf { it > 0 }
+    SecondaryButton("تغيير اسم المستخدم", { name = ""; error = ""; open = true }, enabled = nextAt != null && wait == null, fill = true)
+    Note(if (wait != null) "تقدر تغيّر اسمك بعد ${(wait / 86_400_000L) + 1} يوم." else "تقدر تغيّر اسم المستخدم مرة كل ستة أشهر، واسمك القديم يصير متاح لغيرك.")
+    if (open) MajliskDialog("تغيير اسم المستخدم", { if (!busy) open = false }) {
+        Text("اسمك الحالي: $current. بعد التغيير ما تقدر تغيّره مرة ثانية إلا بعد ستة أشهر، واسمك القديم يقدر ياخذه أي أحد.", color = Palette.text)
+        UsernameField(name) { name = it }
+        if (error.isNotEmpty()) Text(error, color = Palette.goldSoft)
+        PrimaryButton("تأكيد التغيير", {
+            val invalid = Usernames.validate(name)
+            if (invalid != null) { error = Usernames.ERRORS.getValue(invalid); com.majlisk.app.a11y.Announcer.announce(error); return@PrimaryButton }
+            busy = true; error = ""
+            scope.launch {
+                runCatching { Api.post("/profile/rename", org.json.JSONObject().put("username", name)) }
+                    .onSuccess {
+                        nextAt = it.optLong("nextAt", 0L); open = false
+                        com.majlisk.app.a11y.Announcer.announce("تم تغيير اسمك إلى ${it.optString("username", name)}")
+                    }
+                    .onFailure {
+                        error = when ((it as? com.majlisk.app.net.ApiError)?.code) {
+                            "too-soon" -> "ما تقدر تغيّر اسمك الحين، مرة كل ستة أشهر"
+                            "same" -> "هذا اسمك الحالي"
+                            else -> Usernames.ERRORS[(it as? com.majlisk.app.net.ApiError)?.code] ?: "حدث خطأ، حاول مرة أخرى"
+                        }
+                        com.majlisk.app.a11y.Announcer.announce(error)
+                    }
+                busy = false
+            }
+        }, enabled = !busy)
+        SecondaryButton("إلغاء", { open = false }, enabled = !busy, fill = true)
     }
 }
 

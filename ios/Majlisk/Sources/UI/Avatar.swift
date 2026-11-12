@@ -69,6 +69,11 @@ struct ProfileScreen: View {
     @ObservedObject private var session = Session.shared
     @State private var pick: PhotosPickerItem?
     @State private var busy = false
+    /// تغيير اسم المستخدم: متى يقدر يغيّر (0 = الحين، nil = ما وصل الرد بعد)
+    @State private var nextAt: Double?
+    @State private var renaming = false
+    @State private var newName = ""
+    @State private var renameError = ""
 
     var body: some View {
         Screen {
@@ -85,6 +90,23 @@ struct ProfileScreen: View {
             .disabled(busy)
             MButton("حذف الصورة", enabled: !busy) { Task { await send(["remove": true], ok: "تم حذف صورتك", fail: "تعذّر حذف الصورة") } }
             Note("صورتك تطلع دائرية جنب اسمك في الطاولات وعند أصدقائك.")
+            // تغيير اسم المستخدم: مرة كل ستة أشهر، والاسم القديم يصير متاح لغيرك
+            let wait = nextAt.map { $0 / 1000 - Date().timeIntervalSince1970 }.flatMap { $0 > 0 ? $0 : nil }
+            MButton("تغيير اسم المستخدم", enabled: nextAt != nil && wait == nil) { newName = ""; renameError = ""; renaming = true }
+            Note(wait.map { "تقدر تغيّر اسمك بعد \(Int($0 / 86400) + 1) يوم." } ?? "تقدر تغيّر اسم المستخدم مرة كل ستة أشهر، واسمك القديم يصير متاح لغيرك.")
+        }
+        .task(id: profile?.username ?? "") {
+            if let r = try? await Api.post("/profile/rename", ["check": true]) { nextAt = (r["nextAt"] as? NSNumber)?.doubleValue ?? 0 }
+        }
+        .sheet(isPresented: $renaming) {
+            Sheet(title: "تغيير اسم المستخدم") {
+                Text("اسمك الحالي: \(profile?.username ?? ""). بعد التغيير ما تقدر تغيّره مرة ثانية إلا بعد ستة أشهر، واسمك القديم يقدر ياخذه أي أحد.")
+                    .foregroundColor(Palette.text)
+                UsernameField(name: $newName)
+                if !renameError.isEmpty { Text(renameError).foregroundColor(Palette.goldSoft) }
+                MButton("تأكيد التغيير", .primary, enabled: !busy) { Task { @MainActor in await rename() } }
+                MButton("إلغاء", enabled: !busy) { renaming = false }
+            }
         }
         .onChange(of: pick) { item in
             guard let item else { return }
@@ -96,6 +118,25 @@ struct ProfileScreen: View {
                 }
                 await send(["image": b64], ok: "تم تغيير صورتك", fail: "تعذّر رفع الصورة، حاول مرة أخرى")
             }
+        }
+    }
+
+    private func rename() async {
+        if let invalid = Usernames.validate(newName) { renameError = Usernames.errors[invalid] ?? ""; Announcer.announce(renameError); return }
+        busy = true
+        defer { busy = false }
+        renameError = ""
+        do {
+            let r = try await Api.post("/profile/rename", ["username": newName])
+            nextAt = (r["nextAt"] as? NSNumber)?.doubleValue ?? 0
+            renaming = false
+            Announcer.announce("تم تغيير اسمك إلى \(r.str("username", newName))")
+        } catch {
+            let code = (error as? ApiError)?.code ?? ""
+            renameError = code == "too-soon" ? "ما تقدر تغيّر اسمك الحين، مرة كل ستة أشهر"
+                : code == "same" ? "هذا اسمك الحالي"
+                : Usernames.errors[code] ?? "حدث خطأ، حاول مرة أخرى"
+            Announcer.announce(renameError)
         }
     }
 
