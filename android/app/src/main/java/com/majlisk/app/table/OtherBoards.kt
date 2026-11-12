@@ -48,6 +48,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -889,7 +890,17 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
         if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
             Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            l.options.forEach { o -> SecondaryButton(o.text, { act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, fill = true) }
+            // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+            val dice = l.options.map { it.die }.distinct()
+            if (dice.size > 1) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                dice.forEach { d ->
+                    SecondaryButton(if (pickedDie == d) "✓ بالـ$d" else "بالـ$d", { pickedDie = if (pickedDie == d) null else d },
+                        modifier = Modifier.weight(1f).semantics { selected = pickedDie == d }, fill = true)
+                }
+            }
+            l.options.filter { pickedDie == null || pickedDie !in dice || it.die == pickedDie }.forEach { o ->
+                SecondaryButton(o.text, { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, fill = true)
+            }
         }
     }
 }

@@ -939,7 +939,19 @@ struct LudoBoard: View {
             // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
             if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
                 Text(l.prompt.isEmpty ? "اختر الحجر" : l.prompt).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
-                ForEach(l.options) { o in MButton(o.text) { act(["type": "move", "token": o.token, "die": o.die]) } }
+                // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+                let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
+                if dice.count > 1 {
+                    HStack(spacing: 8) {
+                        ForEach(dice, id: \.self) { d in
+                            MButton(pickedDie == d ? "✓ بالـ\(d)" : "بالـ\(d)") { pickedDie = pickedDie == d ? nil : d }
+                                .accessibilityAddTraits(pickedDie == d ? .isSelected : [])
+                        }
+                    }
+                }
+                ForEach(l.options.filter { pickedDie == nil || !dice.contains(pickedDie!) || $0.die == pickedDie }) { o in
+                    MButton(o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
+                }
             }
         }
         .onAppear { Gestures.shared.set("ludo") { read($0) }; noteRoll() }
