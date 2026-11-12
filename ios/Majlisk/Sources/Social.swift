@@ -100,7 +100,10 @@ final class Hub: ObservableObject {
         case "presence": DispatchQueue.main.async { self.presence += 1 }
         // الحساب انفتح من جوال ثاني: نسجّل خروج هالجوال
         case "loggedOut":
-            DispatchQueue.main.async {
+            Task { @MainActor in
+                // نتأكد من الخادم إن جوال ثاني فعلاً أخذ الحساب (ما نطلع بالغلط). لو ما قدرنا نتأكد ما نطلع
+                guard let r = try? await Api.post("/profile/device-status", ["device": Prefs.deviceId]),
+                      (r["current"] as? Bool) == false else { return }
                 Prefs.claimedUid = nil
                 Messaging.messaging().deleteToken { _ in }
                 Announcer.announce("انفتح حسابك من جوال ثاني، فتسجّل خروجك من هالجوال")

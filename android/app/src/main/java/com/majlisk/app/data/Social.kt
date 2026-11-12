@@ -98,6 +98,9 @@ object Hub {
                             "presence" -> _presence.value++
                             // الحساب انفتح من جوال ثاني: نسجّل خروج هالجوال
                             "loggedOut" -> Session.scope.launch {
+                                // نتأكد من الخادم إن جوال ثاني فعلاً أخذ الحساب (ما نطلع بالغلط). لو ما قدرنا نتأكد ما نطلع
+                                val current = runCatching { Api.post("/profile/device-status", jsonOf("device" to Prefs.deviceId)).optBoolean("current", true) }.getOrDefault(true)
+                                if (current) return@launch
                                 Prefs.claimedUid = null
                                 runCatching { com.google.firebase.messaging.FirebaseMessaging.getInstance().deleteToken() }
                                 Announcer.announce("انفتح حسابك من جوال ثاني، فتسجّل خروجك من هالجوال")
