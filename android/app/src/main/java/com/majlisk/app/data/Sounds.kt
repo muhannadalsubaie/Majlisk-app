@@ -132,7 +132,7 @@ object Sounds {
     /** وصلتك دعوة وأنت في التطبيق */
     fun inviteIn() = play("invite-in", gain = 1f, vary = false)
     /** إشعار عام (طلب صداقة، قبول، تنبيه) */
-    fun notify() = play("notify", gain = 0.9f, vary = false)
+    fun notifyTone() = play("notify", gain = 0.9f, vary = false)
     /** أحد طلب يدخل طاولتك */
     fun joinRequest() = play("join-request", gain = 1f, vary = false)
     /** وصلت رسالة دردشة */

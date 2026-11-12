@@ -90,7 +90,7 @@ object Hub {
                         when (msg.optString("type")) {
                             "state" -> _state.value = HubState(friends(msg, "friends"), friends(msg, "requests"), invites(msg))
                             "presence" -> _presence.value++
-                            "notice" -> { Sounds.notify(); Announcer.announce(msg.optString("text")) }
+                            "notice" -> { Sounds.notifyTone(); Announcer.announce(msg.optString("text")) }
                             "invite" -> { Sounds.inviteIn(); Announcer.announce("${msg.optJSONObject("invite")?.optString("fromName")} يدعوك لطاولته") }
                         }
                     }
