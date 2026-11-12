@@ -21,7 +21,7 @@ final class Sounds {
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
-        "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap",
+        "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
     ]
 
     func preload() {
@@ -160,12 +160,9 @@ final class Sounds {
     /// القطع بالحكم: ورقة ومعها رنة عملة
     func cut() { play("trump-cut", gain: 1, vary: false) }
     /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع
-    func project(_ kinds: [String]) {
-        if kinds.contains("أربعمية") { play("proj-400", gain: 0.8, vary: false) }
-        else if kinds.contains("مية") { play("proj-hundred", gain: 0.8, vary: false) }
-        else if kinds.contains("خمسين") { play("proj-fifty", gain: 0.8, vary: false) }
-        else { play("proj-sira", gain: 0.8, vary: false) }
-    }
+    // كل المشاريع (سرا، خمسين، مية، أربعمية) صوت واحد اختاره صاحب التطبيق.
+    // أصوات كل مشروع القديمة باقية في الملفات (proj-sira وproj-fifty وproj-hundred وproj-400) لو نبي نرجع لها
+    func project(_ kinds: [String]) { play("proj-reveal", gain: 1, vary: false) }
     /// مشروع البلوت: تسجيلك «بلوت»
     func baloot() { play("proj-baloot", gain: 0.8, vary: false) }
     func hokm() { if once("hokm") { play("bid", gain: 0.8, vary: false) } }

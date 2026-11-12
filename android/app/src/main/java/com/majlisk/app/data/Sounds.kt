@@ -38,7 +38,7 @@ object Sounds {
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
-        "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap",
+        "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
     ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -170,12 +170,10 @@ object Sounds {
     fun cut() = play("trump-cut", gain = 1f, vary = false) // ورقة ومعها رنة عملة
 
     /** المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع */
-    fun project(kinds: List<String>) = when {
-        kinds.contains("أربعمية") -> play("proj-400", gain = 0.8f, vary = false)
-        kinds.contains("مية") -> play("proj-hundred", gain = 0.8f, vary = false)
-        kinds.contains("خمسين") -> play("proj-fifty", gain = 0.8f, vary = false)
-        else -> play("proj-sira", gain = 0.8f, vary = false)
-    }
+    // كل المشاريع (سرا، خمسين، مية، أربعمية) صوت واحد اختاره صاحب التطبيق.
+    // أصوات كل مشروع القديمة باقية في الملفات (proj-sira وproj-fifty وproj-hundred وproj-400) لو نبي نرجع لها
+    @Suppress("UNUSED_PARAMETER")
+    fun project(kinds: List<String>) = play("proj-reveal", gain = 1f, vary = false)
     /** مشروع البلوت: تسجيلك «بلوت» */
     fun baloot() = play("proj-baloot", gain = 0.8f, vary = false)
 
