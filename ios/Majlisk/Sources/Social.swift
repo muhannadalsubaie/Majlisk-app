@@ -343,6 +343,10 @@ final class TableConnection: ObservableObject {
                     ws.resume()
                     ws.send(.string(self.chatPrefMessage())) { _ in }
                     ws.send(.string("{\"type\":\"caps\",\"voice\":true}")) { _ in }
+                    // حركة انرسلت والاتصال ميت (ضاعت): نعيد إرسالها مع الاتصال الجديد
+                    if let p = self.pending {
+                        if Date().timeIntervalSince(p.at) < 20 { self.resent = true; ws.send(.string(p.text)) { _ in } } else { self.pending = nil }
+                    }
                     // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
                     self.lastHeard = Date()
                     let ping = Task { [weak self] in
@@ -405,6 +409,7 @@ final class TableConnection: ObservableObject {
         guard let data = text.data(using: .utf8), let msg = (try? JSONSerialization.jsonObject(with: data)) as? JSON else { return }
         switch msg.str("type") {
         case "state":
+            pending = nil
             if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async {
                 self.view = parsed; self.version += 1; self.onState?(parsed)
                 // المحادثة الصوتية تتابع المنضمين هنا (مو من الشاشة): والتطبيق في الخلفية الشاشة ما تتحدث، فما كنت تسمع من دخل جديد
@@ -456,7 +461,9 @@ final class TableConnection: ObservableObject {
                 }
             }
             if !m.mine && mode == .read { Announcer.announce("\(m.name): \(m.text)") }
-        case "error": Announcer.announce(msg.str("message"))
+        case "error":
+            pending = nil
+            if resent { resent = false } else { Announcer.announce(msg.str("message")) }
         case "kicked":
             stopped = true
             let banned = msg.bool("banned")
@@ -470,11 +477,26 @@ final class TableConnection: ObservableObject {
         }
     }
 
+    /// آخر حركة لعب انرسلت ولسا ما جا رد الخادم عليها. لو الاتصال ميت وهو يبان شغال (النت انقطع ثواني)
+    /// كانت الحركة تضيع: الحين لو ما وصل شي من الخادم خلال ثانيتين ونص نعيد الاتصال على طول،
+    /// ونعيد إرسال الحركة مع الاتصال الجديد
+    private var pending: (text: String, at: Date)?
+    /// أعدنا إرسال حركة: لو كانت انلعبت قبل، خطأ الخادم («ليس دورك») ما ينقرأ
+    private var resent = false
+
     func send(_ msg: JSON) {
-        guard connected, let ws, let data = try? JSONSerialization.data(withJSONObject: msg), let s = String(data: data, encoding: .utf8) else {
-            Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return
-        }
+        guard let data = try? JSONSerialization.data(withJSONObject: msg), let s = String(data: data, encoding: .utf8) else { return }
+        let isMove = msg["action"] != nil
+        let at = Date()
+        if isMove { pending = (s, at); resent = false }
+        guard connected, let ws else { Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return }
         ws.send(.string(s)) { _ in }
+        if isMove {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                guard let self, let p = self.pending, p.at == at, self.lastHeard < at else { return }
+                self.ws?.cancel(with: .goingAway, reason: nil)
+            }
+        }
     }
 
     func send(_ type: String, _ extra: JSON = [:]) { send(extra.merging(["type": type]) { a, _ in a }) }

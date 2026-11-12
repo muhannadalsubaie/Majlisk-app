@@ -194,7 +194,13 @@ class TableConnection(val tableId: String) {
                 if (token != null) {
                     val done = CompletableDeferred<Unit>()
                     ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/tables/$tableId/ws", token)).build(), object : WebSocketListener() {
-                        override fun onOpen(webSocket: WebSocket, response: Response) { _connected.value = true; retry = 0; webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString()); webSocket.send("{\"type\":\"caps\",\"voice\":true}") }
+                        override fun onOpen(webSocket: WebSocket, response: Response) {
+                            _connected.value = true; retry = 0
+                            webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString())
+                            webSocket.send("{\"type\":\"caps\",\"voice\":true}")
+                            // حركة انرسلت والاتصال ميت (ضاعت): نعيد إرسالها مع الاتصال الجديد
+                            pending?.let { (text, at) -> if (System.currentTimeMillis() - at < 20_000) { resent = true; webSocket.send(text) } else pending = null }
+                        }
                         override fun onMessage(webSocket: WebSocket, text: String) { lastHeard = System.currentTimeMillis(); if (text != "pong") handle(text) }
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
@@ -251,7 +257,7 @@ class TableConnection(val tableId: String) {
                 _view.value?.let { v -> val next = v.copy(voice = list); _view.value = next; onState?.invoke(next) }
                 scope.launch { com.majlisk.app.voice.Voice.sync(list, tableId) }
             }
-            "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it); scope.launch { com.majlisk.app.voice.Voice.sync(it.voice, tableId) } }
+            "state" -> runCatching { pending = null; TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it); scope.launch { com.majlisk.app.voice.Voice.sync(it.voice, tableId) } }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             "events" -> msg.optJSONArray("events")?.let { a ->
@@ -284,7 +290,7 @@ class TableConnection(val tableId: String) {
                     if (mode == ChatMode.READ) Announcer.announce("${m.name}: ${m.text}")
                 }
             }
-            "error" -> Announcer.announce(msg.optString("message"))
+            "error" -> { pending = null; if (resent) resent = false else Announcer.announce(msg.optString("message")) }
             "kicked" -> {
                 stopped = true
                 val banned = msg.optBoolean("banned")
@@ -299,9 +305,26 @@ class TableConnection(val tableId: String) {
         }
     }
 
+    /**
+     * آخر حركة لعب انرسلت ولسا ما جا رد الخادم عليها. لو الاتصال ميت وهو يبان شغال (النت انقطع ثواني)
+     * كانت الحركة تضيع: الحين لو ما وصل شي من الخادم خلال ثانيتين ونص نعيد الاتصال على طول،
+     * ونعيد إرسال الحركة مع الاتصال الجديد
+     */
+    @Volatile private var pending: Pair<String, Long>? = null
+    /** أعدنا إرسال حركة: لو كانت انلعبت قبل، خطأ الخادم («ليس دورك») ما ينقرأ */
+    @Volatile private var resent = false
+    private val watchdog = android.os.Handler(android.os.Looper.getMainLooper())
+
     fun send(msg: JSONObject) {
-        val ok = ws?.takeIf { _connected.value }?.send(msg.toString()) ?: false
-        if (!ok) Announcer.announce("جارٍ إعادة الاتصال بالطاولة…")
+        val text = msg.toString()
+        val isMove = msg.has("action")
+        val at = System.currentTimeMillis()
+        if (isMove) { pending = text to at; resent = false }
+        val ok = ws?.takeIf { _connected.value }?.send(text) ?: false
+        if (!ok) { Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return }
+        if (isMove) watchdog.postDelayed({
+            if (pending?.second == at && lastHeard < at) ws?.cancel()
+        }, 2_500)
     }
 
     fun send(type: String, vararg pairs: Pair<String, Any?>) = send(jsonOf("type" to type, *pairs))
