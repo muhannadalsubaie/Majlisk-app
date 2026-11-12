@@ -23,6 +23,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
@@ -45,6 +46,7 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -471,7 +473,7 @@ private val JK_COLOR_NAMES = listOf("الذهبي", "الأحمر", "الأزر�
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner: Boolean) {
+fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner: Boolean, modifier: Modifier = Modifier) {
     val mySeat = v.mySeat
     val names = names(v)
     var picked by remember { mutableStateOf<JackarooHandCard?>(null) }
@@ -496,7 +498,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
     Column(
         // سحب بإصبعين: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = أحجارك،
         // من تحت لفوق = الدور عند مين، من فوق لتحت = قائمة أماكن الأحجار
-        Modifier.fillMaxWidth().twoFingerSwipes {
+        modifier.fillMaxWidth().twoFingerSwipes {
             when (it) {
                 SwipeDir.Left -> Announcer.announceNow(j.boardText)
                 SwipeDir.Right -> Announcer.announceNow(j.mineText)
@@ -528,11 +530,12 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             }
         }
         // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
+        // الشكل الطويل: اللوحة تاخذ كل المساحة الباقية في الشاشة (فوق وتحت)
         Box(
-            Modifier.fillMaxWidth().clearAndSetSemantics { },
+            (if (JK_TALL) Modifier.fillMaxWidth().weight(1f).heightIn(min = 220.dp) else Modifier.fillMaxWidth()).clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
-            Canvas(Modifier.widthIn(max = jkSide()).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
+            Canvas(if (JK_TALL) Modifier.fillMaxSize() else Modifier.widthIn(max = jkSide()).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
             // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
             Row(Modifier.clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy((-10).dp)) {
                 j.centerCards.forEachIndexed { i, c ->
@@ -665,6 +668,8 @@ private fun jackarooPositions(j: JackarooView, mySeat: Int?): List<Triple<String
  * (الجاكارو: اللوحة الدائرية، اللودو: أحجار مسطحة تنقل لمكانها مباشرة)
  */
 const val JK_OCTAGON = true
+/** الجاكارو: اللوحة الثمانية تتمدد بالطول وتملأ الشاشة (false = مربعة بحجمها القديم) */
+const val JK_TALL = true
 const val LUDO_3D = true
 
 /**
@@ -704,11 +709,16 @@ private fun jkRot(x: Float, y: Float, k: Int): Pair<Float, Float> {
 
 private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
     // لوحة غير الحجم المعتاد (١٩ خانة لكل لاعب): الرسم الدائري القديم
-    if (!JK_OCTAGON || j.segment != JK_HOLES.size) { drawJackarooRound(j, bottom); return }
+    if (!JK_OCTAGON || j.segment != JK_HOLES.size) {
+        translate(top = (size.height - size.minDimension).coerceAtLeast(0f) / 2) { drawJackarooRound(j, bottom) }
+        return
+    }
+    // اللوحة الطويلة: العرض كامل، والطول يتمدد (لين ١٫٦ من العرض)؛ الخانات والأحجار تبقى دائرية
     val W = size.minDimension
     val half = W * 0.47f
-    val ctr = Offset(W / 2, W / 2)
-    fun at(x: Float, y: Float) = Offset(ctr.x + x * half, ctr.y + y * half)
+    val halfY = if (JK_TALL) minOf(size.height, size.width * 1.6f) * 0.47f else half
+    val ctr = if (JK_TALL) center else Offset(W / 2, W / 2)
+    fun at(x: Float, y: Float) = Offset(ctr.x + x * half, ctr.y + y * halfY)
     val rk = { seat: Int -> (seat - bottom + 4) % 4 }
     fun hole(seat: Int, i: Int): Offset { val h = JK_HOLES[i]; val (x, y) = jkRot(h[0], h[1], rk(seat)); return at(x, y) }
     fun safe(seat: Int, s: Int): Offset { val d = 0.565f - 0.068f * s; val (x, y) = jkRot(d, d, rk(seat)); return at(x, y) }
@@ -728,11 +738,11 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
     val oct = Path()
     for (i in 0 until 8) {
         val a = Math.toRadians(22.5 + 45.0 * i); val rr = half * 0.99f / cos(Math.toRadians(22.5)).toFloat()
-        val q = Offset(ctr.x + rr * cos(a).toFloat(), ctr.y + rr * sin(a).toFloat())
+        val q = Offset(ctr.x + rr * cos(a).toFloat(), ctr.y + rr * sin(a).toFloat() * halfY / half)
         if (i == 0) oct.moveTo(q.x, q.y) else oct.lineTo(q.x, q.y)
     }
     oct.close()
-    drawPath(oct, androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF1C1C1E), Color(0xFF0B0B0C)), Offset.Zero, Offset(W, W)))
+    drawPath(oct, androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF1C1C1E), Color(0xFF0B0B0C)), Offset.Zero, Offset(size.width, size.height)))
     drawPath(oct, Color(0x80D4AF37), style = Stroke(W * 0.003f))
     // صينية الورق في النص
     val tray = Path()
@@ -769,7 +779,7 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
             if (i == 0 && active) drawCircle(JK_COLORS[seat], holeR * 1.4f, p, style = Stroke(W * 0.004f))
             drawHole(p)
             val (nx, ny) = jkRot(h[2], h[3], k)
-            text("${seat * j.segment + i}", Offset(p.x + nx * half * 0.062f, p.y + ny * half * 0.062f), W * 0.021f, android.graphics.Color.rgb(233, 220, 192))
+            text("${seat * j.segment + i}", Offset(p.x + nx * half * 0.062f, p.y + ny * halfY * 0.062f), W * 0.021f, android.graphics.Color.rgb(233, 220, 192))
         }
         val (sx, sy) = jkRot(-0.24f, 0.84f, k)
         text(JK_SUITS[seat], at(sx, sy), W * 0.064f, android.graphics.Color.rgb(239, 230, 207))
@@ -782,7 +792,7 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
             drawRoundRect(Color(0xFF101010), Offset(yc.x - bs / 2, yc.y - bs / 2), Size(bs, bs), CornerRadius(W * 0.016f))
             drawRoundRect(cream.copy(alpha = 0.7f), Offset(yc.x - bs / 2, yc.y - bs / 2), Size(bs, bs), CornerRadius(W * 0.016f), style = Stroke(W * 0.002f))
         }
-        JK_YARD_SPOTS.forEach { (dx, dy) -> drawHole(at(yx + dx, yy + dy), W * 0.014f) }
+        JK_YARD_SPOTS.forEach { (dx, dy) -> drawHole(yc + Offset(dx * half, dy * half), W * 0.014f) }
     }
     // الأحجار
     for (o in j.active) {
@@ -790,7 +800,7 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
             val p = when (m.zone) {
                 "track" -> hole(m.pos / j.segment, m.pos % j.segment)
                 "safe" -> safe(o, m.pos.coerceIn(0, 3))
-                else -> { val (yx, yy) = yard(o); val (dx, dy) = JK_YARD_SPOTS[i % 4]; at(yx + dx, yy + dy) }
+                else -> { val (yx, yy) = yard(o); val (dx, dy) = JK_YARD_SPOTS[i % 4]; at(yx, yy) + Offset(dx * half, dy * half) }
             }
             marble(JK_COLORS[o], p)
         }

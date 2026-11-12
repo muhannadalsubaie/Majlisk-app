@@ -11,6 +11,22 @@ private func boardSide(_ full: CGFloat) -> CGFloat {
     min(full, max(170, UIScreen.main.bounds.height - 550))
 }
 /// لوحة الجاكارو كبيرة: تاخذ عرض الشاشة لو فيه مكان بالطول
+/// حجم لوحة الجاكارو: الطويلة تاخذ عرض الشاشة وتتمدد بالطول على المساحة الباقية (لين ١٫٦ من العرض)
+private struct JkBoardSize: ViewModifier {
+    let player: Bool
+    func body(content: Content) -> some View {
+        if JK_TALL {
+            let s = UIScreen.main.bounds
+            let w = s.width - 32
+            // باقي الشاشة: الحواف والعنوان ومربعات اللاعبين والأزرار، وأوراقك لو كنت لاعب
+            let h = min(max(s.height - (player ? 420 : 320), min(w, 260)), w * 1.6)
+            content.frame(width: w, height: h)
+        } else {
+            content.aspectRatio(1, contentMode: .fit).frame(maxWidth: jkSide())
+        }
+    }
+}
+
 private func jkSide() -> CGFloat {
     min(440, max(220, UIScreen.main.bounds.height - 490))
 }
@@ -568,7 +584,7 @@ struct JackarooBoard: View {
                     }
                     .accessibilityHidden(true)
                 }
-                .aspectRatio(1, contentMode: .fit).frame(maxWidth: jkSide())
+                .modifier(JkBoardSize(player: mySeat != nil))
             }
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
@@ -723,6 +739,8 @@ func jackarooPositions(_ j: JackarooView, mySeat: Int?) -> [(title: String, colo
 /// مفاتيح الشكل: true = الجديد. لو ما عجبك، false يرجّع الشكل القديم كما كان بالضبط
 /// (الجاكارو: اللوحة الدائرية، اللودو: أحجار مسطحة تنقل لمكانها مباشرة)
 let JK_OCTAGON = true
+/// الجاكارو: اللوحة الثمانية تتمدد بالطول وتملأ الشاشة (false = مربعة بحجمها القديم)
+let JK_TALL = true
 let LUDO_3D = true
 
 /// لوحة الجاكارو الثمانية (مثل اللوحة الخشب): لكل لاعب ١٩ خانة على جهته، وخانة البداية عليها حلقة بلونه.
@@ -760,11 +778,18 @@ private func jkRot(_ x: CGFloat, _ y: CGFloat, _ k: Int) -> (CGFloat, CGFloat) {
 
 private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooView, _ bottom: Int) {
     // لوحة غير الحجم المعتاد (١٩ خانة لكل لاعب): الرسم الدائري القديم
-    guard JK_OCTAGON, j.segment == JK_HOLES.count else { drawJackarooRound(ctx, size, j, bottom); return }
+    guard JK_OCTAGON, j.segment == JK_HOLES.count else {
+        // اللوحة الطويلة: الدائرية القديمة في النص
+        var c = ctx
+        c.translateBy(x: 0, y: max(0, size.height - min(size.width, size.height)) / 2)
+        drawJackarooRound(c, size, j, bottom); return
+    }
+    // اللوحة الطويلة: العرض كامل، والطول يتمدد (لين ١٫٦ من العرض)؛ الخانات والأحجار تبقى دائرية
     let W = min(size.width, size.height)
     let half = W * 0.47
-    let ctr = CGPoint(x: W / 2, y: W / 2)
-    func at(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: ctr.x + x * half, y: ctr.y + y * half) }
+    let halfY = JK_TALL ? min(size.height, size.width * 1.6) * 0.47 : half
+    let ctr = JK_TALL ? CGPoint(x: size.width / 2, y: size.height / 2) : CGPoint(x: W / 2, y: W / 2)
+    func at(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: ctr.x + x * half, y: ctr.y + y * halfY) }
     func rk(_ seat: Int) -> Int { (seat - bottom + 4) % 4 }
     func hole(_ seat: Int, _ i: Int) -> CGPoint { let h = JK_HOLES[i]; let (x, y) = jkRot(h[0], h[1], rk(seat)); return at(x, y) }
     func safe(_ seat: Int, _ s: Int) -> CGPoint { let d = 0.565 - 0.068 * CGFloat(s); let (x, y) = jkRot(d, d, rk(seat)); return at(x, y) }
@@ -785,20 +810,20 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
         ctx.fill(dot(p, r), with: .radialGradient(Gradient(colors: [.white.opacity(0.85), .clear]), center: CGPoint(x: p.x - r * 0.35, y: p.y - r * 0.4), startRadius: 0, endRadius: r * 0.8))
         ctx.fill(dot(p, r), with: .radialGradient(Gradient(colors: [.clear, .black.opacity(0.7)]), center: CGPoint(x: p.x - r * 0.35, y: p.y - r * 0.4), startRadius: r * 0.5, endRadius: r * 1.6))
     }
-    func octagon(_ radius: CGFloat) -> Path {
+    func octagon(_ radius: CGFloat, stretch: CGFloat = 1) -> Path {
         var path = Path()
         for i in 0..<8 {
             let a = (22.5 + 45 * Double(i)) * Double.pi / 180
             let rr = radius / CGFloat(cos(22.5 * Double.pi / 180))
-            let q = CGPoint(x: ctr.x + rr * CGFloat(cos(a)), y: ctr.y + rr * CGFloat(sin(a)))
+            let q = CGPoint(x: ctr.x + rr * CGFloat(cos(a)), y: ctr.y + rr * CGFloat(sin(a)) * stretch)
             if i == 0 { path.move(to: q) } else { path.addLine(to: q) }
         }
         path.closeSubpath()
         return path
     }
     // اللوحة الثمانية السوداء
-    let board = octagon(half * 0.99)
-    ctx.fill(board, with: .linearGradient(Gradient(colors: [Color(red: 0.11, green: 0.11, blue: 0.12), Color(red: 0.04, green: 0.04, blue: 0.05)]), startPoint: .zero, endPoint: CGPoint(x: W, y: W)))
+    let board = octagon(half * 0.99, stretch: halfY / half)
+    ctx.fill(board, with: .linearGradient(Gradient(colors: [Color(red: 0.11, green: 0.11, blue: 0.12), Color(red: 0.04, green: 0.04, blue: 0.05)]), startPoint: .zero, endPoint: CGPoint(x: size.width, y: size.height)))
     ctx.stroke(board, with: .color(Palette.gold.opacity(0.5)), lineWidth: W * 0.003)
     // صينية الورق في النص
     let tray = octagon(half * 0.27)
@@ -829,7 +854,7 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
             drawHole(p)
             let (nx, ny) = jkRot(h[2], h[3], k)
             ctx.draw(Text("\(seat * j.segment + i)").font(.system(size: W * 0.021, weight: .semibold)).foregroundColor(cream),
-                     at: CGPoint(x: p.x + nx * half * 0.062, y: p.y + ny * half * 0.062))
+                     at: CGPoint(x: p.x + nx * half * 0.062, y: p.y + ny * halfY * 0.062))
         }
         let (sx, sy) = jkRot(-0.24, 0.84, k)
         ctx.draw(Text(JK_SUITS[seat]).font(.system(size: W * 0.064)).foregroundColor(cream), at: at(sx, sy))
@@ -844,7 +869,7 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
         let box = Path(roundedRect: CGRect(x: -bs / 2, y: -bs / 2, width: bs, height: bs), cornerRadius: W * 0.016)
         c3.fill(box, with: .color(Color(white: 0.06)))
         c3.stroke(box, with: .color(cream.opacity(0.7)), lineWidth: W * 0.002)
-        for (dx, dy) in JK_YARD_SPOTS { drawHole(at(yx + dx, yy + dy), W * 0.014) }
+        for (dx, dy) in JK_YARD_SPOTS { drawHole(CGPoint(x: yc.x + dx * half, y: yc.y + dy * half), W * 0.014) }
     }
     // الأحجار
     for o in j.active {
@@ -854,7 +879,7 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
             switch m.zone {
             case "track": p = hole(m.pos / j.segment, m.pos % j.segment)
             case "safe": p = safe(o, min(max(m.pos, 0), 3))
-            default: let (yx, yy) = yard(o); let (dx, dy) = JK_YARD_SPOTS[i % 4]; p = at(yx + dx, yy + dy)
+            default: let (yx, yy) = yard(o); let (dx, dy) = JK_YARD_SPOTS[i % 4]; let yc = at(yx, yy); p = CGPoint(x: yc.x + dx * half, y: yc.y + dy * half)
             }
             marble(JK_COLORS[o], p)
         }

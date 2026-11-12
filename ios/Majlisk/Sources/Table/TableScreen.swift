@@ -109,8 +109,8 @@ struct TableScreen: View {
             } else if let d = v.domino {
                 DominoBoard(v: v, d: d, conn: conn, isOwner: v.ownerUid == uid) { dominoLogOpen = true }
             } else if let j = v.jackaroo {
-                // الجاكارو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
-                Spacer(minLength: 0)
+                // الجاكارو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها (الطويلة تملأ الشاشة بنفسها)
+                if !JK_TALL { Spacer(minLength: 0) }
                 JackarooBoard(v: v, j: j, conn: conn, isOwner: v.ownerUid == uid)
             } else if let l = v.ludo {
                 // اللودو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
