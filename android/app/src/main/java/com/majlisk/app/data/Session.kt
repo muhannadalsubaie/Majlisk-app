@@ -34,9 +34,27 @@ object Session {
 
     private var doc: ListenerRegistration? = null
 
+    /** تشخيص: الدخول ضاع بدون ما يضغط اللاعب «تسجيل الخروج» — نرسل السبب لسجل الخادم (بدون بيانات شخصية) */
+    private fun reportLost(what: String, detail: String = "") {
+        scope.launch {
+            runCatching { Api.postPublic("/diag/auth", com.majlisk.app.net.jsonOf("device" to Prefs.deviceId, "what" to what, "detail" to detail.replace(Regex("\\S+@\\S+"), "*"))) }
+        }
+    }
+
     init {
+        // فتحنا التطبيق والحساب مو موجود، مع إنه كان مسجل وما ضغط «تسجيل الخروج»
+        if (auth.currentUser == null && Prefs.lastUid != null && !Prefs.manualSignOut) reportLost("no-user-on-start")
+        // الحساب موجود: نتأكد إن تجديد الدخول يشتغل، ولو فشل نسجّل السبب
+        auth.currentUser?.let { u ->
+            u.getIdToken(true).addOnFailureListener { e ->
+                val code = (e as? com.google.firebase.auth.FirebaseAuthException)?.errorCode.orEmpty()
+                reportLost("refresh-failed", "${e.javaClass.simpleName} $code ${e.message.orEmpty()}")
+            }
+        }
         auth.addAuthStateListener { a ->
             val u = a.currentUser
+            if (u != null) { Prefs.lastUid = u.uid; Prefs.manualSignOut = false }
+            else if (Prefs.lastUid != null && !Prefs.manualSignOut) { reportLost("signed-out-while-open"); Prefs.lastUid = null }
             if (u?.uid == _user.value?.uid && doc != null) return@addAuthStateListener
             _user.value = u
             doc?.remove()
@@ -65,6 +83,7 @@ object Session {
     fun signOut() {
         // دخولك الجاي على هالجوال يرجّعه جوال الحساب
         Prefs.claimedUid = null
+        Prefs.manualSignOut = true
         auth.signOut()
     }
 }

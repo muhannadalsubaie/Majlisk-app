@@ -32,5 +32,12 @@ object Prefs {
     var claimedUid: String?
         get() = sp.getString("claimedUid", null)
         set(v) { sp.edit().putString("claimedUid", v).apply() }
+    /** تشخيص: آخر حساب كان مسجل، وهل اللاعب ضغط «تسجيل الخروج» بنفسه */
+    var lastUid: String?
+        get() = sp.getString("lastUid", null)
+        set(v) { sp.edit().putString("lastUid", v).apply() }
+    var manualSignOut: Boolean
+        get() = sp.getBoolean("manualSignOut", false)
+        set(v) { sp.edit().putBoolean("manualSignOut", v).apply() }
 
 }
