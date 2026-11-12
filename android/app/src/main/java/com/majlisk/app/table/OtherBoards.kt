@@ -661,6 +661,13 @@ private fun jackarooPositions(j: JackarooView, mySeat: Int?): List<Triple<String
 }
 
 /**
+ * مفاتيح الشكل: true = الجديد. لو ما عجبك، false يرجّع الشكل القديم كما كان بالضبط
+ * (الجاكارو: اللوحة الدائرية، اللودو: أحجار مسطحة تنقل لمكانها مباشرة)
+ */
+const val JK_OCTAGON = true
+const val LUDO_3D = true
+
+/**
  * لوحة الجاكارو الثمانية (مثل اللوحة الخشب): لكل لاعب ١٩ خانة على جهته، وخانة البداية عليها حلقة بلونه.
  * نقاط خانات جهة اللاعب اللي تحت (بنسبة من نص اللوحة: x، y، وجهة الرقم للخارج)، وباقي الجهات بالتدوير
  */
@@ -697,7 +704,7 @@ private fun jkRot(x: Float, y: Float, k: Int): Pair<Float, Float> {
 
 private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
     // لوحة غير الحجم المعتاد (١٩ خانة لكل لاعب): الرسم الدائري القديم
-    if (j.segment != JK_HOLES.size) { drawJackarooRound(j, bottom); return }
+    if (!JK_OCTAGON || j.segment != JK_HOLES.size) { drawJackarooRound(j, bottom); return }
     val W = size.minDimension
     val half = W * 0.47f
     val ctr = Offset(W / 2, W / 2)
@@ -872,7 +879,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         @Suppress("UNCHECKED_CAST") val before = prevTokens[0] as List<List<Int>>?
         val wasPhase = prevTokens[1] as String?
         prevTokens[0] = l.tokens; prevTokens[1] = l.phase
-        if (before == null) return@LaunchedEffect
+        if (before == null || !LUDO_3D) return@LaunchedEffect
         val now = System.currentTimeMillis()
         // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
         val delayMs = if (wasPhase != "move") 600L else 0L
@@ -1237,7 +1244,14 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
             seen[key] = n + 1
             val q = Offset(pt.x + n * U * 0.18f, pt.y - n * U * 0.18f)
             if (movable.any { it.first == o && it.second == i }) drawCircle(Color(0xFFD4AF37), U * 0.5f, q, style = Stroke(U * 0.14f))
-            drawPawn(LUDO_COLORS[o], q, if (p == LudoView.FINISH) U * 0.25f else U * 0.36f, 0f, U)
+            if (LUDO_3D) drawPawn(LUDO_COLORS[o], q, if (p == LudoView.FINISH) U * 0.25f else U * 0.36f, 0f, U)
+            else {
+                // الشكل القديم: دائرة مسطحة بإطار ونقطة بيضاء
+                val r = if (p == LudoView.FINISH) U * 0.23f else U * 0.36f
+                drawCircle(LUDO_COLORS[o], r, q)
+                drawCircle(Color(0xFF0D2B20), r, q, style = Stroke(U * 0.09f))
+                if (p != LudoView.FINISH) drawCircle(Color(0xAAFFFFFF), U * 0.14f, q)
+            }
         }
     }
     flying.forEach { (o, q, lift) -> drawPawn(LUDO_COLORS[o], q, U * 0.36f, lift, U) }

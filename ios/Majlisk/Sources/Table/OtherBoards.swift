@@ -720,6 +720,11 @@ func jackarooPositions(_ j: JackarooView, mySeat: Int?) -> [(title: String, colo
 }
 
 /// رسم لوحة الجاكارو (نفس رسم النسخة السابقة): المسار دائرة، ولكل لاعب قاعدة ومنطقة أمان وبيت
+/// مفاتيح الشكل: true = الجديد. لو ما عجبك، false يرجّع الشكل القديم كما كان بالضبط
+/// (الجاكارو: اللوحة الدائرية، اللودو: أحجار مسطحة تنقل لمكانها مباشرة)
+let JK_OCTAGON = true
+let LUDO_3D = true
+
 /// لوحة الجاكارو الثمانية (مثل اللوحة الخشب): لكل لاعب ١٩ خانة على جهته، وخانة البداية عليها حلقة بلونه.
 /// نقاط خانات جهة اللاعب اللي تحت (بنسبة من نص اللوحة: x، y، وجهة الرقم للخارج)، وباقي الجهات بالتدوير
 private let JK_HOLES: [[CGFloat]] = [
@@ -755,7 +760,7 @@ private func jkRot(_ x: CGFloat, _ y: CGFloat, _ k: Int) -> (CGFloat, CGFloat) {
 
 private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooView, _ bottom: Int) {
     // لوحة غير الحجم المعتاد (١٩ خانة لكل لاعب): الرسم الدائري القديم
-    guard j.segment == JK_HOLES.count else { drawJackarooRound(ctx, size, j, bottom); return }
+    guard JK_OCTAGON, j.segment == JK_HOLES.count else { drawJackarooRound(ctx, size, j, bottom); return }
     let W = min(size.width, size.height)
     let half = W * 0.47
     let ctr = CGPoint(x: W / 2, y: W / 2)
@@ -927,7 +932,7 @@ struct LudoBoard: View {
     private func animateMoves() {
         let before = prevTokens, wasPhase = prevTokPhase
         prevTokens = l.tokens; prevTokPhase = l.phase
-        guard let before else { return }
+        guard let before, LUDO_3D else { return }
         let now = Date().timeIntervalSince1970
         hops = hops.filter { $0.value.end > now }
         // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
@@ -1343,7 +1348,13 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
             seen[key] = n + 1
             let q = CGPoint(x: pt.x + CGFloat(n) * U * 0.18, y: pt.y - CGFloat(n) * U * 0.18)
             if movable.contains(where: { $0.0 == o && $0.1 == i }) { ctx.stroke(circle(q, U * 0.5), with: .color(Palette.gold), lineWidth: U * 0.14) }
-            drawPawn(ctx, LUDO_COLORS[o], q, p == LudoView.FINISH ? U * 0.25 : U * 0.36, 0, U)
+            if LUDO_3D { drawPawn(ctx, LUDO_COLORS[o], q, p == LudoView.FINISH ? U * 0.25 : U * 0.36, 0, U) } else {
+                // الشكل القديم: دائرة مسطحة بإطار ونقطة بيضاء
+                let r = p == LudoView.FINISH ? U * 0.23 : U * 0.36
+                ctx.fill(circle(q, r), with: .color(LUDO_COLORS[o]))
+                ctx.stroke(circle(q, r), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13)), lineWidth: U * 0.09)
+                if p != LudoView.FINISH { ctx.fill(circle(q, U * 0.14), with: .color(Color.white.opacity(0.67))) }
+            }
         }
     }
     for (o, q, lift) in flying { drawPawn(ctx, LUDO_COLORS[o], q, U * 0.36, lift, U) }
