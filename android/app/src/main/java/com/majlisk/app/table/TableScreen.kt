@@ -412,7 +412,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
-            // «ورق»: أوراقك الخمس الأولى كلها أقل من العشرة — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
+            // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
             if (g.actions.waraqDecision) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     SecondaryButton("بس", { toHand(); act(jsonOf("type" to "waraq", "call" to false)) }, modifier = Modifier.weight(1f), fill = true)

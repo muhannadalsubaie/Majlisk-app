@@ -283,7 +283,7 @@ struct BalootBoard: View {
                 if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
                 }
-                // «ورق»: أوراقك الخمس الأولى كلها أقل من العشرة — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
+                // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
                 if g.actions.waraqDecision {
                     HStack(spacing: 8) {
                         MButton("بس") { toHand(); act(["type": "waraq", "call": false]) }
