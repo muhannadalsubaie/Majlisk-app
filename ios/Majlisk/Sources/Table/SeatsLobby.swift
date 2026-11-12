@@ -25,6 +25,8 @@ struct SeatsLobby: View {
     @State private var panel: SeatPanel?
     /// وقت كل دور اللي اختاره المالك (٠ = بدون)
     @State private var turnLimit = 0
+    /// نافذة إعدادات المباراة (تفتح من «بدء المباراة»)
+    @State private var setup = false
     private var isOwner: Bool { v.ownerUid == uid }
 
     /// كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
@@ -98,8 +100,12 @@ struct SeatsLobby: View {
             if !v.spectators.isEmpty {
                 Note("المشاهدون: " + v.spectators.map { $0.uid == uid ? "\($0.username) (أنت)" : $0.username }.joined(separator: "، "))
             }
-            // وقت كل دور: قائمة منسدلة (بدون، أو ١٠ إلى ٦٠ ثانية) فوق «بدء المباراة» — لو خلص الوقت الروبوت يلعب عن اللاعب
-            if isOwner {
+            // «بدء المباراة» يفتح نافذة إعدادات المباراة: فيها وقت كل دور (قائمة منسدلة) وأي إعدادات تنضاف بعدين، ثم «ابدأ»
+            if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = true } }
+            else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
+        }
+        .sheet(isPresented: $setup) {
+            Sheet(title: "إعدادات المباراة") {
                 Menu {
                     ForEach(TURN_LIMITS, id: \.self) { s in
                         Button(s == turnLimit ? "✓ \(turnLimitLabel(s))" : turnLimitLabel(s)) { turnLimit = s }
@@ -108,14 +114,14 @@ struct SeatsLobby: View {
                     Text("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾")
                         .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.text)
                         .frame(maxWidth: .infinity, minHeight: 50)
-                        .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
+                        .background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.gold.opacity(0.6), lineWidth: 1))
                 }
                 .accessibilityLabel("وقت كل دور، \(turnLimitLabel(turnLimit))")
                 Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-                MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { conn.send("start", ["turnLimit": turnLimit]) }
+                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit]) }
+                MButton("إلغاء") { setup = false }
             }
-            else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
         }
         .sheet(item: $panel) { p in
             switch p {

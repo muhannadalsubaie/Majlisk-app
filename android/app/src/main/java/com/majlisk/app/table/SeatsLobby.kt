@@ -103,10 +103,13 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         Note("المشاهدون: " + v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username })
     }
     val seated = v.seats.count { it != null }
-    // وقت كل دور: قائمة منسدلة (بدون، أو ١٠ إلى ٦٠ ثانية) فوق «بدء المباراة» — لو خلص الوقت الروبوت يلعب عن اللاعب
+    // «بدء المباراة» يفتح نافذة إعدادات المباراة: فيها وقت كل دور (قائمة منسدلة) وأي إعدادات تنضاف بعدين، ثم «ابدأ»
     if (isOwner) {
         var limit by remember { mutableStateOf(0) }
         var open by remember { mutableStateOf(false) }
+        var setup by remember { mutableStateOf(false) }
+        PrimaryButton("بدء المباراة", { setup = true }, enabled = seated in v.startCounts)
+        if (setup) MajliskDialog("إعدادات المباراة", { setup = false }) {
         androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
             SecondaryButton("وقت كل دور: ${turnLimitLabel(limit)} ▾", { open = true }, fill = true, description = "وقت كل دور، ${turnLimitLabel(limit)}، قائمة")
             androidx.compose.material3.DropdownMenu(open, { open = false }, containerColor = Palette.green800) {
@@ -119,7 +122,9 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             }
         }
         Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-        PrimaryButton("بدء المباراة", { conn.send("start", "turnLimit" to limit) }, enabled = seated in v.startCounts)
+        PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit) }, enabled = seated in v.startCounts)
+        SecondaryButton("إلغاء", { setup = false }, fill = true)
+        }
     } else Body("بانتظار مالك الطاولة لبدء المباراة")
 
     // كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
