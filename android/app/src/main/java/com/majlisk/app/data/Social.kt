@@ -75,6 +75,7 @@ object Hub {
     fun start() {
         if (enabled) return
         enabled = true
+        Online.start()
         job = Session.scope.launch {
             var retry = 0
             while (enabled) {
@@ -109,6 +110,7 @@ object Hub {
 
     fun stop() {
         enabled = false
+        Online.stop()
         job?.cancel()
         ws?.close(1000, null)
         ws = null
@@ -118,5 +120,70 @@ object Hub {
     /** أزل دعوة من القائمة محلياً بعد الرد عليها */
     fun dropInvite(tableId: String) {
         _state.value = _state.value.copy(invites = _state.value.invites.filter { it.tableId != tableId })
+    }
+}
+
+/** لاعب متصل في التطبيق (me = أنت) */
+data class OnlinePlayer(val uid: String, val username: String, val me: Boolean)
+
+/**
+ * المتصلون في التطبيق كله: العدد يوصل من الخادم على طول مع كل دخول وطلوع،
+ * وقائمة الأسماء تنطلب لما تفتحها
+ */
+object Online {
+    private val _count = MutableStateFlow<Int?>(null)
+    val count: StateFlow<Int?> = _count
+    private val _list = MutableStateFlow<List<OnlinePlayer>?>(null)
+    val list: StateFlow<List<OnlinePlayer>?> = _list
+    private var ws: WebSocket? = null
+    private var job: Job? = null
+    private var enabled = false
+
+    fun start() {
+        if (enabled) return
+        enabled = true
+        job = Session.scope.launch {
+            var retry = 0
+            while (enabled) {
+                val token = runCatching { Api.token() }.getOrNull()
+                if (token == null) { delay(3000); continue }
+                val closed = kotlinx.coroutines.CompletableDeferred<Unit>()
+                ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/presence/ws", token)).build(), object : WebSocketListener() {
+                    override fun onOpen(webSocket: WebSocket, response: Response) { retry = 0 }
+                    override fun onMessage(webSocket: WebSocket, text: String) {
+                        if (text == "pong") return
+                        val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
+                        when (msg.optString("type")) {
+                            "online" -> _count.value = msg.optInt("count")
+                            "onlineList" -> {
+                                _count.value = msg.optInt("count")
+                                val a = msg.optJSONArray("players") ?: org.json.JSONArray()
+                                _list.value = (0 until a.length()).mapNotNull { a.optJSONObject(it) }
+                                    .map { OnlinePlayer(it.optString("uid"), it.optString("username"), it.optBoolean("me")) }
+                            }
+                        }
+                    }
+                    override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { closed.complete(Unit) }
+                    override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { closed.complete(Unit) }
+                })
+                val ping = launch { while (true) { delay(15_000); ws?.send("ping") } }
+                closed.await()
+                ping.cancel()
+                if (!enabled) break
+                retry = (retry + 1).coerceAtMost(6)
+                delay(1500L * retry)
+            }
+        }
+    }
+
+    /** قائمة المتصلين (تجي في رسالة من الخادم) */
+    fun requestList() { _list.value = null; ws?.send(JSONObject().put("type", "list").toString()) }
+
+    fun stop() {
+        enabled = false
+        job?.cancel()
+        ws?.close(1000, null)
+        ws = null
+        _count.value = null; _list.value = null
     }
 }

@@ -60,6 +60,7 @@ final class Hub: ObservableObject {
 
     func start() {
         guard loop == nil else { return }
+        Online.shared.start()
         loop = Task { [weak self] in
             var retry = 0
             while !Task.isCancelled {
@@ -96,6 +97,7 @@ final class Hub: ObservableObject {
     }
 
     func stop() {
+        Online.shared.stop()
         loop?.cancel(); loop = nil
         task?.cancel(with: .goingAway, reason: nil); task = nil
         DispatchQueue.main.async { self.state = HubState() }
@@ -103,6 +105,67 @@ final class Hub: ObservableObject {
 
     /// أزل دعوة من القائمة محلياً بعد الرد عليها
     func dropInvite(_ tableId: String) { state.invites.removeAll { $0.tableId == tableId } }
+}
+
+/// لاعب متصل في التطبيق (me = أنت)
+struct OnlinePlayer: Identifiable, Equatable { let uid: String; let username: String; let me: Bool; var id: String { uid } }
+
+/// المتصلون في التطبيق كله: العدد يوصل من الخادم على طول مع كل دخول وطلوع، وقائمة الأسماء تنطلب لما تفتحها
+final class Online: ObservableObject {
+    static let shared = Online()
+    @Published private(set) var count: Int?
+    @Published private(set) var list: [OnlinePlayer]?
+    private var task: URLSessionWebSocketTask?
+    private var loop: Task<Void, Never>?
+
+    func start() {
+        guard loop == nil else { return }
+        loop = Task { [weak self] in
+            var retry = 0
+            while !Task.isCancelled {
+                guard let token = try? await Api.token() else { try? await Task.sleep(nanoseconds: 3_000_000_000); continue }
+                let ws = URLSession.shared.webSocketTask(with: Api.wsURL("/presence/ws", token: token))
+                self?.task = ws
+                ws.resume()
+                let ping = Task { while !Task.isCancelled { try? await Task.sleep(nanoseconds: 15_000_000_000); try? await ws.send(.string("ping")) } }
+                while !Task.isCancelled {
+                    guard let msg = try? await ws.receive() else { break }
+                    retry = 0
+                    if case .string(let text) = msg { self?.handle(text) }
+                }
+                ping.cancel()
+                if Task.isCancelled { break }
+                retry = min(retry + 1, 6)
+                try? await Task.sleep(nanoseconds: UInt64(1_500_000_000 * retry))
+            }
+        }
+    }
+
+    private func handle(_ text: String) {
+        guard text != "pong", let data = text.data(using: .utf8), let msg = (try? JSONSerialization.jsonObject(with: data)) as? JSON else { return }
+        switch msg.str("type") {
+        case "online":
+            let n = msg.int("count")
+            DispatchQueue.main.async { self.count = n }
+        case "onlineList":
+            let n = msg.int("count")
+            let players = msg.objs("players").map { OnlinePlayer(uid: $0.str("uid"), username: $0.str("username"), me: $0.bool("me")) }
+            DispatchQueue.main.async { self.count = n; self.list = players }
+        default: break
+        }
+    }
+
+    /// قائمة المتصلين (تجي في رسالة من الخادم)
+    func requestList() {
+        list = nil
+        task?.send(.string("{\"type\":\"list\"}")) { _ in }
+    }
+
+    func stop() {
+        loop?.cancel(); loop = nil
+        task?.cancel(with: .goingAway, reason: nil); task = nil
+        DispatchQueue.main.async { self.count = nil; self.list = nil }
+    }
 }
 
 let GAME_NAMES = ["baloot": "بلوت", "domino": "دومينو", "jackaroo": "جاكارو", "ludo": "لودو"]

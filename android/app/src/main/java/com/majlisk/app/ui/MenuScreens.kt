@@ -66,6 +66,8 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit) {
             Column(Modifier.weight(1f)) {
                 Title("مجلسك")
                 if (!profile?.username.isNullOrEmpty()) Note("أهلاً ${profile?.username}")
+                // عدد المتصلين في التطبيق كله (يتحدث على طول)، والضغط يعرض أسماءهم
+                OnlineLine()
             }
             CoinsBadge(profile)
         }

@@ -25,6 +25,8 @@ struct MainMenuScreen: View {
                 VStack(alignment: .leading) {
                     Title("مجلسك")
                     if let name = profile?.username, !name.isEmpty { Note("أهلاً \(name)") }
+                    // عدد المتصلين في التطبيق كله (يتحدث على طول)، والضغط يعرض أسماءهم
+                    OnlineLine()
                 }
                 Spacer()
                 CoinsBadge(profile: profile)
