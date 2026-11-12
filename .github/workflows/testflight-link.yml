@@ -8,10 +8,15 @@ on:
       build:
         description: رقم النسخة (CFBundleVersion)
         required: true
+      runner:
+        description: الجهاز (لو لينكس موقوف نشغلها على ماك)
+        type: choice
+        options: [ubuntu-latest, macos-15-intel, macos-26]
+        default: ubuntu-latest
 
 jobs:
   testers:
-    runs-on: ubuntu-latest
+    runs-on: ${{ inputs.runner || 'ubuntu-latest' }}
     timeout-minutes: 75
     steps:
       - uses: actions/checkout@v4
