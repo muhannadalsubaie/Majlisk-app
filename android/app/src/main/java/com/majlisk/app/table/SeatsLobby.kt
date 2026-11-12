@@ -26,6 +26,8 @@ import com.majlisk.app.ui.SecondaryButton
 import com.majlisk.app.ui.SectionTitle
 import com.majlisk.app.ui.SmallButton
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.foundation.layout.fillMaxWidth
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -101,17 +103,24 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         Note("المشاهدون: " + v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username })
     }
     val seated = v.seats.count { it != null }
-    // بدء المباراة: المالك يختار وقت كل دور (بدون، أو ١٠ إلى ٦٠ ثانية) — لو خلص الوقت الروبوت يلعب عن اللاعب
-    var pickTime by remember { mutableStateOf(false) }
-    if (isOwner) PrimaryButton("بدء المباراة", { pickTime = true }, enabled = seated in v.startCounts)
-    if (pickTime) MajliskDialog("وقت كل دور", { pickTime = false }) {
-        Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-        TURN_LIMITS.forEach { s ->
-            SecondaryButton(turnLimitLabel(s), { pickTime = false; conn.send("start", "turnLimit" to s) }, fill = true)
+    // وقت كل دور: قائمة منسدلة (بدون، أو ١٠ إلى ٦٠ ثانية) فوق «بدء المباراة» — لو خلص الوقت الروبوت يلعب عن اللاعب
+    if (isOwner) {
+        var limit by remember { mutableStateOf(0) }
+        var open by remember { mutableStateOf(false) }
+        androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
+            SecondaryButton("وقت كل دور: ${turnLimitLabel(limit)} ▾", { open = true }, fill = true, description = "وقت كل دور، ${turnLimitLabel(limit)}، قائمة")
+            androidx.compose.material3.DropdownMenu(open, { open = false }, containerColor = Palette.green800) {
+                TURN_LIMITS.forEach { s ->
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(if (s == limit) "✓ ${turnLimitLabel(s)}" else turnLimitLabel(s), color = Palette.text, fontSize = 17.sp) },
+                        onClick = { limit = s; open = false },
+                    )
+                }
+            }
         }
-        SecondaryButton("إلغاء", { pickTime = false }, fill = true)
-    }
-    else Body("بانتظار مالك الطاولة لبدء المباراة")
+        Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
+        PrimaryButton("بدء المباراة", { conn.send("start", "turnLimit" to limit) }, enabled = seated in v.startCounts)
+    } else Body("بانتظار مالك الطاولة لبدء المباراة")
 
     // كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
     fun candidates(seat: Int): List<Pair<String, String>> =
