@@ -19,6 +19,8 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.unit.dp
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.Friend
@@ -121,7 +123,11 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                             onClickLabel = "فتح ملفه", onClick = { profileOf = f },
                             onLongClickLabel = if (f.tableId != null) "دخول طاولته" else null,
                             onLongClick = { joinFriend(f) },
-                        ).semantics(mergeDescendants = true) { contentDescription = "${f.username}، $status" },
+                        ).semantics(mergeDescendants = true) {
+                            contentDescription = "${f.username}، $status"
+                            // قارئ الشاشة: «دخول طاولته» إجراء (سحب لفوق أو تحت) مثل الآيفون
+                            customActions = listOf(CustomAccessibilityAction("دخول طاولته") { joinFriend(f); true })
+                        },
                     ) {
                         Avatar(f.uid, f.username, 40.dp)
                         Text("${if (f.online) "🟢" else "⚪"} ${f.username}، $status", color = Palette.text, modifier = Modifier.weight(1f))

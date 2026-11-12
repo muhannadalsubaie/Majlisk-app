@@ -47,7 +47,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -156,6 +158,10 @@ fun RaisedButton(
                 else Modifier.clickable(interaction, ripple(), enabled = enabled, role = Role.Button, onClick = onClick),
             )
             .describe(description)
+            // قارئ الشاشة: الضغطة المطولة إجراء باسمها (سحب لفوق أو تحت) مثل الآيفون
+            .then(if (onLongClick != null && longClickLabel != null) Modifier.semantics {
+                customActions = listOf(CustomAccessibilityAction(longClickLabel) { onLongClick(); true })
+            } else Modifier)
             .padding(padding),
         contentAlignment = Alignment.Center,
     ) {
