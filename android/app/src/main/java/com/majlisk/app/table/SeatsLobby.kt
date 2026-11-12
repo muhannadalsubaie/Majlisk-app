@@ -101,7 +101,16 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         Note("المشاهدون: " + v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username })
     }
     val seated = v.seats.count { it != null }
-    if (isOwner) PrimaryButton("بدء المباراة", { conn.send("start") }, enabled = seated in v.startCounts)
+    // بدء المباراة: المالك يختار وقت كل دور (بدون، أو ١٠ إلى ٦٠ ثانية) — لو خلص الوقت الروبوت يلعب عن اللاعب
+    var pickTime by remember { mutableStateOf(false) }
+    if (isOwner) PrimaryButton("بدء المباراة", { pickTime = true }, enabled = seated in v.startCounts)
+    if (pickTime) MajliskDialog("وقت كل دور", { pickTime = false }) {
+        Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
+        TURN_LIMITS.forEach { s ->
+            SecondaryButton(turnLimitLabel(s), { pickTime = false; conn.send("start", "turnLimit" to s) }, fill = true)
+        }
+        SecondaryButton("إلغاء", { pickTime = false }, fill = true)
+    }
     else Body("بانتظار مالك الطاولة لبدء المباراة")
 
     // كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون

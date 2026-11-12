@@ -589,10 +589,13 @@ private struct PlayerTag: View {
         let label = (s?.username ?? "مقعد \(seat + 1)") + (s?.isBot == true ? " (روبوت)" : "") + (s?.away == true ? " (انقطع الاتصال)" : "") + (partner ? " (شريكك)" : "")
         VStack(spacing: 4) {
             Avatar(uid: v.seatUid(seat), name: s?.username ?? "", size: 34)
-            Text(label)
-                .font(.system(size: 14, weight: .bold))
-                .multilineTextAlignment(.center)
-                .minimumScaleFactor(0.7)
+            HStack(spacing: 4) {
+                Text(label)
+                    .font(.system(size: 14, weight: .bold))
+                    .multilineTextAlignment(.center)
+                    .minimumScaleFactor(0.7)
+                TurnClock(v: v, seat: seat, turn: turn)
+            }
             if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
             if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner ? 200 : 62).padding(.top, 2) }
         }

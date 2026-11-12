@@ -386,9 +386,12 @@ struct DominoBoard: View {
                 .padding(3)
                 .background(Circle().fill(Color(red: 0.09, green: 0.24, blue: 0.17)))
                 .overlay(Circle().stroke(Palette.gold.opacity(turn ? 1 : 0.7), lineWidth: turn ? 3 : 2))
-            Text("\(n) · \(count)").font(.system(size: 11, weight: .bold)).foregroundColor(turn ? Palette.gold : Palette.text).lineLimit(1)
-                .padding(.horizontal, 6).padding(.vertical, 1)
-                .background(Color(red: 0.06, green: 0.16, blue: 0.12).opacity(0.8)).clipShape(RoundedRectangle(cornerRadius: 8))
+            HStack(spacing: 3) {
+                Text("\(n) · \(count)").font(.system(size: 11, weight: .bold)).foregroundColor(turn ? Palette.gold : Palette.text).lineLimit(1)
+                    .padding(.horizontal, 6).padding(.vertical, 1)
+                    .background(Color(red: 0.06, green: 0.16, blue: 0.12).opacity(0.8)).clipShape(RoundedRectangle(cornerRadius: 8))
+                TurnClock(v: v, seat: seat, turn: turn)
+            }
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(n)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")")
@@ -532,7 +535,10 @@ struct JackarooBoard: View {
                     let who = o == mySeat ? "أنت" : names[o]
                     let color = JK_COLOR_NAMES[o].hasPrefix("ال") ? String(JK_COLOR_NAMES[o].dropFirst(2)) : JK_COLOR_NAMES[o]
                     VStack(spacing: 0) {
-                        Text(who).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
+                        HStack(spacing: 3) {
+                            Text(who).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
+                            TurnClock(v: v, seat: o, turn: turn)
+                        }
                         Text("\(j.safeOf(o))/4").font(.system(size: 22, weight: .bold)).foregroundColor(Palette.goldSoft)
                     }
                     .padding(.vertical, 6).padding(.horizontal, 4)
@@ -820,10 +826,13 @@ struct LudoBoard: View {
                 Avatar(uid: v.seatUid(o), name: n, size: 52)
                     .padding(3)
                     .overlay(Circle().stroke(turn ? Palette.gold : LUDO_COLORS[o], lineWidth: 3))
-                Text("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")")
-                    .font(.system(size: 13, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
-                    .padding(.horizontal, 6).padding(.vertical, 1)
-                    .background(Color.black.opacity(0.4)).clipShape(RoundedRectangle(cornerRadius: 8))
+                HStack(spacing: 3) {
+                    Text("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")")
+                        .font(.system(size: 13, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
+                        .padding(.horizontal, 6).padding(.vertical, 1)
+                        .background(Color.black.opacity(0.4)).clipShape(RoundedRectangle(cornerRadius: 8))
+                    TurnClock(v: v, seat: o, turn: turn)
+                }
                 Text("وصل \(l.home(o))/4").font(.system(size: 11)).foregroundColor(Palette.textDim)
             }
             if left { dice }

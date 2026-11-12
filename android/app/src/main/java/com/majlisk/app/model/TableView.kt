@@ -120,6 +120,10 @@ data class TableView(
     val ludo: LudoView? = null,
     /** كم لاعب يقدر يبدأ اللعبة */
     val startCounts: List<Int> = listOf(4),
+    /** مؤقت الدور: الثواني المختارة (٠ = بدون)، واللي عليه الوقت، ومتى يخلص وقته (بساعة الجوال) */
+    val clockLimit: Int = 0,
+    val clockSeat: Int? = null,
+    val clockDeadline: Long? = null,
     /** خيارات اللعبة من صفحة المقاعد: فرق، كمبلكس، هدف الدومينو */
     val optTeams: Boolean = true,
     val optComplex: Boolean = false,
@@ -152,6 +156,10 @@ data class TableView(
             domino = o.optJSONObject("domino")?.let { DominoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("dominoLog")) },
             jackaroo = o.optJSONObject("jackaroo")?.let { JackarooView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optIntOrNull("mySeat")) },
             startCounts = o.optJSONArray("startCounts")?.ints()?.takeIf { it.isNotEmpty() } ?: listOf(4),
+            clockLimit = o.optJSONObject("clock")?.optInt("limit", 0) ?: 0,
+            clockSeat = o.optJSONObject("clock")?.optIntOrNull("seat"),
+            // الباقي من لحظة وصول الحالة (ما نعتمد على ساعة الخادم)
+            clockDeadline = o.optJSONObject("clock")?.takeIf { !it.isNull("remainingMs") && it.has("remainingMs") }?.let { System.currentTimeMillis() + it.optLong("remainingMs") },
             optTeams = o.optJSONObject("options")?.optBoolean("teams", true) ?: true,
             optComplex = o.optJSONObject("options")?.optBoolean("complex") == true,
             optTarget = o.optJSONObject("options")?.optInt("target", 100) ?: 100,

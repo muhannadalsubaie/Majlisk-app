@@ -173,6 +173,10 @@ struct TableView {
     let ludo: LudoView?
     /// كم لاعب يقدر يبدأ اللعبة
     let startCounts: [Int]
+    /// مؤقت الدور: الثواني المختارة (٠ = بدون)، واللي عليه الوقت، ومتى يخلص وقته (بساعة الجوال)
+    var clockLimit = 0
+    var clockSeat: Int?
+    var clockDeadline: Date?
     /// خيارات اللعبة من صفحة المقاعد: فرق، كمبلكس، هدف الدومينو
     let optTeams: Bool, optComplex: Bool, optTarget: Int
     /// اسم مالك الطاولة
@@ -206,6 +210,11 @@ struct TableView {
         domino = o.obj("domino").map { DominoView($0, ui, log: o.objs("dominoLog")) }
         jackaroo = o.obj("jackaroo").map { JackarooView($0, ui, mySeat: o.intOrNil("mySeat")) }
         let counts = o.ints("startCounts"); startCounts = counts.isEmpty ? [4] : counts
+        let clock = o.obj("clock") ?? [:]
+        clockLimit = clock.int("limit")
+        clockSeat = clock.intOrNil("seat")
+        // الباقي من لحظة وصول الحالة (ما نعتمد على ساعة الخادم)
+        clockDeadline = (clock["remainingMs"] as? NSNumber).map { Date().addingTimeInterval($0.doubleValue / 1000) }
         let opts = o.obj("options") ?? [:]
         optTeams = opts.bool("teams"); optComplex = opts.bool("complex"); optTarget = opts.int("target", 100)
         ownerName = o.str("ownerName")

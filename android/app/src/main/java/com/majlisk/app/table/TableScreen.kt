@@ -530,7 +530,10 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(seat), s?.username.orEmpty(), 34.dp)
-        Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
+            TurnClock(v, seat, turn)
+        }
         if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
         if (faces.isNotEmpty()) ProjectFaces(faces, if (partner) 200f else 62f)
     }

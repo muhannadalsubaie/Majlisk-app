@@ -23,6 +23,7 @@ struct SeatsLobby: View {
     let uid: String
     @ObservedObject var conn: TableConnection
     @State private var panel: SeatPanel?
+    @State private var pickTime = false
     private var isOwner: Bool { v.ownerUid == uid }
 
     /// كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
@@ -96,8 +97,18 @@ struct SeatsLobby: View {
             if !v.spectators.isEmpty {
                 Note("المشاهدون: " + v.spectators.map { $0.uid == uid ? "\($0.username) (أنت)" : $0.username }.joined(separator: "، "))
             }
-            if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { conn.send("start") } }
+            // بدء المباراة: المالك يختار وقت كل دور (بدون، أو ١٠ إلى ٦٠ ثانية) — لو خلص الوقت الروبوت يلعب عن اللاعب
+            if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { pickTime = true } }
             else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
+        }
+        .sheet(isPresented: $pickTime) {
+            Sheet(title: "وقت كل دور") {
+                Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
+                ForEach(TURN_LIMITS, id: \.self) { s in
+                    MButton(turnLimitLabel(s)) { pickTime = false; conn.send("start", ["turnLimit": s]) }
+                }
+                MButton("إلغاء") { pickTime = false }
+            }
         }
         .sheet(item: $panel) { p in
             switch p {

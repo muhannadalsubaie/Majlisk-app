@@ -356,8 +356,11 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
                         .padding(3.dp),
                     contentAlignment = Alignment.Center,
                 ) { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(seat), n, 32.dp) }
-                Text("$n · $count", color = if (turn) Palette.gold else Palette.text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-                    modifier = Modifier.background(Color(0xCC0F2A1E), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                    Text("$n · $count", color = if (turn) Palette.gold else Palette.text, fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+                        modifier = Modifier.background(Color(0xCC0F2A1E), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp))
+                    TurnClock(v, seat, turn)
+                }
             }
         }
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
@@ -515,7 +518,10 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                         .padding(vertical = 6.dp, horizontal = 4.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text(who, color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text(who, color = Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        TurnClock(v, o, turn)
+                    }
                     Text("${j.safeOf(o)}/4", color = Palette.goldSoft, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                 }
             }
@@ -844,9 +850,12 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                     Box(
                         Modifier.border(3.dp, if (turn) Palette.gold else LUDO_COLORS[o], androidx.compose.foundation.shape.CircleShape).padding(3.dp),
                     ) { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(o), n, 52.dp) }
-                    Text("$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""}", color = Palette.text, fontSize = 13.sp,
-                        fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
-                        modifier = Modifier.background(Color(0x66000000), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp)) {
+                        Text("$n${if (o == mySeat) " (أنت)" else if (l.teams && o == partner) " (شريكك)" else ""}", color = Palette.text, fontSize = 13.sp,
+                            fontWeight = if (turn) FontWeight.Bold else FontWeight.Normal, maxLines = 1,
+                            modifier = Modifier.background(Color(0x66000000), RoundedCornerShape(8.dp)).padding(horizontal = 6.dp, vertical = 1.dp))
+                        TurnClock(v, o, turn)
+                    }
                     Text("وصل ${l.home(o)}/4", color = Palette.textDim, fontSize = 11.sp)
                 }
                 if (left) dice()
