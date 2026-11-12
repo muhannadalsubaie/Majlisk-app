@@ -19,6 +19,10 @@ on:
         description: رفع النسخة إلى Google Play (أطفئه لنشر ملف APK بس)
         type: boolean
         default: true
+      apk:
+        description: نشر ملف APK على رابط التحميل (أطفئه للرفع على Google Play بس)
+        type: boolean
+        default: true
 
 concurrency: android-build
 
@@ -61,7 +65,7 @@ jobs:
             cp app/build/outputs/apk/debug/app-debug.apk ../majlisk.apk
           fi
       - name: Publish android-latest
-        if: github.event_name != 'workflow_dispatch' || inputs.publish
+        if: github.event_name != 'workflow_dispatch' || (inputs.publish && inputs.apk)
         uses: softprops/action-gh-release@v2
         with:
           tag_name: android-latest
