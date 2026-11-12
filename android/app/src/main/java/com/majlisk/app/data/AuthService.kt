@@ -7,6 +7,7 @@ import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.exceptions.GetCredentialCancellationException
+import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GetSignInWithGoogleOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.auth.FirebaseAuth
@@ -40,9 +41,13 @@ object AuthService {
     }
 
     /** نافذة اختيار حساب Google في الجهاز، ثم الدخول بنفس الحساب في Firebase */
-    suspend fun google() {
+    suspend fun google(silent: Boolean = false) {
         val activity = MainActivity.current ?: throw ApiError("cancelled")
-        val option = GetSignInWithGoogleOption.Builder(activity.getString(R.string.default_web_client_id)).build()
+        val clientId = activity.getString(R.string.default_web_client_id)
+        // الرجوع التلقائي: نفس حساب Google اللي سبق ودخل فيه، ويختاره الجوال لحاله بدون نافذة الاختيار
+        val option = if (silent) GetGoogleIdOption.Builder().setServerClientId(clientId)
+            .setFilterByAuthorizedAccounts(true).setAutoSelectEnabled(true).build()
+        else GetSignInWithGoogleOption.Builder(clientId).build()
         val result = try {
             CredentialManager.create(activity).getCredential(activity, GetCredentialRequest.Builder().addCredentialOption(option).build())
         } catch (e: GetCredentialCancellationException) {

@@ -6,7 +6,8 @@ import android.content.SharedPreferences
 /** إعدادات الجهاز (كتم الأصوات، نغمة الدور) */
 object Prefs {
     private lateinit var sp: SharedPreferences
-    fun init(c: Context) { sp = c.getSharedPreferences("majlisk", Context.MODE_PRIVATE) }
+    lateinit var app: Context
+    fun init(c: Context) { app = c.applicationContext; sp = c.getSharedPreferences("majlisk", Context.MODE_PRIVATE) }
 
     var muted: Boolean
         get() = sp.getBoolean("muted", false)
@@ -39,5 +40,9 @@ object Prefs {
     var manualSignOut: Boolean
         get() = sp.getBoolean("manualSignOut", false)
         set(v) { sp.edit().putBoolean("manualSignOut", v).apply() }
+    /** آخر دخول كان بحساب Google: لو ضاع الدخول بدون «تسجيل الخروج» نرجّعه تلقائياً بنفس الحساب */
+    var googleAuto: Boolean
+        get() = sp.getBoolean("googleAuto", false)
+        set(v) { sp.edit().putBoolean("googleAuto", v).apply() }
 
 }

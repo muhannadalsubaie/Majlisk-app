@@ -41,9 +41,19 @@ object Session {
         }
     }
 
+    /** تشخيص: هل ملف دخول Firebase موجود، ومتى نُزّل التطبيق وتحدّث (يكشف لو أعيد تثبيته) */
+    private fun startInfo(): String = runCatching {
+        val c = Prefs.app
+        val dir = java.io.File(c.applicationInfo.dataDir, "shared_prefs")
+        val fb = dir.listFiles()?.filter { it.name.startsWith("com.google.firebase.auth") }.orEmpty()
+        val pi = c.packageManager.getPackageInfo(c.packageName, 0)
+        val fmt = java.text.SimpleDateFormat("MM-dd'T'HH:mm", java.util.Locale.US).apply { timeZone = java.util.TimeZone.getTimeZone("UTC") }
+        "fbfiles=${fb.size} fbsize=${fb.sumOf { it.length() }} install=${fmt.format(pi.firstInstallTime)} update=${fmt.format(pi.lastUpdateTime)} ver=${pi.versionName} sdk=${android.os.Build.VERSION.SDK_INT}"
+    }.getOrElse { "info-failed ${it.javaClass.simpleName}" }
+
     init {
         // فتحنا التطبيق والحساب مو موجود، مع إنه كان مسجل وما ضغط «تسجيل الخروج»
-        if (auth.currentUser == null && Prefs.lastUid != null && !Prefs.manualSignOut) reportLost("no-user-on-start")
+        if (auth.currentUser == null && Prefs.lastUid != null && !Prefs.manualSignOut) reportLost("no-user-on-start", startInfo())
         // الحساب موجود: نتأكد إن تجديد الدخول يشتغل، ولو فشل نسجّل السبب
         auth.currentUser?.let { u ->
             u.getIdToken(true).addOnFailureListener { e ->
@@ -53,7 +63,10 @@ object Session {
         }
         auth.addAuthStateListener { a ->
             val u = a.currentUser
-            if (u != null) { Prefs.lastUid = u.uid; Prefs.manualSignOut = false }
+            if (u != null) {
+                Prefs.lastUid = u.uid; Prefs.manualSignOut = false
+                Prefs.googleAuto = u.providerData.any { it.providerId == "google.com" }
+            }
             else if (Prefs.lastUid != null && !Prefs.manualSignOut) { reportLost("signed-out-while-open"); Prefs.lastUid = null }
             if (u?.uid == _user.value?.uid && doc != null) return@addAuthStateListener
             _user.value = u
@@ -80,10 +93,16 @@ object Session {
         }
     }
 
+    /** الدخول ضاع بدون «تسجيل الخروج» وكان بحساب Google: نرجّعه بنفس الحساب بدون ما يختار */
+    val canAutoGoogle get() = Prefs.googleAuto && !Prefs.manualSignOut
+
+    fun autoGoogleResult(ok: Boolean, detail: String) = reportLost(if (ok) "auto-google-ok" else "auto-google-failed", detail)
+
     fun signOut() {
         // دخولك الجاي على هالجوال يرجّعه جوال الحساب
         Prefs.claimedUid = null
         Prefs.manualSignOut = true
+        Prefs.googleAuto = false
         auth.signOut()
     }
 }

@@ -146,6 +146,21 @@ fun AuthScreen(done: () -> Unit) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
+    // الدخول ضاع لحاله (ما ضغط «تسجيل الخروج") وكان بحساب Google: نرجّعه بنفس الحساب تلقائياً
+    LaunchedEffect(Unit) {
+        if (!com.majlisk.app.data.Session.canAutoGoogle) return@LaunchedEffect
+        busy = true
+        try {
+            AuthService.google(silent = true)
+            com.majlisk.app.data.Session.autoGoogleResult(true, "")
+            Announcer.announce("تم تسجيل الدخول")
+            done()
+        } catch (e: Throwable) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            com.majlisk.app.data.Session.autoGoogleResult(false, e.javaClass.simpleName)
+        } finally { busy = false }
+    }
+
     fun run(block: suspend () -> Unit) {
         busy = true; error = ""
         scope.launch {
