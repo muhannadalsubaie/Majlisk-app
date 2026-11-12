@@ -30,8 +30,8 @@ concurrency: ios-${{ github.event_name }}
 jobs:
   build:
     # ماك Intel: أجهزة Apple Silicon عند GitHub مزدحمة (لم تُستلم المهمة)
-    # أجهزة ماك الجديدة (Apple): متوفرة أكثر من أجهزة Intel اللي كانت البناءات تنتظرها لين تنلغي
-    runs-on: macos-15
+    # أجهزة ماك macOS 26 (فيها Xcode 26 اللي تطلبه Apple): Intel وmacos-15 كانت البناءات تنتظرها لين تنلغي
+    runs-on: macos-26
     env:
       HAS_KEYS: ${{ secrets.ASC_KEY_P8 != '' && secrets.APPLE_TEAM_ID != '' }}
       UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.upload }}
