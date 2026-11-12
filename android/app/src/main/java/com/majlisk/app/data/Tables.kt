@@ -283,6 +283,8 @@ class TableConnection(val tableId: String) {
                 if (mode == ChatMode.OFF) return
                 val m = ChatMessage(msg.optString("uid"), msg.optString("name"), msg.optString("text"), msg.optString("uid") == myUid)
                 _chat.value = (_chat.value + m).takeLast(100)
+                // سطر من الطاولة نفسها (مثل الدعوات): ينكتب في الدردشة بس، لأن قارئ الشاشة قرأه من الإعلان
+                if (m.uid == "system") return
                 if (!m.mine) {
                     Sounds.chat()
                     if (!chatOpen) _unread.value += 1

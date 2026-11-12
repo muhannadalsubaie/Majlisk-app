@@ -180,7 +180,7 @@ fun InviteFriendsDialog(tableId: String, seat: Int?, title: String, onClose: () 
                     scope.launch {
                         runCatching { Social.inviteFriend(tableId, f.uid, seat) }
                             .onSuccess {
-                                Announcer.announce(if (seat != null) "أُرسلت الدعوة إلى ${f.username} للمقعد ${seat + 1}" else "أُرسلت الدعوة إلى ${f.username}")
+                                // الخادم يعلن للكل «فلان أرسل دعوة إلى فلان» (وتنكتب في الدردشة)، فما نكررها هنا
                                 if (seat != null) onClose()
                             }
                             .onFailure { Announcer.announce(Social.error(it)) }

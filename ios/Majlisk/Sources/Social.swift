@@ -452,6 +452,8 @@ final class TableConnection: ObservableObject {
             let mode = ChatSettings.shared.mode
             guard mode != .off else { return }
             let m = ChatMessage(uid: msg.str("uid"), name: msg.str("name"), text: msg.str("text"), mine: msg.str("uid") == myUid)
+            // سطر من الطاولة نفسها (مثل الدعوات): ينكتب في الدردشة بس، لأن قارئ الشاشة قرأه من الإعلان
+            if m.uid == "system" { DispatchQueue.main.async { self.chat = Array((self.chat + [m]).suffix(100)) }; return }
             DispatchQueue.main.async {
                 self.chat = Array((self.chat + [m]).suffix(100))
                 if !m.mine {

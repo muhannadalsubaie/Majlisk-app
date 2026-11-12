@@ -174,7 +174,7 @@ struct InviteFriendsSheet: View {
                             Task { @MainActor in
                                 do {
                                     try await Social.inviteFriend(tableId: tableId, uid: f.uid, seat: seat)
-                                    Announcer.announce(seat != nil ? "أُرسلت الدعوة إلى \(f.username) للمقعد \(seat! + 1)" : "أُرسلت الدعوة إلى \(f.username)")
+                                    // الخادم يعلن للكل «فلان أرسل دعوة إلى فلان» (وتنكتب في الدردشة)، فما نكررها هنا
                                     if seat != nil { onClose() }
                                 } catch { Announcer.announce(Social.error(error)) }
                                 busy = ""
