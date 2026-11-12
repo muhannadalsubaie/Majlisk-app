@@ -23,15 +23,21 @@ on:
         description: إضافة النسخة لرابط المختبرين الخارجيين (بعد الرفع)
         type: boolean
         default: false
+      runner:
+        description: نوع جهاز الماك (لو نوع ما يتوفر نجرب الثاني)
+        type: choice
+        options: [macos-26, macos-15-intel]
+        default: macos-26
 
 # فحص البناء (مع كل تعديل) والرفع (يدوي) في مجموعتين منفصلتين، فلا يلغي تعديلٌ جديد رفعاً ينتظر دوره
-concurrency: ios-${{ github.event_name }}
+concurrency: ios-${{ github.event_name }}-${{ inputs.runner || 'macos-26' }}
 
 jobs:
   build:
     # ماك Intel: أجهزة Apple Silicon عند GitHub مزدحمة (لم تُستلم المهمة)
     # أجهزة ماك macOS 26 (فيها Xcode 26 اللي تطلبه Apple): Intel وmacos-15 كانت البناءات تنتظرها لين تنلغي
-    runs-on: macos-26
+    # يدوياً نقدر نختار Intel (macos-15-intel) لو أجهزة macos-26 مزدحمة
+    runs-on: ${{ inputs.runner || 'macos-26' }}
     env:
       HAS_KEYS: ${{ secrets.ASC_KEY_P8 != '' && secrets.APPLE_TEAM_ID != '' }}
       UPLOAD: ${{ github.event_name == 'workflow_dispatch' && inputs.upload }}
