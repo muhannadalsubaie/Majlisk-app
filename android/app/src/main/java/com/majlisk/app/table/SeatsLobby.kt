@@ -169,9 +169,12 @@ fun InviteFriendsDialog(tableId: String, seat: Int?, title: String, onClose: () 
         }
     }
     MajliskDialog(title, onClose) {
+        // الأصدقاء اللي موجودين في نفس الطاولة (جالسين أو يتفرجون) ما يطلعون في الدعوة
+        val outside = friends?.filter { it.tableId != tableId }
         if (friends == null) Body("جارٍ التحميل…")
         else if (friends!!.isEmpty()) Body("لا يوجد أصدقاء بعد. أضفهم من شاشة الأصدقاء، أو أضف روبوتاً.")
-        friends?.sortedByDescending { it.online }?.forEach { f ->
+        else if (outside!!.isEmpty()) Body("كل أصدقائك موجودين في الطاولة.")
+        outside?.sortedByDescending { it.online }?.forEach { f ->
             ItemRow {
                 Text("${f.username}، ${if (f.online) "متصل" else "غير متصل"}", color = Palette.text, modifier = Modifier.weight(1f))
                 // غير المتصل تصله الدعوة إشعار على جواله

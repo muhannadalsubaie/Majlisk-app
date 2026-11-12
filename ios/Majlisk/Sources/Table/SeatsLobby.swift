@@ -162,9 +162,12 @@ struct InviteFriendsSheet: View {
 
     var body: some View {
         Sheet(title: title) {
+            // الأصدقاء اللي موجودين في نفس الطاولة (جالسين أو يتفرجون) ما يطلعون في الدعوة
+            let outside = (friends ?? []).filter { $0.tableId != tableId }
             if friends == nil { BodyText("جارٍ التحميل…") }
             else if friends!.isEmpty { BodyText("لا يوجد أصدقاء بعد. أضفهم من شاشة الأصدقاء، أو أضف روبوتاً.") }
-            ForEach((friends ?? []).sorted { $0.online && !$1.online }) { f in
+            else if outside.isEmpty { BodyText("كل أصدقائك موجودين في الطاولة.") }
+            ForEach(outside.sorted { $0.online && !$1.online }) { f in
                 ItemRow {
                     Text("\(f.username)، \(f.online ? "متصل" : "غير متصل")").frame(maxWidth: .infinity, alignment: .leading)
                     // غير المتصل تصله الدعوة إشعار على جواله
