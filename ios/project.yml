@@ -30,6 +30,9 @@ targets:
       - path: Majlisk/Assets.xcassets
       - path: Majlisk/GoogleService-Info.plist
         buildPhase: resources
+      # صوت الإشعارات وأنت برا التطبيق: لازم يكون في جذر التطبيق وبصيغة CAF
+      - path: Majlisk/notify.caf
+        buildPhase: resources
     dependencies:
       - package: Firebase
         product: FirebaseAuth
