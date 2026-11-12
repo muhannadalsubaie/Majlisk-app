@@ -63,6 +63,8 @@ object Session {
     }
 
     fun signOut() {
+        // دخولك الجاي على هالجوال يرجّعه جوال الحساب
+        Prefs.claimedUid = null
         auth.signOut()
     }
 }

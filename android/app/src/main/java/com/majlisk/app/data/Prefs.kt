@@ -25,4 +25,12 @@ object Prefs {
         get() = sp.getLong("lastTableAt", 0)
         set(v) { sp.edit().putLong("lastTableAt", v).apply() }
 
+    /** رقم هالجوال (ثابت): الحساب يكون مسجل في جوال واحد بس */
+    val deviceId: String
+        get() = sp.getString("deviceId", null) ?: java.util.UUID.randomUUID().toString().also { sp.edit().putString("deviceId", it).apply() }
+    /** الحساب اللي سجّل هالجوال نفسه جواله عند الخادم (عشان ما نعيدها كل ما فتحت التطبيق) */
+    var claimedUid: String?
+        get() = sp.getString("claimedUid", null)
+        set(v) { sp.edit().putString("claimedUid", v).apply() }
+
 }

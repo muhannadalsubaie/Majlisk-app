@@ -62,6 +62,8 @@ final class Session: ObservableObject {
     func markVerified() { needsVerify = false }
 
     func signOut() {
+        // دخولك الجاي على هالجوال يرجّعه جوال الحساب
+        Prefs.claimedUid = nil
         try? Auth.auth().signOut()
         GIDSignIn.sharedInstance.signOut()
     }

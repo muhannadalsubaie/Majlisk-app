@@ -81,8 +81,14 @@ object Hub {
             while (enabled) {
                 val token = runCatching { Api.token() }.getOrNull()
                 if (token == null) { delay(3000); continue }
+                // دخول جديد بهالحساب على هالجوال: يصير هو جوال الحساب (والجوال الثاني يتسجل خروجه) قبل ما نتصل
+                val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
+                if (uid != null && Prefs.claimedUid != uid) {
+                    val ok = runCatching { Api.post("/profile/claim-device", jsonOf("device" to Prefs.deviceId)) }.isSuccess
+                    if (ok) Prefs.claimedUid = uid else { delay(3000); continue }
+                }
                 val closed = kotlinx.coroutines.CompletableDeferred<Unit>()
-                ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/me/ws", token)).build(), object : WebSocketListener() {
+                ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/me/ws", token) + "&device=" + Prefs.deviceId).build(), object : WebSocketListener() {
                     override fun onOpen(webSocket: WebSocket, response: Response) { retry = 0 }
                     override fun onMessage(webSocket: WebSocket, text: String) {
                         if (text == "pong") return
@@ -90,6 +96,13 @@ object Hub {
                         when (msg.optString("type")) {
                             "state" -> _state.value = HubState(friends(msg, "friends"), friends(msg, "requests"), invites(msg))
                             "presence" -> _presence.value++
+                            // الحساب انفتح من جوال ثاني: نسجّل خروج هالجوال
+                            "loggedOut" -> Session.scope.launch {
+                                Prefs.claimedUid = null
+                                runCatching { com.google.firebase.messaging.FirebaseMessaging.getInstance().deleteToken() }
+                                Announcer.announce("انفتح حسابك من جوال ثاني، فتسجّل خروجك من هالجوال")
+                                Session.signOut()
+                            }
                             "notice" -> { Sounds.notifyTone(); Announcer.announce(msg.optString("text")) }
                             "invite" -> { Sounds.inviteIn(); Announcer.announce("${msg.optJSONObject("invite")?.optString("fromName")} يدعوك لطاولته") }
                         }

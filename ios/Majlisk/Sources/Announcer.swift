@@ -69,4 +69,16 @@ enum Prefs {
         get { UserDefaults.standard.double(forKey: "lastTableAt") }
         set { UserDefaults.standard.set(newValue, forKey: "lastTableAt") }
     }
+    /// رقم هالجوال (ثابت): الحساب يكون مسجل في جوال واحد بس
+    static var deviceId: String {
+        if let d = UserDefaults.standard.string(forKey: "deviceId") { return d }
+        let d = UUID().uuidString
+        UserDefaults.standard.set(d, forKey: "deviceId")
+        return d
+    }
+    /// الحساب اللي سجّل هالجوال نفسه جواله عند الخادم (عشان ما نعيدها كل ما فتحت التطبيق)
+    static var claimedUid: String? {
+        get { UserDefaults.standard.string(forKey: "claimedUid") }
+        set { UserDefaults.standard.set(newValue, forKey: "claimedUid") }
+    }
 }

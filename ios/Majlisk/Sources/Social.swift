@@ -2,6 +2,8 @@ import Foundation
 import Combine
 import Network
 import FirebaseFirestore
+import FirebaseAuth
+import FirebaseMessaging
 
 /// tableId: الطاولة اللي فيها الصديق المتصل الآن (إن وُجدت)
 struct Friend: Identifiable, Equatable { let uid: String; let username: String; var online = false; var tableId: String? = nil; var tablePrivate = false; var tableGame = ""; var id: String { uid } }
@@ -65,7 +67,13 @@ final class Hub: ObservableObject {
             var retry = 0
             while !Task.isCancelled {
                 guard let token = try? await Api.token() else { try? await Task.sleep(nanoseconds: 3_000_000_000); continue }
-                let ws = URLSession.shared.webSocketTask(with: Api.wsURL("/me/ws", token: token))
+                // دخول جديد بهالحساب على هالجوال: يصير هو جوال الحساب (والجوال الثاني يتسجل خروجه) قبل ما نتصل
+                if let uid = Auth.auth().currentUser?.uid, Prefs.claimedUid != uid {
+                    if (try? await Api.post("/profile/claim-device", ["device": Prefs.deviceId])) != nil { Prefs.claimedUid = uid }
+                    else { try? await Task.sleep(nanoseconds: 3_000_000_000); continue }
+                }
+                let url = URL(string: Api.wsURL("/me/ws", token: token).absoluteString + "&device=" + Prefs.deviceId)!
+                let ws = URLSession.shared.webSocketTask(with: url)
                 self?.task = ws
                 ws.resume()
                 // نبضة كل 15 ثانية: بها يعرف الخادم أنك متصل (وإذا انقطعت تصير "غير متصل" لأصدقائك)
@@ -90,6 +98,14 @@ final class Hub: ObservableObject {
             let s = HubState(friends: friends(msg, "friends"), requests: friends(msg, "requests"), invites: invites(msg))
             DispatchQueue.main.async { self.state = s }
         case "presence": DispatchQueue.main.async { self.presence += 1 }
+        // الحساب انفتح من جوال ثاني: نسجّل خروج هالجوال
+        case "loggedOut":
+            DispatchQueue.main.async {
+                Prefs.claimedUid = nil
+                Messaging.messaging().deleteToken { _ in }
+                Announcer.announce("انفتح حسابك من جوال ثاني، فتسجّل خروجك من هالجوال")
+                Session.shared.signOut()
+            }
         case "notice": Sounds.shared.notify(); Announcer.announce(msg.str("text"))
         case "invite": Sounds.shared.inviteIn(); Announcer.announce("\(msg.obj("invite")?.str("fromName") ?? "") يدعوك لطاولته")
         default: break
