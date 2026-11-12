@@ -74,7 +74,7 @@ fun AppRoot() {
                 } else screen = Route.Menu
             }
             Route.Auth -> AuthScreen { screen = Route.Menu }
-            Route.Menu -> MainMenuScreen(profile, navigate)
+            Route.Menu -> MainMenuScreen(profile, navigate, openTable)
             Route.CreateTable -> CreateTableScreen(profile, navigate, openTable)
             Route.JoinTable -> JoinTableScreen(navigate, openTable)
             Route.Friends -> FriendsScreen(hub, navigate, openTable)

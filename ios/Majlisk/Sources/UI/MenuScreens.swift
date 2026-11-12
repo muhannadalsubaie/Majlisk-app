@@ -14,6 +14,7 @@ struct CoinsBadge: View {
 
 struct MainMenuScreen: View {
     let profile: Profile?
+    var openTable: (String) -> Void = { _ in }
     let navigate: (Route) -> Void
     @State private var getCoins = false
     var body: some View {
@@ -26,7 +27,7 @@ struct MainMenuScreen: View {
                     Title("مجلسك")
                     if let name = profile?.username, !name.isEmpty { Note("أهلاً \(name)") }
                     // عدد المتصلين في التطبيق كله (يتحدث على طول)، والضغط يعرض أسماءهم
-                    OnlineLine()
+                    OnlineLine(openTable: openTable)
                 }
                 Spacer()
                 CoinsBadge(profile: profile)

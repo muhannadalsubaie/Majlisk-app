@@ -2,6 +2,7 @@ import SwiftUI
 
 /// تحت اسمك في الشاشة الرئيسية: «المتصلون: ١٢» (يتحدث على طول)، والضغط يفتح قائمتهم
 struct OnlineLine: View {
+    let openTable: (String) -> Void
     @ObservedObject private var online = Online.shared
     @State private var open = false
     var body: some View {
@@ -12,80 +13,136 @@ struct OnlineLine: View {
         .buttonStyle(.plain)
         .accessibilityLabel(online.count.map { "المتصلون الآن \($0)" } ?? "المتصلون، جارٍ التحميل")
         .accessibilityHint("يعرض أسماء المتصلين")
-        .sheet(isPresented: $open) { OnlineSheet { open = false } }
+        .sheet(isPresented: $open) { OnlineSheet(close: { open = false }, openTable: { id in open = false; openTable(id) }) }
     }
 }
 
-/// أسماء كل المتصلين في التطبيق: الضغط على الاسم يفتح ملفه (وتقدر تضيفه صديق)
+/// وين اللاعب: «بلوت، طاولة عامة» أو «في الرئيسية»
+private func placeText(_ p: OnlinePlayer) -> String {
+    guard p.tableId != nil else { return "في الرئيسية" }
+    return [p.tableGame, p.tablePrivate ? "طاولة خاصة" : "طاولة عامة"].filter { !$0.isEmpty }.joined(separator: "، ")
+}
+
+/// كل المتصلين: صورة واسم ووين هو (اللعبة، وعامة أو خاصة)، وجنبه «إضافة صديق».
+/// الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته (العامة على طول، والخاصة بطلب انضمام)
 private struct OnlineSheet: View {
     let close: () -> Void
+    let openTable: (String) -> Void
     @ObservedObject private var online = Online.shared
+    @ObservedObject private var hub = Hub.shared
     @State private var player: OnlinePlayer?
+    @State private var sent: Set<String> = []
+    @State private var joining = false
+
+    private func say(_ t: String) { Announcer.announce(t) }
+
+    /// الدخول لطاولته (نفس قائمة الأصدقاء): العامة على طول، والخاصة طلب انضمام وننتظر رد صاحبها
+    private func enter(_ p: OnlinePlayer) {
+        guard !joining, !p.me, let id = p.tableId else { return }
+        joining = true
+        Task { @MainActor in
+            defer { joining = false }
+            do {
+                if p.tablePrivate {
+                    var (st, mins) = try await Tables.requestJoin(id)
+                    if st == "pending" { say("أُرسل طلب الانضمام إلى طاولة \(p.username)، ننتظر موافقة صاحبها") }
+                    var n = 0
+                    while st == "pending" && n < 155 {
+                        try? await Task.sleep(nanoseconds: 2_000_000_000)
+                        if let r = try? await Tables.joinRequestStatus(id) { (st, mins) = r }
+                        n += 1
+                    }
+                    switch st {
+                    case "accepted": try await Tables.join(id); player = nil; openTable(id)
+                    case "rejected": say("رُفض طلب الانضمام، تقدر تحاول بعد \(minutesText(mins))")
+                    case "waiting": say("عندك طلب انضمام معلّق لهالطاولة، تقدر ترسل طلب جديد بعد \(minutesText(mins))")
+                    default: say("انتهى طلب الانضمام بدون رد")
+                    }
+                } else {
+                    try await Tables.join(id); player = nil; openTable(id)
+                }
+            } catch { say(Tables.error(error, p.tablePrivate ? "تعذّر إرسال طلب الانضمام" : "تعذّر الانضمام")) }
+        }
+    }
+
+    private func addFriend(_ p: OnlinePlayer) {
+        Task { @MainActor in
+            do {
+                let became = try await Social.requestFriend(p.username)
+                sent.insert(p.uid)
+                say(became ? "أصبحت أنت و\(p.username) أصدقاء" : "أُرسل طلب الصداقة إلى \(p.username)")
+            } catch { say(Social.error(error)) }
+        }
+    }
+
+    private func acceptFriend(_ p: OnlinePlayer) {
+        Task { @MainActor in
+            do { try await Social.respondFriend(p.uid, accept: true); say("أصبحت أنت و\(p.username) أصدقاء") } catch { say(Social.error(error)) }
+        }
+    }
+
+    private func isFriend(_ p: OnlinePlayer) -> Bool { hub.state.friends.contains { $0.uid == p.uid } }
+    private func asked(_ p: OnlinePlayer) -> Bool { hub.state.requests.contains { $0.uid == p.uid } }
+
     var body: some View {
         Sheet(title: online.count.map { "المتصلون الآن (\($0))" } ?? "المتصلون الآن") {
             if let list = online.list {
                 if list.isEmpty { BodyText("ما فيه أحد متصل الحين") }
-                ForEach(list) { p in
-                    Button { player = p } label: {
-                        ItemRow {
-                            Avatar(uid: p.uid, name: p.username, size: 36)
-                            Text(p.me ? "\(p.username) (أنت)" : p.username).font(.system(size: 16)).foregroundColor(Palette.text)
-                            Spacer()
-                        }
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(p.me ? "\(p.username)، أنت" : p.username)
-                    .accessibilityHint("يفتح ملفه")
-                    .accessibilityAddTraits(.isButton)
-                }
+                ForEach(list) { p in row(p) }
             } else { BodyText("جارٍ التحميل…") }
             MButton("تحديث القائمة") { online.requestList() }
             MButton("إغلاق") { close() }
         }
         .onAppear { online.requestList() }
-        .sheet(item: $player) { p in PlayerCard(p: p) { player = nil } }
+        .sheet(item: $player) { p in card(p) }
     }
-}
 
-/// ملف لاعب: صورته واسمه، وإضافته صديق (أو قبول طلبه لو هو اللي طلبك)
-private struct PlayerCard: View {
-    let p: OnlinePlayer
-    let close: () -> Void
-    @ObservedObject private var hub = Hub.shared
-    @State private var sent = false
-    @State private var busy = false
-    var body: some View {
-        let friend = hub.state.friends.contains { $0.uid == p.uid }
-        let asked = hub.state.requests.contains { $0.uid == p.uid }
+    @ViewBuilder private func row(_ p: OnlinePlayer) -> some View {
+        let friend = isFriend(p), req = asked(p)
+        let relation: String? = p.me ? "أنت" : friend ? "صديقك" : sent.contains(p.uid) ? "أُرسل طلب الصداقة" : nil
+        ItemRow {
+            Avatar(uid: p.uid, name: p.username, size: 38)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(p.me ? "\(p.username) (أنت)" : p.username).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.text)
+                Text(placeText(p)).font(.system(size: 13)).foregroundColor(Palette.textDim)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
+            .onTapGesture { player = p }
+            .onLongPressGesture { enter(p) }
+            if p.me { EmptyView() }
+            else if friend { Text("صديقك").font(.system(size: 13)).foregroundColor(Palette.goldSoft) }
+            else if sent.contains(p.uid) { Text("أُرسل").font(.system(size: 13)).foregroundColor(Palette.textDim) }
+            else if req { MButton("قبول", .primary, fill: false) { acceptFriend(p) } }
+            else { MButton("إضافة صديق", fill: false) { addFriend(p) } }
+        }
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel([p.username, placeText(p), relation].compactMap { $0 }.joined(separator: "، "))
+        .accessibilityAddTraits(.isButton)
+        .accessibilityAction { player = p }
+        .accessibilityActions {
+            if !p.me && !friend && !sent.contains(p.uid) {
+                Button(req ? "قبول طلب الصداقة" : "إضافة صديق") { req ? acceptFriend(p) : addFriend(p) }
+            }
+            if !p.me && p.tableId != nil {
+                Button(p.tablePrivate ? "طلب انضمام لطاولته" : "دخول طاولته") { enter(p) }
+            }
+        }
+    }
+
+    /// ملف اللاعب: صورته واسمه ووين هو، والدخول لطاولته، وإضافته صديق
+    @ViewBuilder private func card(_ p: OnlinePlayer) -> some View {
+        let friend = isFriend(p), req = asked(p)
         Sheet(title: p.username) {
             HStack { Spacer(); Avatar(uid: p.uid, name: p.username, size: 110); Spacer() }
-            BodyText(p.me ? "هذا أنت" : friend ? "صديقك، متصل الآن" : "متصل الآن")
-            if !p.me && !friend {
-                if asked {
-                    MButton("قبول طلب الصداقة", .primary, enabled: !busy) {
-                        Task { @MainActor in
-                            busy = true; defer { busy = false }
-                            do { try await Social.respondFriend(p.uid, accept: true); Announcer.announce("أصبحت أنت و\(p.username) أصدقاء") }
-                            catch { Announcer.announce(Social.error(error)) }
-                        }
-                    }
-                } else if sent {
-                    BodyText("أُرسل طلب الصداقة")
-                } else {
-                    MButton("إضافة صديق", .primary, enabled: !busy) {
-                        Task { @MainActor in
-                            busy = true; defer { busy = false }
-                            do {
-                                let became = try await Social.requestFriend(p.username)
-                                sent = true
-                                Announcer.announce(became ? "أصبحت أنت و\(p.username) أصدقاء" : "أُرسل طلب الصداقة إلى \(p.username)")
-                            } catch { Announcer.announce(Social.error(error)) }
-                        }
-                    }
-                }
+            BodyText(p.me ? "هذا أنت" : "\(friend ? "صديقك، " : "")متصل، \(placeText(p))")
+            if !p.me && p.tableId != nil {
+                MButton(p.tablePrivate ? "طلب انضمام" : "دخول طاولته", .primary, enabled: !joining) { enter(p) }
             }
-            MButton("رجوع") { close() }
+            if !p.me && !friend && !sent.contains(p.uid) {
+                MButton(req ? "قبول طلب الصداقة" : "إضافة صديق") { req ? acceptFriend(p) : addFriend(p) }
+            }
+            MButton("رجوع") { player = nil }
         }
     }
 }

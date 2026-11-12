@@ -123,8 +123,8 @@ object Hub {
     }
 }
 
-/** لاعب متصل في التطبيق (me = أنت) */
-data class OnlinePlayer(val uid: String, val username: String, val me: Boolean)
+/** لاعب متصل في التطبيق (me = أنت)، وطاولته لو هو جالس على طاولة: اللعبة، وخاصة أو عامة */
+data class OnlinePlayer(val uid: String, val username: String, val me: Boolean, val tableId: String? = null, val tablePrivate: Boolean = false, val tableGame: String = "")
 
 /**
  * المتصلون في التطبيق كله: العدد يوصل من الخادم على طول مع كل دخول وطلوع،
@@ -155,12 +155,6 @@ object Online {
                         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
                         when (msg.optString("type")) {
                             "online" -> _count.value = msg.optInt("count")
-                            "onlineList" -> {
-                                _count.value = msg.optInt("count")
-                                val a = msg.optJSONArray("players") ?: org.json.JSONArray()
-                                _list.value = (0 until a.length()).mapNotNull { a.optJSONObject(it) }
-                                    .map { OnlinePlayer(it.optString("uid"), it.optString("username"), it.optBoolean("me")) }
-                            }
                         }
                     }
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { closed.complete(Unit) }
@@ -176,8 +170,19 @@ object Online {
         }
     }
 
-    /** قائمة المتصلين (تجي في رسالة من الخادم) */
-    fun requestList() { _list.value = null; ws?.send(JSONObject().put("type", "list").toString()) }
+    /** قائمة المتصلين مع طاولة كل واحد (من الخادم) */
+    fun requestList() {
+        _list.value = null
+        Session.scope.launch {
+            runCatching { Api.post("/online/list") }.onSuccess { r ->
+                _count.value = r.optInt("count")
+                _list.value = r.optJSONArray("players").objects().map {
+                    OnlinePlayer(it.optString("uid"), it.optString("username"), it.optBoolean("me"), it.optString("tableId").ifEmpty { null }, it.optBoolean("tablePrivate"),
+                        if (it.has("tableKind")) gameTitle(it.optString("tableKind"), it.optString("tableVariant")) else "")
+                }
+            }.onFailure { _list.value = emptyList() }
+        }
+    }
 
     fun stop() {
         enabled = false

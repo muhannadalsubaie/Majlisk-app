@@ -44,7 +44,7 @@ struct AppRoot: View {
             switch route {
             case .splash: SplashScreen(done: afterSplash)
             case .auth: AuthScreen { route = .menu }
-            case .menu: MainMenuScreen(profile: session.profile) { route = $0 }
+            case .menu: MainMenuScreen(profile: session.profile, openTable: open) { route = $0 }
             case .createTable: CreateTableScreen(profile: session.profile, navigate: { route = $0 }, openTable: open)
             case .joinTable: JoinTableScreen(navigate: { route = $0 }, openTable: open)
             case .friends: FriendsScreen(hub: hub.state, navigate: { route = $0 }, openTable: open)

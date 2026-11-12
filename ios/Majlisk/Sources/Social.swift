@@ -107,8 +107,12 @@ final class Hub: ObservableObject {
     func dropInvite(_ tableId: String) { state.invites.removeAll { $0.tableId == tableId } }
 }
 
-/// لاعب متصل في التطبيق (me = أنت)
-struct OnlinePlayer: Identifiable, Equatable { let uid: String; let username: String; let me: Bool; var id: String { uid } }
+/// لاعب متصل في التطبيق (me = أنت)، وطاولته لو هو جالس على طاولة: اللعبة، وخاصة أو عامة
+struct OnlinePlayer: Identifiable, Equatable {
+    let uid: String; let username: String; let me: Bool
+    var tableId: String? = nil; var tablePrivate = false; var tableGame = ""
+    var id: String { uid }
+}
 
 /// المتصلون في التطبيق كله: العدد يوصل من الخادم على طول مع كل دخول وطلوع، وقائمة الأسماء تنطلب لما تفتحها
 final class Online: ObservableObject {
@@ -147,18 +151,22 @@ final class Online: ObservableObject {
         case "online":
             let n = msg.int("count")
             DispatchQueue.main.async { self.count = n }
-        case "onlineList":
-            let n = msg.int("count")
-            let players = msg.objs("players").map { OnlinePlayer(uid: $0.str("uid"), username: $0.str("username"), me: $0.bool("me")) }
-            DispatchQueue.main.async { self.count = n; self.list = players }
         default: break
         }
     }
 
-    /// قائمة المتصلين (تجي في رسالة من الخادم)
+    /// قائمة المتصلين مع طاولة كل واحد (من الخادم)
     func requestList() {
         list = nil
-        task?.send(.string("{\"type\":\"list\"}")) { _ in }
+        Task { @MainActor in
+            guard let r = try? await Api.post("/online/list") else { list = []; return }
+            count = r.int("count")
+            list = r.objs("players").map {
+                OnlinePlayer(uid: $0.str("uid"), username: $0.str("username"), me: $0.bool("me"),
+                             tableId: $0.strOrNil("tableId"), tablePrivate: $0.bool("tablePrivate"),
+                             tableGame: $0["tableKind"] != nil ? gameTitle($0.str("tableKind"), $0.strOrNil("tableVariant")) : "")
+            }
+        }
     }
 
     func stop() {

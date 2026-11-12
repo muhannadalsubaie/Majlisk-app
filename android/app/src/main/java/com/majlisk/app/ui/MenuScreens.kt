@@ -54,7 +54,7 @@ fun CoinsBadge(profile: Profile?) {
 }
 
 @Composable
-fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit) {
+fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (String) -> Unit = {}) {
     var getCoins by remember { mutableStateOf(false) }
     Screen(scroll = false) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -67,7 +67,7 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit) {
                 Title("مجلسك")
                 if (!profile?.username.isNullOrEmpty()) Note("أهلاً ${profile?.username}")
                 // عدد المتصلين في التطبيق كله (يتحدث على طول)، والضغط يعرض أسماءهم
-                OnlineLine()
+                OnlineLine(openTable)
             }
             CoinsBadge(profile)
         }
