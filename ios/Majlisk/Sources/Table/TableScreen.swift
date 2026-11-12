@@ -383,6 +383,9 @@ struct BalootBoard: View {
     /// وصلت الحالة الجديدة
     private func settleFocus() {
         let hand = g.myHand
+        // خلصت الأوراق (نهاية الجولة): ننسى مكان المؤشر في اليد. لو بقي محفوظ، أول ما تتوزع الأوراق الجديدة
+        // يرجع المؤشر لنفس المكان ويقرأ الورقة، فيقطع قراءة النتيجة
+        if hand.isEmpty { playedPos = nil; slotFocus = nil; return }
         // لعبت آخر ورقة في اليد: مكانها اختفى، ننقل المؤشر للمكان اللي قبله
         if let p = playedPos, hand.count < p + 1 || hand.count == 0 {
             playedPos = nil
