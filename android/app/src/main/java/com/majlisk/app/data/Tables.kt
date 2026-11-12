@@ -268,6 +268,7 @@ class TableConnection(val tableId: String) {
             "joinRequest" -> scope.launch {
                 val name = msg.optString("name")
                 joinRequest.value = msg.optString("uid") to name
+                Sounds.joinRequest()
                 // قارئ الشاشة يقرأ الطلب على طول
                 Announcer.announceNow("$name طلب الانضمام")
             }
@@ -277,6 +278,7 @@ class TableConnection(val tableId: String) {
                 val m = ChatMessage(msg.optString("uid"), msg.optString("name"), msg.optString("text"), msg.optString("uid") == myUid)
                 _chat.value = (_chat.value + m).takeLast(100)
                 if (!m.mine) {
+                    Sounds.chat()
                     if (!chatOpen) _unread.value += 1
                     _toast.value = m
                     if (mode == ChatMode.READ) Announcer.announce("${m.name}: ${m.text}")

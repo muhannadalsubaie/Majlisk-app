@@ -21,6 +21,7 @@ final class Sounds {
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
+        "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap",
     ]
 
     func preload() {
@@ -106,6 +107,23 @@ final class Sounds {
     func micToggle(_ open: Bool) { play(open ? "mic-on" : "mic-off", gain: 0.8, vary: false) }
     func voiceJoin() { play("voice-join", gain: 0.7, vary: false) }
     func voiceLeave() { play("voice-leave", gain: 0.7, vary: false) }
+
+    /// ضغطت ورقة ما يصلح تلعبها
+    func illegal() { play("illegal", gain: 0.9, vary: false) }
+    /// وصلتك دعوة وأنت في التطبيق
+    func inviteIn() { play("invite-in", gain: 1, vary: false) }
+    /// إشعار عام (طلب صداقة، قبول، تنبيه)
+    func notify() { play("notify", gain: 0.9, vary: false) }
+    /// أحد طلب يدخل طاولتك
+    func joinRequest() { play("join-request", gain: 1, vary: false) }
+    /// وصلت رسالة دردشة
+    func chat() { play("chat-msg", gain: 0.8, vary: false) }
+    /// دخل حجر منطقة الأمان (الجاكارو) أو المنزل (اللودو)
+    func jackarooHome(at: Double = 0) { play("jk-home", at: at, gain: 1, vary: false) }
+    func ludoHome(at: Double = 0) { play("ludo-home", at: at, gain: 1, vary: false) }
+    /// الجاكارو: رجع الحجر ٤ للخلف، أو تبدّل حجرين
+    func jackarooBack(at: Double = 0) { play("jk-back", at: at, gain: 1, vary: false) }
+    func jackarooSwap(at: Double = 0) { play("jk-swap", at: at, gain: 1, vary: false) }
 
     /// أخذ الأكلة: الأوراق تنسحب لصاحبها
     func collect() { play("trick-collect", gain: 1, vary: false) }

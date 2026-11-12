@@ -567,7 +567,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                                 when {
                                     !j.myTurn -> Announcer.announceNow("ليس دورك")
                                     j.burning -> act(conn, "jackaroo", jsonOf("type" to "burn", "card" to h.card.json()))
-                                    h.moves.isEmpty() -> Announcer.announceNow("${h.label.substringBefore("،")} لا تصلح الآن")
+                                    h.moves.isEmpty() -> { Sounds.illegal(); Announcer.announceNow("${h.label.substringBefore("،")} لا تصلح الآن") }
                                     h.moves.size == 1 -> act(conn, "jackaroo", jsonOf("type" to "play", "card" to h.card.json(), "move" to h.moves[0].move))
                                     else -> picked = h
                                 }
@@ -1325,9 +1325,17 @@ class OtherGameSounds {
                     if ((first && !j.hasMove) || (!first && deal != null && deal != j.dealNo)) Sounds.deal(true)
                     if (!first && j.hasMove) {
                         Sounds.jackarooCard()
-                        if (j.lastSteps > 0) Sounds.marbleSteps(j.lastSteps, at = 0.25)
+                        // رجوع ٤ وتبديل حجرين: صوتهم الخاص بدل نقرات الخطوات
+                        when (j.lastKind) {
+                            "back" -> Sounds.jackarooBack(at = 0.25)
+                            "swap" -> Sounds.jackarooSwap(at = 0.25)
+                            else -> if (j.lastSteps > 0) Sounds.marbleSteps(j.lastSteps, at = 0.25)
+                        }
+                        val arrive = 0.25 + j.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP
                         // أكل حجر: بعد ما يوصل الحجر
-                        if (j.captures > 0) Sounds.capture(at = 0.25 + j.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP)
+                        if (j.captures > 0) Sounds.capture(at = arrive)
+                        // دخل حجر منطقة الأمان (المنزل)
+                        if (j.enteredSafe > 0) Sounds.jackarooHome(at = arrive + if (j.captures > 0) 0.5 else 0.0)
                     }
                 }
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
@@ -1342,6 +1350,8 @@ class OtherGameSounds {
                         Sounds.steps(l.lastSteps, at = at)
                         // أكل حجر: بعد ما يوصل الحجر
                         if (l.captures > 0) Sounds.capture(at = at + l.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP)
+                        // وصل الحجر المنزل
+                        if (l.finished) Sounds.ludoHome(at = at + l.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP)
                     }
                 }
             }

@@ -630,7 +630,7 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
  */
 @Composable
 private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modifier, actions: List<Pair<String, () -> Unit>> = emptyList(), onPlay: () -> Unit) {
-    val tap = { if (legal) onPlay() else Announcer.announceNow("غير متاحة") }
+    val tap = { if (legal) onPlay() else { Sounds.illegal(); Announcer.announceNow("غير متاحة") } }
     Box(
         modifier
             // مكانها في المروحة (تدور حول نقطة تحت اليد)، والمسموح لعبها بإطار ذهبي فقط فيبقى شكل المروحة واحداً

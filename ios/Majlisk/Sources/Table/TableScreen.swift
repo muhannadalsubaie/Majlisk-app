@@ -677,7 +677,7 @@ private struct HandCard: View {
     }
 
     private func tap() {
-        if legal { play() } else { Announcer.announceNow("غير متاحة") }
+        if legal { play() } else { Sounds.shared.illegal(); Announcer.announceNow("غير متاحة") }
     }
 }
 

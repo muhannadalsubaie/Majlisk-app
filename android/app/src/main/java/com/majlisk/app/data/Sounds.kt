@@ -38,6 +38,7 @@ object Sounds {
         "voice-double", "voice-three", "voice-four", "voice-gahwa", "voice-locked", "voice-open", "voice-turn", "voice-qablak", "proj-hundred", "proj-400",
         "voice-confirm", "voice-hokm2-S", "voice-hokm2-H", "voice-hokm2-C", "voice-hokm2-D", "mic-on", "mic-off",
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
+        "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap",
     ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -125,6 +126,23 @@ object Sounds {
     /** أحد انضم للمحادثة الصوتية / غادرها */
     fun voiceJoin() = play("voice-join", gain = 0.7f, vary = false)
     fun voiceLeave() = play("voice-leave", gain = 0.7f, vary = false)
+
+    /** ضغطت ورقة ما يصلح تلعبها */
+    fun illegal() = play("illegal", gain = 0.9f, vary = false)
+    /** وصلتك دعوة وأنت في التطبيق */
+    fun inviteIn() = play("invite-in", gain = 1f, vary = false)
+    /** إشعار عام (طلب صداقة، قبول، تنبيه) */
+    fun notify() = play("notify", gain = 0.9f, vary = false)
+    /** أحد طلب يدخل طاولتك */
+    fun joinRequest() = play("join-request", gain = 1f, vary = false)
+    /** وصلت رسالة دردشة */
+    fun chat() = play("chat-msg", gain = 0.8f, vary = false)
+    /** دخل حجر منطقة الأمان (الجاكارو) أو المنزل (اللودو) */
+    fun jackarooHome(at: Double = 0.0) = play("jk-home", at = at, gain = 1f, vary = false)
+    fun ludoHome(at: Double = 0.0) = play("ludo-home", at = at, gain = 1f, vary = false)
+    /** الجاكارو: رجع الحجر ٤ للخلف، أو تبدّل حجرين */
+    fun jackarooBack(at: Double = 0.0) = play("jk-back", at = at, gain = 1f, vary = false)
+    fun jackarooSwap(at: Double = 0.0) = play("jk-swap", at = at, gain = 1f, vary = false)
 
     /** أخذ الأكلة: الأوراق تنسحب لصاحبها */
     fun collect() = play("trick-collect", gain = 1f, vary = false)

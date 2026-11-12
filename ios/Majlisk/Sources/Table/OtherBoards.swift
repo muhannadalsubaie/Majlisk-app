@@ -587,7 +587,7 @@ struct JackarooBoard: View {
                     Button {
                         if !j.myTurn { Announcer.announceNow("ليس دورك") }
                         else if j.burning { act(["type": "burn", "card": h.card.json]) }
-                        else if h.moves.isEmpty { Announcer.announceNow("\(short(h.label)) لا تصلح الآن") }
+                        else if h.moves.isEmpty { Sounds.shared.illegal(); Announcer.announceNow("\(short(h.label)) لا تصلح الآن") }
                         else if h.moves.count == 1 { act(["type": "play", "card": h.card.json, "move": h.moves[0].move]) }
                         else { picked = h }
                     } label: {
@@ -1427,9 +1427,17 @@ final class OtherGameSounds {
                 if (first && !j.hasMove) || (!first && deal != nil && deal != j.dealNo) { s.deal(newHand: true) }
                 if !first && j.hasMove {
                     s.jackarooCard()
-                    if j.lastSteps > 0 { s.marbleSteps(j.lastSteps, at: 0.25) }
+                    // رجوع ٤ وتبديل حجرين: صوتهم الخاص بدل نقرات الخطوات
+                    switch j.lastKind {
+                    case "back": s.jackarooBack(at: 0.25)
+                    case "swap": s.jackarooSwap(at: 0.25)
+                    default: if j.lastSteps > 0 { s.marbleSteps(j.lastSteps, at: 0.25) }
+                    }
+                    let arrive = 0.25 + Double(min(max(j.lastSteps, 1), 13)) * Sounds.stepGap
                     // أكل حجر: بعد ما يوصل الحجر
-                    if j.captures > 0 { s.capture(at: 0.25 + Double(min(max(j.lastSteps, 1), 13)) * Sounds.stepGap) }
+                    if j.captures > 0 { s.capture(at: arrive) }
+                    // دخل حجر منطقة الأمان (المنزل)
+                    if j.enteredSafe > 0 { s.jackarooHome(at: arrive + (j.captures > 0 ? 0.5 : 0)) }
                 }
             } else if let l, !first {
                 // لودو: صوت النرد مع كل رمية، ونقرة لكل خطوة يمشيها الحجر
@@ -1442,6 +1450,8 @@ final class OtherGameSounds {
                     s.steps(l.lastSteps, at: at)
                     // أكل حجر: بعد ما يوصل الحجر
                     if l.captures > 0 { s.capture(at: at + Double(min(max(l.lastSteps, 1), 13)) * Sounds.stepGap) }
+                    // وصل الحجر المنزل
+                    if l.finished { s.ludoHome(at: at + Double(min(max(l.lastSteps, 1), 13)) * Sounds.stepGap) }
                 }
             }
         }

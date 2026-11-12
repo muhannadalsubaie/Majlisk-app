@@ -113,6 +113,9 @@ data class JackarooView(
     val lastSteps: Int,
     /** كم حجر انأكل في آخر حركة (لصوت الأكل) */
     val captures: Int = 0,
+    /** نوع آخر حركة (back = رجوع ٤، swap = تبديل)، وكم حجر دخل منطقة الأمان (للأصوات) */
+    val lastKind: String = "",
+    val enteredSafe: Int = 0,
     val myTurn: Boolean,
     val burning: Boolean,
     val hand: List<JackarooHandCard>,
@@ -160,6 +163,8 @@ data class JackarooView(
                 moveSig = "${s.opt("lastMove")}|${s.optInt("dealNo")}|${s.optString("phase")}",
                 hasMove = s.optJSONObject("lastMove") != null,
                 captures = s.optJSONObject("lastMove")?.optJSONArray("captured")?.length() ?: 0,
+                lastKind = s.optJSONObject("lastMove")?.optJSONObject("move")?.optString("kind").orEmpty(),
+                enteredSafe = s.optJSONObject("lastMove")?.optJSONArray("enteredSafe")?.length() ?: 0,
                 lastSteps = s.optJSONObject("lastMove")?.optJSONObject("move")?.let { m ->
                     when (m.optString("kind")) {
                         "forward", "back", "kingRun" -> m.optInt("steps")
@@ -213,6 +218,8 @@ data class LudoView(
     val lastSteps: Int,
     /** كم حجر انأكل في آخر حركة (لصوت الأكل) */
     val captures: Int = 0,
+    /** آخر حركة وصّلت حجر المنزل (لصوت الدخول) */
+    val finished: Boolean = false,
     val myTurn: Boolean,
     val options: List<LudoOption>,
     val movableOwner: Int,
@@ -258,6 +265,7 @@ data class LudoView(
                 moved = last?.optJSONObject("token") != null,
                 lastSig = "${s.opt("lastMove")}",
                 captures = last?.optJSONArray("captured")?.length() ?: 0,
+                finished = last?.optBoolean("finished") == true,
                 lastSteps = last?.let { m ->
                     val from = m.optIntOrNull("from"); val to = m.optIntOrNull("to")
                     if (from == null || to == null) 0 else if (from == -1) 1 else to - from

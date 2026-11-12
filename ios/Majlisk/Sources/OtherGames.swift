@@ -93,6 +93,9 @@ struct JackarooView {
     let lastSteps: Int
     /// كم حجر انأكل في آخر حركة (لصوت الأكل)
     let captures: Int
+    /// نوع آخر حركة (back = رجوع ٤، swap = تبديل)، وكم حجر دخل منطقة الأمان (للأصوات)
+    var lastKind = ""
+    var enteredSafe = 0
     let myTurn: Bool, burning: Bool
     let hand: [JackarooHandCard]
     let boardText: String, mineText: String, prompt: String
@@ -125,6 +128,8 @@ struct JackarooView {
         moveSig = jsonSig(s["lastMove"]) + "|\(s.int("dealNo"))|\(s.str("phase"))"
         hasMove = s.obj("lastMove") != nil
         captures = s.obj("lastMove")?.objs("captured").count ?? 0
+        lastKind = s.obj("lastMove")?.obj("move")?.str("kind") ?? ""
+        enteredSafe = s.obj("lastMove")?.objs("enteredSafe").count ?? 0
         if let m = s.obj("lastMove")?.obj("move") {
             switch m.str("kind") {
             case "forward", "back", "kingRun": lastSteps = m.int("steps")
@@ -173,6 +178,8 @@ struct LudoView {
     let lastSteps: Int
     /// كم حجر انأكل في آخر حركة (لصوت الأكل)
     let captures: Int
+    /// آخر حركة وصّلت حجر المنزل (لصوت الدخول)
+    var finished = false
     let myTurn: Bool
     let options: [LudoOption]
     let movableOwner: Int
@@ -208,6 +215,7 @@ struct LudoView {
         moved = last?.obj("token") != nil
         lastSig = jsonSig(s["lastMove"])
         captures = last?.objs("captured").count ?? 0
+        finished = last?.bool("finished") ?? false
         if let f = last?.intOrNil("from"), let t = last?.intOrNil("to") { lastSteps = f == -1 ? 1 : t - f } else { lastSteps = 0 }
         myTurn = ui.bool("myTurn")
         options = ui.objs("options").map { LudoOption(token: $0.int("token"), die: $0.int("die", s.int("dice")), text: $0.str("text")) }

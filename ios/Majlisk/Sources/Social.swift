@@ -90,8 +90,8 @@ final class Hub: ObservableObject {
             let s = HubState(friends: friends(msg, "friends"), requests: friends(msg, "requests"), invites: invites(msg))
             DispatchQueue.main.async { self.state = s }
         case "presence": DispatchQueue.main.async { self.presence += 1 }
-        case "notice": Announcer.announce(msg.str("text"))
-        case "invite": Announcer.announce("\(msg.obj("invite")?.str("fromName") ?? "") يدعوك لطاولته")
+        case "notice": Sounds.shared.notify(); Announcer.announce(msg.str("text"))
+        case "invite": Sounds.shared.inviteIn(); Announcer.announce("\(msg.obj("invite")?.str("fromName") ?? "") يدعوك لطاولته")
         default: break
         }
     }
@@ -439,6 +439,7 @@ final class TableConnection: ObservableObject {
             let r = JoinRequest(uid: msg.str("uid"), name: msg.str("name"))
             DispatchQueue.main.async {
                 self.joinRequest = r
+                Sounds.shared.joinRequest()
                 // قارئ الشاشة يقرأ الطلب على طول
                 Announcer.announceNow("\(r.name) طلب الانضمام")
             }
@@ -449,6 +450,7 @@ final class TableConnection: ObservableObject {
             DispatchQueue.main.async {
                 self.chat = Array((self.chat + [m]).suffix(100))
                 if !m.mine {
+                    Sounds.shared.chat()
                     if !self.chatOpen { self.unread += 1 }
                     self.toast = m
                 }
