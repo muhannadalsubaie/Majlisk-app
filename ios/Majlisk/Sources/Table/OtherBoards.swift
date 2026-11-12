@@ -720,7 +720,144 @@ func jackarooPositions(_ j: JackarooView, mySeat: Int?) -> [(title: String, colo
 }
 
 /// رسم لوحة الجاكارو (نفس رسم النسخة السابقة): المسار دائرة، ولكل لاعب قاعدة ومنطقة أمان وبيت
+/// لوحة الجاكارو الثمانية (مثل اللوحة الخشب): لكل لاعب ١٩ خانة على جهته، وخانة البداية عليها حلقة بلونه.
+/// نقاط خانات جهة اللاعب اللي تحت (بنسبة من نص اللوحة: x، y، وجهة الرقم للخارج)، وباقي الجهات بالتدوير
+private let JK_HOLES: [[CGFloat]] = [
+    [0.54, 0.684, -0.068, 0.998],
+    [0.4811, 0.6346, -0.642, 0.767],
+    [0.4225, 0.5857, -0.641, 0.768],
+    [0.3636, 0.5365, -0.671, 0.742],
+    [0.3089, 0.4829, -0.596, 0.803],
+    [0.2422, 0.4466, -0.368, 0.93],
+    [0.168, 0.4272, -0.205, 0.979],
+    [0.0925, 0.4153, -0.115, 0.993],
+    [0.016, 0.4097, -0.021, 1.0],
+    [-0.0605, 0.4121, 0.077, 0.997],
+    [-0.1365, 0.4215, 0.165, 0.986],
+    [-0.2114, 0.4373, 0.283, 0.959],
+    [-0.2825, 0.4646, 0.522, 0.853],
+    [-0.3393, 0.5155, 0.652, 0.758],
+    [-0.3982, 0.5641, 0.632, 0.775],
+    [-0.4582, 0.6125, 0.599, 0.8],
+    [-0.5209, 0.656, 0.342, 0.94],
+    [-0.5925, 0.6615, -0.39, 0.921],
+    [-0.643, 0.6043, -0.799, 0.602]
+]
+private let JK_YARD_SPOTS: [(CGFloat, CGFloat)] = [(0, -0.045), (0.045, 0), (0, 0.045), (-0.045, 0)]
+private let JK_SUITS = ["♠", "♣", "♦", "♥"]
+
+/// تدوير ربع لفة مع عقارب الساعة على الشاشة، k مرات
+private func jkRot(_ x: CGFloat, _ y: CGFloat, _ k: Int) -> (CGFloat, CGFloat) {
+    var a = x, b = y
+    for _ in 0..<(((k % 4) + 4) % 4) { (a, b) = (-b, a) }
+    return (a, b)
+}
+
 private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooView, _ bottom: Int) {
+    // لوحة غير الحجم المعتاد (١٩ خانة لكل لاعب): الرسم الدائري القديم
+    guard j.segment == JK_HOLES.count else { drawJackarooRound(ctx, size, j, bottom); return }
+    let W = min(size.width, size.height)
+    let half = W * 0.47
+    let ctr = CGPoint(x: W / 2, y: W / 2)
+    func at(_ x: CGFloat, _ y: CGFloat) -> CGPoint { CGPoint(x: ctr.x + x * half, y: ctr.y + y * half) }
+    func rk(_ seat: Int) -> Int { (seat - bottom + 4) % 4 }
+    func hole(_ seat: Int, _ i: Int) -> CGPoint { let h = JK_HOLES[i]; let (x, y) = jkRot(h[0], h[1], rk(seat)); return at(x, y) }
+    func safe(_ seat: Int, _ s: Int) -> CGPoint { let d = 0.565 - 0.068 * CGFloat(s); let (x, y) = jkRot(d, d, rk(seat)); return at(x, y) }
+    func yard(_ seat: Int) -> (CGFloat, CGFloat) { jkRot(0.20, 0.79, rk(seat)) }
+    func dot(_ p: CGPoint, _ r: CGFloat) -> Path { Path(ellipseIn: CGRect(x: p.x - r, y: p.y - r, width: r * 2, height: r * 2)) }
+    let holeR = W * 0.015
+    let woodDark = Color(red: 0.42, green: 0.29, blue: 0.13)
+    let cream = Color(red: 0.91, green: 0.86, blue: 0.75)
+    func drawHole(_ p: CGPoint, _ r: CGFloat? = nil, ring: Color? = nil, ringW: CGFloat? = nil) {
+        let r = r ?? holeR
+        ctx.fill(dot(p, r), with: .radialGradient(Gradient(colors: [Color(red: 0.91, green: 0.79, blue: 0.58), Color(red: 0.85, green: 0.71, blue: 0.49), Color(red: 0.65, green: 0.49, blue: 0.28)]),
+                                                  center: CGPoint(x: p.x - r * 0.2, y: p.y - r * 0.3), startRadius: 0, endRadius: r * 1.3))
+        ctx.stroke(dot(p, r), with: .color(ring ?? woodDark), lineWidth: ringW ?? W * 0.0015)
+    }
+    func marble(_ color: Color, _ p: CGPoint) {
+        let r = W * 0.013
+        ctx.fill(dot(p, r), with: .color(color))
+        ctx.fill(dot(p, r), with: .radialGradient(Gradient(colors: [.white.opacity(0.85), .clear]), center: CGPoint(x: p.x - r * 0.35, y: p.y - r * 0.4), startRadius: 0, endRadius: r * 0.8))
+        ctx.fill(dot(p, r), with: .radialGradient(Gradient(colors: [.clear, .black.opacity(0.7)]), center: CGPoint(x: p.x - r * 0.35, y: p.y - r * 0.4), startRadius: r * 0.5, endRadius: r * 1.6))
+    }
+    func octagon(_ radius: CGFloat) -> Path {
+        var path = Path()
+        for i in 0..<8 {
+            let a = (22.5 + 45 * Double(i)) * Double.pi / 180
+            let rr = radius / CGFloat(cos(22.5 * Double.pi / 180))
+            let q = CGPoint(x: ctr.x + rr * CGFloat(cos(a)), y: ctr.y + rr * CGFloat(sin(a)))
+            if i == 0 { path.move(to: q) } else { path.addLine(to: q) }
+        }
+        path.closeSubpath()
+        return path
+    }
+    // اللوحة الثمانية السوداء
+    let board = octagon(half * 0.99)
+    ctx.fill(board, with: .linearGradient(Gradient(colors: [Color(red: 0.11, green: 0.11, blue: 0.12), Color(red: 0.04, green: 0.04, blue: 0.05)]), startPoint: .zero, endPoint: CGPoint(x: W, y: W)))
+    ctx.stroke(board, with: .color(Palette.gold.opacity(0.5)), lineWidth: W * 0.003)
+    // صينية الورق في النص
+    let tray = octagon(half * 0.27)
+    ctx.fill(tray, with: .radialGradient(Gradient(colors: [Color(red: 0.89, green: 0.77, blue: 0.56), Color(red: 0.73, green: 0.55, blue: 0.33)]), center: ctr, startRadius: 0, endRadius: half * 0.32))
+    ctx.stroke(tray, with: .color(Color(red: 0.54, green: 0.38, blue: 0.2)), lineWidth: W * 0.003)
+    let cards: [(String, String, Bool)] = [("3", "♥", true), ("2", "♠", false), ("Q", "♣", false), ("A", "♦", true), ("K", "♣", false), ("J", "♠", false), ("A", "♠", false)]
+    let cw = W * 0.076, ch = W * 0.108
+    for (i, card) in cards.enumerated() {
+        var c2 = ctx
+        let pivot = CGPoint(x: ctr.x, y: ctr.y + W * 0.04)
+        c2.translateBy(x: pivot.x, y: pivot.y)
+        c2.rotate(by: .degrees(-27 + Double(i) * 9))
+        let rect = CGRect(x: -cw / 2, y: -W * 0.15, width: cw, height: ch)
+        let col = card.2 ? Color(red: 0.75, green: 0.22, blue: 0.17) : Color(red: 0.07, green: 0.07, blue: 0.07)
+        c2.fill(Path(roundedRect: rect, cornerRadius: W * 0.007), with: .color(Color(red: 0.98, green: 0.98, blue: 0.96)))
+        c2.stroke(Path(roundedRect: rect, cornerRadius: W * 0.007), with: .color(Color(white: 0.73)), lineWidth: W * 0.0012)
+        c2.draw(Text(card.0).font(.system(size: W * 0.02, weight: .bold)).foregroundColor(col), at: CGPoint(x: rect.minX + W * 0.016, y: rect.minY + W * 0.017))
+        c2.draw(Text(card.1).font(.system(size: W * 0.018)).foregroundColor(col), at: CGPoint(x: rect.minX + W * 0.016, y: rect.minY + W * 0.038))
+        if i == cards.count - 1 { c2.draw(Text(card.1).font(.system(size: W * 0.044)).foregroundColor(col), at: CGPoint(x: rect.midX, y: rect.minY + W * 0.066)) }
+    }
+    // جهة كل لاعب: الخانات وأرقامها (رقم ثابت للجميع، نفس الرقم في الإعلانات)، ورمز ورق، والبيت ومنطقة الأمان
+    for seat in 0...3 {
+        let k = rk(seat)
+        let active = j.active.contains(seat)
+        for (i, h) in JK_HOLES.enumerated() {
+            let p = hole(seat, i)
+            if i == 0 && active { ctx.stroke(dot(p, holeR * 1.4), with: .color(JK_COLORS[seat]), lineWidth: W * 0.004) }
+            drawHole(p)
+            let (nx, ny) = jkRot(h[2], h[3], k)
+            ctx.draw(Text("\(seat * j.segment + i)").font(.system(size: W * 0.021, weight: .semibold)).foregroundColor(cream),
+                     at: CGPoint(x: p.x + nx * half * 0.062, y: p.y + ny * half * 0.062))
+        }
+        let (sx, sy) = jkRot(-0.24, 0.84, k)
+        ctx.draw(Text(JK_SUITS[seat]).font(.system(size: W * 0.064)).foregroundColor(cream), at: at(sx, sy))
+        if !active { continue }
+        for s2 in 0..<4 { drawHole(safe(seat, s2), ring: JK_COLORS[seat], ringW: W * 0.003) }
+        let (yx, yy) = yard(seat)
+        let yc = at(yx, yy)
+        var c3 = ctx
+        c3.translateBy(x: yc.x, y: yc.y)
+        c3.rotate(by: .degrees(45))
+        let bs = W * 0.096
+        let box = Path(roundedRect: CGRect(x: -bs / 2, y: -bs / 2, width: bs, height: bs), cornerRadius: W * 0.016)
+        c3.fill(box, with: .color(Color(white: 0.06)))
+        c3.stroke(box, with: .color(cream.opacity(0.7)), lineWidth: W * 0.002)
+        for (dx, dy) in JK_YARD_SPOTS { drawHole(at(yx + dx, yy + dy), W * 0.014) }
+    }
+    // الأحجار
+    for o in j.active {
+        let row = o < j.marbles.count ? j.marbles[o] : []
+        for (i, m) in row.enumerated() {
+            let p: CGPoint
+            switch m.zone {
+            case "track": p = hole(m.pos / j.segment, m.pos % j.segment)
+            case "safe": p = safe(o, min(max(m.pos, 0), 3))
+            default: let (yx, yy) = yard(o); let (dx, dy) = JK_YARD_SPOTS[i % 4]; p = at(yx + dx, yy + dy)
+            }
+            marble(JK_COLORS[o], p)
+        }
+    }
+}
+
+/// الرسم الدائري القديم (للوحة بعدد خانات مختلف)
+private func drawJackarooRound(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooView, _ bottom: Int) {
     let k = min(size.width, size.height) / 320
     let L = j.segment * 4
     let c: CGFloat = 160, R: CGFloat = 130

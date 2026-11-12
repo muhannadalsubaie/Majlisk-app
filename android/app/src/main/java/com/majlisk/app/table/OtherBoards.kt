@@ -44,6 +44,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -659,8 +660,138 @@ private fun jackarooPositions(j: JackarooView, mySeat: Int?): List<Triple<String
     return out
 }
 
-/** رسم لوحة الجاكارو (نفس رسم النسخة السابقة): المسار دائرة، ولكل لاعب قاعدة ومنطقة أمان وبيت */
+/**
+ * لوحة الجاكارو الثمانية (مثل اللوحة الخشب): لكل لاعب ١٩ خانة على جهته، وخانة البداية عليها حلقة بلونه.
+ * نقاط خانات جهة اللاعب اللي تحت (بنسبة من نص اللوحة: x، y، وجهة الرقم للخارج)، وباقي الجهات بالتدوير
+ */
+private val JK_HOLES = listOf(
+    floatArrayOf(0.54f, 0.684f, -0.068f, 0.998f),
+    floatArrayOf(0.4811f, 0.6346f, -0.642f, 0.767f),
+    floatArrayOf(0.4225f, 0.5857f, -0.641f, 0.768f),
+    floatArrayOf(0.3636f, 0.5365f, -0.671f, 0.742f),
+    floatArrayOf(0.3089f, 0.4829f, -0.596f, 0.803f),
+    floatArrayOf(0.2422f, 0.4466f, -0.368f, 0.93f),
+    floatArrayOf(0.168f, 0.4272f, -0.205f, 0.979f),
+    floatArrayOf(0.0925f, 0.4153f, -0.115f, 0.993f),
+    floatArrayOf(0.016f, 0.4097f, -0.021f, 1.0f),
+    floatArrayOf(-0.0605f, 0.4121f, 0.077f, 0.997f),
+    floatArrayOf(-0.1365f, 0.4215f, 0.165f, 0.986f),
+    floatArrayOf(-0.2114f, 0.4373f, 0.283f, 0.959f),
+    floatArrayOf(-0.2825f, 0.4646f, 0.522f, 0.853f),
+    floatArrayOf(-0.3393f, 0.5155f, 0.652f, 0.758f),
+    floatArrayOf(-0.3982f, 0.5641f, 0.632f, 0.775f),
+    floatArrayOf(-0.4582f, 0.6125f, 0.599f, 0.8f),
+    floatArrayOf(-0.5209f, 0.656f, 0.342f, 0.94f),
+    floatArrayOf(-0.5925f, 0.6615f, -0.39f, 0.921f),
+    floatArrayOf(-0.643f, 0.6043f, -0.799f, 0.602f)
+)
+private val JK_YARD_SPOTS = listOf(0f to -0.045f, 0.045f to 0f, 0f to 0.045f, -0.045f to 0f)
+private val JK_SUITS = listOf("♠", "♣", "♦", "♥")
+
+/** تدوير ربع لفة مع عقارب الساعة على الشاشة، k مرات */
+private fun jkRot(x: Float, y: Float, k: Int): Pair<Float, Float> {
+    var a = x; var b = y
+    repeat(((k % 4) + 4) % 4) { val t = a; a = -b; b = t }
+    return a to b
+}
+
 private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
+    // لوحة غير الحجم المعتاد (١٩ خانة لكل لاعب): الرسم الدائري القديم
+    if (j.segment != JK_HOLES.size) { drawJackarooRound(j, bottom); return }
+    val W = size.minDimension
+    val half = W * 0.47f
+    val ctr = Offset(W / 2, W / 2)
+    fun at(x: Float, y: Float) = Offset(ctr.x + x * half, ctr.y + y * half)
+    val rk = { seat: Int -> (seat - bottom + 4) % 4 }
+    fun hole(seat: Int, i: Int): Offset { val h = JK_HOLES[i]; val (x, y) = jkRot(h[0], h[1], rk(seat)); return at(x, y) }
+    fun safe(seat: Int, s: Int): Offset { val d = 0.565f - 0.068f * s; val (x, y) = jkRot(d, d, rk(seat)); return at(x, y) }
+    fun yard(seat: Int): Pair<Float, Float> = jkRot(0.20f, 0.79f, rk(seat))
+    val holeR = W * 0.015f
+    val wood = Color(0xFFD8B47E); val woodDark = Color(0xFF6B4A22); val cream = Color(0xFFE9DCC0)
+    val txt = android.graphics.Paint().apply { isAntiAlias = true; textAlign = android.graphics.Paint.Align.CENTER }
+    fun text(s: String, p: Offset, sizePx: Float, color: Int) { txt.textSize = sizePx; txt.color = color; drawContext.canvas.nativeCanvas.drawText(s, p.x, p.y + sizePx * 0.36f, txt) }
+    fun drawHole(p: Offset, r: Float = holeR, ring: Color = woodDark, ringW: Float = W * 0.0015f) {
+        drawCircle(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0xFFE9C995), wood, Color(0xFFA77D47)), Offset(p.x - r * 0.2f, p.y - r * 0.3f), r * 1.3f), r, p)
+        drawCircle(ring, r, p, style = Stroke(ringW))
+    }
+    fun marble(color: Color, p: Offset, r: Float = W * 0.013f) {
+        drawCircle(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color.White.copy(alpha = 0.85f), color, Color.Black), Offset(p.x - r * 0.35f, p.y - r * 0.4f), r * 1.5f), r, p)
+    }
+    // اللوحة الثمانية السوداء
+    val oct = Path()
+    for (i in 0 until 8) {
+        val a = Math.toRadians(22.5 + 45.0 * i); val rr = half * 0.99f / cos(Math.toRadians(22.5)).toFloat()
+        val q = Offset(ctr.x + rr * cos(a).toFloat(), ctr.y + rr * sin(a).toFloat())
+        if (i == 0) oct.moveTo(q.x, q.y) else oct.lineTo(q.x, q.y)
+    }
+    oct.close()
+    drawPath(oct, androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF1C1C1E), Color(0xFF0B0B0C)), Offset.Zero, Offset(W, W)))
+    drawPath(oct, Color(0x80D4AF37), style = Stroke(W * 0.003f))
+    // صينية الورق في النص
+    val tray = Path()
+    for (i in 0 until 8) {
+        val a = Math.toRadians(22.5 + 45.0 * i); val rr = half * 0.27f / cos(Math.toRadians(22.5)).toFloat()
+        val q = Offset(ctr.x + rr * cos(a).toFloat(), ctr.y + rr * sin(a).toFloat())
+        if (i == 0) tray.moveTo(q.x, q.y) else tray.lineTo(q.x, q.y)
+    }
+    tray.close()
+    drawPath(tray, androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0xFFE4C48F), Color(0xFFB98D55)), ctr, half * 0.32f))
+    drawPath(tray, Color(0xFF8A6232), style = Stroke(W * 0.003f))
+    val cw = W * 0.076f; val ch = W * 0.108f
+    listOf(Triple("3", "♥", true), Triple("2", "♠", false), Triple("Q", "♣", false), Triple("A", "♦", true), Triple("K", "♣", false), Triple("J", "♠", false), Triple("A", "♠", false)).forEachIndexed { i, (r, su, red) ->
+        val col = if (red) android.graphics.Color.rgb(192, 57, 43) else android.graphics.Color.rgb(17, 17, 17)
+        rotate(-27f + i * 9f, Offset(ctr.x, ctr.y + W * 0.04f)) {
+            val tl = Offset(ctr.x - cw / 2, ctr.y + W * 0.04f - W * 0.15f)
+            drawRoundRect(Color(0xFFFBFBF6), tl, Size(cw, ch), CornerRadius(W * 0.007f))
+            drawRoundRect(Color(0xFFBBBBBB), tl, Size(cw, ch), CornerRadius(W * 0.007f), style = Stroke(W * 0.0012f))
+            txt.textAlign = android.graphics.Paint.Align.LEFT
+            txt.textSize = W * 0.02f; txt.color = col
+            drawContext.canvas.nativeCanvas.drawText(r, tl.x + W * 0.008f, tl.y + W * 0.024f, txt)
+            txt.textSize = W * 0.018f
+            drawContext.canvas.nativeCanvas.drawText(su, tl.x + W * 0.009f, tl.y + W * 0.044f, txt)
+            if (i == 6) { txt.textAlign = android.graphics.Paint.Align.CENTER; txt.textSize = W * 0.044f; drawContext.canvas.nativeCanvas.drawText(su, tl.x + cw / 2, tl.y + W * 0.08f, txt) }
+            txt.textAlign = android.graphics.Paint.Align.CENTER
+        }
+    }
+    // جهة كل لاعب: الخانات وأرقامها (رقم ثابت للجميع، نفس الرقم في الإعلانات)، ورمز ورق، والبيت ومنطقة الأمان
+    for (seat in 0..3) {
+        val k = rk(seat)
+        val active = seat in j.active
+        JK_HOLES.forEachIndexed { i, h ->
+            val p = hole(seat, i)
+            if (i == 0 && active) drawCircle(JK_COLORS[seat], holeR * 1.4f, p, style = Stroke(W * 0.004f))
+            drawHole(p)
+            val (nx, ny) = jkRot(h[2], h[3], k)
+            text("${seat * j.segment + i}", Offset(p.x + nx * half * 0.062f, p.y + ny * half * 0.062f), W * 0.021f, android.graphics.Color.rgb(233, 220, 192))
+        }
+        val (sx, sy) = jkRot(-0.24f, 0.84f, k)
+        text(JK_SUITS[seat], at(sx, sy), W * 0.064f, android.graphics.Color.rgb(239, 230, 207))
+        if (!active) continue
+        for (s2 in 0 until 4) drawHole(safe(seat, s2), ring = JK_COLORS[seat], ringW = W * 0.003f)
+        val (yx, yy) = yard(seat)
+        val yc = at(yx, yy)
+        rotate(45f, yc) {
+            val bs = W * 0.096f
+            drawRoundRect(Color(0xFF101010), Offset(yc.x - bs / 2, yc.y - bs / 2), Size(bs, bs), CornerRadius(W * 0.016f))
+            drawRoundRect(cream.copy(alpha = 0.7f), Offset(yc.x - bs / 2, yc.y - bs / 2), Size(bs, bs), CornerRadius(W * 0.016f), style = Stroke(W * 0.002f))
+        }
+        JK_YARD_SPOTS.forEach { (dx, dy) -> drawHole(at(yx + dx, yy + dy), W * 0.014f) }
+    }
+    // الأحجار
+    for (o in j.active) {
+        j.marbles.getOrNull(o).orEmpty().forEachIndexed { i, m ->
+            val p = when (m.zone) {
+                "track" -> hole(m.pos / j.segment, m.pos % j.segment)
+                "safe" -> safe(o, m.pos.coerceIn(0, 3))
+                else -> { val (yx, yy) = yard(o); val (dx, dy) = JK_YARD_SPOTS[i % 4]; at(yx + dx, yy + dy) }
+            }
+            marble(JK_COLORS[o], p)
+        }
+    }
+}
+
+/** الرسم الدائري القديم (للوحة بعدد خانات مختلف) */
+private fun DrawScope.drawJackarooRound(j: JackarooView, bottom: Int) {
     val k = size.minDimension / 320f
     val L = j.segment * 4
     val c = 160f; val R = 130f
