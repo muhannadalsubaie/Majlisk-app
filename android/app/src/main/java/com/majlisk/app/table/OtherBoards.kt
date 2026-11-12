@@ -733,6 +733,42 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         prev[0] = l.phase; prev[1] = l.turn; prev[2] = l.lastSig
     }
 
+    // حركة الأحجار: الحجر يقفز خانة خانة لين يوصل (نفس توقيت نقرات الخطوات)، والمأكول يطير لبيته
+    val hops = remember { androidx.compose.runtime.mutableStateMapOf<Pair<Int, Int>, LudoHop>() }
+    val prevTokens = remember { arrayOf<Any?>(null, null) } // الأحجار والمرحلة قبل التحديث
+    var clock by remember { mutableStateOf(System.currentTimeMillis()) }
+    androidx.compose.runtime.LaunchedEffect(l.tokens) {
+        @Suppress("UNCHECKED_CAST") val before = prevTokens[0] as List<List<Int>>?
+        val wasPhase = prevTokens[1] as String?
+        prevTokens[0] = l.tokens; prevTokens[1] = l.phase
+        if (before == null) return@LaunchedEffect
+        val now = System.currentTimeMillis()
+        // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
+        val delayMs = if (wasPhase != "move") 600L else 0L
+        var moverEnd = now + delayMs
+        val captured = mutableListOf<Triple<Int, Int, Int>>()
+        for (o in l.seats) l.tokens.getOrNull(o).orEmpty().forEachIndexed { i, p1 ->
+            val p0 = before.getOrNull(o)?.getOrNull(i) ?: return@forEachIndexed
+            if (p0 == p1) return@forEachIndexed
+            when {
+                p1 == -1 -> captured += Triple(o, i, p0)
+                p0 == -1 -> { hops[o to i] = LudoHop(listOf(ludoCell(o, i, -1), ludoCell(o, i, p1)), now + delayMs, 320); moverEnd = maxOf(moverEnd, now + delayMs + 320) }
+                p1 > p0 -> {
+                    val path = (p0..p1).map { ludoCell(o, i, it) }
+                    hops[o to i] = LudoHop(path, now + delayMs, (Sounds.STEP_GAP * 1000).toLong())
+                    moverEnd = maxOf(moverEnd, now + delayMs + (path.size - 1) * (Sounds.STEP_GAP * 1000).toLong())
+                }
+            }
+        }
+        // المأكول: يبقى مكانه لين يوصله اللي أكله، وبعدها يطير لبيته
+        for ((o, i, p0) in captured) hops[o to i] = LudoHop(listOf(ludoCell(o, i, p0), ludoCell(o, i, -1)), moverEnd, 520)
+    }
+    androidx.compose.runtime.LaunchedEffect(hops.size) {
+        while (hops.isNotEmpty()) {
+            androidx.compose.runtime.withFrameNanos { clock = System.currentTimeMillis() }
+            hops.entries.filter { clock >= it.value.end }.map { it.key }.forEach { hops.remove(it) }
+        }
+    }
     // قارئ الشاشة شغّال: يبقى كل شي زي ما هو (الإيماءة وأزرار الاختيار)
     val reader = Announcer.readerOn
     // الرقم اللي اختاره (لما يكون عنده أكثر من رقم، مثل ستة وثلاثة): الحجر اللي يلمسه يمشي فيه
@@ -883,7 +919,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 Modifier.widthIn(max = ludoSide()).fillMaxWidth().aspectRatio(1f)
                     // اللمس يستخدم آخر حالة دائماً (ما يعلق على حالة قديمة لو تغيّرت بدون ما تتغير البصمة)
                     .pointerInput(reader) { if (!reader) detectTapGestures { latestTap.value(it, size.width.toFloat()) } },
-            ) { drawLudo(l, mySeat ?: 0, movable) }
+            ) { drawLudo(l, mySeat ?: 0, movable, hops, clock) }
         }
         cornerRow(false)
         if (l.phase == "over") {
@@ -956,6 +992,21 @@ private val YARDS = listOf(0f to 0f, 0f to 9f, 9f to 9f, 9f to 0f)
 private val YARD_SPOTS = listOf(1.5f to 1.5f, 1.5f to 3.5f, 3.5f to 1.5f, 3.5f to 3.5f)
 private val CENTER_SPOT = listOf(7f to 6.25f, 6.25f to 7f, 7f to 7.75f, 7.75f to 7f)
 
+/** خانة الحجر (قبل تدوير اللوحة) حسب تقدّمه: البيت، المسار، ممر المنزل، المنزل */
+private fun ludoCell(o: Int, i: Int, p: Int): Pair<Float, Float> = when {
+    p == -1 -> (YARDS[o].first + YARD_SPOTS[i].first - 0.5f) to (YARDS[o].second + YARD_SPOTS[i].second - 0.5f)
+    p == LudoView.FINISH -> CENTER_SPOT[o]
+    // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
+    p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
+    p > LudoView.LAST_TRACK -> ((HOME_CELLS[o][4].first + CENTER_SPOT[o].first) / 2) to ((HOME_CELLS[o][4].second + CENTER_SPOT[o].second) / 2)
+    else -> TRACK_CELLS[LudoView.absPos(o, p)]
+}
+
+/** حجر يتحرك: الخانات اللي يمر عليها (أولها مكانه القديم)، ومتى يبدأ، ووقت كل قفزة */
+class LudoHop(val path: List<Pair<Float, Float>>, val startAt: Long, val stepMs: Long) {
+    val end: Long get() = startAt + (path.size - 1) * stepMs
+}
+
 /** مكان كل حجر على اللوحة (نفس حساب الرسم، مع إزاحة الأحجار المتكدسة): (اللون، رقم الحجر، النقطة) */
 private fun ludoTokenPoints(width: Float, l: LudoView, bottom: Int): List<Triple<Int, Int, Offset>> {
     val U = width / 15f
@@ -983,7 +1034,7 @@ private fun ludoTokenPoints(width: Float, l: LudoView, bottom: Int): List<Triple
     return out
 }
 
-private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int, Int>>) {
+private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int, Int>>, hops: Map<Pair<Int, Int>, LudoHop> = emptyMap(), clock: Long = 0L) {
     val U = size.minDimension / 15f
     // ندير اللوحة حتى يكون بيت صاحب الجهاز أسفل اليسار
     val turns = (3 - bottom + 4) % 4
@@ -1032,30 +1083,54 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
         }
         drawPath(Path().apply { moveTo(pts[0].x, pts[0].y); lineTo(pts[1].x, pts[1].y); lineTo(M.x, M.y); close() }, LUDO_COLORS[o])
     }
-    // الأحجار (أكثر من حجر في خانة: تُزاح قليلاً)
+    // الأحجار (أكثر من حجر في خانة: تُزاح قليلاً). نرسم الواقفة أول، والمتحركة فوقها
     val seen = HashMap<String, Int>()
+    val flying = mutableListOf<Triple<Int, Offset, Float>>()
     for (o in l.seats) {
         l.tokens.getOrNull(o).orEmpty().forEachIndexed { i, p ->
-            val cell = when {
-                p == -1 -> (YARDS[o].first + YARD_SPOTS[i].first - 0.5f) to (YARDS[o].second + YARD_SPOTS[i].second - 0.5f)
-                p == LudoView.FINISH -> CENTER_SPOT[o]
-                // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
-                p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
-                p > LudoView.LAST_TRACK -> ((HOME_CELLS[o][4].first + CENTER_SPOT[o].first) / 2) to ((HOME_CELLS[o][4].second + CENTER_SPOT[o].second) / 2)
-                else -> TRACK_CELLS[LudoView.absPos(o, p)]
+            val hop = hops[o to i]
+            if (hop != null && clock < hop.end && hop.path.size > 1) {
+                // بين خانتين: ينتقل بنعومة ويرتفع في نص القفزة
+                val t = ((clock - hop.startAt).toFloat() / hop.stepMs).coerceIn(0f, (hop.path.size - 1).toFloat())
+                val k = min(t.toInt(), hop.path.size - 2)
+                val f = t - k
+                val e = f * f * (3 - 2 * f)
+                val a = xy(hop.path[k]); val b = xy(hop.path[k + 1])
+                val lift = if (t <= 0f) 0f else sin(PI * f).toFloat() * (if (hop.path.size == 2 && hop.stepMs > 400) 1.6f else 1f)
+                flying += Triple(o, Offset(a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e), lift)
+                return@forEachIndexed
             }
-            val pt = xy(cell)
+            val pt = xy(ludoCell(o, i, p))
             val key = "${pt.x.toInt()},${pt.y.toInt()}"
             val n = seen[key] ?: 0
             seen[key] = n + 1
             val q = Offset(pt.x + n * U * 0.18f, pt.y - n * U * 0.18f)
             if (movable.any { it.first == o && it.second == i }) drawCircle(Color(0xFFD4AF37), U * 0.5f, q, style = Stroke(U * 0.14f))
-            val r = if (p == LudoView.FINISH) U * 0.23f else U * 0.36f
-            drawCircle(LUDO_COLORS[o], r, q)
-            drawCircle(Color(0xFF0D2B20), r, q, style = Stroke(U * 0.09f))
-            if (p != LudoView.FINISH) drawCircle(Color(0xAAFFFFFF), U * 0.14f, q)
+            drawPawn(LUDO_COLORS[o], q, if (p == LudoView.FINISH) U * 0.25f else U * 0.36f, 0f, U)
         }
     }
+    flying.forEach { (o, q, lift) -> drawPawn(LUDO_COLORS[o], q, U * 0.36f, lift, U) }
+}
+
+/**
+ * حجر بشكل مجسّم: ظل على الأرض، قاعدة أغمق، ورأس كروي بلمعة.
+ * lift (٠ إلى ١): وهو يقفز يرتفع ويكبر شوي، وظله يصغر ويخف
+ */
+private fun DrawScope.drawPawn(color: Color, q: Offset, r: Float, lift: Float, U: Float) {
+    val dark = Color(color.red * 0.45f, color.green * 0.45f, color.blue * 0.45f, 1f)
+    val light = Color(color.red + (1 - color.red) * 0.55f, color.green + (1 - color.green) * 0.55f, color.blue + (1 - color.blue) * 0.55f, 1f)
+    val sh = 1f - lift.coerceIn(0f, 1.6f) * 0.25f
+    drawOval(Color.Black.copy(alpha = 0.35f * sh), Offset(q.x - r * 0.95f * sh, q.y + r * 0.2f), Size(r * 1.9f * sh, r * 0.75f * sh))
+    val h = lift * U * 0.42f
+    val s = r * (1f + lift * 0.14f)
+    val c = Offset(q.x, q.y - h - s * 0.12f)
+    // القاعدة
+    drawOval(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(color, dark), c.y, c.y + s * 0.95f), Offset(c.x - s * 0.95f, c.y + s * 0.05f), Size(s * 1.9f, s * 0.9f))
+    // الرأس الكروي
+    drawCircle(androidx.compose.ui.graphics.Brush.radialGradient(listOf(light, color, dark), Offset(c.x - s * 0.3f, c.y - s * 0.38f), s * 1.25f), s * 0.78f, Offset(c.x, c.y - s * 0.18f))
+    drawCircle(Color(0x55000000), s * 0.78f, Offset(c.x, c.y - s * 0.18f), style = Stroke(U * 0.035f))
+    // لمعة
+    drawCircle(Color.White.copy(alpha = 0.75f), s * 0.17f, Offset(c.x - s * 0.28f, c.y - s * 0.48f))
 }
 
 private fun DrawScope.drawStar(c: Offset, r: Float, color: Color) {

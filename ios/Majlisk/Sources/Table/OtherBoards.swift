@@ -779,8 +779,38 @@ struct LudoBoard: View {
     @Environment(\.accessibilityVoiceOverEnabled) private var reader
     /// الرقم اللي اختاره (لما يكون عنده أكثر من رقم، مثل ستة وثلاثة): الحجر اللي يلمسه يمشي فيه
     @State private var pickedDie: Int?
+    /// حركة الأحجار: الحجر يقفز خانة خانة لين يوصل (نفس توقيت نقرات الخطوات)، والمأكول يطير لبيته
+    @State private var hops: [String: LudoHop] = [:]
+    @State private var prevTokens: [[Int]]?
+    @State private var prevTokPhase: String?
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
+
+    /// تغيّرت أماكن الأحجار: نحسب طريق كل حجر تحرك
+    private func animateMoves() {
+        let before = prevTokens, wasPhase = prevTokPhase
+        prevTokens = l.tokens; prevTokPhase = l.phase
+        guard let before else { return }
+        let now = Date().timeIntervalSince1970
+        hops = hops.filter { $0.value.end > now }
+        // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
+        let delay = wasPhase != "move" ? 0.6 : 0
+        var moverEnd = now + delay
+        var captured: [(Int, Int, Int)] = []
+        for o in l.seats {
+            let row = o < l.tokens.count ? l.tokens[o] : []
+            for (i, p1) in row.enumerated() {
+                guard o < before.count, i < before[o].count else { continue }
+                let p0 = before[o][i]
+                if p0 == p1 { continue }
+                if p1 == -1 { captured.append((o, i, p0)) }
+                else if p0 == -1 { let h = LudoHop(path: [ludoCell(o, i, -1), ludoCell(o, i, p1)], startAt: now + delay, step: 0.32); hops["\(o)-\(i)"] = h; moverEnd = max(moverEnd, h.end) }
+                else if p1 > p0 { let h = LudoHop(path: (p0...p1).map { ludoCell(o, i, $0) }, startAt: now + delay, step: Sounds.stepGap); hops["\(o)-\(i)"] = h; moverEnd = max(moverEnd, h.end) }
+            }
+        }
+        // المأكول: يبقى مكانه لين يوصله اللي أكله، وبعدها يطير لبيته
+        for (o, i, p0) in captured { hops["\(o)-\(i)"] = LudoHop(path: [ludoCell(o, i, p0), ludoCell(o, i, -1)], startAt: moverEnd, step: 0.52) }
+    }
 
     /// النرد اللي يطلع جنب اللاعب: آخر رمية من السيرفر مباشرة (تتحدث على طول لكل اللاعبين)، وإلا آخر رمية محفوظة له
     private func shownRoll(_ o: Int) -> Int? {
@@ -923,8 +953,22 @@ struct LudoBoard: View {
             // اسم كل لاعب عند زاوية لونه في اللوحة، وجنبه نرد بآخر رقم جاه
             cornerRow(top: true, names: names, mySeat: mySeat, partner: partner)
             // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
-            Canvas { ctx, size in
-                drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [])
+            TimelineView(.animation(paused: hops.isEmpty)) { tl in
+                Canvas { ctx, size in
+                    drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [],
+                             hops: hops, now: tl.date.timeIntervalSince1970)
+                }
+            }
+            .onChange(of: l.tokens) { _ in animateMoves() }
+            .onAppear { prevTokens = l.tokens; prevTokPhase = l.phase }
+            // بعد ما توصل كل الأحجار: نوقف التحديث المستمر للرسم
+            .task(id: hops.values.map(\.end).max() ?? 0) {
+                guard let end = hops.values.map(\.end).max() else { return }
+                let wait = end - Date().timeIntervalSince1970 + 0.05
+                if wait > 0 { try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000)) }
+                if Task.isCancelled { return }
+                let now = Date().timeIntervalSince1970
+                hops = hops.filter { $0.value.end > now }
             }
             .aspectRatio(1, contentMode: .fit).frame(maxWidth: ludoSide())
             // بدون قارئ الشاشة: تلمس الحجر اللي تبيه ويتحرك
@@ -1052,6 +1096,24 @@ private let YARDS: [Cell] = [(0, 0), (0, 9), (9, 9), (9, 0)]
 private let YARD_SPOTS: [Cell] = [(1.5, 1.5), (1.5, 3.5), (3.5, 1.5), (3.5, 3.5)]
 private let CENTER_SPOT: [Cell] = [(7, 6.25), (6.25, 7), (7, 7.75), (7.75, 7)]
 
+/// خانة الحجر (قبل تدوير اللوحة) حسب تقدّمه: البيت، المسار، ممر المنزل، المنزل
+private func ludoCell(_ o: Int, _ i: Int, _ p: Int) -> Cell {
+    if p == -1 { return (YARDS[o].0 + YARD_SPOTS[i].0 - 0.5, YARDS[o].1 + YARD_SPOTS[i].1 - 0.5) }
+    if p == LudoView.FINISH { return CENTER_SPOT[o] }
+    // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
+    if p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 { return HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
+    if p > LudoView.LAST_TRACK { return ((HOME_CELLS[o][4].0 + CENTER_SPOT[o].0) / 2, (HOME_CELLS[o][4].1 + CENTER_SPOT[o].1) / 2) }
+    return TRACK_CELLS[LudoView.absPos(o, p)]
+}
+
+/// حجر يتحرك: الخانات اللي يمر عليها (أولها مكانه القديم)، ومتى يبدأ، ووقت كل قفزة
+private struct LudoHop {
+    let path: [Cell]
+    let startAt: Double
+    let step: Double
+    var end: Double { startAt + Double(path.count - 1) * step }
+}
+
 /// مكان كل حجر على اللوحة (نفس حساب الرسم، مع إزاحة الأحجار المتكدسة)
 private func ludoTokenPoints(_ size: CGSize, _ l: LudoView, _ bottom: Int) -> [(owner: Int, index: Int, point: CGPoint)] {
     let U = min(size.width, size.height) / 15
@@ -1079,7 +1141,7 @@ private func ludoTokenPoints(_ size: CGSize, _ l: LudoView, _ bottom: Int) -> [(
     return out
 }
 
-private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ bottom: Int, _ movable: [(Int, Int)]) {
+private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ bottom: Int, _ movable: [(Int, Int)], hops: [String: LudoHop] = [:], now: Double = 0) {
     let U = min(size.width, size.height) / 15
     // ندير اللوحة حتى يكون بيت صاحب الجهاز أسفل اليسار
     let turns = (3 - bottom + 4) % 4
@@ -1121,30 +1183,55 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
         var path = Path(); path.move(to: pts[0]); path.addLine(to: pts[1]); path.addLine(to: M); path.closeSubpath()
         ctx.fill(path, with: .color(LUDO_COLORS[o]))
     }
-    // الأحجار (أكثر من حجر في خانة: تُزاح قليلاً)
+    // الأحجار (أكثر من حجر في خانة: تُزاح قليلاً). نرسم الواقفة أول، والمتحركة فوقها
     var seen: [String: Int] = [:]
+    var flying: [(Int, CGPoint, CGFloat)] = []
     for o in l.seats {
         let row = o < l.tokens.count ? l.tokens[o] : []
         for (i, p) in row.enumerated() {
-            let cell: Cell
-            if p == -1 { cell = (YARDS[o].0 + YARD_SPOTS[i].0 - 0.5, YARDS[o].1 + YARD_SPOTS[i].1 - 0.5) }
-            else if p == LudoView.FINISH { cell = CENTER_SPOT[o] }
-            // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
-            else if p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 { cell = HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
-            else if p > LudoView.LAST_TRACK { cell = ((HOME_CELLS[o][4].0 + CENTER_SPOT[o].0) / 2, (HOME_CELLS[o][4].1 + CENTER_SPOT[o].1) / 2) }
-            else { cell = TRACK_CELLS[LudoView.absPos(o, p)] }
-            let pt = xy(cell)
+            if let hop = hops["\(o)-\(i)"], now < hop.end, hop.path.count > 1 {
+                // بين خانتين: ينتقل بنعومة ويرتفع في نص القفزة
+                let t = min(max((now - hop.startAt) / hop.step, 0), Double(hop.path.count - 1))
+                let k = min(Int(t), hop.path.count - 2)
+                let f = CGFloat(t - Double(k))
+                let e = f * f * (3 - 2 * f)
+                let a = xy(hop.path[k]), b = xy(hop.path[k + 1])
+                let lift = t <= 0 ? 0 : CGFloat(sin(Double.pi * Double(f))) * (hop.path.count == 2 && hop.step > 0.4 ? 1.6 : 1)
+                flying.append((o, CGPoint(x: a.x + (b.x - a.x) * e, y: a.y + (b.y - a.y) * e), lift))
+                continue
+            }
+            let pt = xy(ludoCell(o, i, p))
             let key = "\(Int(pt.x)),\(Int(pt.y))"
             let n = seen[key] ?? 0
             seen[key] = n + 1
             let q = CGPoint(x: pt.x + CGFloat(n) * U * 0.18, y: pt.y - CGFloat(n) * U * 0.18)
             if movable.contains(where: { $0.0 == o && $0.1 == i }) { ctx.stroke(circle(q, U * 0.5), with: .color(Palette.gold), lineWidth: U * 0.14) }
-            let r = p == LudoView.FINISH ? U * 0.23 : U * 0.36
-            ctx.fill(circle(q, r), with: .color(LUDO_COLORS[o]))
-            ctx.stroke(circle(q, r), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13)), lineWidth: U * 0.09)
-            if p != LudoView.FINISH { ctx.fill(circle(q, U * 0.14), with: .color(Color.white.opacity(0.67))) }
+            drawPawn(ctx, LUDO_COLORS[o], q, p == LudoView.FINISH ? U * 0.25 : U * 0.36, 0, U)
         }
     }
+    for (o, q, lift) in flying { drawPawn(ctx, LUDO_COLORS[o], q, U * 0.36, lift, U) }
+}
+
+/// حجر بشكل مجسّم: ظل على الأرض، قاعدة أغمق، ورأس كروي بلمعة.
+/// lift (٠ إلى ١): وهو يقفز يرتفع ويكبر شوي، وظله يصغر ويخف
+private func drawPawn(_ ctx: GraphicsContext, _ color: Color, _ q: CGPoint, _ r: CGFloat, _ lift: CGFloat, _ U: CGFloat) {
+    let sh = 1 - min(max(lift, 0), 1.6) * 0.25
+    ctx.fill(Path(ellipseIn: CGRect(x: q.x - r * 0.95 * sh, y: q.y + r * 0.2, width: r * 1.9 * sh, height: r * 0.75 * sh)), with: .color(.black.opacity(0.35 * sh)))
+    let s = r * (1 + lift * 0.14)
+    let c = CGPoint(x: q.x, y: q.y - lift * U * 0.42 - s * 0.12)
+    // القاعدة
+    let base = Path(ellipseIn: CGRect(x: c.x - s * 0.95, y: c.y + s * 0.05, width: s * 1.9, height: s * 0.9))
+    ctx.fill(base, with: .color(color))
+    ctx.fill(base, with: .linearGradient(Gradient(colors: [.clear, .black.opacity(0.55)]), startPoint: CGPoint(x: c.x, y: c.y), endPoint: CGPoint(x: c.x, y: c.y + s * 0.95)))
+    // الرأس الكروي
+    let hc = CGPoint(x: c.x, y: c.y - s * 0.18), hl = CGPoint(x: c.x - s * 0.3, y: c.y - s * 0.38)
+    let head = Path(ellipseIn: CGRect(x: hc.x - s * 0.78, y: hc.y - s * 0.78, width: s * 1.56, height: s * 1.56))
+    ctx.fill(head, with: .color(color))
+    ctx.fill(head, with: .radialGradient(Gradient(colors: [.white.opacity(0.55), .clear]), center: hl, startRadius: 0, endRadius: s * 0.75))
+    ctx.fill(head, with: .radialGradient(Gradient(colors: [.clear, .black.opacity(0.5)]), center: hl, startRadius: s * 0.45, endRadius: s * 1.4))
+    ctx.stroke(head, with: .color(.black.opacity(0.33)), lineWidth: U * 0.035)
+    // لمعة
+    ctx.fill(Path(ellipseIn: CGRect(x: c.x - s * 0.45, y: c.y - s * 0.65, width: s * 0.34, height: s * 0.34)), with: .color(.white.opacity(0.75)))
 }
 
 private func starPath(_ c: CGPoint, _ r: CGFloat) -> Path {
