@@ -22,10 +22,10 @@ data class Card(val suit: String, val rank: String) {
 
 /** ترتيب اليد: حسب اللون ثم الرتبة */
 /**
- * ترتيب يدك من اليمين لليسار: هاص، ديمن، شريا، سبيت (اللي ما معك منه يُتخطّى)،
+ * ترتيب يدك من اليمين لليسار: هاص، شريا، ديمن، سبيت (اللي ما معك منه يُتخطّى)،
  * وفي كل لون الأكبر يمين ثم الأصغر. الأوراق تُرسم من اليسار لليمين، فنرجعها مقلوبة.
  */
-private val HAND_SUITS_LTR = listOf("S", "C", "D", "H")
+private val HAND_SUITS_LTR = listOf("S", "D", "C", "H")
 fun sortHand(hand: List<Card>): List<Card> =
     hand.sortedWith(compareBy({ HAND_SUITS_LTR.indexOf(it.suit) }, { -RANK_ORDER.indexOf(it.rank) }))
 

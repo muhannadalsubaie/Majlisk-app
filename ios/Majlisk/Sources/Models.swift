@@ -21,9 +21,9 @@ struct Card: Hashable {
 }
 
 /// ترتيب اليد: حسب اللون ثم الرتبة
-/// ترتيب يدك من اليمين لليسار: هاص، ديمن، شريا، سبيت (اللي ما معك منه يُتخطّى)،
+/// ترتيب يدك من اليمين لليسار: هاص، شريا، ديمن، سبيت (اللي ما معك منه يُتخطّى)،
 /// وفي كل لون الأكبر يمين ثم الأصغر. الأوراق تُرسم من اليسار لليمين، فنرجعها مقلوبة.
-private let HAND_SUITS_LTR = ["S", "C", "D", "H"]
+private let HAND_SUITS_LTR = ["S", "D", "C", "H"]
 func sortHand(_ hand: [Card]) -> [Card] {
     hand.sorted { a, b in
         let sa = HAND_SUITS_LTR.firstIndex(of: a.suit) ?? 0, sb = HAND_SUITS_LTR.firstIndex(of: b.suit) ?? 0
@@ -70,6 +70,8 @@ struct Doubling: Equatable {
     let level: Int; let gahwa: Bool; let locked: Bool
     /** مين يقرر الدبل الحين: لاعب واحد، أو فريق (إلا اللي قال بس)، وما فيه أحد وقت اختيار مقفل/مفتوح */
     var awaitingSeat: Int? = nil, awaitingTeam: Int? = nil, passed: [Int] = [], lockPending: Int? = nil
+    /// أول من دبّل (الثري والقهوة من المشتري، والفور من المدبّل)
+    var doubler: Int? = nil
     var deciders: [Int] {
         if lockPending != nil { return [] }
         if let s = awaitingSeat { return [s] }
@@ -90,6 +92,9 @@ struct GameActions {
     let legal: [Card]
     /// سوا: دورك تبدأ الأكلة وكل أوراقك مضمونة تاكل
     var canSawa = false
+    /// «ورق»: الزر يطلع، وwaraqDecision = دورك تختار بس أو ورق (بعد الشراء)
+    var canWaraq = false
+    var waraqDecision = false
 }
 
 struct GameView {
@@ -127,7 +132,7 @@ struct GameView {
     var sawaHands: [[Card]]? = nil
 
     var myTurn: Bool {
-        !actions.bids.isEmpty || actions.doubleLabel != nil || actions.canPassDouble || actions.chooseLock || !actions.legal.isEmpty
+        !actions.bids.isEmpty || actions.doubleLabel != nil || actions.canPassDouble || actions.chooseLock || !actions.legal.isEmpty || actions.waraqDecision
     }
 }
 
@@ -224,7 +229,7 @@ struct TableView {
             qaba: Card(g.obj("qaba")),
             bidRound: g.int("bidRound", 1),
             contract: g.obj("contract").map { Contract(mode: $0.str("mode"), trump: $0.strOrNil("trump"), buyer: $0.int("buyer"), qabaTo: $0.int("qabaTo")) },
-            doubling: Doubling(level: d.int("level", 1), gahwa: d.bool("gahwa"), locked: d.bool("locked"), awaitingSeat: d.intOrNil("awaitingSeat"), awaitingTeam: d.intOrNil("awaitingTeam"), passed: d.ints("passed"), lockPending: d.intOrNil("lockPending")),
+            doubling: Doubling(level: d.int("level", 1), gahwa: d.bool("gahwa"), locked: d.bool("locked"), awaitingSeat: d.intOrNil("awaitingSeat"), awaitingTeam: d.intOrNil("awaitingTeam"), passed: d.ints("passed"), lockPending: d.intOrNil("lockPending"), doubler: d.intOrNil("doubler")),
             trick: played(g.objs("trick")),
             lastTrick: g.obj("lastTrick").map { played($0.objs("cards")) },
             trickNo: g.int("trickNo"),
@@ -245,7 +250,9 @@ struct TableView {
                 canPassDouble: a.bool("canPassDouble"),
                 chooseLock: a.bool("chooseLock"),
                 legal: a.objs("legal").compactMap { Card($0) },
-                canSawa: a.bool("canSawa")
+                canSawa: a.bool("canSawa"),
+                canWaraq: a.bool("canWaraq"),
+                waraqDecision: a.bool("waraqDecision")
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },
             secondHokmSeat: g.intOrNil("secondHokmSeat"),

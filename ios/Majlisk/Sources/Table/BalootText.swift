@@ -22,7 +22,7 @@ struct BalootText {
     func trick() -> String {
         // القراءة دائماً للأكلة الحالية (لا الأكلة السابقة الظاهرة لحظة على الشاشة)
         if !g.trick.isEmpty { return g.trick.map { "\(name($0.seat)): \($0.card.label)" }.joined(separator: "، ") }
-        if (g.phase == "bidding" || g.phase == "doubling"), let q = g.qaba { return "ورقة الأرض: \(q.label)" }
+        if (g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq"), let q = g.qaba { return "ورقة الأرض: \(q.label)" }
         return "لا توجد أوراق على الطاولة"
     }
 
@@ -46,10 +46,10 @@ struct BalootText {
         if c.qabaTo != c.buyer { parts.append("ورقة الأرض لـ\(c.qabaTo == mySeat ? "ك" : name(c.qabaTo))") }
         parts.append(start())
         let d = g.doubling
-        if d.gahwa { parts.append("قهوة") }
+        if d.gahwa { parts.append("قهوة" + by()) }
         else if d.level > 1 {
             let label = [2: "دبل", 3: "ثري", 4: "فور"][d.level] ?? ""
-            parts.append(label + (c.mode == "hokm" ? (d.locked ? " مقفل" : " مفتوح") : ""))
+            parts.append(label + by() + (c.mode == "hokm" ? (d.locked ? " مقفل" : " مفتوح") : ""))
         } else { parts.append("بدون دبل") }
         return parts.joined(separator: "، ")
     }
@@ -92,8 +92,21 @@ struct BalootText {
         switch g.phase {
         case "bidding": return who
         case "doubling": return g.myTurn ? "دورك تقرر الدبل" : "بانتظار قرار الدبل"
+        case "waraq": return g.myTurn ? "دورك: بس أو ورق" : "بانتظار \(name(g.turn)): بس أو ورق"
         default: return "\(who) في اللعب"
         }
+    }
+
+    /// مين قال آخر دبل: الدبل والفور من المدبّل، والثري والقهوة من المشتري
+    private func lastDoubler() -> Int? {
+        guard let c = g.contract else { return nil }
+        let d = g.doubling
+        if d.level <= 1 { return nil }
+        return !d.gahwa && d.level % 2 == 0 ? d.doubler : c.buyer
+    }
+    private func by() -> String {
+        guard let s = lastDoubler() else { return "" }
+        return s == mySeat ? " منك" : " من \(name(s))"
     }
 
     func statusLine() -> String? {
@@ -103,6 +116,6 @@ struct BalootText {
         let lock = c.mode == "hokm" && g.doubling.level > 1 && !g.doubling.gahwa ? (g.doubling.locked ? " (مقفل)" : " (مفتوح)") : ""
         // المشتري ونوع اللعب جنبه، طول الجولة
         let kind = c.mode == "sun" && c.qabaTo != c.buyer ? "أشكل" : mode
-        return "المشتري \(name(c.buyer)) — \(kind)\(level.map { " — \($0)" } ?? "")\(lock)"
+        return "المشتري \(name(c.buyer)) — \(kind)\(level.map { " — \($0)\(by())" } ?? "")\(lock)"
     }
 }

@@ -22,7 +22,7 @@ class BalootText(private val view: TableView, private val g: GameView, private v
     fun trick(): String = when {
         // القراءة دائماً للأكلة الحالية (لا الأكلة السابقة الظاهرة لحظة على الشاشة)
         g.trick.isNotEmpty() -> g.trick.joinToString("، ") { "${name(it.seat)}: ${it.card.label}" }
-        (g.phase == "bidding" || g.phase == "doubling") && g.qaba != null -> "ورقة الأرض: ${g.qaba.label}"
+        (g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq") && g.qaba != null -> "ورقة الأرض: ${g.qaba.label}"
         else -> "لا توجد أوراق على الطاولة"
     }
 
@@ -47,10 +47,10 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         parts += start()
         val d = g.doubling
         when {
-            d.gahwa -> parts += "قهوة"
+            d.gahwa -> parts += "قهوة${by()}"
             d.level > 1 -> {
                 val label = mapOf(2 to "دبل", 3 to "ثري", 4 to "فور")[d.level]
-                parts += "$label${if (c.mode == "hokm") (if (d.locked) " مقفل" else " مفتوح") else ""}"
+                parts += "$label${by()}${if (c.mode == "hokm") (if (d.locked) " مقفل" else " مفتوح") else ""}"
             }
             else -> parts += "بدون دبل"
         }
@@ -99,9 +99,19 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         return when (g.phase) {
             "bidding" -> who
             "doubling" -> if (g.myTurn) "دورك تقرر الدبل" else "بانتظار قرار الدبل"
+            "waraq" -> if (g.myTurn) "دورك: بس أو ورق" else "بانتظار ${name(g.turn)}: بس أو ورق"
             else -> "$who في اللعب"
         }
     }
+
+    /** مين قال آخر دبل: الدبل والفور من المدبّل، والثري والقهوة من المشتري */
+    private fun lastDoubler(): Int? {
+        val c = g.contract ?: return null
+        val d = g.doubling
+        if (d.level <= 1) return null
+        return if (!d.gahwa && d.level % 2 == 0) d.doubler else c.buyer
+    }
+    private fun by(): String = lastDoubler()?.let { if (it == mySeat) " منك" else " من ${name(it)}" }.orEmpty()
 
     fun statusLine(): String? {
         val c = g.contract ?: return null
@@ -110,6 +120,6 @@ class BalootText(private val view: TableView, private val g: GameView, private v
         val lock = if (c.mode == "hokm" && g.doubling.level > 1 && !g.doubling.gahwa) (if (g.doubling.locked) " (مقفل)" else " (مفتوح)") else ""
         // المشتري ونوع اللعب جنبه، طول الجولة
         val kind = if (c.mode == "sun" && c.qabaTo != c.buyer) "أشكل" else mode
-        return "المشتري ${name(c.buyer)} — $kind${level?.let { " — $it" }.orEmpty()}$lock"
+        return "المشتري ${name(c.buyer)} — $kind${level?.let { " — $it${by()}" }.orEmpty()}$lock"
     }
 }

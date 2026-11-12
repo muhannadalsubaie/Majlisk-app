@@ -18,6 +18,8 @@ data class Doubling(
     val level: Int, val gahwa: Boolean, val locked: Boolean,
     /** مين يقرر الدبل الحين: لاعب واحد، أو فريق (إلا اللي قال بس)، وما فيه أحد وقت اختيار مقفل/مفتوح */
     val awaitingSeat: Int? = null, val awaitingTeam: Int? = null, val passed: List<Int> = emptyList(), val lockPending: Int? = null,
+    /** أول من دبّل (الثري والقهوة من المشتري، والفور من المدبّل) */
+    val doubler: Int? = null,
 ) {
     val deciders: List<Int> get() = when {
         lockPending != null -> emptyList()
@@ -39,6 +41,9 @@ data class GameActions(
     val legal: List<Card>,
     /** سوا: دورك تبدأ الأكلة وكل أوراقك مضمونة تاكل */
     val canSawa: Boolean = false,
+    /** «ورق»: الزر يطلع، وwaraqDecision = دورك تختار بس أو ورق (بعد الشراء) */
+    val canWaraq: Boolean = false,
+    val waraqDecision: Boolean = false,
 )
 
 data class GameView(
@@ -76,7 +81,7 @@ data class GameView(
     val sawaHands: List<List<Card>>? = null,
 ) {
     val myTurn: Boolean
-        get() = actions.bids.isNotEmpty() || actions.doubleLabel != null || actions.canPassDouble || actions.chooseLock || actions.legal.isNotEmpty()
+        get() = actions.bids.isNotEmpty() || actions.doubleLabel != null || actions.canPassDouble || actions.chooseLock || actions.legal.isNotEmpty() || actions.waraqDecision
 }
 
 data class HandRecord(
@@ -169,7 +174,7 @@ data class TableView(
                 contract = g.optJSONObject("contract")?.let {
                     Contract(it.optString("mode"), it.optStringOrNull("trump"), it.optInt("buyer"), it.optInt("qabaTo"))
                 },
-                doubling = Doubling(d.optInt("level", 1), d.optBoolean("gahwa"), d.optBoolean("locked"), d.optIntOrNull("awaitingSeat"), d.optIntOrNull("awaitingTeam"), d.optJSONArray("passed").ints(), d.optIntOrNull("lockPending")),
+                doubling = Doubling(d.optInt("level", 1), d.optBoolean("gahwa"), d.optBoolean("locked"), d.optIntOrNull("awaitingSeat"), d.optIntOrNull("awaitingTeam"), d.optJSONArray("passed").ints(), d.optIntOrNull("lockPending"), d.optIntOrNull("doubler")),
                 trick = played(g.optJSONArray("trick")),
                 lastTrick = g.optJSONObject("lastTrick")?.let { played(it.optJSONArray("cards")) },
                 trickNo = g.optInt("trickNo"),
@@ -197,6 +202,8 @@ data class TableView(
                     chooseLock = a.optBoolean("chooseLock"),
                     legal = a.optJSONArray("legal").objects().mapNotNull { Card.from(it) },
                     canSawa = a.optBoolean("canSawa"),
+                    canWaraq = a.optBoolean("canWaraq"),
+                    waraqDecision = a.optBoolean("waraqDecision"),
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),

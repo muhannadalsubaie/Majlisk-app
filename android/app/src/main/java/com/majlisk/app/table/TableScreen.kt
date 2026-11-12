@@ -376,6 +376,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
             if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
+            if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
+            if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
                 add("مقفل" to { act(jsonOf("type" to "doubleLock", "locked" to true)) })
                 add("مفتوح" to { act(jsonOf("type" to "doubleLock", "locked" to false)) })
@@ -398,17 +400,25 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
             if (g.actions.doubleLabel != null || g.actions.canPassDouble) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    // «بس» يمين و«دبل» يسار
+                    if (g.actions.canPassDouble) SecondaryButton("بس", { toHand(); act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
                     g.actions.doubleLabel?.let { label ->
                         PrimaryButton(label, {
                             toHand()
                             act(jsonOf("type" to "double"))
                         }, modifier = Modifier.weight(1f))
                     }
-                    if (g.actions.canPassDouble) SecondaryButton("بس", { toHand(); act(jsonOf("type" to "doublePass")) }, modifier = Modifier.weight(1f), fill = true)
                 }
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
+            // «ورق»: أوراقك الخمس الأولى كلها أقل من العشرة — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
+            if (g.actions.waraqDecision) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    SecondaryButton("بس", { toHand(); act(jsonOf("type" to "waraq", "call" to false)) }, modifier = Modifier.weight(1f), fill = true)
+                    PrimaryButton("ورق", { toHand(); act(jsonOf("type" to "waraq", "call" to true)) }, modifier = Modifier.weight(1f))
+                }
+            } else if (g.actions.canWaraq) PrimaryButton("ورق", { toHand(); act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     PrimaryButton("مقفل", { toHand(); act(jsonOf("type" to "doubleLock", "locked" to true)) }, modifier = Modifier.weight(1f))
@@ -426,7 +436,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
-            Box(Modifier.fillMaxWidth().height(132.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
+            Box(Modifier.fillMaxWidth().height(152.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
                 hand.forEachIndexed { i, c ->
                     // مربوط بالمكان (i) مو بالورقة
                     androidx.compose.runtime.key(i) {
@@ -439,7 +449,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                         HandCard(
                             c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = cardActions,
                             // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(66.dp, 96.dp).focusRequester(fr)
+                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(80.dp, 116.dp).focusRequester(fr)
                                 .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
                             if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i }
@@ -574,7 +584,7 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
             },
         contentAlignment = Alignment.Center,
     ) {
-        if ((g.phase == "bidding" || g.phase == "doubling") && g.qaba != null) {
+        if ((g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq") && g.qaba != null) {
             Column(Modifier.absoluteOffset(y = 6.dp - 10.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text("ورقة الأرض", color = Palette.textDim, fontSize = 14.sp)
                 CardFaceBox(g.qaba)

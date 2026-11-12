@@ -269,18 +269,28 @@ struct BalootBoard: View {
                 // الدبل: الضغطة تعلن الدبل فوراً للجميع، ثم يختار صاحبه مقفل أو مفتوح
                 if g.actions.doubleLabel != nil || g.actions.canPassDouble {
                     HStack(spacing: 8) {
+                        // «بس» يمين و«دبل» يسار
+                        if g.actions.canPassDouble { MButton("بس") { toHand(); act(["type": "doublePass"]) } }
                         if let label = g.actions.doubleLabel {
                             MButton(label, .primary) {
                                 toHand()
                                 act(["type": "double"])
                             }
                         }
-                        if g.actions.canPassDouble { MButton("بس") { toHand(); act(["type": "doublePass"]) } }
                     }
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
+                }
+                // «ورق»: أوراقك الخمس الأولى كلها أقل من العشرة — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
+                if g.actions.waraqDecision {
+                    HStack(spacing: 8) {
+                        MButton("بس") { toHand(); act(["type": "waraq", "call": false]) }
+                        MButton("ورق", .primary) { toHand(); act(["type": "waraq", "call": true]) }
+                    }
+                } else if g.actions.canWaraq {
+                    MButton("ورق", .primary) { toHand(); act(["type": "waraq", "call": true]) }
                 }
                 if g.actions.chooseLock {
                     HStack(spacing: 8) {
@@ -322,7 +332,7 @@ struct BalootBoard: View {
                         }
                     }
                     .padding(.bottom, 6)
-                    .frame(maxWidth: .infinity, minHeight: 132, alignment: .bottom)
+                    .frame(maxWidth: .infinity, minHeight: 152, alignment: .bottom)
                     .environment(\.layoutDirection, .leftToRight)
                     // ترتيب الأوراق لـ VoiceOver داخل اليد فقط
                     .accessibilityElement(children: .contain)
@@ -358,6 +368,8 @@ struct BalootBoard: View {
         if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
         if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
+        if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
+        if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
         if g.actions.chooseLock {
             out.append(("مقفل", { act(["type": "doubleLock", "locked": true]) }))
             out.append(("مفتوح", { act(["type": "doubleLock", "locked": false]) }))
@@ -404,7 +416,7 @@ struct BalootBoard: View {
             Circle().fill(RadialGradient(colors: [Color(red: 0.12, green: 0.42, blue: 0.29), Color(red: 0.08, green: 0.31, blue: 0.21), Color(red: 0.04, green: 0.14, blue: 0.11)], center: .center, startRadius: 0, endRadius: 150))
                 .padding(10)
             Circle().stroke(Palette.gold.opacity(0.33), lineWidth: 1).padding(10)
-            if (g.phase == "bidding" || g.phase == "doubling"), let q = g.qaba {
+            if (g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq"), let q = g.qaba {
                 VStack(spacing: 4) {
                     Text("ورقة الأرض").font(.system(size: 14)).foregroundColor(Palette.textDim)
                     TableCard(card: q)
@@ -646,7 +658,7 @@ private struct HandCard: View {
     var step: ((AccessibilityAdjustmentDirection) -> Void)? = nil
     let play: () -> Void
     var body: some View {
-        TableCard(card: card, width: 66, height: 96)
+        TableCard(card: card, width: 80, height: 116)
             // المسموح لعبها بإطار ذهبي فقط، فيبقى شكل المروحة واحداً
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 3))
             .contentShape(Rectangle())

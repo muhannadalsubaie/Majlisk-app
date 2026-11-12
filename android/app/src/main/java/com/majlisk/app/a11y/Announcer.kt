@@ -9,7 +9,7 @@ import android.view.accessibility.AccessibilityManager
 import java.lang.ref.WeakReference
 
 /**
- * إعلانات قارئ الشاشة (TalkBack): تُرسل فوراً، وTalkBack يقرؤها بالترتيب.
+ * إعلانات قارئ الشاشة (TalkBack): بالترتيب، كل إعلان بعد ما يخلص اللي قبله.
  */
 object Announcer {
     private var view = WeakReference<View>(null)
@@ -25,12 +25,33 @@ object Announcer {
     val readerOn: Boolean
         get() = manager?.let { it.isEnabled && it.isTouchExplorationEnabled } ?: false
 
-    /** يُرسل لـ TalkBack فوراً، وهو يقرأ الإعلانات بالترتيب دون انتظار إضافي منا */
+    /**
+     * طابور القراءة: TalkBack أحياناً يقطع الإعلان اللي يقرؤه لما يجيه إعلان جديد،
+     * فنرسل كل إعلان بعد ما يخلص اللي قبله (وقت تقريبي من طول النص) فيُقرأ كل شي بالترتيب
+     */
+    private val queue = ArrayDeque<String>()
+    private var busyUntil = 0L
+    private var scheduled = false
+    /** وقت تقريبي لقراءة النص بسرعة قارئ الشاشة المعتادة */
+    private fun readTime(text: String) = 350L + text.length * 55L
+
+    private fun pump() {
+        scheduled = false
+        val now = System.currentTimeMillis()
+        if (now < busyUntil) { scheduled = true; main.postDelayed(::pump, busyUntil - now); return }
+        val next = queue.removeFirstOrNull() ?: return
+        busyUntil = now + readTime(next)
+        @Suppress("DEPRECATION")
+        view.get()?.announceForAccessibility(next)
+        if (queue.isNotEmpty()) { scheduled = true; main.postDelayed(::pump, busyUntil - now) }
+    }
+
+    /** يُقرأ بعد ما يخلص اللي قبله (ما يقطعه) */
     fun announce(text: String) {
         if (text.isBlank()) return
         main.post {
-            @Suppress("DEPRECATION")
-            view.get()?.announceForAccessibility(text)
+            queue.addLast(text)
+            if (!scheduled) pump()
         }
     }
 
@@ -53,7 +74,12 @@ object Announcer {
     fun announceNow(text: String) {
         if (text.isBlank()) return
         main.post {
+            // اللي ينتظر في الطابور قديم: الجديد يحل محله
+            queue.clear()
+            main.removeCallbacksAndMessages(null)
+            scheduled = false
             runCatching { manager?.takeIf { it.isEnabled }?.interrupt() }
+            busyUntil = System.currentTimeMillis() + readTime(text)
             @Suppress("DEPRECATION")
             view.get()?.announceForAccessibility(text)
         }
