@@ -160,9 +160,14 @@ final class Sounds {
     /// القطع بالحكم: ورقة ومعها رنة عملة
     func cut() { play("trump-cut", gain: 1, vary: false) }
     /// المشاريع: لكل مشروع صوته (أكبر مشروع في الإعلان)، أصوات ورق وفيش مسجّلة تكبر مع المشروع
-    // كل المشاريع (سرا، خمسين، مية، أربعمية) صوت واحد اختاره صاحب التطبيق.
-    // أصوات كل مشروع القديمة باقية في الملفات (proj-sira وproj-fifty وproj-hundred وproj-400) لو نبي نرجع لها
-    func project(_ kinds: [String]) { play("proj-reveal", gain: 1, vary: false) }
+    func project(_ kinds: [String]) {
+        if kinds.contains("أربعمية") { play("proj-400", gain: 0.8, vary: false) }
+        else if kinds.contains("مية") { play("proj-hundred", gain: 0.8, vary: false) }
+        else if kinds.contains("خمسين") { play("proj-fifty", gain: 0.8, vary: false) }
+        else { play("proj-sira", gain: 0.8, vary: false) }
+    }
+    /// اللفة الثانية: انكشفت أوراق المشروع (صوت واحد لكل المشاريع، اختاره صاحب التطبيق)
+    func projectReveal() { play("proj-reveal", gain: 1, vary: false) }
     /// مشروع البلوت: تسجيلك «بلوت»
     func baloot() { play("proj-baloot", gain: 0.8, vary: false) }
     func hokm() { if once("hokm") { play("bid", gain: 0.8, vary: false) } }

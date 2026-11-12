@@ -517,7 +517,10 @@ final class GameSoundTracker {
             _ = lead
             if let trump, card.suit == trump { s.cut() } else { s.card() }
         }
+        // إعلان المشروع (اللفة الأولى): صوت كل مشروع
         if g.declared.count > prev.declared.count { s.project(g.declared.dropFirst(prev.declared.count).flatMap(\.kinds)) }
+        // كشف أوراق المشروع (اللفة الثانية)
+        if g.declared.filter({ !$0.faces.isEmpty }).count > prev.declared.filter({ !$0.faces.isEmpty }).count { s.projectReveal() }
         if g.balootSeat != nil && prev.balootSeat == nil { s.baloot() }
         // نهاية الصكة (بعد صوت سحب الأكلة الأخيرة)، ثم نهاية المباراة
         if let r = g.lastHand, prev.lastHand == nil {
