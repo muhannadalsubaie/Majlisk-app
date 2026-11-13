@@ -140,6 +140,14 @@ fun LookScreen(onBack: () -> Unit) {
                         Box(Modifier.size(40.dp).background(Brush.verticalGradient(o.colors), CircleShape))
                     } }
                 }
+                Section("وجه الورق") {
+                    Look.FACES.forEachIndexed { i, n -> Choice(n, Look.cardFace == i, { pick { Look.cardFace = i } }) {
+                        val (bg, ink) = when (i) { 2 -> Color(0xFFFFF8E1) to Color(0xFF2A1E05); 3 -> Color(0xFF1F2A35) to Color(0xFFF1DDA0); else -> Color.White to Color(0xFF111111) }
+                        Box(Modifier.size(30.dp, 42.dp).background(bg, RoundedCornerShape(5.dp)).border(1.dp, if (i >= 2) Color(0xFFD9B45A) else Color(0xFFCFC9B8), RoundedCornerShape(5.dp)), contentAlignment = Alignment.Center) {
+                            Text(if (i == 1) "A" else "♠", color = ink, fontSize = if (i == 1) 20.sp else 18.sp, fontWeight = FontWeight.ExtraBold)
+                        }
+                    } }
+                }
                 Section("إطار الورق") {
                     Look.CARD_EDGES.forEachIndexed { i, o -> Choice(o.name, Look.cardEdge == i, { pick { Look.cardEdge = i } }) {
                         Box(Modifier.size(28.dp, 40.dp).background(Color.White, RoundedCornerShape(5.dp)).border(2.dp, o.colors[0], RoundedCornerShape(5.dp)))

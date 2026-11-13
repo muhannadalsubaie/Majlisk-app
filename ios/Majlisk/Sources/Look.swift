@@ -33,6 +33,8 @@ final class Look: ObservableObject {
         LookOption(name: "عنابي", colors: [rgb(0x7A1F2B)]),
         LookOption(name: "أزرق", colors: [rgb(0x2B4C7E)]),
     ]
+    /// وجه الورق (البلوت)
+    static let faces = ["كلاسيكي", "خط كبير", "ذهبي", "ليلي"]
     static let tiles = [
         LookOption(name: "عاجي", colors: [rgb(0xFAF7EE), rgb(0x1A1A1A), rgb(0x9E9886)]),
         LookOption(name: "أسود بنقط ذهبية", colors: [rgb(0x2A2E33), rgb(0xF1DDA0), rgb(0x0B0F14)]),
@@ -59,6 +61,7 @@ final class Look: ObservableObject {
     @Published var balootShape = Look.saved("balootShape") { didSet { save("balootShape", balootShape) } }
     @Published var balootRim = Look.saved("balootRim") { didSet { save("balootRim", balootRim) } }
     @Published var cardEdge = Look.saved("cardEdge") { didSet { save("cardEdge", cardEdge) } }
+    @Published var cardFace = Look.saved("cardFace") { didSet { save("cardFace", cardFace) } }
     @Published var dominoFelt = Look.saved("dominoFelt") { didSet { save("dominoFelt", dominoFelt) } }
     @Published var dominoRim = Look.saved("dominoRim") { didSet { save("dominoRim", dominoRim) } }
     @Published var dominoTile = Look.saved("dominoTile") { didSet { save("dominoTile", dominoTile) } }
@@ -75,6 +78,7 @@ final class Look: ObservableObject {
     static var shape: Int { pro ? shared.balootShape : 0 }
     static var rim: [Color] { pick(rims, shared.balootRim) }
     static var edge: Color { pick(cardEdges, shared.cardEdge)[0] }
+    static var face: Int { pro && faces.indices.contains(shared.cardFace) ? shared.cardFace : 0 }
     static var dFelt: [Color] { pick(felts, shared.dominoFelt) }
     static var dRim: [Color] { pick(rims, shared.dominoRim) }
     static var tile: [Color] { pick(tiles, shared.dominoTile) }

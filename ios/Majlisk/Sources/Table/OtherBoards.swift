@@ -1492,6 +1492,14 @@ final class OtherGameSounds {
                 }
             }
         }
+        // نهاية المباراة: صوت الفوز أو الخسارة (نفس البلوت) — للاعب الجالس بس
+        if changed && !first, let me = v.mySeat {
+            var won: Bool?
+            if let d, phase != "matchOver", d.phase == "matchOver", d.mySide >= 0 { won = d.scores.firstIndex(of: d.scores.max() ?? 0) == d.mySide }
+            else if let j, phase == "playing", j.phase == "over" { won = j.teams ? j.winnerTeam == me % 2 : j.winner == me }
+            else if let l, phase != "over", l.phase == "over" { won = l.teams ? l.winner == me % 2 : l.winner == me }
+            if let won { DispatchQueue.main.asyncAfter(deadline: .now() + 1.4) { s.matchEnd(won: won) } }
+        }
         phase = d?.phase ?? j?.phase ?? l?.phase
         deal = j?.dealNo
         ludoLast = l?.lastSig

@@ -38,6 +38,8 @@ object Look {
         LookOption("عنابي", listOf(Color(0xFF7A1F2B))),
         LookOption("أزرق", listOf(Color(0xFF2B4C7E))),
     )
+    /** وجه الورق (البلوت) */
+    val FACES = listOf("كلاسيكي", "خط كبير", "ذهبي", "ليلي")
     /** أحجار الدومينو: [الوجه، النقاط، الحافة] */
     val TILES = listOf(
         LookOption("عاجي", listOf(Color(0xFFFAF7EE), Color(0xFF1A1A1A), Color(0xFF9E9886))),
@@ -65,6 +67,7 @@ object Look {
     var balootShape by mutableIntStateOf(saved("balootShape"))
     var balootRim by mutableIntStateOf(saved("balootRim"))
     var cardEdge by mutableIntStateOf(saved("cardEdge"))
+    var cardFace by mutableIntStateOf(saved("cardFace"))
     var dominoFelt by mutableIntStateOf(saved("dominoFelt"))
     var dominoRim by mutableIntStateOf(saved("dominoRim"))
     var dominoTile by mutableIntStateOf(saved("dominoTile"))
@@ -73,7 +76,7 @@ object Look {
     var ludoDice by mutableIntStateOf(saved("ludoDice"))
 
     fun save() {
-        mapOf("balootFelt" to balootFelt, "balootShape" to balootShape, "balootRim" to balootRim, "cardEdge" to cardEdge,
+        mapOf("balootFelt" to balootFelt, "balootShape" to balootShape, "balootRim" to balootRim, "cardEdge" to cardEdge, "cardFace" to cardFace,
             "dominoFelt" to dominoFelt, "dominoRim" to dominoRim, "dominoTile" to dominoTile, "dominoSize" to dominoSize,
             "jkBoard" to jkBoard, "ludoDice" to ludoDice).forEach { (k, v) -> Prefs.lookSet(k, v) }
     }
@@ -86,6 +89,7 @@ object Look {
     val shape get() = if (pro) balootShape else 0
     val rim get() = pick(RIMS, balootRim).colors
     val edge get() = pick(CARD_EDGES, cardEdge).colors[0]
+    val face get() = if (pro) cardFace.coerceIn(0, FACES.lastIndex) else 0
     val dFelt get() = pick(FELTS, dominoFelt).colors
     val dRim get() = pick(RIMS, dominoRim).colors
     val tile get() = pick(TILES, dominoTile).colors

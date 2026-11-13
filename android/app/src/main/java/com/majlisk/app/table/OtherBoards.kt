@@ -1377,6 +1377,20 @@ class OtherGameSounds {
                 }
             }
         }
+        // نهاية المباراة: صوت الفوز أو الخسارة (نفس البلوت) — للاعب الجالس بس
+        val me = v.mySeat
+        if (changed && !first && me != null) {
+            val won: Boolean? = when {
+                d != null && phase != "matchOver" && d.phase == "matchOver" && d.mySide >= 0 ->
+                    d.scores.indexOf(d.scores.maxOrNull()) == d.mySide
+                j != null && phase == "playing" && j.phase == "over" ->
+                    if (j.teams) j.winnerTeam == me % 2 else j.winner == me
+                l != null && phase != "over" && l.phase == "over" ->
+                    if (l.teams) l.winner == me % 2 else l.winner == me
+                else -> null
+            }
+            if (won != null) android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ Sounds.matchEnd(won) }, 1400)
+        }
         phase = d?.phase ?: j?.phase ?: l?.phase
         deal = j?.dealNo
         ludoLast = l?.lastSig
