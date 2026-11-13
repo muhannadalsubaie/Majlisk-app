@@ -21,7 +21,7 @@ import com.majlisk.app.data.Social
 import com.majlisk.app.table.TableScreen
 import kotlinx.coroutines.launch
 
-enum class Route { Splash, Auth, Menu, CreateTable, JoinTable, Table, Friends, Settings, Shop, Profile, Pro, Gift }
+enum class Route { Splash, Auth, Menu, CreateTable, JoinTable, Table, Friends, Settings, Shop, Profile, Pro, Gift, Look }
 
 @Composable
 fun AppRoot() {
@@ -82,8 +82,10 @@ fun AppRoot() {
             Route.Settings -> SettingsScreen(onBack = { screen = Route.Menu }, embedded = false)
             Route.Shop -> ShopScreen(profile, navigate)
             Route.Profile -> ProfileScreen(profile) { screen = Route.Menu }
-            Route.Pro -> ProScreen(profile, onBack = { screen = Route.Menu }, onGift = { screen = Route.Gift })
+            Route.Pro -> ProScreen(profile, onBack = { screen = Route.Menu }, onGift = { screen = Route.Gift }, onLook = { screen = Route.Look })
             Route.Gift -> GiftScreen { screen = Route.Pro }
+            // تخصيص الشكل: للمشترك (غيره يروح لشاشة الباقة)
+            Route.Look -> if (profile?.isPro == true) LookScreen { screen = Route.Menu } else ProScreen(profile, onBack = { screen = Route.Menu }, onGift = { screen = Route.Gift })
             Route.Table -> tableId?.let { id -> TableScreen(id, user?.uid.orEmpty()) { Prefs.lastTable = null; screen = Route.Menu } } ?: run { screen = Route.Menu }
         }
     }

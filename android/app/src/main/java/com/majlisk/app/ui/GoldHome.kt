@@ -177,6 +177,7 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             ) {
                 NavItem("👥", "الأصدقاء", false, Modifier.weight(1f)) { navigate(Route.Friends) }
                 NavItem("🎴", "الطاولات", false, Modifier.weight(1f)) { navigate(Route.JoinTable) }
+                NavItem("🎨", "الشكل", false, Modifier.weight(1f)) { navigate(Route.Look) }
                 NavItem("👑", "الباقة", true, Modifier.weight(1f)) { navigate(Route.Pro) }
                 NavItem("👤", "حسابي", false, Modifier.weight(1f)) { navigate(Route.Profile) }
                 NavItem("⚙️", "الإعدادات", false, Modifier.weight(1f)) { navigate(Route.Settings) }

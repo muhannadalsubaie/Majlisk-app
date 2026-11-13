@@ -179,7 +179,7 @@ fun ProOfferDialog(onSubscribe: () -> Unit, onDismiss: () -> Unit) {
 
 /** شاشة الباقة الاحترافية: المزايا والسعر والاشتراك، والإهداء */
 @Composable
-fun ProScreen(profile: Profile?, onBack: () -> Unit, onGift: () -> Unit) {
+fun ProScreen(profile: Profile?, onBack: () -> Unit, onGift: () -> Unit, onLook: () -> Unit = {}) {
     var price by remember { mutableStateOf(Billing.PRO_PRICE) }
     var busy by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -214,8 +214,9 @@ fun ProScreen(profile: Profile?, onBack: () -> Unit, onGift: () -> Unit) {
             busy = true
             scope.launch { Billing.buyPro(); busy = false }
         }, enabled = !busy, emerald = true)
-        // إعدادات المشترك: إخفاء الظهور
+        // إعدادات المشترك: تخصيص الشكل، وإخفاء الظهور
         if (profile?.isPro == true) {
+            GoldButton("🎨 تخصيص الشكل", onLook)
             var hidden by remember { mutableStateOf(false) }
             LaunchedEffect(Unit) { runCatching { hidden = Api.post("/pro/settings").optBoolean("hideOnline") } }
             SwitchRow("إخفاء ظهوري أني متصل", hidden, { on ->

@@ -588,16 +588,23 @@ private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
  */
 @Composable
 private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, me: Int, text: BalootText, reads: Map<SwipeDir, () -> Unit>) {
-    // طاولة ثلاثية الأبعاد: مائلة كأنك جالس عليها، بإطار خشب ومفرش أخضر
+    // طاولة ثلاثية الأبعاد: مائلة كأنك جالس عليها، بإطار ومفرش (المشترك يختار الشكل والألوان)
+    val look = com.majlisk.app.data.Look
+    val tableShape: androidx.compose.ui.graphics.Shape = when (look.shape) {
+        1 -> RoundedCornerShape(26)
+        2 -> androidx.compose.foundation.shape.CutCornerShape(29)
+        3 -> RoundedCornerShape(6)
+        else -> androidx.compose.foundation.shape.CircleShape
+    }
     Box(
         Modifier.widthIn(max = 300.dp).fillMaxWidth().aspectRatio(1f)
             .graphicsLayer { rotationX = 40f; cameraDistance = 12f * density }
-            .shadow(14.dp, androidx.compose.foundation.shape.CircleShape)
-            .background(Brush.radialGradient(listOf(Color(0xFF8A5A2B), Color(0xFF5C3A1A), Color(0xFF3B2410))), androidx.compose.foundation.shape.CircleShape)
+            .shadow(14.dp, tableShape)
+            .background(Brush.radialGradient(look.rim), tableShape)
             .padding(10.dp)
-            .clip(androidx.compose.foundation.shape.CircleShape)
-            .background(Brush.radialGradient(listOf(Color(0xFF1E6B4A), Color(0xFF145036), Color(0xFF0B241B))))
-            .border(1.dp, Color(0x55D4AF37), androidx.compose.foundation.shape.CircleShape)
+            .clip(tableShape)
+            .background(Brush.radialGradient(look.felt))
+            .border(1.dp, Color(0x55D4AF37), tableShape)
             .clickable { reads.getValue(SwipeDir.Left)() }
             .semantics(mergeDescendants = true) {
                 contentDescription = "وسط الطاولة: ${text.trick()}"
@@ -638,7 +645,8 @@ private fun CardFaceBox(card: Card, modifier: Modifier = Modifier.size(58.dp, 84
     // سُمك الورقة: حافة رمادية تحتها، وظل أعمق
     Box(modifier.shadow(8.dp, RoundedCornerShape(6.dp))) {
         Box(Modifier.matchParentSize().absoluteOffset(y = 1.5.dp).background(Color(0xFFB9B4A6), RoundedCornerShape(6.dp)))
-        CardFace(card, Modifier.matchParentSize().clip(RoundedCornerShape(6.dp)).background(Color.White).border(0.5.dp, Color(0xFFCFC9B8), RoundedCornerShape(6.dp)))
+        val edge = com.majlisk.app.data.Look.edge
+        CardFace(card, Modifier.matchParentSize().clip(RoundedCornerShape(6.dp)).background(Color.White).border(if (edge == Color(0xFFCFC9B8)) 0.5.dp else 2.dp, edge, RoundedCornerShape(6.dp)))
     }
 }
 

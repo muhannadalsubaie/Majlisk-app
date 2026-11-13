@@ -41,6 +41,10 @@ object Prefs {
         get() = sp.getBoolean("manualSignOut", false)
         set(v) { sp.edit().putBoolean("manualSignOut", v).apply() }
     /** آخر دخول كان بحساب Google: لو ضاع الدخول بدون «تسجيل الخروج» نرجّعه تلقائياً بنفس الحساب */
+    /** تخصيص الشكل (الباقة الاحترافية) */
+    fun lookGet(key: String): Int = sp.getInt("look.$key", 0)
+    fun lookHas(key: String): Boolean = sp.contains("look.$key")
+    fun lookSet(key: String, v: Int) { sp.edit().putInt("look.$key", v).apply() }
     /** نافذة عرض الباقة الاحترافية: آخر مرة طلعت (ما ترجع قبل يومين) */
     var offerShownAt: Long
         get() = sp.getLong("offerShownAt", 0)

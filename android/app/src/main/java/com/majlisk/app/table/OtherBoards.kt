@@ -129,19 +129,21 @@ private val PIPS = mapOf(
 /** قطعة دومينو للعين: عمودية (a فوق) أو أفقية (a يمين) */
 @Composable
 private fun DominoTileView(t: Tile, vertical: Boolean, unit: Float = 22f, dim: Boolean = false, modifier: Modifier = Modifier) {
+    // المشترك يختار لون القطع وحجمها
+    val look = com.majlisk.app.data.Look.tile
     val w = if (vertical) unit else unit * 2
     val h = if (vertical) unit * 2 else unit
     Canvas(modifier.size(w.dp, h.dp)) {
-        val face = if (dim) Color(0xFFCFCABB) else Color(0xFFFAF7EE)
+        val face = if (dim) look[0].copy(alpha = 0.6f) else look[0]
         drawRoundRect(face, cornerRadius = CornerRadius(size.minDimension * 0.18f))
-        drawRoundRect(Color(0xFF9E9886), cornerRadius = CornerRadius(size.minDimension * 0.18f), style = Stroke(1.dp.toPx()))
+        drawRoundRect(look[2], cornerRadius = CornerRadius(size.minDimension * 0.18f), style = Stroke(1.dp.toPx()))
         val half = if (vertical) Size(size.width, size.height / 2) else Size(size.width / 2, size.height)
         // الفاصل
-        if (vertical) drawLine(Color(0xFF333333), Offset(size.width * 0.12f, size.height / 2), Offset(size.width * 0.88f, size.height / 2), 1.5.dp.toPx())
-        else drawLine(Color(0xFF333333), Offset(size.width / 2, size.height * 0.12f), Offset(size.width / 2, size.height * 0.88f), 1.5.dp.toPx())
+        if (vertical) drawLine(look[1].copy(alpha = 0.8f), Offset(size.width * 0.12f, size.height / 2), Offset(size.width * 0.88f, size.height / 2), 1.5.dp.toPx())
+        else drawLine(look[1].copy(alpha = 0.8f), Offset(size.width / 2, size.height * 0.12f), Offset(size.width / 2, size.height * 0.88f), 1.5.dp.toPx())
         val r = min(half.width, half.height) * 0.1f
         fun pips(n: Int, origin: Offset) = PIPS[n].orEmpty().forEach { (x, y) ->
-            drawCircle(Color(0xFF1A1A1A), r, Offset(origin.x + x * half.width, origin.y + y * half.height))
+            drawCircle(look[1], r, Offset(origin.x + x * half.width, origin.y + y * half.height))
         }
         if (vertical) { pips(t.a, Offset.Zero); pips(t.b, Offset(0f, half.height)) }
         else { pips(t.a, Offset(half.width, 0f)); pips(t.b, Offset.Zero) }
@@ -271,7 +273,8 @@ private fun DominoSnake(line: List<PlacedTile>, modifier: Modifier) {
     ) {
         val W = maxWidth.value; val H = maxHeight.value
         // أكبر حجم يكفي كل القطع، وتصغر بس لما تكثر
-        var u = 32f
+        // (حجم القطع: يختاره المشترك، ويصغر لو ما وسعت الطاولة)
+        var u = 32f * com.majlisk.app.data.Look.tileScale
         var spots = dominoSpiral(line, W, H, u)
         while (spots == null && u > 7f) { u -= 0.5f; spots = dominoSpiral(line, W, H, u) }
         spots.orEmpty().forEach { s -> DominoTileView(s.tile, s.vertical, u, modifier = Modifier.absoluteOffset(s.x.dp, s.y.dp)) }
@@ -369,10 +372,13 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
         androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
             Box(Modifier.fillMaxWidth().weight(1f)) {
                 // المفرش
+                // (المشترك يختار لون المفرش وحافته)
+                val look = com.majlisk.app.data.Look
                 Box(
                     Modifier.fillMaxSize().padding(vertical = 20.dp, horizontal = 8.dp)
-                        .background(Color(0xFF1B5A3C), RoundedCornerShape(18.dp))
-                        .border(1.dp, Palette.gold.copy(alpha = 0.4f), RoundedCornerShape(18.dp)),
+                        .background(androidx.compose.ui.graphics.Brush.verticalGradient(look.dRim), RoundedCornerShape(20.dp)).padding(5.dp)
+                        .background(androidx.compose.ui.graphics.Brush.radialGradient(look.dFelt.take(2)), RoundedCornerShape(16.dp))
+                        .border(1.dp, Palette.gold.copy(alpha = 0.4f), RoundedCornerShape(16.dp)),
                 )
                 // القطع: داخل المفرش بعيد عن صور اللاعبين
                 DominoSnake(d.line, Modifier.fillMaxSize().padding(top = 70.dp, bottom = 70.dp, start = 44.dp, end = 44.dp))
@@ -431,7 +437,7 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                         }
                         .semantics(mergeDescendants = true) { contentDescription = h.label }
                         .padding(4.dp),
-                ) { DominoTileView(h.tile, vertical = true, unit = 24f, dim = d.myTurn && !h.legal) }
+                ) { DominoTileView(h.tile, vertical = true, unit = 24f * com.majlisk.app.data.Look.tileScale, dim = d.myTurn && !h.legal) }
             }
         }
     }
@@ -742,7 +748,9 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
         if (i == 0) oct.moveTo(q.x, q.y) else oct.lineTo(q.x, q.y)
     }
     oct.close()
-    drawPath(oct, androidx.compose.ui.graphics.Brush.linearGradient(listOf(Color(0xFF1C1C1E), Color(0xFF0B0B0C)), Offset.Zero, Offset(size.width, size.height)))
+    // (المشترك يختار ألوان اللوحة)
+    val jkLook = com.majlisk.app.data.Look.jk
+    drawPath(oct, androidx.compose.ui.graphics.Brush.linearGradient(listOf(jkLook[0], jkLook[1]), Offset.Zero, Offset(size.width, size.height)))
     drawPath(oct, Color(0x80D4AF37), style = Stroke(W * 0.003f))
     // صينية الورق في النص
     val tray = Path()
@@ -752,7 +760,7 @@ private fun DrawScope.drawJackaroo(j: JackarooView, bottom: Int) {
         if (i == 0) tray.moveTo(q.x, q.y) else tray.lineTo(q.x, q.y)
     }
     tray.close()
-    drawPath(tray, androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0xFFE4C48F), Color(0xFFB98D55)), ctr, half * 0.32f))
+    drawPath(tray, androidx.compose.ui.graphics.Brush.radialGradient(listOf(jkLook[2], androidx.compose.ui.graphics.lerp(jkLook[2], Color.Black, 0.3f)), ctr, half * 0.32f))
     drawPath(tray, Color(0xFF8A6232), style = Stroke(W * 0.003f))
     val cw = W * 0.076f; val ch = W * 0.108f
     listOf(Triple("3", "♥", true), Triple("2", "♠", false), Triple("Q", "♣", false), Triple("A", "♦", true), Triple("K", "♣", false), Triple("J", "♠", false), Triple("A", "♠", false)).forEachIndexed { i, (r, su, red) ->
@@ -1106,13 +1114,14 @@ private fun Dice(value: Int?, color: Color, sizeDp: Int = 54) {
     val spots = mapOf(1 to listOf(4), 2 to listOf(0, 8), 3 to listOf(0, 4, 8), 4 to listOf(0, 2, 6, 8), 5 to listOf(0, 2, 4, 6, 8), 6 to listOf(0, 2, 3, 5, 6, 8))
     Canvas(Modifier.size(sizeDp.dp).clearAndSetSemantics { }) {
         val r = size.width * 0.19f
-        drawRoundRect(Color.White, cornerRadius = CornerRadius(r))
+        val look = com.majlisk.app.data.Look.dice
+        drawRoundRect(look[0], cornerRadius = CornerRadius(r))
         drawRoundRect(color, cornerRadius = CornerRadius(r), style = Stroke(size.width * 0.055f))
         val on = value?.let { spots[it] }.orEmpty()
         for (i in on) {
             val x = (i % 3 + 0.5f) / 3f * size.width
             val y = (i / 3 + 0.5f) / 3f * size.height
-            drawCircle(Color(0xFF1A1A1A), size.width * 0.08f, Offset(x, y))
+            drawCircle(look[1], size.width * 0.08f, Offset(x, y))
         }
     }
 }
