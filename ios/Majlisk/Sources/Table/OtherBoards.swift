@@ -153,21 +153,23 @@ private struct DominoTileView: View {
     var dim = false
     var body: some View {
         let w = vertical ? unit : unit * 2, h = vertical ? unit * 2 : unit
+        // المشترك يختار لون القطع
+        let look = Look.tile
         Canvas { ctx, size in
             let r = min(size.width, size.height) * 0.18
             let rect = Path(roundedRect: CGRect(origin: .zero, size: size), cornerRadius: r)
-            ctx.fill(rect, with: .color(dim ? Color(red: 0.81, green: 0.79, blue: 0.73) : Color(red: 0.98, green: 0.97, blue: 0.93)))
-            ctx.stroke(rect, with: .color(Color(red: 0.62, green: 0.6, blue: 0.53)), lineWidth: 1)
+            ctx.fill(rect, with: .color(dim ? look[0].opacity(0.6) : look[0]))
+            ctx.stroke(rect, with: .color(look[2]), lineWidth: 1)
             var line = Path()
             if vertical { line.move(to: CGPoint(x: size.width * 0.12, y: size.height / 2)); line.addLine(to: CGPoint(x: size.width * 0.88, y: size.height / 2)) }
             else { line.move(to: CGPoint(x: size.width / 2, y: size.height * 0.12)); line.addLine(to: CGPoint(x: size.width / 2, y: size.height * 0.88)) }
-            ctx.stroke(line, with: .color(Color(white: 0.2)), lineWidth: 1.5)
+            ctx.stroke(line, with: .color(look[1].opacity(0.8)), lineWidth: 1.5)
             let half = vertical ? CGSize(width: size.width, height: size.height / 2) : CGSize(width: size.width / 2, height: size.height)
             let pr = min(half.width, half.height) * 0.1
             func pips(_ n: Int, _ o: CGPoint) {
                 for (x, y) in PIPS[n] ?? [] {
                     let c = CGPoint(x: o.x + x * half.width, y: o.y + y * half.height)
-                    ctx.fill(Path(ellipseIn: CGRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)), with: .color(Color(white: 0.1)))
+                    ctx.fill(Path(ellipseIn: CGRect(x: c.x - pr, y: c.y - pr, width: pr * 2, height: pr * 2)), with: .color(look[1]))
                 }
             }
             if vertical { pips(t.a, .zero); pips(t.b, CGPoint(x: 0, y: half.height)) }
@@ -275,7 +277,7 @@ private struct DominoSnake: View {
             let W = geo.size.width, H = geo.size.height
             // أكبر حجم يكفي كل القطع، وتصغر بس لما تكثر
             let fit: (CGFloat, [DominoSpot]) = {
-                var u: CGFloat = 32
+                var u: CGFloat = 32 * Look.tileScale
                 while u > 7 {
                     if let s = dominoSpiral(line, W, H, u) { return (u, s) }
                     u -= 0.5
@@ -355,8 +357,11 @@ struct DominoBoard: View {
             let left: Int? = d.players == 4 ? others[2] : d.players == 3 ? others[1] : nil
             ZStack {
                 // المفرش
-                RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.11, green: 0.35, blue: 0.24))
-                    .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.gold.opacity(0.4), lineWidth: 1))
+                // (المشترك يختار لون المفرش وحافته)
+                RoundedRectangle(cornerRadius: 16).fill(RadialGradient(colors: Array(Look.dFelt.prefix(2)), center: .center, startRadius: 0, endRadius: 260))
+                    .overlay(RoundedRectangle(cornerRadius: 16).stroke(Palette.gold.opacity(0.4), lineWidth: 1))
+                    .padding(5)
+                    .background(RoundedRectangle(cornerRadius: 20).fill(LinearGradient(colors: Look.dRim, startPoint: .top, endPoint: .bottom)))
                     .padding(.vertical, 20).padding(.horizontal, 8)
                 // القطع: داخل المفرش بعيد عن صور اللاعبين
                 DominoSnake(line: d.line)
@@ -469,7 +474,7 @@ struct DominoHand: View {
                         else if h.askSide { chooseSide = h }
                         else { act(["type": "play", "tile": h.tile.json]) }
                     } label: {
-                        DominoTileView(t: h.tile, vertical: true, unit: 24, dim: d.myTurn && !h.legal)
+                        DominoTileView(t: h.tile, vertical: true, unit: 24 * Look.tileScale, dim: d.myTurn && !h.legal)
                             .padding(4)
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(h.legal ? Palette.gold : .clear, lineWidth: 2))
                     }
@@ -823,11 +828,13 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
     }
     // اللوحة الثمانية السوداء
     let board = octagon(half * 0.99, stretch: halfY / half)
-    ctx.fill(board, with: .linearGradient(Gradient(colors: [Color(red: 0.11, green: 0.11, blue: 0.12), Color(red: 0.04, green: 0.04, blue: 0.05)]), startPoint: .zero, endPoint: CGPoint(x: size.width, y: size.height)))
+    // (المشترك يختار ألوان اللوحة)
+    let jkLook = Look.jk
+    ctx.fill(board, with: .linearGradient(Gradient(colors: [jkLook[0], jkLook[1]]), startPoint: .zero, endPoint: CGPoint(x: size.width, y: size.height)))
     ctx.stroke(board, with: .color(Palette.gold.opacity(0.5)), lineWidth: W * 0.003)
     // صينية الورق في النص
     let tray = octagon(half * 0.27)
-    ctx.fill(tray, with: .radialGradient(Gradient(colors: [Color(red: 0.89, green: 0.77, blue: 0.56), Color(red: 0.73, green: 0.55, blue: 0.33)]), center: ctr, startRadius: 0, endRadius: half * 0.32))
+    ctx.fill(tray, with: .radialGradient(Gradient(colors: [jkLook[2], jkLook[2].opacity(0.7)]), center: ctr, startRadius: 0, endRadius: half * 0.32))
     ctx.stroke(tray, with: .color(Color(red: 0.54, green: 0.38, blue: 0.2)), lineWidth: W * 0.003)
     let cards: [(String, String, Bool)] = [("3", "♥", true), ("2", "♠", false), ("Q", "♣", false), ("A", "♦", true), ("K", "♣", false), ("J", "♠", false), ("A", "♠", false)]
     let cw = W * 0.076, ch = W * 0.108
@@ -1224,14 +1231,15 @@ private struct DiceView: View {
     var size: CGFloat = 54
     var body: some View {
         let spots: [Int: [Int]] = [1: [4], 2: [0, 8], 3: [0, 4, 8], 4: [0, 2, 6, 8], 5: [0, 2, 4, 6, 8], 6: [0, 2, 3, 5, 6, 8]]
+        let look = Look.diceColors
         Canvas { ctx, size in
             let rect = Path(roundedRect: CGRect(origin: .zero, size: size).insetBy(dx: 1.5, dy: 1.5), cornerRadius: size.width * 0.19)
-            ctx.fill(rect, with: .color(.white))
+            ctx.fill(rect, with: .color(look[0]))
             ctx.stroke(rect, with: .color(color), lineWidth: max(1.5, size.width * 0.055))
             for i in value.flatMap({ spots[$0] }) ?? [] {
                 let x = (CGFloat(i % 3) + 0.5) / 3 * size.width, y = (CGFloat(i / 3) + 0.5) / 3 * size.height
                 let r = size.width * 0.08
-                ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(Color(white: 0.1)))
+                ctx.fill(Path(ellipseIn: CGRect(x: x - r, y: y - r, width: r * 2, height: r * 2)), with: .color(look[1]))
             }
         }
         .frame(width: size, height: size)

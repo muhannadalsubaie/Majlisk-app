@@ -431,12 +431,13 @@ struct BalootBoard: View {
     /// وفي دوّار VoiceOver (الإجراءات): القراءات الثلاث
     private var trickArea: some View {
         ZStack {
-            // طاولة ثلاثية الأبعاد: إطار خشب ومفرش أخضر
-            Circle().fill(RadialGradient(colors: [Color(red: 0.54, green: 0.35, blue: 0.17), Color(red: 0.36, green: 0.23, blue: 0.10), Color(red: 0.23, green: 0.14, blue: 0.06)], center: .center, startRadius: 0, endRadius: 160))
+            // طاولة ثلاثية الأبعاد: إطار ومفرش (المشترك يختار الشكل والألوان)
+            let shape = Look.tableShape(Look.shape)
+            shape.fill(RadialGradient(colors: Look.rim, center: .center, startRadius: 0, endRadius: 160))
                 .shadow(color: .black.opacity(0.6), radius: 12, y: 8)
-            Circle().fill(RadialGradient(colors: [Color(red: 0.12, green: 0.42, blue: 0.29), Color(red: 0.08, green: 0.31, blue: 0.21), Color(red: 0.04, green: 0.14, blue: 0.11)], center: .center, startRadius: 0, endRadius: 150))
+            shape.fill(RadialGradient(colors: Look.felt, center: .center, startRadius: 0, endRadius: 150))
                 .padding(10)
-            Circle().stroke(Palette.gold.opacity(0.33), lineWidth: 1).padding(10)
+            shape.stroke(Palette.gold.opacity(0.33), lineWidth: 1).padding(10)
             if (g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq"), let q = g.qaba {
                 VStack(spacing: 4) {
                     Text("ورقة الأرض").font(.system(size: 14)).foregroundColor(Palette.textDim)
@@ -666,7 +667,7 @@ private struct TableCard: View {
             .frame(width: width, height: height)
             .background(Color.white)
             .clipShape(RoundedRectangle(cornerRadius: 6))
-            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Color(white: 0.8), lineWidth: 0.5))
+            .overlay(RoundedRectangle(cornerRadius: 6).stroke(Look.edge, lineWidth: Look.pro && Look.shared.cardEdge > 0 ? 2 : 0.5))
             .background(RoundedRectangle(cornerRadius: 6).fill(Color(red: 0.73, green: 0.71, blue: 0.65)).offset(y: 1.5))
             .shadow(color: .black.opacity(0.7), radius: 6, y: 4)
     }

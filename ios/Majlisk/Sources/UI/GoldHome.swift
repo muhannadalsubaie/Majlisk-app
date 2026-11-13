@@ -151,6 +151,7 @@ struct GoldMenuScreen: View {
                     HStack(spacing: 0) {
                         NavItem(icon: "👥", label: "الأصدقاء") { navigate(.friends) }
                         NavItem(icon: "🎴", label: "الطاولات") { navigate(.joinTable) }
+                        NavItem(icon: "🎨", label: "الشكل") { navigate(.look) }
                         NavItem(icon: "👑", label: "الباقة", active: true) { navigate(.pro) }
                         NavItem(icon: "👤", label: "حسابي") { navigate(.profile) }
                         NavItem(icon: "⚙️", label: "الإعدادات") { navigate(.settings) }

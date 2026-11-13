@@ -1,7 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 
-enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop, profile, pro, gift }
+enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop, profile, pro, gift, look }
 
 struct AppRoot: View {
     @StateObject private var session = Session.shared
@@ -64,7 +64,11 @@ struct AppRoot: View {
             case .settings: SettingsScreen(embedded: false) { route = .menu }
             case .shop: ShopScreen(profile: session.profile) { route = $0 }
             case .profile: ProfileScreen(profile: session.profile) { route = .menu }
-            case .pro: ProScreen(profile: session.profile, onBack: { route = .menu }, onGift: { route = .gift })
+            case .pro: ProScreen(profile: session.profile, onBack: { route = .menu }, onGift: { route = .gift }, onLook: { route = .look })
+            // تخصيص الشكل: للمشترك (غيره يروح لشاشة الباقة)
+            case .look:
+                if session.profile?.isPro == true { LookScreen { route = .menu } }
+                else { ProScreen(profile: session.profile, onBack: { route = .menu }, onGift: { route = .gift }) }
             case .gift: GiftScreen { route = .pro }
             case .table:
                 if let tableId { TableScreen(tableId: tableId, uid: session.uid ?? "") { Prefs.lastTable = nil; route = .menu }.id(tableId) }

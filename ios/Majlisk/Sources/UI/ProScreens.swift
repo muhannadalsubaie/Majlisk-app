@@ -139,6 +139,7 @@ struct ProScreen: View {
     let profile: Profile?
     let onBack: () -> Void
     let onGift: () -> Void
+    var onLook: () -> Void = {}
     @State private var price = Store.proPriceFallback
     @State private var busy = false
     @State private var hidden = false
@@ -177,8 +178,9 @@ struct ProScreen: View {
                     Task { @MainActor in _ = await Store.buyPro(); busy = false }
                 }
             }
-            // إعدادات المشترك: إخفاء الظهور
+            // إعدادات المشترك: تخصيص الشكل، وإخفاء الظهور
             if profile?.isPro == true {
+                GoldButton(title: "🎨 تخصيص الشكل", action: onLook)
                 SwitchRow(label: "إخفاء ظهوري أني متصل", isOn: hidden, onChange: { on in
                     hidden = on
                     Task { @MainActor in

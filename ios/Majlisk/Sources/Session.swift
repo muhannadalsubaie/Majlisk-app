@@ -60,6 +60,7 @@ final class Session: ObservableObject {
                 unlimited: d["unlimited"] as? Bool == true,
                 proUntil: (d["proUntil"] as? NSNumber)?.doubleValue ?? 0
             )
+            Look.pro = self?.profile?.isPro == true
         }
     }
 
