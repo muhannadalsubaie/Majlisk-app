@@ -1036,6 +1036,10 @@ struct LudoBoard: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turnPool(o).count > 1 ? "، رمياته " + turnPool(o).map(String.init).joined(separator: " و") : "")\(turn ? "، عليه الدور" : "")")
+        // النرد نفسه زر الرمي: مع VoiceOver الضغط مرتين على اسمك يرمي النرد
+        .accessibilityAddTraits(o == mySeat && l.canRoll ? .isButton : [])
+        .accessibilityHint(o == mySeat && l.canRoll ? "اضغط مرتين لرمي النرد" : "")
+        .accessibilityAction { if o == mySeat && l.canRoll { act(["type": "roll"]) } }
     }
 
     /// رميات هالدور (للي عليه الدور بس)
@@ -1153,8 +1157,8 @@ struct LudoBoard: View {
                     .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
                 if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
             } else {
-                // النرد الكبير تحت اللوحة انشال (النرد جنب اسمك يكفي)؛ زر الرمي لقارئ الشاشة بس
-                if l.myTurn && l.phase == "roll" && reader { MButton("ارمِ النرد", .primary, fill: false) { act(["type": "roll"]) }.frame(maxWidth: .infinity) }
+                // زر «ارمِ النرد» انشال: الرمي بالضغط على النرد نفسه (أو على اسمك مع VoiceOver، أو بالسحب)
+                EmptyView()
             }
             // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
             if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {

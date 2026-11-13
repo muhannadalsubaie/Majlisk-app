@@ -33,6 +33,14 @@ enum Api {
         return try await execute(req)
     }
 
+    /// ملف (صورة) بتوكن المستخدم: nil لو ما انجاب
+    static func bytes(_ path: String) async -> Data? {
+        guard var req = URL(string: base + path).map({ URLRequest(url: $0) }), let t = try? await token() else { return nil }
+        req.setValue("Bearer \(t)", forHTTPHeaderField: "Authorization")
+        guard let (data, res) = try? await URLSession.shared.data(for: req), (res as? HTTPURLResponse)?.statusCode == 200 else { return nil }
+        return data
+    }
+
     private static func send(_ path: String, body: JSON, token: String?) async throws -> JSON {
         var req = URLRequest(url: URL(string: base + path)!)
         req.httpMethod = "POST"

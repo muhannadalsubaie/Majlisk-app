@@ -111,6 +111,8 @@ struct Screen<Content: View>: View {
                             .frame(minHeight: geo.size.height, alignment: .top)
                     }
                     .scrollDisabled(lockScroll)
+                    // ما ترتد ولا تنسحب لو المحتوى قد الشاشة (كانت الطاولة تتحرك كأنها صفحتين)
+                    .modifier(BounceOnlyWhenScrolls())
                 }
             } else if scroll {
                 ScrollView { VStack(alignment: .leading, spacing: 14) { content() }.padding(16) }
@@ -272,5 +274,12 @@ extension View {
             Button(confirm, role: destructive ? .destructive : nil, action: action)
             Button("إلغاء", role: .cancel) {}
         } message: { Text(message) }
+    }
+}
+
+/// الارتداد بس لو المحتوى أطول من الشاشة (iOS 16.4 وأحدث)
+struct BounceOnlyWhenScrolls: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(iOS 16.4, *) { content.scrollBounceBehavior(.basedOnSize) } else { content }
     }
 }

@@ -10,6 +10,7 @@ import androidx.compose.material3.ripple
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
@@ -67,7 +68,9 @@ fun Screen(modifier: Modifier = Modifier, scroll: Boolean = true, fill: Boolean 
         // fill: المحتوى يملأ طول الشاشة على الأقل، فيقدر Spacer(weight) يدفع ما بعده لأسفلها
         if (fill) {
             androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxSize().safeDrawingPadding()) {
-                val inner = if (scroll) Modifier.verticalScroll(rememberScrollState()) else Modifier
+                // التمرير بس لو المحتوى أطول من الشاشة (كانت الطاولة تنسحب وتتمطط كأنها صفحتين وهي كاملة)
+                val state = rememberScrollState()
+                val inner = if (scroll) Modifier.verticalScroll(state, enabled = state.maxValue > 0) else Modifier
                 Column(
                     Modifier.fillMaxWidth().then(inner).heightIn(min = maxHeight).padding(horizontal = 16.dp, vertical = 12.dp).then(modifier),
                     verticalArrangement = Arrangement.spacedBy(14.dp),
@@ -165,7 +168,9 @@ fun RaisedButton(
             .padding(padding),
         contentAlignment = Alignment.Center,
     ) {
-        Text(text, color = content, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        // له وصف خاص: النص الظاهر ما يُقرأ (كان قارئ الشاشة يقرأ الوصف ثم النص، فتنقرأ الطاولة مرتين)
+        Text(text, color = content, fontSize = fontSize, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center,
+            modifier = if (description != null) Modifier.clearAndSetSemantics { } else Modifier)
     }
 }
 

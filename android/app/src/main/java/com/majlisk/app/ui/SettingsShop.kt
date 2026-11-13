@@ -35,6 +35,12 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
     var muted by remember { mutableStateOf(Prefs.muted) }
     var confirmDelete by remember { mutableStateOf(false) }
+    var support by remember { mutableStateOf(false) }
+    if (support) {
+        val dev = com.majlisk.app.data.Session.profile.collectAsState().value?.unlimited == true
+        SupportScreen(dev) { support = false }
+        return
+    }
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val site = Api.BASE.removeSuffix("/api")
@@ -50,6 +56,8 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
             SwitchRow(m.label, chatMode == m, { if (it) com.majlisk.app.data.ChatSettings.set(m) })
         }
         if (!embedded) {
+            SectionTitle("المساعدة")
+            SecondaryButton("💬 المساعدة والدعم", { support = true }, fill = true)
             SectionTitle("الحساب")
             SecondaryButton("تسجيل الخروج", { Session.signOut() }, fill = true)
             DangerButton("حذف الحساب", { confirmDelete = true })

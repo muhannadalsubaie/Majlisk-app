@@ -1012,7 +1012,10 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                         Box(
                             Modifier.graphicsLayer { rotationZ = spin.value }
-                                .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp).clickable { doRoll() } else Modifier),
+                                // النرد نفسه زر الرمي (وقارئ الشاشة يقرأه «ارمِ النرد»)
+                                .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp)
+                                    .clickable(onClickLabel = "ارمِ النرد", role = androidx.compose.ui.semantics.Role.Button) { doRoll() }
+                                    .semantics { contentDescription = "ارمِ النرد" } else Modifier),
                         ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
                         // الرميات اللي عنده هالدور (ستة ثم ستة ثم ثلاثة...): نرد صغير لكل وحدة، تختفي لما يلعبها
                         if (pool.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -1077,8 +1080,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
         } else {
-            // النرد الكبير تحت اللوحة انشال (النرد جنب اسمك يكفي)؛ زر الرمي لقارئ الشاشة بس
-            if (l.myTurn && l.phase == "roll" && reader) PrimaryButton("ارمِ النرد", { act(conn, "ludo", jsonOf("type" to "roll")) })
+            // زر «ارمِ النرد» انشال: الرمي بالضغط على النرد نفسه (أو سحب إصبعين لليمين مع قارئ الشاشة)
         }
         // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
         if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {

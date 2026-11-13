@@ -51,6 +51,14 @@ object Api {
         return execute(req)
     }
 
+    /** ملف (صورة) بتوكن المستخدم: null لو ما انجاب */
+    suspend fun bytes(path: String): ByteArray? = withContext(Dispatchers.IO) {
+        runCatching {
+            val req = Request.Builder().url(BASE + path).header("Authorization", "Bearer ${token()}").build()
+            http.newCall(req).await().use { if (it.isSuccessful) it.body?.bytes() else null }
+        }.getOrNull()
+    }
+
     private suspend fun send(path: String, body: JSONObject, token: String?): JSONObject {
         val b = Request.Builder().url(BASE + path).post(body.toString().toRequestBody(JSON))
         if (token != null) b.header("Authorization", "Bearer $token")

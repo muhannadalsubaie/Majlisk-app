@@ -8,8 +8,14 @@ struct SettingsScreen: View {
     @State private var muted = Prefs.muted
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
+    @State private var support = false
+    @ObservedObject private var session = Session.shared
 
     var body: some View {
+        if support { SupportScreen(dev: session.profile?.unlimited == true) { support = false } } else { settings }
+    }
+
+    @ViewBuilder private var settings: some View {
         Screen {
             TopBar("الإعدادات", onBack: onBack)
             SectionTitle("الصوت")
@@ -20,6 +26,8 @@ struct SettingsScreen: View {
                 SwitchRow(label: m.label, isOn: chatSettings.mode == m, onChange: { if $0 { chatSettings.set(m) } })
             }
             if !embedded {
+                SectionTitle("المساعدة")
+                MButton("💬 المساعدة والدعم") { support = true }
                 SectionTitle("الحساب")
                 MButton("تسجيل الخروج") { Session.shared.signOut() }
                 MButton("حذف الحساب", .danger) { confirmDelete = true }
