@@ -183,6 +183,7 @@ struct BalootBoard: View {
     let uid: String
     @ObservedObject var conn: TableConnection
     /// آخر أكلة انتهت مهلة عرضها (بعدها تختفي أوراقها). الحساب فوري في نفس الإطار، فما تختفي الأوراق وترجع
+    @AppStorage("showSawa") private var showSawa = true
     @State private var releasedTrick: Int?
     /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
     /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
@@ -293,7 +294,7 @@ struct BalootBoard: View {
                     }
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
-                if g.actions.canSawa {
+                if g.actions.canSawa && showSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
                 }
                 // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
@@ -384,7 +385,7 @@ struct BalootBoard: View {
         }
         if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
-        if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
+        if g.actions.canSawa && showSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
         if g.actions.canProject && v.manualProjects { out.append(("مشروع", { act(["type": "declareProject"]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }

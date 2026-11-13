@@ -9,6 +9,10 @@ object Prefs {
     lateinit var app: Context
     fun init(c: Context) { app = c.applicationContext; sp = c.getSharedPreferences("majlisk", Context.MODE_PRIVATE) }
 
+    /** زر «سوا» في البلوت: يطلع بس لو مفعّل (يتحدث على الطاولة على طول) */
+    val showSawa: androidx.compose.runtime.MutableState<Boolean> by lazy { androidx.compose.runtime.mutableStateOf(sp.getBoolean("showSawa", true)) }
+    fun setShowSawa(v: Boolean) { showSawa.value = v; sp.edit().putBoolean("showSawa", v).apply() }
+
     var muted: Boolean
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }

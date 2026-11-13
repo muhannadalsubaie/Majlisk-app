@@ -6,6 +6,7 @@ struct SettingsScreen: View {
     let embedded: Bool
     let onBack: () -> Void
     @State private var muted = Prefs.muted
+    @AppStorage("showSawa") private var showSawa = true
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
@@ -20,6 +21,8 @@ struct SettingsScreen: View {
             TopBar("الإعدادات", onBack: onBack)
             SectionTitle("الصوت")
             SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
+            SectionTitle("إعدادات اللعب")
+            SwitchRow(label: "زر سوا في البلوت", isOn: showSawa, onChange: { showSawa = $0 })
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
             ForEach(ChatMode.allCases, id: \.self) { m in

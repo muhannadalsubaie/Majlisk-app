@@ -390,7 +390,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             g.actions.bids.forEach { b -> add((if (b.type == "pass" && g.bidRound == 2) "ولا" else b.label) to { act(jsonOf("type" to "bid", "bid" to b.raw)) }) }
             g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
-            if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
+            if (g.actions.canSawa && com.majlisk.app.data.Prefs.showSawa.value) add("سوا" to { act(jsonOf("type" to "sawa")) })
             if (g.actions.canProject && v.manualProjects) add("مشروع" to { act(jsonOf("type" to "declareProject")) })
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
@@ -427,7 +427,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 }
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
-            if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
+            if (g.actions.canSawa && com.majlisk.app.data.Prefs.showSawa.value) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
             if (g.actions.canProject && v.manualProjects) PrimaryButton("أعلن مشروعك", { act(jsonOf("type" to "declareProject")) })
             // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
