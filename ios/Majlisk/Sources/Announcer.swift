@@ -4,12 +4,61 @@ import UIKit
 enum Announcer {
     static var readerOn: Bool { UIAccessibility.isVoiceOverRunning }
 
-    /// يُضاف لطابور VoiceOver ويُقرأ بعد ما قبله
+    /**
+     * طابورنا (مثل الأندرويد): VoiceOver يقطع الإعلان اللي يقرؤه لما يجيه إعلان جديد،
+     * فنرسل كل إعلان بعد ما يخلص اللي قبله (VoiceOver يبلغنا لما يخلص)، ولو انقطع نعيده.
+     */
+    private static var queue: [String] = []
+    private static var current: String?
+    private static var retries = 0
+    private static var busyUntil = Date.distantPast
+    private static var observer: NSObjectProtocol?
+    /// وقت تقريبي لقراءة النص (احتياط لو ما وصل بلاغ الانتهاء)
+    private static func readTime(_ text: String) -> TimeInterval { 0.5 + Double(text.count) * 0.06 }
+
+    private static func listen() {
+        guard observer == nil else { return }
+        observer = NotificationCenter.default.addObserver(forName: UIAccessibility.announcementDidFinishNotification, object: nil, queue: .main) { n in
+            let text = n.userInfo?[UIAccessibility.announcementStringValueUserInfoKey] as? String
+            let ok = n.userInfo?[UIAccessibility.announcementWasSuccessfulUserInfoKey] as? Bool ?? true
+            guard let cur = current, text == cur else { return }
+            // انقطع (VoiceOver قرأ شي ثاني فوقه): نعيده مرة وحدة
+            if !ok && retries < 1 {
+                retries += 1
+                post(cur, queued: true)
+                return
+            }
+            current = nil
+            busyUntil = .distantPast
+            pump()
+        }
+    }
+
+    private static func post(_ text: String, queued: Bool) {
+        current = text
+        busyUntil = Date().addingTimeInterval(readTime(text))
+        let s = NSAttributedString(string: text, attributes: [.accessibilitySpeechQueueAnnouncement: queued])
+        UIAccessibility.post(notification: .announcement, argument: s)
+        // احتياط: لو ما وصل بلاغ الانتهاء نكمل بعد الوقت التقريبي
+        let mine = text
+        DispatchQueue.main.asyncAfter(deadline: .now() + readTime(text) + 1.5) {
+            if current == mine { current = nil; pump() }
+        }
+    }
+
+    private static func pump() {
+        listen()
+        guard current == nil, Date() >= busyUntil, !queue.isEmpty else { return }
+        retries = 0
+        post(queue.removeFirst(), queued: true)
+    }
+
+    /// يُقرأ بعد ما يخلص اللي قبله (ما يقطعه)
     static func announce(_ text: String) {
         guard !text.isEmpty else { return }
         DispatchQueue.main.async {
-            let s = NSAttributedString(string: text, attributes: [.accessibilitySpeechQueueAnnouncement: true])
-            UIAccessibility.post(notification: .announcement, argument: s)
+            queue.append(text)
+            pump()
         }
     }
 
@@ -27,11 +76,14 @@ enum Announcer {
         }
     }
 
-    /// يُقرأ الآن (ردّ إيماءة أو زر قراءة سريعة)
+    /// يُقرأ الآن (ردّ إيماءة أو زر قراءة سريعة): يقطع القديم، واللي ينتظر في الطابور قديم فينمسح
     static func announceNow(_ text: String) {
+        guard !text.isEmpty else { return }
         DispatchQueue.main.async {
-            let s = NSAttributedString(string: text, attributes: [.accessibilitySpeechQueueAnnouncement: false])
-            UIAccessibility.post(notification: .announcement, argument: s)
+            listen()
+            queue.removeAll()
+            retries = 1 // ما نعيده لو انقطع: الجديد أهم
+            post(text, queued: false)
         }
     }
 }
