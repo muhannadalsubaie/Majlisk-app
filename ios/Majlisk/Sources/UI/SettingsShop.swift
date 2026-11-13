@@ -12,7 +12,7 @@ struct SettingsScreen: View {
     @ObservedObject private var session = Session.shared
 
     var body: some View {
-        if support { SupportScreen(dev: session.profile?.unlimited == true) { support = false } } else { settings }
+        if support { SupportScreen(dev: session.profile?.dev == true || session.profile?.unlimited == true) { support = false } } else { settings }
     }
 
     @ViewBuilder private var settings: some View {

@@ -19,6 +19,8 @@ struct Profile: Equatable {
     var isPro: Bool { proUntil > Date().timeIntervalSince1970 * 1000 }
     /// الباقة الاحترافية ظاهرة لهالحساب (تجربة: مجرّبين محددين لين تنفتح للكل)
     var proAccess = false
+    /// حساب المطوّر (يستقبل تذاكر الدعم)
+    var dev = false
 }
 
 /// المستخدم الحالي ورصيده، ويتحدثان فور أي تغيير
@@ -61,7 +63,8 @@ final class Session: ObservableObject {
                 loaded: snap.exists,
                 unlimited: d["unlimited"] as? Bool == true,
                 proUntil: (d["proUntil"] as? NSNumber)?.doubleValue ?? 0,
-                proAccess: d["proAccess"] as? Bool == true
+                proAccess: d["proAccess"] as? Bool == true,
+                dev: d["dev"] as? Bool == true
             )
             Look.pro = self?.profile?.isPro == true
         }

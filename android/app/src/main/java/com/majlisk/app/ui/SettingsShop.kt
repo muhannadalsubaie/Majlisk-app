@@ -37,7 +37,7 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
     var confirmDelete by remember { mutableStateOf(false) }
     var support by remember { mutableStateOf(false) }
     if (support) {
-        val dev = com.majlisk.app.data.Session.profile.collectAsState().value?.unlimited == true
+        val dev = com.majlisk.app.data.Session.profile.collectAsState().value.let { it?.dev == true || it?.unlimited == true }
         SupportScreen(dev) { support = false }
         return
     }

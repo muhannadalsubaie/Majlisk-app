@@ -24,6 +24,8 @@ data class Profile(
     val proUntil: Long = 0,
     /** الباقة الاحترافية ظاهرة لهالحساب (تجربة: مجرّبين محددين لين تنفتح للكل) */
     val proAccess: Boolean = false,
+    /** حساب المطوّر (يستقبل تذاكر الدعم) */
+    val dev: Boolean = false,
 ) {
     val isPro: Boolean get() = proUntil > System.currentTimeMillis()
 }
@@ -96,6 +98,7 @@ object Session {
                     unlimited = snap.getBoolean("unlimited") == true,
                     proUntil = snap.getLong("proUntil") ?: 0L,
                     proAccess = snap.getBoolean("proAccess") == true,
+                    dev = snap.getBoolean("dev") == true,
                 )
             }
         }
