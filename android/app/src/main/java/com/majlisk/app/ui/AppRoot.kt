@@ -36,6 +36,8 @@ fun AppRoot() {
     val navigate: (Route) -> Unit = { screen = it }
     val openTable: (String) -> Unit = { tableId = it; screen = Route.Table }
 
+    // المشترك: كل صفحات التطبيق بالشكل الذهبي
+    LaunchedEffect(profile?.isPro) { Palette.goldMode = profile?.isPro == true }
     // بعد تسجيل الخروج (أو حذف الحساب) من أي شاشة نعود لشاشة الدخول
     LaunchedEffect(user) {
         if (user == null && screen != Route.Splash) screen = Route.Auth

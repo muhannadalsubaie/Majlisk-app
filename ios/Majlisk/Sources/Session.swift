@@ -67,6 +67,7 @@ final class Session: ObservableObject {
                 dev: d["dev"] as? Bool == true
             )
             Look.pro = self?.profile?.isPro == true
+            Palette.goldMode = self?.profile?.isPro == true
         }
     }
 

@@ -19,7 +19,8 @@ struct AppRoot: View {
     private var pendingInvite: TableInvite? { hub.state.invites.first { !(route == .table && tableId == $0.tableId) } }
 
     var body: some View {
-        content
+        // المشترك: كل صفحات التطبيق بالشكل الذهبي (تتلون من جديد لما يتغير اشتراكه)
+        content.id(session.profile?.isPro == true)
             .onChange(of: session.uid) { uid in if uid == nil && route != .splash { route = .auth } }
             .onChange(of: signedIn) { on in if on { hub.start(); Store.recover(); Push.shared.register(); openPushTable() } else { hub.stop() } }
             .onAppear { if signedIn { hub.start(); Store.recover(); Push.shared.register() } }

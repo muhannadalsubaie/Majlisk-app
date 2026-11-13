@@ -344,9 +344,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.8f))
-                Box(Modifier.weight(3f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
-                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.8f))
+                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.7f))
+                Box(Modifier.weight(3.4f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
+                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.7f))
             }
         }
 
@@ -597,7 +597,7 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
         else -> androidx.compose.foundation.shape.CircleShape
     }
     Box(
-        Modifier.widthIn(max = 300.dp).fillMaxWidth().aspectRatio(1f)
+        Modifier.widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)
             .graphicsLayer { rotationX = 40f; cameraDistance = 12f * density }
             .shadow(14.dp, tableShape)
             .background(Brush.radialGradient(look.rim), tableShape)

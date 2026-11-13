@@ -3,12 +3,15 @@ import SwiftUI
 /// ألوان التصميم المؤقت (الأخضر الغامق والذهبي، مثل التطبيق الحالي).
 /// كل ألوان التطبيق وخطوطه من هنا فقط، فتغيير التصميم لاحقاً يكون في هذا الملف.
 enum Palette {
-    static let green900 = Color(red: 0x0D / 255, green: 0x2B / 255, blue: 0x20 / 255)
-    static let green800 = Color(red: 0x13 / 255, green: 0x3A / 255, blue: 0x2B / 255)
-    static let green700 = Color(red: 0x1B / 255, green: 0x4D / 255, blue: 0x39 / 255)
-    static let gold = Color(red: 0xD4 / 255, green: 0xAF / 255, blue: 0x37 / 255)
-    static let goldSoft = Color(red: 0xE8 / 255, green: 0xCF / 255, blue: 0x7A / 255)
-    static let text = Color(red: 0xF3 / 255, green: 0xEF / 255, blue: 0xE2 / 255)
+    /// الشكل الذهبي (المشترك في الباقة الاحترافية): كل صفحات التطبيق تتلون ليلي وذهبي
+    static var goldMode = false
+    private static func c(_ r: Int, _ g: Int, _ b: Int) -> Color { Color(red: Double(r) / 255, green: Double(g) / 255, blue: Double(b) / 255) }
+    static var green900: Color { goldMode ? c(0x0B, 0x0F, 0x14) : c(0x0D, 0x2B, 0x20) }
+    static var green800: Color { goldMode ? c(0x17, 0x20, 0x2A) : c(0x13, 0x3A, 0x2B) }
+    static var green700: Color { goldMode ? c(0x26, 0x32, 0x3F) : c(0x1B, 0x4D, 0x39) }
+    static var gold: Color { goldMode ? c(0xD9, 0xB4, 0x5A) : c(0xD4, 0xAF, 0x37) }
+    static var goldSoft: Color { goldMode ? c(0xF1, 0xDD, 0xA0) : c(0xE8, 0xCF, 0x7A) }
+    static var text: Color { goldMode ? c(0xF4, 0xEF, 0xE2) : c(0xF3, 0xEF, 0xE2) }
     static let textDim = Color(red: 0xB9 / 255, green: 0xC4 / 255, blue: 0xBD / 255)
     static let danger = Color(red: 0xC0 / 255, green: 0x39 / 255, blue: 0x2B / 255)
     static let online = Color(red: 0x7F / 255, green: 0xD4 / 255, blue: 0x8F / 255)
