@@ -63,6 +63,18 @@ fun AppRoot() {
     when {
         user != null && !verified && screen != Route.Splash -> VerifyEmailScreen(user?.email.orEmpty()) { verified = true }
         needsUsername -> ChooseUsernameScreen()
+        // المشترك: علامات التبويب ثابتة تحت، وكل تبويب يفتح فوقها (ما يفتح صفحة مستقلة)
+        profile?.isPro == true && screen in GOLD_TABS -> GoldTabs(screen, navigate) {
+            when (screen) {
+                Route.Menu -> GoldMenuScreen(profile, navigate, openTable)
+                Route.JoinTable -> JoinTableScreen(navigate, openTable)
+                Route.Friends -> FriendsScreen(hub, navigate, openTable)
+                Route.Settings -> SettingsScreen(onBack = { screen = Route.Menu }, embedded = false)
+                Route.Profile -> ProfileScreen(profile) { screen = Route.Menu }
+                Route.Pro -> ProScreen(profile, onBack = { screen = Route.Menu }, onGift = { screen = Route.Gift }, onLook = { screen = Route.Look })
+                else -> LookScreen { screen = Route.Menu }
+            }
+        }
         else -> when (screen) {
             Route.Splash -> SplashScreen {
                 if (user == null) { screen = Route.Auth; return@SplashScreen }

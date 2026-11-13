@@ -51,6 +51,19 @@ struct AppRoot: View {
             VerifyEmailScreen()
         } else if needsUsername {
             ChooseUsernameScreen()
+        } else if session.profile?.isPro == true, goldTabs.contains(route) {
+            // المشترك: علامات التبويب ثابتة تحت، وكل تبويب يفتح فوقها (ما يفتح صفحة مستقلة)
+            GoldTabs(current: route, navigate: { route = $0 }) {
+                switch route {
+                case .menu: GoldMenuScreen(profile: session.profile, openTable: open) { route = $0 }
+                case .joinTable: JoinTableScreen(navigate: { route = $0 }, openTable: open)
+                case .friends: FriendsScreen(hub: hub.state, navigate: { route = $0 }, openTable: open)
+                case .settings: SettingsScreen(embedded: false) { route = .menu }
+                case .profile: ProfileScreen(profile: session.profile) { route = .menu }
+                case .pro: ProScreen(profile: session.profile, onBack: { route = .menu }, onGift: { route = .gift }, onLook: { route = .look })
+                default: LookScreen { route = .menu }
+                }
+            }
         } else {
             switch route {
             case .splash: SplashScreen(done: afterSplash)

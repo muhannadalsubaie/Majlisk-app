@@ -5,6 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.navigationBars
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.selection.toggleable
+import androidx.compose.ui.semantics.isTraversalGroup
+import androidx.compose.ui.semantics.stateDescription
+import kotlinx.coroutines.launch
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +50,7 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -94,11 +103,11 @@ private fun GameCard(name: String, icon: String, featured: Boolean, modifier: Mo
 @Composable
 private fun NavItem(icon: String, label: String, active: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Column(
-        modifier.heightIn(min = 56.dp).clickable(role = Role.Button, onClick = onClick).semantics(mergeDescendants = true) { contentDescription = label },
+        modifier.heightIn(min = 56.dp).clickable(role = Role.Tab, onClick = onClick).semantics(mergeDescendants = true) { contentDescription = label; selected = active },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
         Text(icon, fontSize = 20.sp, modifier = Modifier.clearAndSetSemantics { })
-        Text(label, color = if (active) Pro.goldLight else Pro.dim, fontSize = 11.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clearAndSetSemantics { })
+        Text(label, color = if (active) Pro.goldLight else Pro.dim, fontSize = 10.sp, fontWeight = FontWeight.Bold, maxLines = 1, softWrap = false, modifier = Modifier.clearAndSetSemantics { })
     }
 }
 
@@ -121,7 +130,10 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                         .clickable(role = Role.Button) { navigate(Route.Profile) }.semantics(mergeDescendants = true) { contentDescription = "الملف الشخصي" },
                 ) { Avatar(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid, profile?.username.orEmpty(), 50.dp) }
                 Column(Modifier.weight(1f)) {
-                    Text(profile?.username.orEmpty(), color = Color(0xFFF4EFE2), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.semantics { heading() })
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Text(profile?.username.orEmpty(), color = Color(0xFFF4EFE2), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false).semantics { heading() })
+                        HideOnlineButton()
+                    }
                     Text("👑 عضو ذهبي", color = Pro.goldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
@@ -168,20 +180,6 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF141B22)).border(1.dp, Pro.goldLight.copy(alpha = 0.18f), RoundedCornerShape(16.dp)).padding(14.dp)) {
                 OnlineLine(openTable)
             }
-            Spacer(Modifier.height(4.dp))
-            // شريط التنقل
-            Row(
-                Modifier.fillMaxWidth().shadow(14.dp, RoundedCornerShape(24.dp))
-                    .background(Brush.verticalGradient(listOf(Color(0xFF232D38), Color(0xFF141B22))), RoundedCornerShape(24.dp))
-                    .padding(vertical = 6.dp),
-            ) {
-                NavItem("👥", "الأصدقاء", false, Modifier.weight(1f)) { navigate(Route.Friends) }
-                NavItem("🎴", "الطاولات", false, Modifier.weight(1f)) { navigate(Route.JoinTable) }
-                NavItem("🎨", "الشكل", false, Modifier.weight(1f)) { navigate(Route.Look) }
-                NavItem("👑", "الباقة", true, Modifier.weight(1f)) { navigate(Route.Pro) }
-                NavItem("👤", "حسابي", false, Modifier.weight(1f)) { navigate(Route.Profile) }
-                NavItem("⚙️", "الإعدادات", false, Modifier.weight(1f)) { navigate(Route.Settings) }
-            }
         }
     }
     if (getCoins) {
@@ -191,4 +189,59 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             SecondaryButton("إلغاء", { getCoins = false }, fill = true)
         }
     }
+}
+
+/** التبويبات اللي تبقى علاماتها ثابتة تحت عند المشترك */
+val GOLD_TABS = setOf(Route.Menu, Route.Friends, Route.JoinTable, Route.Look, Route.Pro, Route.Profile, Route.Settings)
+
+/** الواجهة الذهبية: الصفحة فوق، وعلامات التبويب ثابتة تحت في كل التبويبات */
+@Composable
+fun GoldTabs(current: Route, navigate: (Route) -> Unit, content: @Composable () -> Unit) {
+    Column(Modifier.fillMaxSize().background(Color(0xFF0B0F14))) {
+        Box(Modifier.weight(1f).consumeWindowInsets(WindowInsets.navigationBars)) { content() }
+        Row(
+            Modifier.fillMaxWidth()
+                .background(Brush.verticalGradient(listOf(Color(0xFF232D38), Color(0xFF141B22))), RoundedCornerShape(topStart = 22.dp, topEnd = 22.dp))
+                .navigationBarsPadding().padding(vertical = 4.dp)
+                .semantics { isTraversalGroup = true },
+        ) {
+            NavItem("🏠", "الرئيسية", current == Route.Menu, Modifier.weight(1f)) { navigate(Route.Menu) }
+            NavItem("👥", "الأصدقاء", current == Route.Friends, Modifier.weight(1f)) { navigate(Route.Friends) }
+            NavItem("🎴", "الطاولات", current == Route.JoinTable, Modifier.weight(1f)) { navigate(Route.JoinTable) }
+            NavItem("🎨", "الشكل", current == Route.Look, Modifier.weight(1f)) { navigate(Route.Look) }
+            NavItem("👑", "الباقة", current == Route.Pro, Modifier.weight(1f)) { navigate(Route.Pro) }
+            NavItem("👤", "حسابي", current == Route.Profile, Modifier.weight(1f)) { navigate(Route.Profile) }
+            NavItem("⚙️", "الإعدادات", current == Route.Settings, Modifier.weight(1f)) { navigate(Route.Settings) }
+        }
+    }
+}
+
+/** زر إخفاء الظهور جنب اسمك: 👁 ظاهر، 🙈 مخفي */
+@Composable
+private fun HideOnlineButton() {
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    var hidden by remember { mutableStateOf<Boolean?>(null) }
+    androidx.compose.runtime.LaunchedEffect(Unit) {
+        runCatching { hidden = com.majlisk.app.net.Api.post("/pro/settings").optBoolean("hideOnline") }
+    }
+    val on = hidden == true
+    Text(
+        if (on) "🙈 مخفي" else "👁 ظاهر",
+        color = if (on) Pro.ink else Pro.goldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1,
+        modifier = Modifier.clip(RoundedCornerShape(50))
+            .background(if (on) Pro.gold else Color(0xFF232D38))
+            .border(1.dp, Pro.gold.copy(alpha = 0.6f), RoundedCornerShape(50))
+            .toggleable(value = on, enabled = hidden != null, role = Role.Switch) { want ->
+                hidden = want
+                scope.launch {
+                    runCatching { hidden = com.majlisk.app.net.Api.post("/pro/settings", com.majlisk.app.net.jsonOf("hideOnline" to want)).optBoolean("hideOnline") }
+                    com.majlisk.app.a11y.Announcer.announce(if (hidden == true) "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" else "صرت تظهر متصل")
+                }
+            }
+            .heightIn(min = 36.dp).padding(horizontal = 10.dp, vertical = 8.dp)
+            .clearAndSetSemantics {
+                contentDescription = "إخفاء ظهوري أني متصل"
+                stateDescription = if (on) "مفعّل" else "متوقف"
+            },
+    )
 }

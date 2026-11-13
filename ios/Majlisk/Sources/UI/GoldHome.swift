@@ -61,12 +61,13 @@ private struct NavItem: View {
         Button(action: action) {
             VStack(spacing: 3) {
                 Text(icon).font(.system(size: 20))
-                Text(label).font(.system(size: 11, weight: .bold)).foregroundColor(active ? Pro.goldLight : Pro.dim)
+                Text(label).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8).foregroundColor(active ? Pro.goldLight : Pro.dim)
             }
             .frame(maxWidth: .infinity, minHeight: 56)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(label)
+        .accessibilityAddTraits(active ? [.isSelected] : [])
     }
 }
 
@@ -93,7 +94,10 @@ struct GoldMenuScreen: View {
                         }
                         .buttonStyle(.plain).accessibilityLabel("الملف الشخصي")
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(profile?.username ?? "").font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)
+                            HStack(spacing: 8) {
+                                Text(profile?.username ?? "").font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
+                                HideOnlineButton()
+                            }
                             Text("👑 عضو ذهبي").font(.system(size: 12, weight: .bold)).foregroundColor(Pro.goldLight)
                         }
                         Spacer()
@@ -147,19 +151,6 @@ struct GoldMenuScreen: View {
                         .frame(maxWidth: .infinity, alignment: .leading).padding(14)
                         .background(Color(red: 0.078, green: 0.106, blue: 0.133)).clipShape(RoundedRectangle(cornerRadius: 16))
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
-                    // شريط التنقل
-                    HStack(spacing: 0) {
-                        NavItem(icon: "👥", label: "الأصدقاء") { navigate(.friends) }
-                        NavItem(icon: "🎴", label: "الطاولات") { navigate(.joinTable) }
-                        NavItem(icon: "🎨", label: "الشكل") { navigate(.look) }
-                        NavItem(icon: "👑", label: "الباقة", active: true) { navigate(.pro) }
-                        NavItem(icon: "👤", label: "حسابي") { navigate(.profile) }
-                        NavItem(icon: "⚙️", label: "الإعدادات") { navigate(.settings) }
-                    }
-                    .padding(.vertical, 6)
-                    .background(LinearGradient(colors: [Color(red: 0.137, green: 0.176, blue: 0.22), Color(red: 0.078, green: 0.106, blue: 0.133)], startPoint: .top, endPoint: .bottom))
-                    .clipShape(RoundedRectangle(cornerRadius: 24))
-                    .shadow(color: .black.opacity(0.6), radius: 14, y: 8)
                 }
                 .padding(.horizontal, 18).padding(.vertical, 12)
             }
@@ -177,5 +168,67 @@ struct GoldMenuScreen: View {
                 MButton("إلغاء") { getCoins = false }
             }
         }
+    }
+}
+
+/// التبويبات اللي تبقى علاماتها ثابتة تحت عند المشترك
+let goldTabs: Set<Route> = [.menu, .friends, .joinTable, .look, .pro, .profile, .settings]
+
+/// الواجهة الذهبية: الصفحة فوق، وعلامات التبويب ثابتة تحت في كل التبويبات
+struct GoldTabs<Content: View>: View {
+    let current: Route
+    let navigate: (Route) -> Void
+    @ViewBuilder let content: () -> Content
+    var body: some View {
+        VStack(spacing: 0) {
+            content().frame(maxHeight: .infinity)
+            HStack(spacing: 0) {
+                NavItem(icon: "🏠", label: "الرئيسية", active: current == .menu) { navigate(.menu) }
+                NavItem(icon: "👥", label: "الأصدقاء", active: current == .friends) { navigate(.friends) }
+                NavItem(icon: "🎴", label: "الطاولات", active: current == .joinTable) { navigate(.joinTable) }
+                NavItem(icon: "🎨", label: "الشكل", active: current == .look) { navigate(.look) }
+                NavItem(icon: "👑", label: "الباقة", active: current == .pro) { navigate(.pro) }
+                NavItem(icon: "👤", label: "حسابي", active: current == .profile) { navigate(.profile) }
+                NavItem(icon: "⚙️", label: "الإعدادات", active: current == .settings) { navigate(.settings) }
+            }
+            .padding(.top, 4)
+            .background(
+                LinearGradient(colors: [Color(red: 0.137, green: 0.176, blue: 0.22), Color(red: 0.078, green: 0.106, blue: 0.133)], startPoint: .top, endPoint: .bottom)
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
+                    .ignoresSafeArea(edges: .bottom)
+            )
+            .environment(\.layoutDirection, .rightToLeft)
+            .accessibilityElement(children: .contain)
+        }
+        .background(Pro.deep.ignoresSafeArea())
+    }
+}
+
+/// زر إخفاء الظهور جنب اسمك: 👁 ظاهر، 🙈 مخفي
+private struct HideOnlineButton: View {
+    @State private var hidden: Bool?
+    var body: some View {
+        let on = hidden == true
+        Button {
+            let want = !on
+            hidden = want
+            Task { @MainActor in
+                if let r = try? await Api.post("/pro/settings", ["hideOnline": want]) { hidden = r.bool("hideOnline") }
+                Announcer.announce(hidden == true ? "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" : "صرت تظهر متصل")
+            }
+        } label: {
+            Text(on ? "🙈 مخفي" : "👁 ظاهر")
+                .font(.system(size: 12, weight: .bold)).lineLimit(1)
+                .foregroundColor(on ? Pro.ink : Pro.goldLight)
+                .padding(.horizontal, 10).frame(minHeight: 32)
+                .background(on ? Pro.gold : Color(red: 0.137, green: 0.176, blue: 0.22))
+                .clipShape(Capsule())
+                .overlay(Capsule().stroke(Pro.gold.opacity(0.6), lineWidth: 1))
+        }
+        .buttonStyle(.plain)
+        .disabled(hidden == nil)
+        .accessibilityLabel("إخفاء ظهوري أني متصل")
+        .accessibilityValue(on ? "مفعّل" : "متوقف")
+        .task { if let r = try? await Api.post("/pro/settings") { hidden = r.bool("hideOnline") } }
     }
 }
