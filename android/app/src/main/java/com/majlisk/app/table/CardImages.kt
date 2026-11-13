@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.absolutePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
@@ -65,7 +66,8 @@ fun CardFace(card: Card, modifier: Modifier = Modifier) {
                 Text(symbol(card.suit), color = ink, fontSize = (w * 0.46f).sp, lineHeight = (w * 0.48f).sp)
             }
         } else {
-            Column(Modifier.align(Alignment.TopStart).padding(start = (w * 0.1f).dp, top = (w * 0.08f).dp), horizontalAlignment = Alignment.CenterHorizontally) {
+            // الرقم والرمز في الزاوية اليسرى دائماً (حتى والتطبيق عربي): يبين والورق فوق بعض في يدك
+            Column(Modifier.align(androidx.compose.ui.AbsoluteAlignment.TopLeft).absolutePadding(left = (w * 0.1f).dp, top = (w * 0.08f).dp), horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(card.rank, color = ink, fontSize = (w * 0.26f).sp, fontWeight = FontWeight.ExtraBold, lineHeight = (w * 0.28f).sp)
                 Text(symbol(card.suit), color = ink, fontSize = (w * 0.22f).sp, lineHeight = (w * 0.24f).sp)
             }
