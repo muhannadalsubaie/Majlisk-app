@@ -1,0 +1,18 @@
+# رفع صور المراجعة (شاشة الشراء) لمنتجات App Store — ما يرفع أي نسخة
+name: App Store review screenshots
+on: workflow_dispatch
+jobs:
+  shots:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Screenshots
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          KEY=$RUNNER_TEMP/k.p8; printf '%s' "$KEY_P8" > $KEY
+          KEY=$KEY node .github/scripts/asc-review-shots.mjs | tee -a $GITHUB_STEP_SUMMARY; exit ${PIPESTATUS[0]}
+        shell: bash
