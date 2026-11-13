@@ -129,7 +129,7 @@ struct SeatsLobby: View {
                         SwitchRow(label: "إعلان المشاريع يدوي", isOn: manual, onChange: { manual = $0 })
                         SwitchRow(label: "القيد والقطع", isOn: qaid, onChange: { qaid = $0 })
                         Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
-                    } else {
+                    } else if session.profile?.proAccess == true {
                         Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
                     }
                 }

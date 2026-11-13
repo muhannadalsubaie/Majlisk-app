@@ -132,7 +132,8 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
                 com.majlisk.app.ui.SwitchRow("إعلان المشاريع يدوي", manual, { manual = it }, description = "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى")
                 com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it })
                 Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
-            } else Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
+            } else if (com.majlisk.app.data.Session.profile.collectAsState().value?.proAccess == true)
+                Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
         }
         PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit, "manualProjects" to (pro && manual), "qaid" to (pro && qaid)) }, enabled = seated in v.startCounts)
         SecondaryButton("إلغاء", { setup = false }, fill = true)
