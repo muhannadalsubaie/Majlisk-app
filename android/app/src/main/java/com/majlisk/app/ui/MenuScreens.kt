@@ -98,6 +98,8 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
     // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
     var variant by remember { mutableStateOf("classic") }
     var isPrivate by remember { mutableStateOf(false) }
+    var pinned by remember { mutableStateOf(false) }
+    var password by remember { mutableStateOf("") }
     var busy by remember { mutableStateOf(false) }
     var error by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
@@ -134,16 +136,25 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
         }
         val balance = if (profile?.unlimited == true) "لا محدود" else "${profile?.coins ?: "…"} عملة"
         SwitchRow("طاولة خاصة", isPrivate, { isPrivate = it })
+        // الطاولة الثابتة بكلمة مرور: للمشترك في الباقة الاحترافية (ما تتقفل لو فضيت)
+        if (profile?.isPro == true) {
+            SwitchRow("👑 طاولة ثابتة بكلمة مرور", pinned, { pinned = it }, description = "ما تتقفل لو فضيت، وتدخلها بكلمة مرور")
+            if (pinned) androidx.compose.material3.OutlinedTextField(
+                value = password, onValueChange = { password = it.take(20) }, label = { Text("كلمة المرور (4 أحرف أو أكثر)") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim),
+            )
+        }
         if (error.isNotEmpty()) Text(error, color = Palette.goldSoft, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive })
         PrimaryButton("إنشاء الطاولة (2 🪙)", {
             busy = true; error = ""
             scope.launch {
-                runCatching { Tables.create(isPrivate, picked!!, variant) }
+                runCatching { Tables.create(isPrivate, picked!!, variant, if (pinned && profile?.isPro == true) password.trim() else null) }
                     .onSuccess { Announcer.announce("تم إنشاء الطاولة"); openTable(it) }
                     .onFailure { error = Tables.error(it, "تعذّر إنشاء الطاولة، حاول مرة أخرى"); Announcer.announce(error) }
                 busy = false
             }
-        }, enabled = !busy)
+        }, enabled = !busy && (!pinned || password.trim().length >= 4))
     }
 }
 
@@ -155,6 +166,10 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     var busy by remember { mutableStateOf("") }
     // ضغطة مطولة على طاولة: قائمة الموجودين فيها
     var showing by remember { mutableStateOf<TableRow?>(null) }
+    // طاولة ثابتة بكلمة مرور: نطلب الكلمة قبل الدخول
+    var asking by remember { mutableStateOf<TableRow?>(null) }
+    var pass by remember { mutableStateOf("") }
+    var passError by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     DisposableEffect(Unit) {
         // ترتيب ثابت (الطاولة لا تتحرك من مكانها كل حركة لعب، والجديدة تظهر فوق)، ولا نحدّث القائمة إلا إذا تغيّر ما يُقرأ،
@@ -177,10 +192,11 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         }
         rows?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
-            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else ""}عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}"
+            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else if (r.locked) "ثابتة بكلمة مرور، " else ""}عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}"
             SecondaryButton(
-                "${if (r.isPrivate) "🔒 " else ""}طاولة ${r.ownerName} · $game · الموجودين ${r.people} · ${STATUS[r.status].orEmpty()}",
+                "${if (r.isPrivate) "🔒 " else if (r.locked) "👑🔑 " else ""}طاولة ${r.ownerName} · $game · الموجودين ${r.people} · ${STATUS[r.status].orEmpty()}",
                 {
+                    if (r.locked) { asking = r; pass = ""; passError = ""; return@SecondaryButton }
                     busy = r.id
                     scope.launch {
                         runCatching { Tables.join(r.id) }
@@ -196,6 +212,26 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                 longClickLabel = "عرض الموجودين",
             )
         } }
+    }
+    asking?.let { r ->
+        MajliskDialog("كلمة مرور طاولة ${r.ownerName}", { asking = null }) {
+            androidx.compose.material3.OutlinedTextField(
+                value = pass, onValueChange = { pass = it.take(20); passError = "" }, label = { Text("كلمة المرور") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim),
+            )
+            if (passError.isNotEmpty()) Text(passError, color = Palette.goldSoft)
+            PrimaryButton("دخول", {
+                busy = r.id
+                scope.launch {
+                    runCatching { Tables.join(r.id, pass.trim()) }
+                        .onSuccess { asking = null; openTable(r.id) }
+                        .onFailure { passError = Tables.error(it, "تعذّر الانضمام"); Announcer.announce(passError) }
+                    busy = ""
+                }
+            }, enabled = pass.isNotBlank() && busy.isEmpty())
+            SecondaryButton("إلغاء", { asking = null }, fill = true)
+        }
     }
     showing?.let { r ->
         androidx.compose.material3.AlertDialog(

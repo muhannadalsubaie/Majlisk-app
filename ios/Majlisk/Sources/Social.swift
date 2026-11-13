@@ -212,6 +212,8 @@ struct TableRow: Identifiable {
     var members: [(name: String, role: String)] = []
     /// نتيجة اللعب الجاري (فاضي إذا ما فيه لعب)
     var score: String = ""
+    /// طاولة ثابتة بكلمة مرور (الباقة الاحترافية)
+    var locked = false
 
     /// قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين
     var membersText: String {
@@ -240,13 +242,22 @@ enum Tables {
         "not-a-member": "لست عضواً في هذه الطاولة",
         "private": "هذه طاولة خاصة — تحتاج دعوة من مالكها",
         "not-owner": "هذا الإجراء لمالك الطاولة فقط",
+        "wrong-password": "كلمة المرور غير صحيحة",
+        "password-required": "هذه الطاولة بكلمة مرور",
+        "bad-password": "كلمة المرور من 4 إلى 20 حرف",
+        "pro-only": "هذي الميزة للمشتركين في الباقة الاحترافية",
     ]
     static func error(_ e: Error, _ fallback: String) -> String { errors[(e as? ApiError)?.code ?? ""] ?? fallback }
 
-    static func create(isPrivate: Bool, kind: String, variant: String) async throws -> String {
-        try await Api.post("/tables", ["isPrivate": isPrivate, "kind": kind, "variant": variant]).str("id")
+    /// password = طاولة ثابتة بكلمة مرور (الباقة الاحترافية)
+    static func create(isPrivate: Bool, kind: String, variant: String, password: String? = nil) async throws -> String {
+        var b: JSON = ["isPrivate": isPrivate, "kind": kind, "variant": variant]
+        if let password { b["password"] = password }
+        return try await Api.post("/tables", b).str("id")
     }
-    static func join(_ id: String) async throws { try await Api.post("/tables/\(id)/join") }
+    static func join(_ id: String, password: String? = nil) async throws {
+        if let password { try await Api.post("/tables/\(id)/join", ["password": password]) } else { try await Api.post("/tables/\(id)/join") }
+    }
     /// طلب انضمام لطاولة خاصة (يوصل للمالك تنبيه)، وحالته: pending / accepted / ignored
     /// الحالة وكم دقيقة باقية (للمعلّق والمرفوض)
     static func requestJoin(_ id: String) async throws -> (String, Int) { let r = try await Api.post("/tables/\(id)/join-request"); return (r.str("status"), r.int("minutes")) }
@@ -271,7 +282,8 @@ enum Tables {
                     members: ((x["members"] as? String).flatMap { $0.data(using: .utf8) }
                         .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] } ?? [])
                         .map { (name: $0["name"] as? String ?? "", role: $0["role"] as? String ?? "") },
-                    score: x["score"] as? String ?? ""
+                    score: x["score"] as? String ?? "",
+                    locked: x["locked"] as? Bool == true
                 )
             })
         }

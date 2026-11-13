@@ -141,6 +141,7 @@ struct ProScreen: View {
     let onGift: () -> Void
     @State private var price = Store.proPriceFallback
     @State private var busy = false
+    @State private var hidden = false
     var body: some View {
         Screen {
             TopBar("الباقة الاحترافية", onBack: onBack)
@@ -176,6 +177,16 @@ struct ProScreen: View {
                     Task { @MainActor in _ = await Store.buyPro(); busy = false }
                 }
             }
+            // إعدادات المشترك: إخفاء الظهور
+            if profile?.isPro == true {
+                SwitchRow(label: "إخفاء ظهوري أني متصل", isOn: hidden, onChange: { on in
+                    hidden = on
+                    Task { @MainActor in
+                        if let r = try? await Api.post("/pro/settings", ["hideOnline": on]) { hidden = r.bool("hideOnline") }
+                        Announcer.announce(hidden ? "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" : "صرت تظهر متصل")
+                    }
+                })
+            }
             MButton("🎁 إهداء الباقة للاعب ثاني", action: onGift)
             MButton("استعادة المشتريات") { Task { await Store.syncPro(announce: true) } }
             Note("الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من إعدادات اشتراكات Apple.")
@@ -185,7 +196,10 @@ struct ProScreen: View {
             }
             .font(.system(size: 13, weight: .bold)).foregroundColor(Pro.goldLight).frame(maxWidth: .infinity)
         }
-        .task { price = await Store.proPrice() }
+        .task {
+            price = await Store.proPrice()
+            if profile?.isPro == true, let r = try? await Api.post("/pro/settings") { hidden = r.bool("hideOnline") }
+        }
     }
 }
 

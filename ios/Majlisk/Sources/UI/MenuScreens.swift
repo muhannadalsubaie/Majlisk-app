@@ -64,6 +64,8 @@ struct CreateTableScreen: View {
     @State private var picked: String?
     @State private var variant = "classic"
     @State private var isPrivate = false
+    @State private var pinned = false
+    @State private var password = ""
     @State private var busy = false
     @State private var error = ""
 
@@ -83,12 +85,18 @@ struct CreateTableScreen: View {
                     }
                 }
                 SwitchRow(label: "طاولة خاصة", isOn: isPrivate, onChange: { isPrivate = $0 })
+                // الطاولة الثابتة بكلمة مرور: للمشترك في الباقة الاحترافية (ما تتقفل لو فضيت)
+                if profile?.isPro == true {
+                    SwitchRow(label: "👑 طاولة ثابتة بكلمة مرور", isOn: pinned, onChange: { pinned = $0 })
+                    if pinned { Field(label: "كلمة المرور (4 أحرف أو أكثر)", text: $password) }
+                }
                 if !error.isEmpty { Text(error).foregroundColor(Palette.goldSoft) }
-                MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy) {
+                MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy && (!pinned || password.trimmingCharacters(in: .whitespaces).count >= 4)) {
                     busy = true; error = ""
                     Task { @MainActor in
                         do {
-                            let id = try await Tables.create(isPrivate: isPrivate, kind: game, variant: variant)
+                            let pass = pinned && profile?.isPro == true ? String(password.trimmingCharacters(in: .whitespaces).prefix(20)) : nil
+                            let id = try await Tables.create(isPrivate: isPrivate, kind: game, variant: variant, password: pass)
                             Announcer.announce("تم إنشاء الطاولة")
                             openTable(id)
                         } catch {
@@ -128,6 +136,10 @@ struct JoinTableScreen: View {
     @State private var showing: TableRow?
     /// الضغطة المطولة ما تنحسب ضغطة انضمام بعد ما ترفع إصبعك
     @State private var longPressed: String?
+    /// طاولة ثابتة بكلمة مرور: نطلب الكلمة قبل الدخول
+    @State private var asking: TableRow?
+    @State private var pass = ""
+    @State private var passError = ""
 
     var body: some View {
         Screen {
@@ -136,10 +148,11 @@ struct JoinTableScreen: View {
             else if rows!.isEmpty { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
             ForEach(rows ?? []) { r in
                 let game = gameTitle(r.kind, r.variant)
-                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
-                MButton("\(r.isPrivate ? "🔒 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
+                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : r.locked ? "ثابتة بكلمة مرور، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
+                MButton("\(r.isPrivate ? "🔒 " : r.locked ? "👑🔑 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
                         enabled: !r.isPrivate && busy != r.id, label: spoken) {
                     if longPressed == r.id { longPressed = nil; return }
+                    if r.locked { pass = ""; passError = ""; asking = r; return }
                     busy = r.id
                     Task { @MainActor in
                         do { try await Tables.join(r.id); openTable(r.id) } catch { Announcer.announce(Tables.error(error, "تعذّر الانضمام")) }
@@ -151,6 +164,21 @@ struct JoinTableScreen: View {
             }
         }
         .onChange(of: showing?.id) { id in if id == nil { longPressed = nil } }
+        .sheet(item: $asking) { r in
+            Sheet(title: "كلمة مرور طاولة \(r.ownerName)") {
+                Field(label: "كلمة المرور", text: $pass)
+                if !passError.isEmpty { Text(passError).foregroundColor(Palette.goldSoft) }
+                MButton("دخول", .primary, enabled: !pass.trimmingCharacters(in: .whitespaces).isEmpty && busy.isEmpty) {
+                    busy = r.id
+                    Task { @MainActor in
+                        do { try await Tables.join(r.id, password: pass.trimmingCharacters(in: .whitespaces)); asking = nil; openTable(r.id) }
+                        catch { passError = Tables.error(error, "تعذّر الانضمام"); Announcer.announce(passError) }
+                        busy = ""
+                    }
+                }
+                MButton("إلغاء") { asking = nil }
+            }
+        }
         .alert(item: $showing) { r in
             Alert(title: Text("الموجودين في طاولة \(r.ownerName)"), message: Text(r.membersText), dismissButton: .default(Text("تم")))
         }

@@ -214,6 +214,18 @@ fun ProScreen(profile: Profile?, onBack: () -> Unit, onGift: () -> Unit) {
             busy = true
             scope.launch { Billing.buyPro(); busy = false }
         }, enabled = !busy, emerald = true)
+        // إعدادات المشترك: إخفاء الظهور
+        if (profile?.isPro == true) {
+            var hidden by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { runCatching { hidden = Api.post("/pro/settings").optBoolean("hideOnline") } }
+            SwitchRow("إخفاء ظهوري أني متصل", hidden, { on ->
+                hidden = on
+                scope.launch {
+                    runCatching { hidden = Api.post("/pro/settings", jsonOf("hideOnline" to on)).optBoolean("hideOnline") }
+                    Announcer.announce(if (hidden) "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" else "صرت تظهر متصل")
+                }
+            }, description = "ما تطلع في قائمة المتصلين، وأصدقاؤك يشوفونك غير متصل")
+        }
         SecondaryButton("🎁 إهداء الباقة للاعب ثاني", onGift, fill = true)
         SecondaryButton("استعادة المشتريات", { scope.launch { Billing.syncPro(announce = true) } }, fill = true)
         Note("الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من اشتراكات Google Play.")

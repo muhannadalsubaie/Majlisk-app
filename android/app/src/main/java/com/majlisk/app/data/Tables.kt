@@ -44,6 +44,8 @@ data class TableRow(
     val members: List<Pair<String, String>> = emptyList(),
     /** نتيجة اللعب الجاري (فاضي إذا ما فيه لعب) */
     val score: String = "",
+    /** طاولة ثابتة بكلمة مرور (الباقة الاحترافية) */
+    val locked: Boolean = false,
 ) {
     /** قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين */
     val membersText: String get() {
@@ -72,14 +74,19 @@ object Tables {
         "not-a-member" to "لست عضواً في هذه الطاولة",
         "private" to "هذه طاولة خاصة — تحتاج دعوة من مالكها",
         "not-owner" to "هذا الإجراء لمالك الطاولة فقط",
+        "wrong-password" to "كلمة المرور غير صحيحة",
+        "password-required" to "هذه الطاولة بكلمة مرور",
+        "bad-password" to "كلمة المرور من 4 إلى 20 حرف",
+        "pro-only" to "هذي الميزة للمشتركين في الباقة الاحترافية",
     )
 
     fun error(e: Throwable, fallback: String) = ERRORS[(e as? ApiError)?.code] ?: fallback
 
-    suspend fun create(isPrivate: Boolean, kind: String, variant: String): String =
-        Api.post("/tables", jsonOf("isPrivate" to isPrivate, "kind" to kind, "variant" to variant)).getString("id")
+    /** password = طاولة ثابتة بكلمة مرور (الباقة الاحترافية) */
+    suspend fun create(isPrivate: Boolean, kind: String, variant: String, password: String? = null): String =
+        Api.post("/tables", jsonOf("isPrivate" to isPrivate, "kind" to kind, "variant" to variant, "password" to password)).getString("id")
 
-    suspend fun join(id: String) { Api.post("/tables/$id/join") }
+    suspend fun join(id: String, password: String? = null) { Api.post("/tables/$id/join", jsonOf("password" to password)) }
     /** طلب انضمام لطاولة خاصة (يوصل للمالك تنبيه)، وحالته: pending / accepted / ignored */
     /** الحالة وكم دقيقة باقية (للمعلّق والمرفوض) */
     suspend fun requestJoin(id: String): Pair<String, Int> = Api.post("/tables/$id/join-request").let { it.optString("status") to it.optInt("minutes") }
@@ -108,6 +115,7 @@ object Tables {
                             (0 until a.length()).map { a.getJSONObject(it).let { o -> o.optString("name") to o.optString("role") } }
                         }.getOrDefault(emptyList()),
                         score = d.getString("score").orEmpty(),
+                        locked = d.getBoolean("locked") == true,
                     )
                 })
             }
