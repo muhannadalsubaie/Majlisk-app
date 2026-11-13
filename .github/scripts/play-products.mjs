@@ -6,7 +6,16 @@ const PACKS = [
   { sku: 'coins_70', sar: 9.99, title: '80 عملة', desc: '70 عملة + 10 هدية للعب في مجلسك' },
   { sku: 'coins_190', sar: 19.99, title: '230 عملة', desc: '190 عملة + 40 هدية للعب في مجلسك' },
   { sku: 'coins_550', sar: 44.99, title: '700 عملة', desc: '550 عملة + 150 هدية للعب في مجلسك' },
+  // هدية الباقة الاحترافية: شهر يدفعه لاعب عن لاعب ثاني (مرة وحدة، ما يتجدد)
+  { sku: 'pro_gift_1m', sar: 11.5, title: 'هدية الباقة الاحترافية', desc: 'شهر من الباقة الاحترافية تهديه للاعب ثاني في مجلسك' },
 ];
+// الاشتراك الشهري للباقة الاحترافية (يتجدد تلقائياً لين يلغيه اللاعب)
+const SUB = {
+  id: 'pro_monthly', basePlan: 'monthly', sar: 11.5,
+  title: 'الباقة الاحترافية',
+  benefits: ['اللعب بدون عملات', 'طاولات وأشكال مميزة', 'طاولة ثابتة بكلمة مرور', 'إهداء الباقة'],
+  desc: 'كل مزايا مجلسك في اشتراك شهري',
+};
 let sa = {};
 try { sa = fixKey(process.env.SA || '{}'); } catch (e) { console.log(`### ❌ ملف المفتاح غير صالح: ${e.message}`); process.exit(1); }
 const b64u = (x) => Buffer.from(x).toString('base64url');
@@ -72,5 +81,41 @@ for (const p of PACKS) {
   if (act.ok) console.log(`- ✅ ${p.sku}: جاهز ومفعّل (${p.sar} ر.س، ${regions.length} دولة)`);
   else { failed = true; console.log(`- ⚠️ ${p.sku}: انضاف لكن التفعيل فشل: ${act.status} ${JSON.stringify(act.body).slice(0, 600)}`); }
 }
+// ───── الاشتراك الشهري ─────
+{
+  const conv = await api('/pricing:convertRegionPrices', 'POST', { price: money('SAR', SUB.sar) });
+  const version = conv.body?.regionVersion?.version || '2022/02';
+  const other = conv.body?.convertedOtherRegionsPrice;
+  const all = Object.values(conv.body?.convertedRegionPrices ?? {}).map((r) => ({ regionCode: r.regionCode, newSubscriberAvailability: true, price: r.price }));
+  if (!all.some((r) => r.regionCode === 'SA')) all.push({ regionCode: 'SA', newSubscriberAvailability: true, price: money('SAR', SUB.sar) });
+  const sub = (regs, withOther) => ({
+    packageName: PKG, productId: SUB.id,
+    listings: [{ languageCode: lang, title: SUB.title, benefits: SUB.benefits, description: SUB.desc }],
+    basePlans: [{
+      basePlanId: SUB.basePlan,
+      autoRenewingBasePlanType: {
+        billingPeriodDuration: 'P1M', gracePeriodDuration: 'P3D', accountHoldDuration: 'P30D',
+        resubscribeState: 'RESUBSCRIBE_STATE_ACTIVE', legacyCompatible: true,
+        prorationMode: 'SUBSCRIPTION_PRORATION_MODE_CHARGE_ON_NEXT_BILLING_DATE',
+      },
+      regionalConfigs: regs,
+      ...(withOther && other?.usdPrice && other?.eurPrice ? { otherRegionsConfig: { usdPrice: other.usdPrice, eurPrice: other.eurPrice, newSubscriberAvailability: true } } : {}),
+    }],
+  });
+  const q = `allowMissing=true&updateMask=listings,basePlans&regionsVersion.version=${encodeURIComponent(version)}&latencyTolerance=${LT}`;
+  let r = await api(`/subscriptions/${SUB.id}?${q}`, 'PATCH', sub(all, true));
+  if (!r.ok) {
+    console.log(`  (الاشتراك بكل الدول: ${r.status} ${JSON.stringify(r.body).slice(0, 600)}) — نجرب السعودية بس`);
+    r = await api(`/subscriptions/${SUB.id}?${q}`, 'PATCH', sub([{ regionCode: 'SA', newSubscriberAvailability: true, price: money('SAR', SUB.sar) }], false));
+  }
+  if (!r.ok) { failed = true; console.log(`- ❌ ${SUB.id}: ${r.status} ${JSON.stringify(r.body).slice(0, 800)}`); }
+  else {
+    const state = (r.body?.basePlans ?? []).find((b) => b.basePlanId === SUB.basePlan)?.state;
+    let act = { ok: state === 'ACTIVE', status: 200, body: '' };
+    if (state !== 'ACTIVE') act = await api(`/subscriptions/${SUB.id}/basePlans/${SUB.basePlan}:activate`, 'POST', { packageName: PKG, productId: SUB.id, basePlanId: SUB.basePlan, latencyTolerance: LT });
+    if (act.ok) console.log(`- ✅ ${SUB.id}: اشتراك شهري جاهز ومفعّل (${SUB.sar} ر.س)`);
+    else { failed = true; console.log(`- ⚠️ ${SUB.id}: انضاف لكن التفعيل فشل: ${act.status} ${JSON.stringify(act.body).slice(0, 600)}`); }
+  }
+}
 if (failed) process.exit(1);
-console.log('### ✅ باقات العملات جاهزة في Google Play');
+console.log('### ✅ باقات العملات والباقة الاحترافية جاهزة في Google Play');
