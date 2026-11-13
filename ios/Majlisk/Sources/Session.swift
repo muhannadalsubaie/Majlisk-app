@@ -17,6 +17,8 @@ struct Profile: Equatable {
     /// الباقة الاحترافية: متى تنتهي (0 = مو مشترك). يكتبه الخادم بعد التحقق من المتجر أو الهدية
     var proUntil: Double = 0
     var isPro: Bool { proUntil > Date().timeIntervalSince1970 * 1000 }
+    /// الباقة الاحترافية ظاهرة لهالحساب (تجربة: مجرّبين محددين لين تنفتح للكل)
+    var proAccess = false
 }
 
 /// المستخدم الحالي ورصيده، ويتحدثان فور أي تغيير
@@ -58,7 +60,8 @@ final class Session: ObservableObject {
                 coins: (d["coins"] as? NSNumber)?.intValue,
                 loaded: snap.exists,
                 unlimited: d["unlimited"] as? Bool == true,
-                proUntil: (d["proUntil"] as? NSNumber)?.doubleValue ?? 0
+                proUntil: (d["proUntil"] as? NSNumber)?.doubleValue ?? 0,
+                proAccess: d["proAccess"] as? Bool == true
             )
             Look.pro = self?.profile?.isPro == true
         }

@@ -22,6 +22,8 @@ data class Profile(
     val unlimited: Boolean = false,
     /** الباقة الاحترافية: متى تنتهي (0 = مو مشترك). يكتبه الخادم بعد التحقق من المتجر أو الهدية */
     val proUntil: Long = 0,
+    /** الباقة الاحترافية ظاهرة لهالحساب (تجربة: مجرّبين محددين لين تنفتح للكل) */
+    val proAccess: Boolean = false,
 ) {
     val isPro: Boolean get() = proUntil > System.currentTimeMillis()
 }
@@ -93,6 +95,7 @@ object Session {
                     loaded = snap.exists(),
                     unlimited = snap.getBoolean("unlimited") == true,
                     proUntil = snap.getLong("proUntil") ?: 0L,
+                    proAccess = snap.getBoolean("proAccess") == true,
                 )
             }
         }

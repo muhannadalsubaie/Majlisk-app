@@ -35,7 +35,9 @@ struct MainMenuScreen: View {
             // شعار التطبيق في المنتصف، والقائمة في أسفل الشاشة
             HStack { Spacer(); Logo(size: 180); Spacer() }.frame(maxHeight: .infinity)
             // الباقة الاحترافية: زر ذهبي بارز (للمشترك: «باقتك الاحترافية»)
-            GoldButton(title: profile?.isPro == true ? "👑 باقتك الاحترافية" : "👑 الباقة الاحترافية") { navigate(.pro) }
+            if profile?.proAccess == true || profile?.isPro == true {
+                GoldButton(title: profile?.isPro == true ? "👑 باقتك الاحترافية" : "👑 الباقة الاحترافية") { navigate(.pro) }
+            }
             MButton("إنشاء طاولة", .primary) { navigate(.createTable) }
             MButton("انضمام إلى طاولة", .primary) { navigate(.joinTable) }
             MButton("الأصدقاء") { navigate(.friends) }

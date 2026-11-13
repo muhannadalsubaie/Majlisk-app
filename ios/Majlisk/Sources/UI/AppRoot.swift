@@ -80,7 +80,7 @@ struct AppRoot: View {
     private func open(_ id: String) { tableId = id; route = .table }
 
     private func maybeOffer() {
-        guard route == .menu, let p = session.profile, p.loaded, !p.isPro, !p.unlimited, pendingInvite == nil,
+        guard route == .menu, let p = session.profile, p.loaded, p.proAccess, !p.isPro, !p.unlimited, pendingInvite == nil,
               Date().timeIntervalSince1970 - Prefs.offerShownAt > 2 * 24 * 60 * 60 else { return }
         Prefs.offerShownAt = Date().timeIntervalSince1970
         offer = true

@@ -143,7 +143,7 @@ fun AppRoot() {
     var offer by remember { mutableStateOf(false) }
     LaunchedEffect(screen, profile?.loaded, profile?.isPro) {
         val p = profile ?: return@LaunchedEffect
-        if (screen == Route.Menu && p.loaded && !p.isPro && !p.unlimited && invite == null &&
+        if (screen == Route.Menu && p.loaded && p.proAccess && !p.isPro && !p.unlimited && invite == null &&
             System.currentTimeMillis() - com.majlisk.app.data.Prefs.offerShownAt > 2 * 24 * 60 * 60 * 1000L) {
             com.majlisk.app.data.Prefs.offerShownAt = System.currentTimeMillis()
             offer = true
