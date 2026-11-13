@@ -1,0 +1,18 @@
+# إضافة منتجات الشراء في App Store Connect: باقات العملات، هدية الباقة الاحترافية، والاشتراك الشهري — ما يرفع أي نسخة
+name: App Store products
+on: workflow_dispatch
+jobs:
+  products:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Products
+        env:
+          KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ISSUER: ${{ secrets.ASC_ISSUER_ID }}
+          KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+        run: |
+          KEY=$RUNNER_TEMP/k.p8; printf '%s' "$KEY_P8" > $KEY
+          KEY=$KEY node .github/scripts/asc-products.mjs | tee -a $GITHUB_STEP_SUMMARY; exit ${PIPESTATUS[0]}
+        shell: bash
