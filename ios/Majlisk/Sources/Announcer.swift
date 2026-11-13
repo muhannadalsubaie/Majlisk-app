@@ -76,6 +76,16 @@ enum Prefs {
         UserDefaults.standard.set(d, forKey: "deviceId")
         return d
     }
+    /// نافذة عرض الباقة الاحترافية: آخر مرة طلعت (ما ترجع قبل يومين)
+    static var offerShownAt: Double {
+        get { UserDefaults.standard.double(forKey: "offerShownAt") }
+        set { UserDefaults.standard.set(newValue, forKey: "offerShownAt") }
+    }
+    /// هدية دُفعت وما تأكد تسليمها: اسم المستلم (يُكمل تسليمها عند الفتح التالي)
+    static var pendingGiftTo: String? {
+        get { UserDefaults.standard.string(forKey: "pendingGiftTo") }
+        set { UserDefaults.standard.set(newValue, forKey: "pendingGiftTo") }
+    }
     /// الحساب اللي سجّل هالجوال نفسه جواله عند الخادم (عشان ما نعيدها كل ما فتحت التطبيق)
     static var claimedUid: String? {
         get { UserDefaults.standard.string(forKey: "claimedUid") }

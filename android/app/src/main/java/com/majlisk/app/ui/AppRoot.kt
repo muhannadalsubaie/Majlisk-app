@@ -21,7 +21,7 @@ import com.majlisk.app.data.Social
 import com.majlisk.app.table.TableScreen
 import kotlinx.coroutines.launch
 
-enum class Route { Splash, Auth, Menu, CreateTable, JoinTable, Table, Friends, Settings, Shop, Profile }
+enum class Route { Splash, Auth, Menu, CreateTable, JoinTable, Table, Friends, Settings, Shop, Profile, Pro, Gift }
 
 @Composable
 fun AppRoot() {
@@ -81,6 +81,8 @@ fun AppRoot() {
             Route.Settings -> SettingsScreen(onBack = { screen = Route.Menu }, embedded = false)
             Route.Shop -> ShopScreen(profile, navigate)
             Route.Profile -> ProfileScreen(profile) { screen = Route.Menu }
+            Route.Pro -> ProScreen(profile, onBack = { screen = Route.Menu }, onGift = { screen = Route.Gift })
+            Route.Gift -> GiftScreen { screen = Route.Pro }
             Route.Table -> tableId?.let { id -> TableScreen(id, user?.uid.orEmpty()) { Prefs.lastTable = null; screen = Route.Menu } } ?: run { screen = Route.Menu }
         }
     }
@@ -133,6 +135,18 @@ fun AppRoot() {
             SecondaryButton("رفض", { answer(false) }, enabled = !busy, fill = true)
         }
     }
+
+    // نافذة عرض الباقة الاحترافية: أول ما يفتح التطبيق على القائمة، لغير المشتركين، ومرة كل يومين بالكثير
+    var offer by remember { mutableStateOf(false) }
+    LaunchedEffect(screen, profile?.loaded, profile?.isPro) {
+        val p = profile ?: return@LaunchedEffect
+        if (screen == Route.Menu && p.loaded && !p.isPro && !p.unlimited && invite == null &&
+            System.currentTimeMillis() - com.majlisk.app.data.Prefs.offerShownAt > 2 * 24 * 60 * 60 * 1000L) {
+            com.majlisk.app.data.Prefs.offerShownAt = System.currentTimeMillis()
+            offer = true
+        }
+    }
+    if (offer) ProOfferDialog(onSubscribe = { offer = false; screen = Route.Pro }, onDismiss = { offer = false })
 
     if (confirmExit) {
         ConfirmDialog(

@@ -116,6 +116,109 @@ object Billing {
         }
     }
 
+    // ───── الباقة الاحترافية ─────
+    const val PRO_SUB = "pro_monthly"
+    const val PRO_GIFT = "pro_gift_1m"
+    const val PRO_PRICE = "11.49 ر.س"
+
+    private suspend fun product(id: String, type: String): ProductDetails? {
+        if (!ready()) return null
+        val params = QueryProductDetailsParams.newBuilder().setProductList(listOf(
+            QueryProductDetailsParams.Product.newBuilder().setProductId(id).setProductType(type).build(),
+        )).build()
+        return suspendCancellableCoroutine { cont ->
+            client.queryProductDetailsAsync(params) { _, result -> if (cont.isActive) cont.resume(result.productDetailsList.orEmpty().firstOrNull()) }
+        }
+    }
+
+    /** سعر الاشتراك الشهري من المتجر (بعملة المستخدم) */
+    suspend fun proPrice(): String = runCatching {
+        product(PRO_SUB, BillingClient.ProductType.SUBS)?.subscriptionOfferDetails?.firstOrNull()
+            ?.pricingPhases?.pricingPhaseList?.lastOrNull()?.formattedPrice
+    }.getOrNull() ?: PRO_PRICE
+
+    /** يفتح نافذة الدفع من Google، ويرجع المشتريات (أو null لو ما كمل) */
+    private suspend fun launch(product: ProductDetails, offerToken: String?): Purchase? {
+        val activity = MainActivity.current ?: return null
+        val token = Api.post("/purchases/account-token").optString("token")
+        val wait = CompletableDeferred<Pair<BillingResult, List<Purchase>?>>()
+        pendingBuy = wait
+        try {
+            val pp = BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(product)
+            if (offerToken != null) pp.setOfferToken(offerToken)
+            client.launchBillingFlow(activity, BillingFlowParams.newBuilder().setProductDetailsParamsList(listOf(pp.build())).setObfuscatedAccountId(token).build())
+            val (result, purchases) = wait.await()
+            return when (result.responseCode) {
+                BillingClient.BillingResponseCode.OK -> purchases?.firstOrNull { it.products.contains(product.productId) }
+                BillingClient.BillingResponseCode.USER_CANCELED -> { Announcer.announce("أُلغي الشراء"); null }
+                BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> { Announcer.announce("أنت مشترك أصلاً"); syncPro(); null }
+                else -> { Announcer.announce("تعذّر إتمام الشراء الآن"); null }
+            }
+        } finally { pendingBuy = null }
+    }
+
+    /** الاشتراك الشهري في الباقة الاحترافية. يرجع true لو تفعّل */
+    suspend fun buyPro(): Boolean = try {
+        val product = product(PRO_SUB, BillingClient.ProductType.SUBS)
+        val offer = product?.subscriptionOfferDetails?.firstOrNull()?.offerToken
+        if (product == null || offer == null) { Announcer.announce("الاشتراك غير متاح الآن، حاول لاحقاً"); false }
+        else {
+            val p = launch(product, offer)
+            when {
+                p == null -> false
+                p.purchaseState == Purchase.PurchaseState.PENDING -> { Announcer.announce("الدفع قيد المعالجة، وتتفعل الباقة عند اكتماله"); false }
+                else -> {
+                    Announcer.announce("جارٍ تفعيل الباقة…")
+                    val ok = Api.post("/pro/verify", jsonOf("platform" to "android", "purchaseToken" to p.purchaseToken)).optBoolean("pro")
+                    Announcer.announce(if (ok) "تم! تفعّلت الباقة الاحترافية" else "تعذّر تفعيل الباقة الآن، تتفعل تلقائياً عند الفتح التالي")
+                    ok
+                }
+            }
+        }
+    } catch (e: Exception) {
+        Announcer.announce("تعذّر الاشتراك الآن، لو انخصم منك تتفعل الباقة تلقائياً عند الفتح التالي"); false
+    }
+
+    /** إهداء شهر من الباقة لاعب ثاني (اسم المستخدم متأكد منه قبل). يرجع true لو وصلت الهدية */
+    suspend fun buyGift(username: String): Boolean = try {
+        val product = product(PRO_GIFT, BillingClient.ProductType.INAPP)
+        if (product == null) { Announcer.announce("الإهداء غير متاح الآن، حاول لاحقاً"); false }
+        else {
+            Prefs.pendingGiftTo = username
+            val p = launch(product, null)
+            when {
+                p == null -> { Prefs.pendingGiftTo = null; false }
+                p.purchaseState == Purchase.PurchaseState.PENDING -> { Announcer.announce("الدفع قيد المعالجة، وتوصل الهدية عند اكتماله"); false }
+                else -> deliverGift(p, username).also { if (it) Announcer.announce("تم! وصلت الهدية إلى $username") }
+            }
+        }
+    } catch (e: Exception) {
+        Announcer.announce("تعذّر الإهداء الآن، لو انخصم منك توصل الهدية تلقائياً عند الفتح التالي"); false
+    }
+
+    private suspend fun deliverGift(p: Purchase, username: String): Boolean {
+        val r = Api.post("/gift/verify", jsonOf("platform" to "android", "purchaseToken" to p.purchaseToken, "username" to username))
+        val ok = r.optBoolean("ok")
+        if (ok) Prefs.pendingGiftTo = null
+        return ok
+    }
+
+    /** يحدّث حالة الاشتراك من Google (التجديد التلقائي والإلغاء) — عند الفتح ومن «استعادة المشتريات» */
+    suspend fun syncPro(announce: Boolean = false): Boolean {
+        val ok = runCatching {
+            if (!ready()) return@runCatching false
+            val subs = client.queryPurchasesAsync(QueryPurchasesParams.newBuilder().setProductType(BillingClient.ProductType.SUBS).build()).purchasesList
+            var pro = false
+            for (p in subs) {
+                if (PRO_SUB !in p.products || p.purchaseState != Purchase.PurchaseState.PURCHASED) continue
+                pro = Api.post("/pro/verify", jsonOf("platform" to "android", "purchaseToken" to p.purchaseToken)).optBoolean("pro") || pro
+            }
+            pro
+        }.getOrDefault(false)
+        if (announce) Announcer.announce(if (ok) "تمت استعادة الاشتراك" else "ما لقينا اشتراك على هذا الحساب في المتجر")
+        return ok
+    }
+
     /** استكمال أي شراء دُفع ولم تُسلَّم عملاته بعد (يُستدعى بعد الدخول) */
     fun recover() {
         Session.scope.launch {
@@ -128,6 +231,13 @@ object Billing {
                     total += runCatching { deliver(p) }.getOrDefault(0)
                 }
                 if (total > 0) Announcer.announce("أُضيفت $total عملة من شراء سابق إلى رصيدك")
+                // هدية دُفعت وما وصلت (انقطع النت مثلاً): نكملها لنفس اللاعب
+                Prefs.pendingGiftTo?.let { to ->
+                    purchases.firstOrNull { PRO_GIFT in it.products && it.purchaseState == Purchase.PurchaseState.PURCHASED }?.let { p ->
+                        if (runCatching { deliverGift(p, to) }.getOrDefault(false)) Announcer.announce("وصلت هديتك إلى $to")
+                    }
+                }
+                syncPro()
             }
         }
     }

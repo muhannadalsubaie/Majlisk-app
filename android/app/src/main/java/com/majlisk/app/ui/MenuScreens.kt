@@ -73,6 +73,8 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
         }
         // شعار التطبيق في المنتصف، والقائمة في أسفل الشاشة
         Box(Modifier.fillMaxWidth().weight(1f), contentAlignment = Alignment.Center) { Logo(180) }
+        // الباقة الاحترافية: زر ذهبي بارز (للمشترك: «باقتك الاحترافية»)
+        GoldButton(if (profile?.isPro == true) "👑 باقتك الاحترافية" else "👑 الباقة الاحترافية", { navigate(Route.Pro) })
         PrimaryButton("إنشاء طاولة", { navigate(Route.CreateTable) })
         PrimaryButton("انضمام إلى طاولة", { navigate(Route.JoinTable) })
         SecondaryButton("الأصدقاء", { navigate(Route.Friends) }, fill = true)

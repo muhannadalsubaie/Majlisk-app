@@ -20,7 +20,11 @@ data class Profile(
     val coins: Long? = null,
     val loaded: Boolean = false,
     val unlimited: Boolean = false,
-)
+    /** الباقة الاحترافية: متى تنتهي (0 = مو مشترك). يكتبه الخادم بعد التحقق من المتجر أو الهدية */
+    val proUntil: Long = 0,
+) {
+    val isPro: Boolean get() = proUntil > System.currentTimeMillis()
+}
 
 /** المستخدم الحالي ورصيده، ويتحدثان فور أي تغيير */
 object Session {
@@ -88,6 +92,7 @@ object Session {
                     coins = snap.getLong("coins") ?: snap.getDouble("coins")?.toLong(),
                     loaded = snap.exists(),
                     unlimited = snap.getBoolean("unlimited") == true,
+                    proUntil = snap.getLong("proUntil") ?: 0L,
                 )
             }
         }

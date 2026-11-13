@@ -58,21 +58,119 @@ enum Store {
         }
     }
 
-    /// استكمال أي شراء دُفع ولم تُسلَّم عملاته بعد (يُستدعى بعد الدخول)، ومتابعة ما يكتمل لاحقاً
+    // ───── الباقة الاحترافية ─────
+    static let proSub = "pro_monthly"
+    static let proGift = "pro_gift_1m"
+    static let proPriceFallback = "11.49 ر.س"
+
+    /// سعر الاشتراك الشهري من المتجر (بعملة المستخدم)
+    static func proPrice() async -> String {
+        (try? await Product.products(for: [proSub]).first?.displayPrice) ?? proPriceFallback
+    }
+
+    private static func purchaseOptions() async throws -> Set<Product.PurchaseOption> {
+        let token = try await Api.post("/purchases/account-token").str("token")
+        var options: Set<Product.PurchaseOption> = []
+        if let uuid = UUID(uuidString: token) { options.insert(.appAccountToken(uuid)) }
+        return options
+    }
+
+    /// يسلّم الاشتراك للخادم (يحفظ تاريخ نهايته) ثم ينهيه في المتجر
+    @discardableResult
+    private static func deliverSub(_ t: Transaction) async throws -> Bool {
+        let r = try await Api.post("/pro/verify", ["platform": "ios", "transactionId": String(t.id)])
+        await t.finish()
+        return r.bool("pro")
+    }
+
+    private static func deliverGift(_ t: Transaction, to username: String) async throws -> Bool {
+        let r = try await Api.post("/gift/verify", ["platform": "ios", "transactionId": String(t.id), "username": username])
+        let ok = r.bool("ok")
+        if ok { await t.finish(); Prefs.pendingGiftTo = nil }
+        return ok
+    }
+
+    /// الاشتراك الشهري في الباقة الاحترافية. يرجع true لو تفعّل
+    static func buyPro() async -> Bool {
+        do {
+            guard let product = try await Product.products(for: [proSub]).first else { Announcer.announce("الاشتراك غير متاح الآن، حاول لاحقاً"); return false }
+            switch try await product.purchase(options: try await purchaseOptions()) {
+            case .success(let v):
+                guard case .verified(let t) = v else { Announcer.announce("تعذّر التحقق من الشراء"); return false }
+                Announcer.announce("جارٍ تفعيل الباقة…")
+                let ok = try await deliverSub(t)
+                Announcer.announce(ok ? "تم! تفعّلت الباقة الاحترافية" : "تعذّر تفعيل الباقة الآن، تتفعل تلقائياً عند الفتح التالي")
+                return ok
+            case .userCancelled: Announcer.announce("أُلغي الشراء"); return false
+            case .pending: Announcer.announce("الدفع قيد المعالجة، وتتفعل الباقة عند اكتماله"); return false
+            @unknown default: return false
+            }
+        } catch {
+            Announcer.announce("تعذّر الاشتراك الآن، لو انخصم منك تتفعل الباقة تلقائياً عند الفتح التالي")
+            return false
+        }
+    }
+
+    /// إهداء شهر من الباقة لاعب ثاني (اسم المستخدم متأكد منه قبل). يرجع true لو وصلت الهدية
+    static func buyGift(to username: String) async -> Bool {
+        do {
+            guard let product = try await Product.products(for: [proGift]).first else { Announcer.announce("الإهداء غير متاح الآن، حاول لاحقاً"); return false }
+            Prefs.pendingGiftTo = username
+            switch try await product.purchase(options: try await purchaseOptions()) {
+            case .success(let v):
+                guard case .verified(let t) = v else { Announcer.announce("تعذّر التحقق من الشراء"); return false }
+                let ok = try await deliverGift(t, to: username)
+                if ok { Announcer.announce("تم! وصلت الهدية إلى \(username)") }
+                return ok
+            case .userCancelled: Prefs.pendingGiftTo = nil; Announcer.announce("أُلغي الشراء"); return false
+            case .pending: Announcer.announce("الدفع قيد المعالجة، وتوصل الهدية عند اكتماله"); return false
+            @unknown default: return false
+            }
+        } catch {
+            Announcer.announce("تعذّر الإهداء الآن، لو انخصم منك توصل الهدية تلقائياً عند الفتح التالي")
+            return false
+        }
+    }
+
+    /// يحدّث حالة الاشتراك (التجديد التلقائي والإلغاء) — عند الفتح ومن «استعادة المشتريات»
+    @discardableResult
+    static func syncPro(announce: Bool = false) async -> Bool {
+        if announce { try? await AppStore.sync() }
+        var pro = false
+        for await v in Transaction.currentEntitlements {
+            if case .verified(let t) = v, t.productID == proSub {
+                pro = ((try? await deliverSub(t)) ?? false) || pro
+            }
+        }
+        if announce { Announcer.announce(pro ? "تمت استعادة الاشتراك" : "ما لقينا اشتراك على هذا الحساب في المتجر") }
+        return pro
+    }
+
+    /// يسلّم أي شراء: عملات، أو هدية (للاعب المحفوظ اسمه)، أو تجديد اشتراك
+    private static func handle(_ t: Transaction) async -> Int {
+        if packs.contains(where: { $0.id == t.productID }) { return (try? await deliver(t)) ?? 0 }
+        if t.productID == proSub { _ = try? await deliverSub(t); return 0 }
+        if t.productID == proGift, let to = Prefs.pendingGiftTo, (try? await deliverGift(t, to: to)) == true {
+            Announcer.announce("وصلت هديتك إلى \(to)")
+        }
+        return 0
+    }
+
+    /// استكمال أي شراء دُفع ولم يُسلَّم بعد (يُستدعى بعد الدخول)، ومتابعة ما يكتمل لاحقاً (ومنها تجديد الاشتراك)
     static func recover() {
         Task {
             var total = 0
             for await v in Transaction.unfinished {
-                if case .verified(let t) = v, packs.contains(where: { $0.id == t.productID }) {
-                    total += (try? await deliver(t)) ?? 0
-                }
+                if case .verified(let t) = v { total += await handle(t) }
             }
             if total > 0 { Announcer.announce("أُضيفت \(total) عملة من شراء سابق إلى رصيدك") }
+            await syncPro()
         }
         Task {
             for await v in Transaction.updates {
-                if case .verified(let t) = v, packs.contains(where: { $0.id == t.productID }), let n = try? await deliver(t), n > 0 {
-                    Announcer.announce("أُضيفت \(n) عملة إلى رصيدك")
+                if case .verified(let t) = v {
+                    let n = await handle(t)
+                    if n > 0 { Announcer.announce("أُضيفت \(n) عملة إلى رصيدك") }
                 }
             }
         }

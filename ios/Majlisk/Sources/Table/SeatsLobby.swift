@@ -27,6 +27,11 @@ struct SeatsLobby: View {
     @State private var turnLimit = 0
     /// نافذة إعدادات المباراة (تفتح من «بدء المباراة»)
     @State private var setup = false
+    /// خيارات الباقة الاحترافية (البلوت، والمالك مشترك): تنضبط قبل البداية بس
+    @ObservedObject private var session = Session.shared
+    @State private var manual = false
+    @State private var qaid = false
+    private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
 
     /// كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
@@ -119,7 +124,16 @@ struct SeatsLobby: View {
                 }
                 .accessibilityLabel("وقت كل دور، \(turnLimitLabel(turnLimit))")
                 Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit]) }
+                if v.kind == "baloot" {
+                    if pro {
+                        SwitchRow(label: "إعلان المشاريع يدوي", isOn: manual, onChange: { manual = $0 })
+                        SwitchRow(label: "القيد والقطع", isOn: qaid, onChange: { qaid = $0 })
+                        Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
+                    } else {
+                        Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
+                    }
+                }
+                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid]) }
                 MButton("إلغاء") { setup = false }
             }
         }

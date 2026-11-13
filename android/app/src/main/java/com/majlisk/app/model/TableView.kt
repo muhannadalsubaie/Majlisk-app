@@ -44,6 +44,8 @@ data class GameActions(
     /** «ورق»: الزر يطلع، وwaraqDecision = دورك تختار بس أو ورق (بعد الشراء) */
     val canWaraq: Boolean = false,
     val waraqDecision: Boolean = false,
+    /** إعلان المشروع (يدوي): دورك في اللفة الأولى ومعك مشروع ما أعلنته */
+    val canProject: Boolean = false,
 )
 
 data class GameView(
@@ -130,6 +132,9 @@ data class TableView(
     val optTarget: Int = 100,
     /** اسم مالك الطاولة */
     val ownerName: String = "",
+    /** خيارات مباراة البلوت (الباقة الاحترافية): إعلان المشاريع يدوي، والقيد والقطع */
+    val manualProjects: Boolean = false,
+    val qaid: Boolean = false,
 ) {
     val hasGame: Boolean get() = game != null || otherGame
     val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
@@ -164,6 +169,8 @@ data class TableView(
             optComplex = o.optJSONObject("options")?.optBoolean("complex") == true,
             optTarget = o.optJSONObject("options")?.optInt("target", 100) ?: 100,
             ownerName = o.optString("ownerName"),
+            manualProjects = o.optBoolean("manualProjects"),
+            qaid = o.optBoolean("qaid"),
             ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
         )
 
@@ -212,6 +219,7 @@ data class TableView(
                     canSawa = a.optBoolean("canSawa"),
                     canWaraq = a.optBoolean("canWaraq"),
                     waraqDecision = a.optBoolean("waraqDecision"),
+                    canProject = a.optBoolean("canProject"),
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),

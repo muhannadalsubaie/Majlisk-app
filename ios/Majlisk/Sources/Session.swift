@@ -14,6 +14,9 @@ struct Profile: Equatable {
     var coins: Int? = nil
     var loaded = false
     var unlimited = false
+    /// الباقة الاحترافية: متى تنتهي (0 = مو مشترك). يكتبه الخادم بعد التحقق من المتجر أو الهدية
+    var proUntil: Double = 0
+    var isPro: Bool { proUntil > Date().timeIntervalSince1970 * 1000 }
 }
 
 /// المستخدم الحالي ورصيده، ويتحدثان فور أي تغيير
@@ -54,7 +57,8 @@ final class Session: ObservableObject {
                 username: d["username"] as? String ?? "",
                 coins: (d["coins"] as? NSNumber)?.intValue,
                 loaded: snap.exists,
-                unlimited: d["unlimited"] as? Bool == true
+                unlimited: d["unlimited"] as? Bool == true,
+                proUntil: (d["proUntil"] as? NSNumber)?.doubleValue ?? 0
             )
         }
     }

@@ -41,6 +41,14 @@ object Prefs {
         get() = sp.getBoolean("manualSignOut", false)
         set(v) { sp.edit().putBoolean("manualSignOut", v).apply() }
     /** آخر دخول كان بحساب Google: لو ضاع الدخول بدون «تسجيل الخروج» نرجّعه تلقائياً بنفس الحساب */
+    /** نافذة عرض الباقة الاحترافية: آخر مرة طلعت (ما ترجع قبل يومين) */
+    var offerShownAt: Long
+        get() = sp.getLong("offerShownAt", 0)
+        set(v) { sp.edit().putLong("offerShownAt", v).apply() }
+    /** هدية دُفعت وما تأكد تسليمها: اسم المستلم (يُكمل تسليمها عند الفتح التالي) */
+    var pendingGiftTo: String?
+        get() = sp.getString("pendingGiftTo", null)
+        set(v) { sp.edit().putString("pendingGiftTo", v).apply() }
     var googleAuto: Boolean
         get() = sp.getBoolean("googleAuto", false)
         set(v) { sp.edit().putBoolean("googleAuto", v).apply() }

@@ -1,7 +1,7 @@
 import SwiftUI
 import FirebaseAuth
 
-enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop, profile }
+enum Route { case splash, auth, menu, createTable, joinTable, table, friends, settings, shop, profile, pro, gift }
 
 struct AppRoot: View {
     @StateObject private var session = Session.shared
@@ -10,6 +10,8 @@ struct AppRoot: View {
     @State private var route: Route = .splash
     @State private var tableId: String?
     @State private var busyInvite = false
+    /// نافذة عرض الباقة الاحترافية
+    @State private var offer = false
 
     private var signedIn: Bool { session.uid != nil && !(session.profile?.username ?? "").isEmpty }
     /// أي حساب مسجّل بلا اسم مستخدم يجب أن يختار اسماً قبل أي شاشة أخرى
@@ -23,6 +25,14 @@ struct AppRoot: View {
             .onAppear { if signedIn { hub.start(); Store.recover(); Push.shared.register() } }
             // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
             .onChange(of: push.pendingTable) { _ in openPushTable() }
+            // نافذة عرض الباقة: أول ما يفتح التطبيق على القائمة، لغير المشتركين، ومرة كل يومين بالكثير
+            .onChange(of: route) { _ in maybeOffer() }
+            .onChange(of: session.profile?.loaded) { _ in maybeOffer() }
+            .overlay {
+                if offer {
+                    ProOfferView(onSubscribe: { offer = false; route = .pro }, onDismiss: { offer = false })
+                }
+            }
             .onChange(of: push.switchTable) { id in if let id { push.switchTable = nil; open(id) } }
             .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && !session.needsVerify && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
                 if let invite = pendingInvite {
@@ -51,6 +61,8 @@ struct AppRoot: View {
             case .settings: SettingsScreen(embedded: false) { route = .menu }
             case .shop: ShopScreen(profile: session.profile) { route = $0 }
             case .profile: ProfileScreen(profile: session.profile) { route = .menu }
+            case .pro: ProScreen(profile: session.profile, onBack: { route = .menu }, onGift: { route = .gift })
+            case .gift: GiftScreen { route = .pro }
             case .table:
                 if let tableId { TableScreen(tableId: tableId, uid: session.uid ?? "") { Prefs.lastTable = nil; route = .menu }.id(tableId) }
                 else { Color.clear.onAppear { route = .menu } }
@@ -59,6 +71,13 @@ struct AppRoot: View {
     }
 
     private func open(_ id: String) { tableId = id; route = .table }
+
+    private func maybeOffer() {
+        guard route == .menu, let p = session.profile, p.loaded, !p.isPro, !p.unlimited, pendingInvite == nil,
+              Date().timeIntervalSince1970 - Prefs.offerShownAt > 2 * 24 * 60 * 60 else { return }
+        Prefs.offerShownAt = Date().timeIntervalSince1970
+        offer = true
+    }
 
     /// بعد البداية: لو أُغلق التطبيق وأنت في طاولة قبل أقل من دقيقة نرجعك لها
     private func afterSplash() {

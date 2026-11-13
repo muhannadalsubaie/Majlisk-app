@@ -21,6 +21,7 @@ struct TableScreen: View {
     @State private var chatOpen = false
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var historyOpen = false
+    @State private var timerOpen = false
     @State private var dominoLogOpen = false
     @State private var confirmLeave = false
 
@@ -98,6 +99,8 @@ struct TableScreen: View {
                         Button("مغادرة الطاولة") { confirmLeave = true }
                     }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
+                // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
+                if v.ownerUid == uid && v.playing && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                 Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim)
@@ -140,6 +143,16 @@ struct TableScreen: View {
         }
         .sheet(isPresented: $chatOpen, onDismiss: { conn.chatOpen = false }) { ChatSheet(conn: conn) { chatOpen = false } }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
+        .sheet(isPresented: $timerOpen) {
+            Sheet(title: "إعدادات المباراة") {
+                Note("تقدر تغيّر وقت الدور أو توقفه والمباراة شغالة.")
+                ForEach(TURN_LIMITS, id: \.self) { s in
+                    if v.clockLimit == s { MButton("✓ \(turnLimitLabel(s))", .primary, label: "\(turnLimitLabel(s))، الحالي") { timerOpen = false } }
+                    else { MButton(turnLimitLabel(s)) { timerOpen = false; conn.send("turnLimit", ["turnLimit": s]) } }
+                }
+                if v.game != nil { Note("🔒 إعلان المشاريع \(v.manualProjects ? "يدوي" : "تلقائي")، والقيد والقطع \(v.qaid ? "مفعّل" : "مو مفعّل"): ينضبطون قبل بداية المباراة بس.") }
+            }
+        }
         .sheet(isPresented: $dominoLogOpen) {
             if let d = (conn.view ?? v).domino { DominoLogView(d: d) { dominoLogOpen = false } }
         }
@@ -283,6 +296,10 @@ struct BalootBoard: View {
                 if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
                 }
+                // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
+                if g.actions.canProject && v.manualProjects {
+                    MButton("أعلن مشروعك", .primary) { act(["type": "declareProject"]) }
+                }
                 // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
                 if g.actions.waraqDecision {
                     HStack(spacing: 8) {
@@ -368,6 +385,7 @@ struct BalootBoard: View {
         if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
         if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
+        if g.actions.canProject && v.manualProjects { out.append(("مشروع", { act(["type": "declareProject"]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
         if g.actions.chooseLock {

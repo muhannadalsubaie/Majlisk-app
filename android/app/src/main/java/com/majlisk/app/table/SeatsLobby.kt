@@ -3,6 +3,7 @@ package com.majlisk.app.table
 import androidx.compose.foundation.layout.Column
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -108,6 +109,10 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         var limit by remember { mutableStateOf(0) }
         var open by remember { mutableStateOf(false) }
         var setup by remember { mutableStateOf(false) }
+        // خيارات الباقة الاحترافية (البلوت، والمالك مشترك): تنضبط قبل البداية بس
+        val pro = com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true
+        var manual by remember { mutableStateOf(false) }
+        var qaid by remember { mutableStateOf(false) }
         PrimaryButton("بدء المباراة", { setup = true }, enabled = seated in v.startCounts)
         if (setup) MajliskDialog("إعدادات المباراة", { setup = false }) {
         androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
@@ -122,7 +127,14 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             }
         }
         Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-        PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit) }, enabled = seated in v.startCounts)
+        if (v.kind == "baloot") {
+            if (pro) {
+                com.majlisk.app.ui.SwitchRow("إعلان المشاريع يدوي", manual, { manual = it }, description = "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى")
+                com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it })
+                Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
+            } else Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
+        }
+        PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit, "manualProjects" to (pro && manual), "qaid" to (pro && qaid)) }, enabled = seated in v.startCounts)
         SecondaryButton("إلغاء", { setup = false }, fill = true)
         }
     } else Body("بانتظار مالك الطاولة لبدء المباراة")

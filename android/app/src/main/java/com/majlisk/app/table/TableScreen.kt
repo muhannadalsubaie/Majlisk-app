@@ -135,6 +135,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     /** الصفحة اللي تنفتح عليها القائمة (من إجراءات قارئ الشاشة على زر القائمة) */
     var menuStart by remember { mutableStateOf(TableMenuStart.Main) }
     var historyOpen by remember { mutableStateOf(false) }
+    var timerOpen by remember { mutableStateOf(false) }
     var dominoLogOpen by remember { mutableStateOf(false) }
     var confirmLeave by remember { mutableStateOf(false) }
     var chatOpen by remember { mutableStateOf(false) }
@@ -192,6 +193,9 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                     )
                 })
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
+                // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
+                if (v.ownerUid == uid && v.playing && com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true)
+                    com.majlisk.app.ui.BackButton({ timerOpen = true }, "⏱ المؤقت")
                 if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(
                     // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
@@ -233,6 +237,15 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     if (chatOpen) ChatDialog(conn) { chatOpen = false; conn.chatOpen = false }
 
     if (historyOpen) HistoryDialog(v.history) { historyOpen = false }
+    if (timerOpen) com.majlisk.app.ui.MajliskDialog("إعدادات المباراة", { timerOpen = false }) {
+        Note("تقدر تغيّر وقت الدور أو توقفه والمباراة شغالة.")
+        TURN_LIMITS.forEach { s ->
+            val cur = v.clockLimit == s
+            if (cur) PrimaryButton("✓ ${turnLimitLabel(s)}", { timerOpen = false }, description = "${turnLimitLabel(s)}، الحالي")
+            else SecondaryButton(turnLimitLabel(s), { timerOpen = false; conn.send("turnLimit", "turnLimit" to s) }, fill = true)
+        }
+        if (v.game != null) Note("🔒 إعلان المشاريع ${if (v.manualProjects) "يدوي" else "تلقائي"}، والقيد والقطع ${if (v.qaid) "مفعّل" else "مو مفعّل"}: ينضبطون قبل بداية المباراة بس.")
+    }
     if (dominoLogOpen && v.domino != null) DominoLogDialog(v.domino) { dominoLogOpen = false }
     // طلب انضمام لطاولتك الخاصة من صديق
     joinRequest?.let { (rid, rname) ->
@@ -378,6 +391,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
             if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
+            if (g.actions.canProject && v.manualProjects) add("مشروع" to { act(jsonOf("type" to "declareProject")) })
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
@@ -414,6 +428,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
+            // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
+            if (g.actions.canProject && v.manualProjects) PrimaryButton("أعلن مشروعك", { act(jsonOf("type" to "declareProject")) })
             // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
             if (g.actions.waraqDecision) {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
