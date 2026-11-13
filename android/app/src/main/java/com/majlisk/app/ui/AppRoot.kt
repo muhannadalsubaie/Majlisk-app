@@ -74,7 +74,8 @@ fun AppRoot() {
                 } else screen = Route.Menu
             }
             Route.Auth -> AuthScreen { screen = Route.Menu }
-            Route.Menu -> MainMenuScreen(profile, navigate, openTable)
+            // المشترك في الباقة الاحترافية: يفتح على الواجهة الذهبية على طول
+            Route.Menu -> if (profile?.isPro == true) GoldMenuScreen(profile, navigate, openTable) else MainMenuScreen(profile, navigate, openTable)
             Route.CreateTable -> CreateTableScreen(profile, navigate, openTable)
             Route.JoinTable -> JoinTableScreen(navigate, openTable)
             Route.Friends -> FriendsScreen(hub, navigate, openTable)

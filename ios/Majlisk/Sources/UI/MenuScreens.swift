@@ -61,7 +61,8 @@ struct CreateTableScreen: View {
     let navigate: (Route) -> Void
     let openTable: (String) -> Void
     // أولاً تختار اللعبة، ثم إعدادات الطاولة
-    @State private var picked: String?
+    // من الواجهة الذهبية: اللعبة مختارة على طول
+    @State private var picked: String? = { defer { PendingGame.game = nil }; return PendingGame.game }()
     @State private var variant = "classic"
     @State private var isPrivate = false
     @State private var pinned = false

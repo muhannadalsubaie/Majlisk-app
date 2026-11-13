@@ -94,7 +94,8 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
 @Composable
 fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     // أولاً تختار اللعبة، ثم إعدادات الطاولة
-    var picked by remember { mutableStateOf<String?>(null) }
+    // من الواجهة الذهبية: اللعبة مختارة على طول
+    var picked by remember { mutableStateOf<String?>(PendingGame.game.also { PendingGame.game = null }) }
     // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
     var variant by remember { mutableStateOf("classic") }
     var isPrivate by remember { mutableStateOf(false) }
