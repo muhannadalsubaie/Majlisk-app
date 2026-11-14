@@ -124,6 +124,8 @@ struct GameView {
     let handCounts: [Int]
     let myHand: [Card]
     let balootSeat: Int?
+    /// الأكلة اللي انعلن فيها البلوت (القراءة تذكره بس خلالها)
+    var balootTrick: Int? = nil
     let projectsWinningTeam: Int?
     let declared: [Declared]
     let actions: GameActions
@@ -268,6 +270,7 @@ struct TableView {
             handCounts: g.ints("handCounts"),
             myHand: g.objs("myHand").compactMap { Card($0) },
             balootSeat: g.intOrNil("balootSeat"),
+            balootTrick: g.intOrNil("balootTrick"),
             projectsWinningTeam: g.obj("projects")?.intOrNil("winningTeam"),
             declared: g.objs("declared").map {
                 Declared(seat: $0.int("seat"), kinds: $0.strs("kinds"), cards: $0["cards"] == nil || $0["cards"] is NSNull ? nil : $0.strs("cards"), cancelled: $0.bool("cancelled"), faces: $0.objs("faces").compactMap { Card($0) })

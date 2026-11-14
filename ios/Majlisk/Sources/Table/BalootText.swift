@@ -79,7 +79,8 @@ struct BalootText {
                 if !kinds.isEmpty { lines.append("\(seat == mySeat ? "أنت" : name(seat)): مشروع \(kinds.joined(separator: " و"))") }
             }
         }
-        if let b = g.balootSeat { lines.append("\(b == mySeat ? "أنت" : name(b)): بلوت") }
+        // البلوت يطلع بس في الأكلة اللي انعلن فيها (مع ورقته الثانية)، وبعدها يختفي مثل باقي المشاريع
+        if let b = g.balootSeat, g.balootTrick.map({ shownTrickNo <= $0 }) ?? true { lines.append("\(b == mySeat ? "أنت" : name(b)): بلوت") }
         let projects = lines.isEmpty ? "لا توجد مشاريع معلنة" : lines.joined(separator: ". ")
         return g.phase == "playing" ? "\(projects). \(tricks())" : projects
     }
