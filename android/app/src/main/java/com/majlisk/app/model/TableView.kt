@@ -50,6 +50,8 @@ data class GameActions(
     val declareKinds: List<String> = emptyList(),
     val canShowProject: Boolean = false,
     val qaidTargets: List<Int> = emptyList(),
+    /** قيد كبوت: فريقك أكل كل الأكلات اللي قبل */
+    val canKaboot: Boolean = false,
 )
 
 data class GameView(
@@ -245,6 +247,7 @@ data class TableView(
                     declareKinds = a.optJSONArray("declareKinds")?.let { arr -> (0 until arr.length()).map { arr.optString(it) } } ?: emptyList(),
                     canShowProject = a.optBoolean("canShowProject"),
                     qaidTargets = a.optJSONArray("qaidTargets")?.let { arr -> (0 until arr.length()).map { arr.optInt(it) } } ?: emptyList(),
+                    canKaboot = a.optBoolean("canKaboot"),
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),

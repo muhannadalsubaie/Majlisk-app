@@ -434,7 +434,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-            if (v.qaid && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa)) {
+            if (v.qaid && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canKaboot)) {
                 QaidButtons(v, g, act)
             } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
             if (g.actions.canShowProject) ShowProjectPanel(v, g, act)
@@ -831,11 +831,19 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
     var qaidOpen by remember { mutableStateOf(false) }
     var target by remember { mutableStateOf<Int?>(null) }
     var projectOpen by remember { mutableStateOf(false) }
+    var kabootOpen by remember { mutableStateOf(false) }
     // أزرار صغيرة (عشان الطاولة ما تطول وتتحرك فوق وتحت)
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
         if (g.actions.qaidTargets.isNotEmpty()) com.majlisk.app.ui.SmallButton("تسجيلة", { target = null; qaidOpen = true }, primary = true)
         if (g.actions.declareKinds.isNotEmpty()) com.majlisk.app.ui.SmallButton("إعلان مشروع", { projectOpen = true }, primary = true)
         if (g.actions.canSawa) com.majlisk.app.ui.SmallButton("سوا", { act(jsonOf("type" to "sawa")) }, primary = true)
+        if (g.actions.canKaboot) com.majlisk.app.ui.SmallButton("قيد كبوت", { kabootOpen = true }, primary = true)
+    }
+    // قيد الكبوت: تأكيد قبل (لو طلع غلط يروح الكبوت للفريق الثاني)
+    if (kabootOpen) com.majlisk.app.ui.MajliskDialog("قيد كبوت", { kabootOpen = false }) {
+        Note("تطالب إن فريقك ياكل كل الأكلات الباقية مهما لعب الخصم. لو صح ينحسب لكم كبوت، ولو غلط ينحسب الكبوت للفريق الثاني.")
+        com.majlisk.app.ui.SmallButton("أطالب بالكبوت", { kabootOpen = false; act(jsonOf("type" to "kabootClaim")) }, primary = true)
+        com.majlisk.app.ui.SmallButton("إلغاء", { kabootOpen = false })
     }
     if (qaidOpen) {
         val t = target
