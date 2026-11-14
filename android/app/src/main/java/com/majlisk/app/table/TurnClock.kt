@@ -40,7 +40,8 @@ fun TurnClock(v: TableView, seat: Int, turn: Boolean) {
             val left = deadline - now
             if (!warned && seat == v.mySeat && left in 1..5_000) { warned = true; Announcer.announce("باقي ٥ ثواني") }
             if (left <= 0) break
-            delay(250)
+            // مرة وحدة كل ثانية (على بداية الثانية): تحديث أقل = قارئ الشاشة يتحرك أسرع على الطاولة
+            delay((left % 1000).coerceAtLeast(50))
         }
     }
     val secs = deadline?.let { ((it - now + 999) / 1000).coerceAtLeast(0) }

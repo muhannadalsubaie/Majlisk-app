@@ -459,7 +459,8 @@ struct BalootBoard: View {
             }
         }
         .environment(\.layoutDirection, .leftToRight)
-        .animation(.easeOut(duration: 0.35), value: shownTrick.count)
+        // مع VoiceOver: الورقة تظهر على طول بدون حركة (المؤشر ما ينتظر الحركة)
+        .animation(Announcer.readerOn ? nil : .easeOut(duration: 0.35), value: shownTrick.count)
         // مائلة كأنك جالس عليها
         .rotation3DEffect(.degrees(40), axis: (x: 1, y: 0, z: 0), perspective: 0.65)
         .contentShape(Circle())

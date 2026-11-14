@@ -15,7 +15,9 @@ struct TurnClock: View {
     var body: some View {
         if turn {
             let deadline = v.clockLimit > 0 && v.clockSeat == seat ? v.clockDeadline : nil
-            TimelineView(.periodic(from: .now, by: 0.25)) { ctx in
+            // بدون وقت: ما يتحدث أبداً. مع وقت: مرة كل ثانية بس (تحديث أقل = VoiceOver يتحرك أسرع على الطاولة)
+            let start = deadline.map { $0.addingTimeInterval(-ceil($0.timeIntervalSinceNow)) } ?? .now
+            TimelineView(.periodic(from: start, by: deadline == nil ? 3600 : 1)) { ctx in
                 let secs = deadline.map { max(0, Int(ceil($0.timeIntervalSince(ctx.date)))) }
                 HStack(spacing: 2) {
                     Text("⏱").font(.system(size: 13))

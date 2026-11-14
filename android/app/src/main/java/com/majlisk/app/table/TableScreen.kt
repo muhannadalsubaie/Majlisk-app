@@ -633,7 +633,8 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
             }
             key(g.trickNo, p.seat) {
                 val anim = remember { androidx.compose.animation.core.Animatable(0f) }
-                LaunchedEffect(Unit) { anim.animateTo(1f, androidx.compose.animation.core.tween(350)) }
+                // مع قارئ الشاشة: الورقة تظهر على طول بدون حركة (المؤشر ما ينتظر الحركة)
+                LaunchedEffect(Unit) { if (com.majlisk.app.a11y.Announcer.readerOn) anim.snapTo(1f) else anim.animateTo(1f, androidx.compose.animation.core.tween(350)) }
                 val f = 1f - anim.value
                 Box(
                     Modifier.absoluteOffset((dx + dx * 1.5f * f).dp, (dy + dy * 1.5f * f).dp)
