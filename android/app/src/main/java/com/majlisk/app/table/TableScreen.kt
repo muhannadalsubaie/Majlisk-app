@@ -827,7 +827,8 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
 private fun ShowProjectPanel(v: TableView, g: GameView, act: (org.json.JSONObject) -> Unit) {
     // أوراقك الحين، ومعها الورقة اللي لعبتها في اللفة الأولى (ممكن تكون من المشروع)
     val mine = g.lastTrick?.firstOrNull { it.seat == v.mySeat }?.card
-    val cards = (g.myHand + listOfNotNull(mine)).distinct()
+    // بنفس ترتيبها في يدك
+    val cards = sortHand((g.myHand + listOfNotNull(mine)).distinct())
     var picked by remember { mutableStateOf(setOf<com.majlisk.app.model.Card>()) }
     var choosing by remember { mutableStateOf(false) }
     // أول ضغطة «فرش المشروع» تفتح اختيار الأوراق (وتقدر تلعب بدون ما تفرش)، وبعد ما تحدد تضغطه مرة ثانية فينكشف للكل
@@ -845,7 +846,8 @@ private fun ShowProjectPanel(v: TableView, g: GameView, act: (org.json.JSONObjec
             }
         }
         PrimaryButton("فرش المشروع", {
-            val arr = org.json.JSONArray(); picked.forEach { arr.put(it.toJson()) }
+            // تنكشف للكل بنفس ترتيبها في يدك
+            val arr = org.json.JSONArray(); sortHand(picked.toList()).forEach { arr.put(it.toJson()) }
             act(jsonOf("type" to "showProject", "cards" to arr)); picked = emptySet(); choosing = false
         }, enabled = picked.size >= 3)
         SecondaryButton("إلغاء", { choosing = false; picked = emptySet() }, fill = true)

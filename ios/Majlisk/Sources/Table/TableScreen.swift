@@ -824,7 +824,8 @@ private struct ShowProjectPanel: View {
         // أوراقك الحين، ومعها الورقة اللي لعبتها في اللفة الأولى (ممكن تكون من المشروع)
         var out = g.myHand
         if let mine = g.lastTrick?.first(where: { $0.seat == v.mySeat })?.card, !out.contains(mine) { out.append(mine) }
-        return out
+        // بنفس ترتيبها في يدك
+        return sortHand(out)
     }
     var body: some View {
         if !choosing {
@@ -841,7 +842,8 @@ private struct ShowProjectPanel: View {
                     }
                 }
                 MButton("فرش المشروع", .primary, enabled: picked.count >= 3) {
-                    act(["type": "showProject", "cards": picked.map { $0.json }])
+                    // تنكشف للكل بنفس ترتيبها في يدك
+                    act(["type": "showProject", "cards": sortHand(Array(picked)).map { $0.json }])
                     picked = []; choosing = false
                 }
                 MButton("إلغاء") { choosing = false; picked = [] }
