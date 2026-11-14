@@ -263,6 +263,11 @@ fun ItemRow(modifier: Modifier = Modifier, content: @Composable RowScope.() -> U
 /** نافذة منبثقة بعنوان: قارئ الشاشة يبقى داخلها حتى تُغلق */
 @Composable
 fun MajliskDialog(title: String, onDismiss: () -> Unit, content: @Composable ColumnScope.() -> Unit) {
+    // وهي مفتوحة: إيماءات اللعبة (الدور عند مين، المشاريع...) واقفة
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        com.majlisk.app.table.TableGestures.openDialogs++
+        onDispose { com.majlisk.app.table.TableGestures.openDialogs-- }
+    }
     Dialog(onDismissRequest = onDismiss, properties = DialogProperties(usePlatformDefaultWidth = false)) {
         Column(
             Modifier.padding(16.dp).widthIn(max = 420.dp).fillMaxWidth()

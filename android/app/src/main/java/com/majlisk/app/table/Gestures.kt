@@ -22,6 +22,8 @@ fun swipeDir(dx: Float, dy: Float, min: Float): SwipeDir? = when {
 /** معالج الإيماءات الحالي: اللوحة المعروضة تسجّل قراءاتها، وشاشة الطاولة كلها تلتقط السحب */
 object TableGestures {
     @Volatile var handler: ((SwipeDir) -> Unit)? = null
+    /** كم نافذة مفتوحة فوق الطاولة (القائمة، اللاعبون، الأصدقاء...): وقتها إيماءات اللعبة واقفة */
+    @Volatile var openDialogs = 0
 }
 
 /**
@@ -69,7 +71,7 @@ fun Modifier.tableGestureArea(): Modifier {
                     val end = last
                     start = null
                     if (s != null && System.currentTimeMillis() - startTime < 1500) {
-                        swipeDir(end.x - s.x, end.y - s.y, min)?.let { TableGestures.handler?.invoke(it) }
+                        if (TableGestures.openDialogs == 0) swipeDir(end.x - s.x, end.y - s.y, min)?.let { TableGestures.handler?.invoke(it) }
                     }
                 }
                 prevCount = down.size

@@ -44,6 +44,8 @@ final class MajliskWindow: UIWindow {
         case .down: dir = .down
         default: return false
         }
+        // فيه قائمة أو نافذة مفتوحة فوق الطاولة (القائمة، اللاعبون، الأصدقاء...): إيماءات اللعبة واقفة
+        if rootViewController?.presentedViewController != nil { return false }
         return Gestures.shared.fire(dir)
     }
 }
