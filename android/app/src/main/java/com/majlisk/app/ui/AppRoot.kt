@@ -135,9 +135,9 @@ fun AppRoot() {
         runCatching { Social.respondInvite(id, true) }
             .onSuccess { Hub.dropInvite(id); openTable(id) }
             .onFailure {
-                // انتهت الدعوة: لو أنت أصلاً في الطاولة ندخلك، وإلا نقول السبب
+                // انتهت الدعوة (أكثر من ١٠ دقائق): لو أنت أصلاً في الطاولة ندخلك، وإلا يفتح التطبيق بس بدون أي رسالة
                 val member = runCatching { Api.get("/tables/$id/member").optBoolean("member") }.getOrDefault(false)
-                if (member) openTable(id) else Announcer.announce(Social.error(it))
+                if (member) openTable(id) else if ((it as? com.majlisk.app.net.ApiError)?.code != "no-invite") Announcer.announce(Social.error(it))
             }
     }
 

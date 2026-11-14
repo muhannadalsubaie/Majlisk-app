@@ -137,8 +137,9 @@ struct AppRoot: View {
                 hub.dropInvite(id)
                 open(id)
             } catch {
+                // انتهت الدعوة (أكثر من ١٠ دقائق): لو أنت أصلاً في الطاولة ندخلك، وإلا يفتح التطبيق بس بدون أي رسالة
                 let member = (try? await Api.get("/tables/\(id)/member"))?.bool("member") ?? false
-                if member { open(id) } else { Announcer.announce(Social.error(error)) }
+                if member { open(id) } else if (error as? ApiError)?.code != "no-invite" { Announcer.announce(Social.error(error)) }
             }
         }
     }
