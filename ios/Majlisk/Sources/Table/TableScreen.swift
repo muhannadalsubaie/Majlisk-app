@@ -268,6 +268,9 @@ struct BalootBoard: View {
             }
             .frame(height: min(min(UIScreen.main.bounds.width - 32, 520) / 4.5 * 3.1, 360) * 0.72 + 70)
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
+            // كشف المشروع: أوراقه كبيرة وسط الطاولة
+            .overlay(ProjectSpotlight(g: g, text: text, faces: (0..<4).map { text.faces($0) }))
+            .zIndex(1)
 
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
                 // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
@@ -335,7 +338,7 @@ struct BalootBoard: View {
                     if !myFaces.isEmpty {
                         HStack(spacing: 8) {
                             Text("مشروعك").font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
-                            ProjectFaces(faces: myFaces)
+                            ProjectFaces(faces: myFaces, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
                         }
                         .frame(maxWidth: .infinity)
                         .accessibilityHidden(true)
@@ -663,7 +666,7 @@ private struct PlayerTag: View {
                 TurnClock(v: v, seat: seat, turn: turn)
             }
             if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
-            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner || wide ? 220 : 62).padding(.top, 2) }
+            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner || wide ? 220 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) }).padding(.top, 2) }
         }
             .padding(.horizontal, 4).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
@@ -678,6 +681,8 @@ private struct ProjectFaces: View {
     let faces: [Card]
     /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
     var maxWidth: CGFloat = 200
+    /// لمسة على الأوراق الصغيرة تكبّرها وسط الطاولة
+    var onTap: (() -> Void)? = nil
     var body: some View {
         // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
         let w: CGFloat = maxWidth < 100 ? 30 : 44, h: CGFloat = w * 1.45
@@ -686,7 +691,96 @@ private struct ProjectFaces: View {
         }
         .frame(maxWidth: maxWidth)
         .environment(\.layoutDirection, .leftToRight)
+        .contentShape(Rectangle())
+        .onTapGesture { onTap?() }
         .accessibilityHidden(true)
+    }
+}
+
+/// لوحة كشف المشروع: عنوانها وأوراقها
+struct Spot: Identifiable {
+    let id = UUID()
+    let title: String
+    let cards: [Card]
+}
+final class ProjectSpot: ObservableObject {
+    static let shared = ProjectSpot()
+    @Published var spot: Spot?
+}
+
+/// كشف المشروع: أول ما ينفرش مشروع تطلع أوراقه كبيرة وسط الطاولة في لوحة ذهبية (تنقلب ورقة ورقة)،
+/// وبعد ثواني تختفي وتبقى الأوراق الصغيرة تحت اسم صاحبها. للعرض فقط — قارئ الشاشة يسمعها من الإعلان.
+private struct ProjectSpotlight: View {
+    let g: GameView
+    let text: BalootText
+    let faces: [[Card]]
+    @ObservedObject private var hub = ProjectSpot.shared
+    @State private var seen = Set<Int>()
+    @State private var queue: [Spot] = []
+    var body: some View {
+        ZStack {
+            if let spot = hub.spot { SpotPanel(spot: spot).id(spot.id) }
+        }
+        .onAppear { scan() }
+        .onChange(of: faces.map(\.count)) { _ in scan() }
+        .onChange(of: hub.spot?.id) { _ in next() }
+    }
+    private func scan() {
+        if faces.allSatisfy(\.isEmpty) { seen.removeAll(); queue.removeAll(); return }
+        for (seat, cards) in faces.enumerated() where !cards.isEmpty && seen.insert(seat * 100 + cards.count).inserted {
+            let kinds = g.declared.filter { $0.seat == seat && !$0.faces.isEmpty }.flatMap(\.kinds).map { PROJECT_KIND_NAMES[$0] ?? $0 }
+            queue.append(Spot(title: "مشروع \(text.name(seat))" + (kinds.isEmpty ? "" : ": " + kinds.joined(separator: " و")), cards: cards))
+        }
+        next()
+    }
+    private func next() {
+        if hub.spot == nil, !queue.isEmpty { hub.spot = queue.removeFirst() }
+    }
+}
+
+private struct SpotPanel: View {
+    let spot: Spot
+    @State private var shown = Announcer.readerOn
+    var body: some View {
+        let w: CGFloat = spot.cards.count >= 5 ? 54 : 62
+        // جنب بعض بدون تراكب، خمس في السطر
+        let rows = stride(from: 0, to: spot.cards.count, by: 5).map { Array(spot.cards[$0..<min($0 + 5, spot.cards.count)]) }
+        let shape = RoundedRectangle(cornerRadius: 20)
+        VStack(spacing: 10) {
+            Text(spot.title).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
+            ForEach(0..<rows.count, id: \.self) { r in
+                HStack(spacing: 6) {
+                    ForEach(0..<rows[r].count, id: \.self) { i in
+                        let mid = CGFloat(rows[r].count - 1) / 2, d = CGFloat(i) - mid
+                        TableCard(card: rows[r][i], width: w, height: w * 1.45)
+                            // كل ورقة تنقلب على وجهها، وترتاح مايلة شوي كأنها مفروشة باليد
+                            .rotationEffect(.degrees(Double(d) * 3))
+                            .offset(y: d * d * 2)
+                            .rotation3DEffect(.degrees(shown ? 0 : -90), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+                            .opacity(shown ? 1 : 0)
+                            .animation(Announcer.readerOn ? nil : .easeOut(duration: 0.38).delay(0.15 + Double(r * 5 + i) * 0.11), value: shown)
+                    }
+                }
+            }
+        }
+        .environment(\.layoutDirection, .leftToRight)
+        .padding(.horizontal, 14).padding(.vertical, 12)
+        .background(shape.fill(LinearGradient(colors: [Color(red: 0.11, green: 0.17, blue: 0.24), Color(red: 0.04, green: 0.07, blue: 0.11)], startPoint: .top, endPoint: .bottom)).opacity(0.96))
+        .overlay(shape.stroke(LinearGradient(colors: [Palette.goldSoft, Palette.gold, Color(red: 0.54, green: 0.42, blue: 0.12)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5))
+        .shadow(color: .black.opacity(0.7), radius: 18, y: 10)
+        // اللوحة تطلع من الطاولة: تميل وتكبر وهي تظهر
+        .scaleEffect(shown ? 1 : 0.8)
+        .rotation3DEffect(.degrees(shown ? 0 : 35), axis: (x: 1, y: 0, z: 0), perspective: 0.5)
+        .opacity(shown ? 1 : 0)
+        .animation(Announcer.readerOn ? nil : .easeOut(duration: 0.4), value: shown)
+        .fixedSize()
+        .onTapGesture { ProjectSpot.shared.spot = nil }
+        .accessibilityHidden(true)
+        .onAppear {
+            shown = true
+            let id = spot.id
+            DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { if ProjectSpot.shared.spot?.id == id { ProjectSpot.shared.spot = nil } }
+        }
     }
 }
 

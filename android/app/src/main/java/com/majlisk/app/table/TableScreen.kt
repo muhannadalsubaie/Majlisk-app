@@ -1,5 +1,9 @@
 package com.majlisk.app.table
 
+import androidx.compose.ui.zIndex
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.foundation.gestures.detectTapGestures
+import androidx.compose.foundation.layout.wrapContentSize
 import kotlin.math.roundToInt
 import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.semantics.setProgress
@@ -349,7 +353,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.7f))
-                Box(Modifier.weight(3.4f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads) }
+                Box(Modifier.weight(3.4f).zIndex(1f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads); ProjectSpotlight(v, g, text) }
                 PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.7f))
             }
         }
@@ -459,7 +463,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             text.faces(mySeat).takeIf { it.isNotEmpty() }?.let { mine ->
                 Row(Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
                     Text("مشروعك", color = Palette.goldSoft, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    ProjectFaces(mine)
+                    ProjectFaces(mine, onTap = { projectSpot.value = Spot("مشروعك", mine) })
                 }
             }
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
@@ -586,23 +590,94 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
             TurnClock(v, seat, turn)
         }
         if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
-        if (faces.isNotEmpty()) ProjectFaces(faces, if (wide) 220f else 62f)
+        if (faces.isNotEmpty()) ProjectFaces(faces, if (wide) 220f else 62f, onTap = { projectSpot.value = Spot("أوراق ${s?.username ?: "اللاعب"}", faces) })
     }
 }
 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
+private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -> Unit)? = null) {
     // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
     val w = if (maxWidth < 100f) 30f else 44f; val h = w * 1.45f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
         FlowRow(
-            Modifier.clearAndSetSemantics { }.widthIn(max = maxWidth.dp),
+            Modifier.clearAndSetSemantics { }.widthIn(max = maxWidth.dp)
+                // لمسة على الأوراق الصغيرة تكبّرها وسط الطاولة
+                .pointerInput(faces) { detectTapGestures { onTap?.invoke() } },
             horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             faces.forEach { c -> CardFaceBox(c, Modifier.size(w.dp, h.dp)) }
+        }
+    }
+}
+
+/** لوحة كشف المشروع: عنوانها وأوراقها */
+private data class Spot(val title: String, val cards: List<Card>)
+private val projectSpot = mutableStateOf<Spot?>(null)
+
+/**
+ * كشف المشروع: أول ما ينفرش مشروع تطلع أوراقه كبيرة وسط الطاولة في لوحة ذهبية (تنقلب ورقة ورقة)،
+ * وبعد ثواني تختفي وتبقى الأوراق الصغيرة تحت اسم صاحبها. للعرض فقط — قارئ الشاشة يسمعها من الإعلان.
+ */
+@Composable
+private fun ProjectSpotlight(v: TableView, g: GameView, text: BalootText) {
+    val seen = remember { mutableSetOf<Int>() }
+    val queue = remember { androidx.compose.runtime.mutableStateListOf<Spot>() }
+    val now = (0..3).map { text.faces(it) }
+    LaunchedEffect(now) {
+        if (now.all { it.isEmpty() }) { seen.clear(); queue.clear() }
+        now.forEachIndexed { seat, cards ->
+            if (cards.isNotEmpty() && seen.add(seat * 100 + cards.size)) {
+                val kinds = g.declared.filter { it.seat == seat && it.faces.isNotEmpty() }.flatMap { it.kinds }.map { PROJECT_KIND_NAMES[it] ?: it }
+                val name = v.seats.getOrNull(seat)?.username ?: "اللاعب"
+                queue.add(Spot("مشروع $name" + if (kinds.isEmpty()) "" else ": " + kinds.joinToString(" و"), cards))
+            }
+        }
+    }
+    val spot = projectSpot.value
+    LaunchedEffect(queue.size, spot) { if (spot == null && queue.isNotEmpty()) projectSpot.value = queue.removeAt(0) }
+    if (spot == null) return
+    key(spot) {
+        val reader = com.majlisk.app.a11y.Announcer.readerOn
+        LaunchedEffect(Unit) { kotlinx.coroutines.delay(4500); if (projectSpot.value === spot) projectSpot.value = null }
+        val enter = remember { androidx.compose.animation.core.Animatable(if (reader) 1f else 0f) }
+        LaunchedEffect(Unit) { enter.animateTo(1f, androidx.compose.animation.core.tween(400)) }
+        val shape = RoundedCornerShape(20.dp)
+        val w = if (spot.cards.size >= 5) 54f else 62f
+        Column(
+            Modifier.wrapContentSize(unbounded = true)
+                // اللوحة تطلع من الطاولة: تميل وتكبر وهي تظهر
+                .graphicsLayer { alpha = enter.value; scaleX = 0.8f + 0.2f * enter.value; scaleY = scaleX; rotationX = 35f * (1f - enter.value); cameraDistance = 14f * density }
+                .shadow(24.dp, shape)
+                .background(Brush.verticalGradient(listOf(Color(0xF51D2C3D), Color(0xF50A111D))), shape)
+                .border(1.5.dp, Brush.linearGradient(listOf(Palette.goldSoft, Palette.gold, Color(0xFF8A6A1F))), shape)
+                .pointerInput(Unit) { detectTapGestures { projectSpot.value = null } }
+                .padding(horizontal = 14.dp, vertical = 12.dp)
+                .clearAndSetSemantics { },
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            Text(spot.title, color = Palette.goldSoft, fontWeight = FontWeight.Bold, fontSize = 16.sp, textAlign = TextAlign.Center)
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                // جنب بعض بدون تراكب، خمس في السطر
+                spot.cards.chunked(5).forEachIndexed { r, row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        row.forEachIndexed { i, c ->
+                            val flip = remember { androidx.compose.animation.core.Animatable(if (reader) 1f else 0f) }
+                            LaunchedEffect(Unit) { kotlinx.coroutines.delay(150L + (r * 5 + i) * 110L); flip.animateTo(1f, androidx.compose.animation.core.tween(380)) }
+                            val mid = (row.size - 1) / 2f
+                            CardFaceBox(c, Modifier.size(w.dp, (w * 1.45f).dp).graphicsLayer {
+                                // كل ورقة تنقلب على وجهها، وترتاح مايلة شوي كأنها مفروشة باليد
+                                rotationY = -90f * (1f - flip.value); cameraDistance = 10f * density
+                                rotationZ = (i - mid) * 3f; translationY = (i - mid) * (i - mid) * 2f * density
+                                alpha = if (flip.value > 0.02f) 1f else 0f
+                            })
+                        }
+                    }
+                }
+            }
         }
     }
 }
