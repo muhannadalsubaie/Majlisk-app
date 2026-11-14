@@ -40,12 +40,9 @@ struct TableScreen: View {
 
     var body: some View {
         Group {
-            if let kicked = conn.kicked {
-                Screen {
-                    Title(kicked == "banned" ? "حظرك مالك الطاولة" : "أخرجك مالك الطاولة")
-                    BodyText(kicked == "banned" ? "لا يمكنك دخول هذه الطاولة ولا أي طاولة يملكها." : "يمكنك دخول أي طاولة أخرى الآن، والعودة لهذه الطاولة بعد ساعة.")
-                    MButton("العودة للقائمة الرئيسية", .primary, action: exit)
-                }
+            // طردك المالك: تطلع على طول للصفحة الرئيسية (ومن المحادثة الصوتية) بدون أي نافذة
+            if conn.kicked != nil {
+                Color.clear.onAppear { Voice.shared.leave(quiet: true); Prefs.lastTable = nil; exit() }
             } else if conn.closed {
                 Screen {
                     Title("أُغلقت الطاولة")

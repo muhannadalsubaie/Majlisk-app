@@ -145,12 +145,9 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     // زر الرجوع في الجهاز يفتح قائمة الطاولة (ومنها المغادرة) بدل الخروج المفاجئ
     BackHandler(enabled = kicked == null && !closed) { menuOpen = true }
 
+    // طردك المالك: تطلع على طول للصفحة الرئيسية (ومن المحادثة الصوتية) بدون أي نافذة
     if (kicked != null) {
-        Screen {
-            Title(if (kicked == "banned") "حظرك مالك الطاولة" else "أخرجك مالك الطاولة")
-            Body(if (kicked == "banned") "لا يمكنك دخول هذه الطاولة ولا أي طاولة يملكها." else "يمكنك دخول أي طاولة أخرى الآن، والعودة لهذه الطاولة بعد ساعة.")
-            PrimaryButton("العودة للقائمة الرئيسية", exit)
-        }
+        LaunchedEffect(Unit) { Voice.leave(quiet = true); exit() }
         return
     }
     if (closed) {
