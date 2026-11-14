@@ -966,7 +966,8 @@ private fun ShowProjectPanel(v: TableView, g: GameView, act: (org.json.JSONObjec
     // أوراقك الحين، ومعها الورقة اللي لعبتها في اللفة الأولى (ممكن تكون من المشروع)
     val mine = g.lastTrick?.firstOrNull { it.seat == v.mySeat }?.card
     // بنفس ترتيبها في يدك
-    val cards = sortHand((g.myHand + listOfNotNull(mine)).distinct())
+    // الأوراق الثمان كاملة حتى لو لعبت منها (السيرفر يرسلها وقت الفرش)
+    val cards = sortHand(g.myInitial.ifEmpty { (g.myHand + listOfNotNull(mine)).distinct() })
     var picked by remember { mutableStateOf(setOf<com.majlisk.app.model.Card>()) }
     var choosing by remember { mutableStateOf(false) }
     // أول ضغطة «فرش المشروع» تفتح اختيار الأوراق (وتقدر تلعب بدون ما تفرش)، وبعد ما تحدد تضغطه مرة ثانية فينكشف للكل

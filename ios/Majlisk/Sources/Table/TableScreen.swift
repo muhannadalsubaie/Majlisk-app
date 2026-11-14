@@ -979,6 +979,8 @@ private struct ShowProjectPanel: View {
     @State private var choosing = false
     @State private var picked: Set<Card> = []
     private var cards: [Card] {
+        // الأوراق الثمان كاملة حتى لو لعبت منها (السيرفر يرسلها وقت الفرش)
+        if !g.myInitial.isEmpty { return sortHand(g.myInitial) }
         // أوراقك الحين، ومعها الورقة اللي لعبتها في اللفة الأولى (ممكن تكون من المشروع)
         var out = g.myHand
         if let mine = g.lastTrick?.first(where: { $0.seat == v.mySeat })?.card, !out.contains(mine) { out.append(mine) }

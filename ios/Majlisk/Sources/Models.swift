@@ -125,6 +125,8 @@ struct GameView {
     let outcomeWinner: Int?
     let handCounts: [Int]
     let myHand: [Card]
+    /// أوراقك الثمان كاملة (حتى اللي لعبتها) — تجي بس لما تقدر تفرش مشروعك
+    var myInitial: [Card] = []
     let balootSeat: Int?
     /// الأكلة اللي انعلن فيها البلوت (القراءة تذكره بس خلالها)
     var balootTrick: Int? = nil
@@ -276,6 +278,7 @@ struct TableView {
             outcomeWinner: outcome.intOrNil("winner"),
             handCounts: g.ints("handCounts"),
             myHand: g.objs("myHand").compactMap { Card($0) },
+            myInitial: g.objs("myInitial").compactMap { Card($0) },
             balootSeat: g.intOrNil("balootSeat"),
             balootTrick: g.intOrNil("balootTrick"),
             projectsWinningTeam: g.obj("projects")?.intOrNil("winningTeam"),

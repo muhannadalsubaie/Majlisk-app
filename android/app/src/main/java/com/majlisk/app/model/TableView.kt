@@ -74,6 +74,8 @@ data class GameView(
     val outcomeWinner: Int?,
     val handCounts: List<Int>,
     val myHand: List<Card>,
+    /** أوراقك الثمان كاملة (حتى اللي لعبتها) — تجي بس لما تقدر تفرش مشروعك */
+    val myInitial: List<Card> = emptyList(),
     val balootSeat: Int?,
     /** الأكلة اللي انعلن فيها البلوت (القراءة تذكره بس خلالها) */
     val balootTrick: Int? = null,
@@ -220,6 +222,7 @@ data class TableView(
                 outcomeWinner = outcome.optIntOrNull("winner"),
                 handCounts = g.optJSONArray("handCounts").ints(),
                 myHand = g.optJSONArray("myHand").objects().mapNotNull { Card.from(it) },
+                myInitial = g.optJSONArray("myInitial").objects().mapNotNull { Card.from(it) },
                 balootSeat = g.optIntOrNull("balootSeat"),
                 balootTrick = g.optIntOrNull("balootTrick"),
                 projectsWinningTeam = g.optJSONObject("projects")?.optIntOrNull("winningTeam"),
