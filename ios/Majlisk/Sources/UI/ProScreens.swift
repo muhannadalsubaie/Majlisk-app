@@ -266,3 +266,18 @@ struct GiftScreen: View {
         }
     }
 }
+
+/// مفتاح إخفاء الظهور (للمشترك): في صفحة الباقة، وقائمة الطاولة
+struct HideOnlineSwitch: View {
+    @State private var hidden = false
+    var body: some View {
+        SwitchRow(label: "إخفاء ظهوري أني متصل", isOn: hidden, onChange: { on in
+            hidden = on
+            Task { @MainActor in
+                if let r = try? await Api.post("/pro/settings", ["hideOnline": on]) { hidden = r.bool("hideOnline") }
+                Announcer.announce(hidden ? "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" : "صرت تظهر متصل")
+            }
+        })
+        .task { if let r = try? await Api.post("/pro/settings") { hidden = r.bool("hideOnline") } }
+    }
+}

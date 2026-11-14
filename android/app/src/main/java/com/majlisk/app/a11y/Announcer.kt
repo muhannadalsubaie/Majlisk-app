@@ -33,7 +33,8 @@ object Announcer {
     private var busyUntil = 0L
     private var scheduled = false
     /** وقت تقريبي لقراءة النص بسرعة قارئ الشاشة المعتادة */
-    private fun readTime(text: String) = 350L + text.length * 55L
+    // أقصر وقت ممكن بين إعلان واللي بعده (سلاسة أعلى) بدون ما يقطع واحد الثاني
+    private fun readTime(text: String) = 250L + text.length * 47L
 
     private fun pump() {
         scheduled = false

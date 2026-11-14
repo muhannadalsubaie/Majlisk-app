@@ -59,6 +59,8 @@ struct TableMenu: View {
                 if isOwner {
                     SwitchRow(label: "طاولة خاصة", isOn: view.isPrivate, onChange: { conn.send("setPrivate", ["isPrivate": $0]) })
                 } else { Note(view.isPrivate ? "طاولة خاصة: الدخول بالدعوة فقط" : "طاولة عامة") }
+                // المشترك: إخفاء ظهوره من هنا بعد
+                if Session.shared.profile?.isPro == true { HideOnlineSwitch() }
                 MButton("اللاعبون") { page = .players }
                 if isOwner { MButton("دعوة صديق") { page = .invite } }
                 MButton("الأصدقاء") { page = .friends }

@@ -69,8 +69,7 @@ struct TableScreen: View {
             conn.start()
             // نغمة الانضمام يسمعها المنضم نفسه أول ما يدخل الطاولة (الموجودون يسمعونها من إعلان الخادم)
             Sounds.shared.tableJoin()
-            // كل من يدخل الطاولة ينضم للمحادثة الصوتية مستمعاً، وميكروفونه مقفل حتى يفتحه بنفسه
-            Voice.shared.join(tableId, uid: uid, mode: .auto)
+            // المحادثة الصوتية ما تدخلها تلقائياً: اللي يبيها يضغط ضغطة مطولة على زر الميكروفون
         }
         .task {
             // نبضة كل ١٠ ثوانٍ: لو أُغلق التطبيق ورجعت خلال دقيقة يرجعك لنفس الطاولة
@@ -183,7 +182,6 @@ struct BalootBoard: View {
     let uid: String
     @ObservedObject var conn: TableConnection
     /// آخر أكلة انتهت مهلة عرضها (بعدها تختفي أوراقها). الحساب فوري في نفس الإطار، فما تختفي الأوراق وترجع
-    @AppStorage("showSawa") private var showSawa = true
     @State private var releasedTrick: Int?
     /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
     /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
@@ -294,9 +292,13 @@ struct BalootBoard: View {
                     }
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
-                if g.actions.canSawa && showSawa {
+                // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
+                if v.qaid && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa) {
+                    QaidButtons(v: v, g: g, act: act)
+                } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
                 }
+                if g.actions.canShowProject { ShowProjectPanel(v: v, g: g, act: act) }
                 // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
                 if g.actions.canProject && v.manualProjects {
                     MButton("أعلن مشروعك", .primary) { act(["type": "declareProject"]) }
@@ -385,7 +387,7 @@ struct BalootBoard: View {
         }
         if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
-        if g.actions.canSawa && showSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
+        if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
         if g.actions.canProject && v.manualProjects { out.append(("مشروع", { act(["type": "declareProject"]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
@@ -753,5 +755,95 @@ private struct StepAdjust: ViewModifier {
     let step: ((AccessibilityAdjustmentDirection) -> Void)?
     func body(content: Content) -> some View {
         if let step { content.accessibilityAdjustableAction(step) } else { content }
+    }
+}
+
+private let PROJECT_KIND_NAMES = ["sira": "سرا", "fifty": "خمسين", "hundred": "مية", "fourHundred": "أربعمية"]
+private let QAID_OPTIONS: [(String, String)] = [
+    ("noRaise", "ما طلع بالحكم"), ("noTrump", "ما دق بالحكم"), ("revoke", "قاطع"),
+    ("lockedLead", "تربيع بحكم مقفل"), ("badProject", "مشروع غلط"), ("badSawa", "سوا غلط"),
+]
+
+/// القيد والقطع: أزرار تسجيلة، وإعلان مشروع، وسوا
+private struct QaidButtons: View {
+    let v: TableView
+    let g: GameView
+    let act: (JSON) -> Void
+    @State private var qaidOpen = false
+    @State private var target: Int?
+    @State private var projectOpen = false
+    var body: some View {
+        HStack(spacing: 8) {
+            if !g.actions.qaidTargets.isEmpty { MButton("تسجيلة", .primary) { target = nil; qaidOpen = true } }
+            if !g.actions.declareKinds.isEmpty { MButton("إعلان مشروع", .primary) { projectOpen = true } }
+            if g.actions.canSawa { MButton("سوا", .primary) { act(["type": "sawa"]) } }
+        }
+        .sheet(isPresented: $qaidOpen) {
+            if let t = target {
+                Sheet(title: "تسجيلة على \(v.seat(t)?.username ?? "")") {
+                    ForEach(QAID_OPTIONS.filter { $0.0 != "badSawa" || v.sawaOn }, id: \.0) { kind, name in
+                        MButton(name, .primary) { qaidOpen = false; act(["type": "qaid", "target": t, "kind": kind]) }
+                    }
+                    MButton("رجوع") { target = nil }
+                }
+            } else {
+                Sheet(title: "تسجيلة على مين؟") {
+                    ForEach(g.actions.qaidTargets, id: \.self) { s in
+                        MButton(v.seat(s)?.username ?? "لاعب", .primary) { target = s }
+                    }
+                    MButton("إلغاء") { qaidOpen = false }
+                }
+            }
+        }
+        .sheet(isPresented: $projectOpen) {
+            Sheet(title: "نوع مشروعك") {
+                ForEach(g.actions.declareKinds, id: \.self) { k in
+                    MButton(PROJECT_KIND_NAMES[k] ?? k, .primary) { projectOpen = false; act(["type": "declareKind", "kind": k]) }
+                }
+                Note("في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.")
+                MButton("إلغاء") { projectOpen = false }
+            }
+        }
+    }
+}
+
+/// القيد والقطع: فرش المشروع يدوي — أول ضغطة تفتح اختيار الأوراق (وتقدر تلعب بدون ما تفرش)،
+/// وبعد ما تحدد تضغط «فرش المشروع» مرة ثانية فينكشف للكل
+private struct ShowProjectPanel: View {
+    let v: TableView
+    let g: GameView
+    let act: (JSON) -> Void
+    @State private var choosing = false
+    @State private var picked: Set<Card> = []
+    private var cards: [Card] {
+        // أوراقك الحين، ومعها الورقة اللي لعبتها في اللفة الأولى (ممكن تكون من المشروع)
+        var out = g.myHand
+        if let mine = g.lastTrick?.first(where: { $0.seat == v.mySeat })?.card, !out.contains(mine) { out.append(mine) }
+        return out
+    }
+    var body: some View {
+        if !choosing {
+            MButton("فرش المشروع", .primary) { choosing = true }
+        } else {
+            VStack(alignment: .leading, spacing: 8) {
+                Text("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع").bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+                FlowLayout(spacing: 6) {
+                    ForEach(cards, id: \.self) { c in
+                        let on = picked.contains(c)
+                        SmallButton(on ? "✓ \(c.label)" : c.label, primary: on, label: on ? "\(c.label)، محددة" : c.label) {
+                            if on { picked.remove(c) } else { picked.insert(c) }
+                        }
+                    }
+                }
+                MButton("فرش المشروع", .primary, enabled: picked.count >= 3) {
+                    act(["type": "showProject", "cards": picked.map { $0.json }])
+                    picked = []; choosing = false
+                }
+                MButton("إلغاء") { choosing = false; picked = [] }
+            }
+            .padding(10)
+            .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
+            .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.gold, lineWidth: 1))
+        }
     }
 }

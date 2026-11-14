@@ -293,3 +293,18 @@ fun GiftScreen(onBack: () -> Unit) {
         }
     }
 }
+
+/** مفتاح إخفاء الظهور (للمشترك): في صفحة الباقة، وقائمة الطاولة */
+@Composable
+fun HideOnlineSwitch() {
+    val scope = rememberCoroutineScope()
+    var hidden by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { runCatching { hidden = Api.post("/pro/settings").optBoolean("hideOnline") } }
+    SwitchRow("إخفاء ظهوري أني متصل", hidden, { on ->
+        hidden = on
+        scope.launch {
+            runCatching { hidden = Api.post("/pro/settings", jsonOf("hideOnline" to on)).optBoolean("hideOnline") }
+            Announcer.announce(if (hidden) "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" else "صرت تظهر متصل")
+        }
+    }, description = "ما تطلع في قائمة المتصلين، وأصدقاؤك يشوفونك غير متصل")
+}

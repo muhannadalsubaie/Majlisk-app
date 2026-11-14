@@ -113,6 +113,7 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         val pro = com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true
         var manual by remember { mutableStateOf(false) }
         var qaid by remember { mutableStateOf(false) }
+        var sawa by remember { mutableStateOf(false) }
         PrimaryButton("بدء المباراة", { setup = true }, enabled = seated in v.startCounts)
         if (setup) MajliskDialog("إعدادات المباراة", { setup = false }) {
         androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
@@ -130,12 +131,13 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         if (v.kind == "baloot") {
             if (pro) {
                 com.majlisk.app.ui.SwitchRow("إعلان المشاريع يدوي", manual, { manual = it }, description = "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى")
-                com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it })
+                com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it }, description = "اللعب حر، واللي يغلط يتسجّل عليه بزر تسجيلة")
+                com.majlisk.app.ui.SwitchRow("زر سوا", sawa, { sawa = it }, description = "يطلع زر سوا في هالمباراة")
                 Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
             } else if (com.majlisk.app.data.Session.profile.collectAsState().value?.proAccess == true)
                 Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
         }
-        PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit, "manualProjects" to (pro && manual), "qaid" to (pro && qaid)) }, enabled = seated in v.startCounts)
+        PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit, "manualProjects" to (pro && manual), "qaid" to (pro && qaid), "sawa" to (pro && sawa)) }, enabled = seated in v.startCounts)
         SecondaryButton("إلغاء", { setup = false }, fill = true)
         }
     } else Body("بانتظار مالك الطاولة لبدء المباراة")

@@ -63,14 +63,14 @@ fun VoiceButton(tableId: String, uid: String) {
     val s = if (raw.reconnecting) raw.copy(joined = true, muted = true, busy = false) else raw
     val status = when {
         s.busy -> "جارٍ الاتصال بالمحادثة الصوتية"
-        !s.joined -> "أنت خارج المحادثة الصوتية"
+        !s.joined -> "المحادثة الصوتية: اضغط مطولاً للانضمام"
         s.muted -> "الميكروفون مغلق"
         else -> "الميكروفون مفتوح"
     }
     val toggleMute = {
         if (!s.busy) {
             // خرجت بنفسك: الضغطة العادية لا تعيدك، العودة بالضغط المطول فقط
-            if (!s.joined) Announcer.announce("أنت خارج المحادثة الصوتية")
+            if (!s.joined) Announcer.announce("للانضمام للمحادثة الصوتية اضغط ضغطة مطولة")
             else Voice.setMuted(!s.muted)
         }
     }
@@ -104,7 +104,7 @@ fun VoiceButton(tableId: String, uid: String) {
                     onLongClick { toggleJoin(); true }
                     // إجراءات قارئ الشاشة (مثل الآيفون): الانضمام/الخروج من المحادثة، وفتح/قفل المايك
                     customActions = buildList {
-                        add(CustomAccessibilityAction(if (s.joined) "الخروج من المحادثة الصوتية" else "العودة للمحادثة الصوتية") { toggleJoin(); true })
+                        add(CustomAccessibilityAction(if (s.joined) "الخروج من المحادثة الصوتية" else "الانضمام للمحادثة الصوتية") { toggleJoin(); true })
                         if (s.joined) add(CustomAccessibilityAction(if (s.muted) "فتح الميكروفون" else "قفل الميكروفون") { toggleMute(); true })
                     }
                 } else {

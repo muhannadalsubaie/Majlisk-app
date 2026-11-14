@@ -49,8 +49,6 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         TopBar("الإعدادات", onBack = onBack)
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
-        SectionTitle("إعدادات اللعب")
-        SwitchRow("زر سوا في البلوت", Prefs.showSawa.value, { Prefs.setShowSawa(it) }, description = "يطلع زر سوا لما تقدر تسويها، ولو توقفه ما يطلع")
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
         val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()

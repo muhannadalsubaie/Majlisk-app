@@ -46,6 +46,10 @@ data class GameActions(
     val waraqDecision: Boolean = false,
     /** إعلان المشروع (يدوي): دورك في اللفة الأولى ومعك مشروع ما أعلنته */
     val canProject: Boolean = false,
+    /** القيد والقطع: أنواع المشروع اللي تقدر تعلنها، وفرش أوراق مشروعك، واللي تقدر تسجّل عليهم */
+    val declareKinds: List<String> = emptyList(),
+    val canShowProject: Boolean = false,
+    val qaidTargets: List<Int> = emptyList(),
 )
 
 data class GameView(
@@ -135,6 +139,8 @@ data class TableView(
     /** خيارات مباراة البلوت (الباقة الاحترافية): إعلان المشاريع يدوي، والقيد والقطع */
     val manualProjects: Boolean = false,
     val qaid: Boolean = false,
+    /** زر سوا مسموح في هالمباراة */
+    val sawaOn: Boolean = true,
 ) {
     val hasGame: Boolean get() = game != null || otherGame
     val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
@@ -171,6 +177,7 @@ data class TableView(
             ownerName = o.optString("ownerName"),
             manualProjects = o.optBoolean("manualProjects"),
             qaid = o.optBoolean("qaid"),
+            sawaOn = o.optBoolean("sawaOn", true),
             ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
         )
 
@@ -220,6 +227,9 @@ data class TableView(
                     canWaraq = a.optBoolean("canWaraq"),
                     waraqDecision = a.optBoolean("waraqDecision"),
                     canProject = a.optBoolean("canProject"),
+                    declareKinds = a.optJSONArray("declareKinds")?.let { arr -> (0 until arr.length()).map { arr.optString(it) } } ?: emptyList(),
+                    canShowProject = a.optBoolean("canShowProject"),
+                    qaidTargets = a.optJSONArray("qaidTargets")?.let { arr -> (0 until arr.length()).map { arr.optInt(it) } } ?: emptyList(),
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },
                 secondHokmSeat = g.optIntOrNull("secondHokmSeat"),

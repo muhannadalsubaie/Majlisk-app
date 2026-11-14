@@ -80,6 +80,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             if (isOwner) {
                 SwitchRow("طاولة خاصة", v.isPrivate, { conn.send("setPrivate", "isPrivate" to it) })
             } else Note(if (v.isPrivate) "طاولة خاصة: الدخول بالدعوة فقط" else "طاولة عامة")
+            // المشترك: إخفاء ظهوره من هنا بعد
+            if (com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true) com.majlisk.app.ui.HideOnlineSwitch()
             SecondaryButton("اللاعبون", { page = Page.Players }, fill = true)
             if (isOwner) SecondaryButton("دعوة صديق", { page = Page.Invite }, fill = true)
             SecondaryButton("الأصدقاء", { page = Page.Friends }, fill = true)

@@ -97,6 +97,10 @@ struct GameActions {
     var waraqDecision = false
     /// إعلان المشروع (يدوي): دورك في اللفة الأولى ومعك مشروع ما أعلنته
     var canProject = false
+    /// القيد والقطع: أنواع المشروع اللي تقدر تعلنها، وفرش أوراق مشروعك، واللي تقدر تسجّل عليهم
+    var declareKinds: [String] = []
+    var canShowProject = false
+    var qaidTargets: [Int] = []
 }
 
 struct GameView {
@@ -186,6 +190,8 @@ struct TableView {
     /// خيارات مباراة البلوت (الباقة الاحترافية): إعلان المشاريع يدوي، والقيد والقطع
     var manualProjects = false
     var qaid = false
+    /// زر سوا مسموح في هالمباراة
+    var sawaOn = true
     /// عنوان الطاولة: اسم اللعبة (والدومينو بهدفه)
     var title: String { kind == "domino" ? "دومينو \(optTarget)" : gameTitle(kind, variant) }
 
@@ -225,6 +231,7 @@ struct TableView {
         ownerName = o.str("ownerName")
         manualProjects = o.bool("manualProjects")
         qaid = o.bool("qaid")
+        sawaOn = (o["sawaOn"] as? Bool) ?? true
         ludo = o.obj("ludo").map { LudoView($0, ui, log: o.strs("ludoLog")) }
     }
 
@@ -269,7 +276,10 @@ struct TableView {
                 canSawa: a.bool("canSawa"),
                 canWaraq: a.bool("canWaraq"),
                 waraqDecision: a.bool("waraqDecision"),
-                canProject: a.bool("canProject")
+                canProject: a.bool("canProject"),
+                declareKinds: a.arr("declareKinds").compactMap { $0 as? String },
+                canShowProject: a.bool("canShowProject"),
+                qaidTargets: a.arr("qaidTargets").compactMap { ($0 as? NSNumber)?.intValue }
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },
             secondHokmSeat: g.intOrNil("secondHokmSeat"),

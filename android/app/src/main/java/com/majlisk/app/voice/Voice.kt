@@ -209,7 +209,11 @@ object Voice {
                         Announcer.announce("لم يُسمح باستخدام الميكروفون. فعّله من إعدادات الجهاز للتطبيق")
                         return@launch
                     }
-                    val source = factory.createAudioSource(MediaConstraints())
+                    // تنقية صوت الميكروفون (مثل الآيفون): إلغاء الضجيج المحيط، وفلتر الطنين، وتوازن المستوى، وإلغاء الصدى
+                    val source = factory.createAudioSource(MediaConstraints().apply {
+                        listOf("googNoiseSuppression", "googHighpassFilter", "googAutoGainControl", "googEchoCancellation")
+                            .forEach { mandatory.add(MediaConstraints.KeyValuePair(it, "true")) }
+                    })
                     micSource = source
                     val track = factory.createAudioTrack("mic", source)
                     mic = track

@@ -41,7 +41,7 @@ enum Announcer {
         UIAccessibility.post(notification: .announcement, argument: s)
         // احتياط: لو ما وصل بلاغ الانتهاء نكمل بعد الوقت التقريبي
         let mine = text
-        DispatchQueue.main.asyncAfter(deadline: .now() + readTime(text) + 1.5) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + readTime(text) + 0.6) {
             if current == mine { current = nil; pump() }
         }
     }

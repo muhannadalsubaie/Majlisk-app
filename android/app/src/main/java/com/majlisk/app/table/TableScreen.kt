@@ -173,7 +173,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
 
     // كل من يدخل الطاولة ينضم للمحادثة الصوتية مستمعاً، وميكروفونه مقفل حتى يفتحه بنفسه
     // نغمة الانضمام يسمعها المنضم نفسه أول ما تفتح الطاولة (الموجودون يسمعونها من إعلان الخادم)
-    LaunchedEffect(tableId) { Sounds.tableJoin(); Voice.join(tableId, uid, Voice.Mode.Auto) }
+    // المحادثة الصوتية ما تدخلها تلقائياً: اللي يبيها يضغط ضغطة مطولة على زر الميكروفون
+    LaunchedEffect(tableId) { Sounds.tableJoin() }
     // متابعة المنضمين للمحادثة الصوتية صارت في اتصال الطاولة نفسه (تشتغل والتطبيق في الخلفية)
 
     val leave = { conn.send("leave"); exit() }
@@ -390,7 +391,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             g.actions.bids.forEach { b -> add((if (b.type == "pass" && g.bidRound == 2) "ولا" else b.label) to { act(jsonOf("type" to "bid", "bid" to b.raw)) }) }
             g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
-            if (g.actions.canSawa && com.majlisk.app.data.Prefs.showSawa.value) add("سوا" to { act(jsonOf("type" to "sawa")) })
+            if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
             if (g.actions.canProject && v.manualProjects) add("مشروع" to { act(jsonOf("type" to "declareProject")) })
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
@@ -427,7 +428,11 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 }
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
-            if (g.actions.canSawa && com.majlisk.app.data.Prefs.showSawa.value) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
+            // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
+            if (v.qaid && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa)) {
+                QaidButtons(v, g, act)
+            } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
+            if (g.actions.canShowProject) ShowProjectPanel(v, g, act)
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
             if (g.actions.canProject && v.manualProjects) PrimaryButton("أعلن مشروعك", { act(jsonOf("type" to "declareProject")) })
             // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
@@ -771,4 +776,73 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
         if (g.outcomeStatus == "won" && team != null) h.postDelayed({ Sounds.matchEnd(g.outcomeWinner == team) }, TRICK_HOLD_MS + 1600)
     }
     // المزايدة والدبل: أصوات منطوقة يرسلها الخادم مع الإعلان (Sounds.voices)
+}
+
+private val PROJECT_KIND_NAMES = mapOf("sira" to "سرا", "fifty" to "خمسين", "hundred" to "مية", "fourHundred" to "أربعمية")
+private val QAID_OPTIONS = listOf(
+    "noRaise" to "ما طلع بالحكم", "noTrump" to "ما دق بالحكم", "revoke" to "قاطع",
+    "lockedLead" to "تربيع بحكم مقفل", "badProject" to "مشروع غلط", "badSawa" to "سوا غلط",
+)
+
+/** القيد والقطع: أزرار تسجيلة، وإعلان مشروع، وسوا */
+@Composable
+private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) -> Unit) {
+    var qaidOpen by remember { mutableStateOf(false) }
+    var target by remember { mutableStateOf<Int?>(null) }
+    var projectOpen by remember { mutableStateOf(false) }
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        if (g.actions.qaidTargets.isNotEmpty()) PrimaryButton("تسجيلة", { target = null; qaidOpen = true }, modifier = Modifier.weight(1f))
+        if (g.actions.declareKinds.isNotEmpty()) PrimaryButton("إعلان مشروع", { projectOpen = true }, modifier = Modifier.weight(1f))
+        if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) }, modifier = Modifier.weight(1f))
+    }
+    if (qaidOpen) {
+        val t = target
+        if (t == null) com.majlisk.app.ui.MajliskDialog("تسجيلة على مين؟", { qaidOpen = false }) {
+            g.actions.qaidTargets.forEach { s -> PrimaryButton(v.seats.getOrNull(s)?.username ?: "لاعب", { target = s }) }
+            SecondaryButton("إلغاء", { qaidOpen = false }, fill = true)
+        } else com.majlisk.app.ui.MajliskDialog("تسجيلة على ${v.seats.getOrNull(t)?.username ?: ""}", { qaidOpen = false }) {
+            QAID_OPTIONS.filter { it.first != "badSawa" || v.sawaOn }.forEach { (kind, name) ->
+                PrimaryButton(name, { qaidOpen = false; act(jsonOf("type" to "qaid", "target" to t, "kind" to kind)) })
+            }
+            SecondaryButton("رجوع", { target = null }, fill = true)
+        }
+    }
+    if (projectOpen) com.majlisk.app.ui.MajliskDialog("نوع مشروعك", { projectOpen = false }) {
+        g.actions.declareKinds.forEach { k ->
+            PrimaryButton(PROJECT_KIND_NAMES[k] ?: k, { projectOpen = false; act(jsonOf("type" to "declareKind", "kind" to k)) })
+        }
+        Note("في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.")
+        SecondaryButton("إلغاء", { projectOpen = false }, fill = true)
+    }
+}
+
+/** القيد والقطع: فرش المشروع يدوي — تحدد أوراقك وتضغط «اسمع فرش المشروع» */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun ShowProjectPanel(v: TableView, g: GameView, act: (org.json.JSONObject) -> Unit) {
+    // أوراقك الحين، ومعها الورقة اللي لعبتها في اللفة الأولى (ممكن تكون من المشروع)
+    val mine = g.lastTrick?.firstOrNull { it.seat == v.mySeat }?.card
+    val cards = (g.myHand + listOfNotNull(mine)).distinct()
+    var picked by remember { mutableStateOf(setOf<com.majlisk.app.model.Card>()) }
+    var choosing by remember { mutableStateOf(false) }
+    // أول ضغطة «فرش المشروع» تفتح اختيار الأوراق (وتقدر تلعب بدون ما تفرش)، وبعد ما تحدد تضغطه مرة ثانية فينكشف للكل
+    if (!choosing) { PrimaryButton("فرش المشروع", { choosing = true }); return }
+    Column(
+        Modifier.fillMaxWidth().background(Palette.green800, RoundedCornerShape(14.dp)).border(1.dp, Palette.gold, RoundedCornerShape(14.dp)).padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        Text("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع", color = Palette.gold, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            cards.forEach { c ->
+                val on = c in picked
+                com.majlisk.app.ui.SmallButton(if (on) "✓ ${c.label}" else c.label, { picked = if (on) picked - c else picked + c }, primary = on,
+                    description = "${c.label}${if (on) "، محددة" else ""}")
+            }
+        }
+        PrimaryButton("فرش المشروع", {
+            val arr = org.json.JSONArray(); picked.forEach { arr.put(it.toJson()) }
+            act(jsonOf("type" to "showProject", "cards" to arr)); picked = emptySet(); choosing = false
+        }, enabled = picked.size >= 3)
+        SecondaryButton("إلغاء", { choosing = false; picked = emptySet() }, fill = true)
+    }
 }

@@ -31,6 +31,7 @@ struct SeatsLobby: View {
     @ObservedObject private var session = Session.shared
     @State private var manual = false
     @State private var qaid = false
+    @State private var sawa = false
     private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
 
@@ -128,12 +129,13 @@ struct SeatsLobby: View {
                     if pro {
                         SwitchRow(label: "إعلان المشاريع يدوي", isOn: manual, onChange: { manual = $0 })
                         SwitchRow(label: "القيد والقطع", isOn: qaid, onChange: { qaid = $0 })
+                        SwitchRow(label: "زر سوا", isOn: sawa, onChange: { sawa = $0 })
                         Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
                     } else if session.profile?.proAccess == true {
                         Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
                     }
                 }
-                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid]) }
+                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": pro && sawa]) }
                 MButton("إلغاء") { setup = false }
             }
         }
@@ -287,7 +289,7 @@ struct VoiceButton: View {
         // أثناء إعادة الاتصال الصامتة يبقى الزر على حاله: في المحادثة والميكروفون مغلق
         let joined = voice.joined || voice.reconnecting
         let muted = voice.muted || voice.reconnecting
-        let status = voice.busy && !voice.reconnecting ? "جارٍ الاتصال بالمحادثة الصوتية" : !joined ? "أنت خارج المحادثة الصوتية" : muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
+        let status = voice.busy && !voice.reconnecting ? "جارٍ الاتصال بالمحادثة الصوتية" : !joined ? "المحادثة الصوتية: اضغط مطولاً للانضمام" : muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
         // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
         let on = joined && !muted
         Text("🎤 \(status)")
@@ -308,7 +310,7 @@ struct VoiceButton: View {
             .accessibilityAddTraits(micFocus.silent ? [] : .isButton)
             .accessibilityRemoveTraits(micFocus.silent ? [.isButton, .isStaticText] : [])
             .accessibilityAction { toggleMute() }
-            .accessibilityAction(named: Text(voice.joined ? "الخروج من المحادثة الصوتية" : "العودة للمحادثة الصوتية")) { toggleJoin() }
+            .accessibilityAction(named: Text(voice.joined ? "الخروج من المحادثة الصوتية" : "الانضمام للمحادثة الصوتية")) { toggleJoin() }
             .accessibilityFocused($focused)
             .onChange(of: micFocus.request) { _ in focused = true }
     }
@@ -316,7 +318,7 @@ struct VoiceButton: View {
     private func toggleMute() {
         guard !voice.busy else { return }
         // خرجت بنفسك: الضغطة العادية لا تعيدك، العودة بالضغط المطول فقط
-        if !voice.joined { Announcer.announce("أنت خارج المحادثة الصوتية"); return }
+        if !voice.joined { Announcer.announce("للانضمام للمحادثة الصوتية اضغط ضغطة مطولة"); return }
         Voice.shared.setMuted(!voice.muted)
     }
 
