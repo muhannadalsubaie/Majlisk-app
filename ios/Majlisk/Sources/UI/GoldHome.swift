@@ -111,6 +111,11 @@ struct GoldMenuScreen: View {
                         .buttonStyle(.plain)
                         .accessibilityLabel("رصيدك \(profile?.coins.map(String.init) ?? "") عملة، الحصول على عملات")
                     }
+                    // المتصلون
+                    OnlineLine(openTable: openTable)
+                        .frame(maxWidth: .infinity, alignment: .leading).padding(14)
+                        .background(Color(red: 0.078, green: 0.106, blue: 0.133)).clipShape(RoundedRectangle(cornerRadius: 16))
+                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
                     // بطاقة «العب الآن» بطاولة مجسمة
                     ZStack(alignment: .bottom) {
                         MiniTable().padding(.top, 6).frame(maxHeight: .infinity, alignment: .top)
@@ -146,11 +151,6 @@ struct GoldMenuScreen: View {
                         GameCard(name: "جاكارو", icon: "🎯", featured: false) { play("jackaroo") }
                         GameCard(name: "لودو", icon: "🎲", featured: false) { play("ludo") }
                     }
-                    // المتصلون
-                    OnlineLine(openTable: openTable)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(14)
-                        .background(Color(red: 0.078, green: 0.106, blue: 0.133)).clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
                 }
                 .padding(.horizontal, 18).padding(.vertical, 12)
             }

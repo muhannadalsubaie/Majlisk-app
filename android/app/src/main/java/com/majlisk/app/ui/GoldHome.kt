@@ -144,6 +144,10 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                         .semantics { contentDescription = "رصيدك ${profile?.coins ?: ""} عملة، الحصول على عملات" },
                 )
             }
+            // المتصلون
+            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF141B22)).border(1.dp, Pro.goldLight.copy(alpha = 0.18f), RoundedCornerShape(16.dp)).padding(14.dp)) {
+                OnlineLine(openTable)
+            }
             // بطاقة «العب الآن» بطاولة مجسمة
             Box(
                 Modifier.fillMaxWidth().height(220.dp).shadow(16.dp, RoundedCornerShape(26.dp))
@@ -175,10 +179,6 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
                 GameCard("جاكارو", "🎯", false, Modifier.weight(1f)) { play("jackaroo") }
                 GameCard("لودو", "🎲", false, Modifier.weight(1f)) { play("ludo") }
-            }
-            // المتصلون
-            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF141B22)).border(1.dp, Pro.goldLight.copy(alpha = 0.18f), RoundedCornerShape(16.dp)).padding(14.dp)) {
-                OnlineLine(openTable)
             }
         }
     }
