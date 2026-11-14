@@ -393,6 +393,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
             if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
             if (g.actions.canProject && v.manualProjects) add("مشروع" to { act(jsonOf("type" to "declareProject")) })
+            // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)
+            g.actions.declareKinds.forEach { k -> add("مشروع ${PROJECT_KIND_NAMES[k] ?: k}" to { act(jsonOf("type" to "declareKind", "kind" to k)) }) }
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
@@ -760,7 +762,9 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
         if (trump != null && played.first.suit == trump) Sounds.cut() else Sounds.card()
     }
     // إعلان المشروع (اللفة الأولى): صوت كل مشروع
-    if (g.declared.size > prev.declared.size) Sounds.project(g.declared.drop(prev.declared.size).flatMap { it.kinds })
+    // (القيد: صوت المشروع أول ما يختار نوعه، وعند الفرش صوت الكشف بس)
+    if (g.kindDeclared.size > prev.kindDeclared.size) Sounds.project(g.kindDeclared.drop(prev.kindDeclared.size))
+    else if (g.kindDeclared.isEmpty() && g.declared.size > prev.declared.size) Sounds.project(g.declared.drop(prev.declared.size).flatMap { it.kinds })
     // كشف أوراق المشروع (اللفة الثانية)
     if (g.declared.count { it.faces.isNotEmpty() } > prev.declared.count { it.faces.isNotEmpty() }) Sounds.projectReveal()
     if (g.balootSeat != null && prev.balootSeat == null) Sounds.baloot()

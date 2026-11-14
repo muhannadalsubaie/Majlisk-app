@@ -389,6 +389,8 @@ struct BalootBoard: View {
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
         if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
         if g.actions.canProject && v.manualProjects { out.append(("مشروع", { act(["type": "declareProject"]) })) }
+        // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)، وفرشه، والتسجيلة من الأزرار
+        for k in g.actions.declareKinds { out.append(("مشروع \(PROJECT_KIND_NAMES[k] ?? k)", { act(["type": "declareKind", "kind": k]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
         if g.actions.chooseLock {
@@ -544,7 +546,9 @@ final class GameSoundTracker {
             if let trump, card.suit == trump { s.cut() } else { s.card() }
         }
         // إعلان المشروع (اللفة الأولى): صوت كل مشروع
-        if g.declared.count > prev.declared.count { s.project(g.declared.dropFirst(prev.declared.count).flatMap(\.kinds)) }
+        // (القيد: صوت المشروع أول ما يختار نوعه، وعند الفرش صوت الكشف بس)
+        if g.kindDeclared.count > prev.kindDeclared.count { s.project(Array(g.kindDeclared.dropFirst(prev.kindDeclared.count))) }
+        else if g.kindDeclared.isEmpty && g.declared.count > prev.declared.count { s.project(g.declared.dropFirst(prev.declared.count).flatMap(\.kinds)) }
         // كشف أوراق المشروع (اللفة الثانية)
         if g.declared.filter({ !$0.faces.isEmpty }).count > prev.declared.filter({ !$0.faces.isEmpty }).count { s.projectReveal() }
         if g.balootSeat != nil && prev.balootSeat == nil { s.baloot() }
