@@ -157,6 +157,9 @@ struct SeatsLobby: View {
                     ForEach(list) { c in MButton(c.label) { conn.send("replace", ["seat": seat, "uid": c.id]); panel = nil } }
                     if list.isEmpty { BodyText("لا يوجد أحد آخر في الطاولة.") }
                     let info = v.seat(seat)
+                    if info?.isBot != true {
+                        MButton("روبوت مكانه (1 🪙)", .primary, label: "روبوت مكانه، عملة واحدة") { conn.send("replace", ["seat": seat, "uid": "bot"]); panel = nil }
+                    }
                     MButton(info?.isBot == true ? "إزالة الروبوت" : seat == v.mySeat ? "أخلِ مقعدي وأصبح مشاهداً" : "إخلاء المقعد (يصبح مشاهداً)", .danger) {
                         conn.send("vacate", ["seat": seat]); panel = nil
                     }

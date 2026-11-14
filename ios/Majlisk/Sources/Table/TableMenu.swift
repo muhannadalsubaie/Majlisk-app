@@ -182,10 +182,14 @@ struct TableMenu: View {
             }
         case .replace(let seat):
             Sheet(title: "من يجلس مكان \(view.seat(seat)?.username ?? "المقعد الفارغ")؟") {
-                if view.spectators.isEmpty { BodyText("لا يوجد مشاهدون للاستبدال. ادعُ صديقاً أولاً، وبعد دخوله يظهر هنا.") }
                 ForEach(view.spectators, id: \.uid) { s in
                     MButton(s.username, .primary) { conn.send("replace", ["seat": seat, "uid": s.uid]); page = .players }
                 }
+                // روبوت مكانه (حتى أثناء اللعب: ياخذ أوراق المقعد)
+                if view.seat(seat)?.isBot != true {
+                    MButton("روبوت (1 🪙)", .primary, label: "روبوت، عملة واحدة") { conn.send("replace", ["seat": seat, "uid": "bot"]); page = .players }
+                }
+                if view.spectators.isEmpty { Note("ما فيه مشاهدين. تقدر تحط روبوت، أو تدعو صديق وبعد ما يدخل يطلع هنا.") }
                 MButton("رجوع") { page = .players }
             }
         }

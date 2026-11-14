@@ -161,6 +161,8 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             list.forEach { (u, label) -> SecondaryButton(label, { conn.send("replace", "seat" to p.seat, "uid" to u); panel = null }, fill = true) }
             if (list.isEmpty()) Body("لا يوجد أحد آخر في الطاولة.")
             val seatInfo = v.seats.getOrNull(p.seat)
+            if (seatInfo?.isBot != true)
+                PrimaryButton("روبوت مكانه (1 🪙)", { conn.send("replace", "seat" to p.seat, "uid" to "bot"); panel = null }, description = "روبوت مكانه، عملة واحدة")
             DangerButton(
                 when { seatInfo?.isBot == true -> "إزالة الروبوت"; p.seat == v.mySeat -> "أخلِ مقعدي وأصبح مشاهداً"; else -> "إخلاء المقعد (يصبح مشاهداً)" },
                 { conn.send("vacate", "seat" to p.seat); panel = null },

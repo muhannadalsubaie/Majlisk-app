@@ -206,8 +206,11 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             }
         }
         is Page.Replace -> MajliskDialog("من يجلس مكان ${v.seats.getOrNull(p.seat)?.username ?: "المقعد الفارغ"}؟", { page = Page.Players }) {
-            if (v.spectators.isEmpty()) Body("لا يوجد مشاهدون للاستبدال. ادعُ صديقاً أولاً، وبعد دخوله يظهر هنا.")
             v.spectators.forEach { s -> PrimaryButton(s.username, { conn.send("replace", "seat" to p.seat, "uid" to s.uid); page = Page.Players }) }
+            // روبوت مكانه (حتى أثناء اللعب: ياخذ أوراق المقعد)
+            if (v.seats.getOrNull(p.seat)?.isBot != true)
+                PrimaryButton("روبوت (1 🪙)", { conn.send("replace", "seat" to p.seat, "uid" to "bot"); page = Page.Players }, description = "روبوت، عملة واحدة")
+            if (v.spectators.isEmpty()) Note("ما فيه مشاهدين. تقدر تحط روبوت، أو تدعو صديق وبعد ما يدخل يطلع هنا.")
             SecondaryButton("رجوع", { page = Page.Players }, fill = true)
         }
     }
