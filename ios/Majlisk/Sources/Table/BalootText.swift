@@ -72,6 +72,13 @@ struct BalootText {
             if d.cancelled { return "\(who): أُلغي المشروع" }
             return "\(who): \(d.kinds.joined(separator: " و"))"
         }
+        // القيد: المشاريع اللي انعلن نوعها وما انفرشت للحين
+        if active {
+            for seat in [0, 1, 2, 3] where !g.declared.contains(where: { $0.seat == seat }) {
+                let kinds = g.kindDeclared.filter { $0.seat == seat }.map(\.kind)
+                if !kinds.isEmpty { lines.append("\(seat == mySeat ? "أنت" : name(seat)): مشروع \(kinds.joined(separator: " و"))") }
+            }
+        }
         if let b = g.balootSeat { lines.append("\(b == mySeat ? "أنت" : name(b)): بلوت") }
         let projects = lines.isEmpty ? "لا توجد مشاريع معلنة" : lines.joined(separator: ". ")
         return g.phase == "playing" ? "\(projects). \(tricks())" : projects

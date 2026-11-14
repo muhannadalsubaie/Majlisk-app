@@ -76,6 +76,10 @@ class BalootText(private val view: TableView, private val g: GameView, private v
             else if (d.cancelled) "$who: أُلغي المشروع"
             else "$who: ${d.kinds.joinToString(" و")}"
         }.toMutableList()
+        // القيد: المشاريع اللي انعلن نوعها وما انفرشت للحين
+        if (active) g.kindDeclared.filter { (seat, _) -> g.declared.none { it.seat == seat } }.groupBy({ it.first }, { it.second }).forEach { (seat, kinds) ->
+            lines += "${if (seat == mySeat) "أنت" else name(seat)}: مشروع ${kinds.joinToString(" و")}"
+        }
         g.balootSeat?.let { lines += "${if (it == mySeat) "أنت" else name(it)}: بلوت" }
         val projects = if (lines.isEmpty()) "لا توجد مشاريع معلنة" else lines.joinToString(". ")
         return if (g.phase == "playing") "$projects. ${tricks()}" else projects

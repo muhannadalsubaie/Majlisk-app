@@ -547,7 +547,7 @@ final class GameSoundTracker {
         }
         // إعلان المشروع (اللفة الأولى): صوت كل مشروع
         // (القيد: صوت المشروع أول ما يختار نوعه، وعند الفرش صوت الكشف بس)
-        if g.kindDeclared.count > prev.kindDeclared.count { s.project(Array(g.kindDeclared.dropFirst(prev.kindDeclared.count))) }
+        if g.kindDeclared.count > prev.kindDeclared.count { s.project(g.kindDeclared.dropFirst(prev.kindDeclared.count).map(\.kind)) }
         else if g.kindDeclared.isEmpty && g.declared.count > prev.declared.count { s.project(g.declared.dropFirst(prev.declared.count).flatMap(\.kinds)) }
         // كشف أوراق المشروع (اللفة الثانية)
         if g.declared.filter({ !$0.faces.isEmpty }).count > prev.declared.filter({ !$0.faces.isEmpty }).count { s.projectReveal() }

@@ -763,7 +763,7 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
     }
     // إعلان المشروع (اللفة الأولى): صوت كل مشروع
     // (القيد: صوت المشروع أول ما يختار نوعه، وعند الفرش صوت الكشف بس)
-    if (g.kindDeclared.size > prev.kindDeclared.size) Sounds.project(g.kindDeclared.drop(prev.kindDeclared.size))
+    if (g.kindDeclared.size > prev.kindDeclared.size) Sounds.project(g.kindDeclared.drop(prev.kindDeclared.size).map { it.second })
     else if (g.kindDeclared.isEmpty() && g.declared.size > prev.declared.size) Sounds.project(g.declared.drop(prev.declared.size).flatMap { it.kinds })
     // كشف أوراق المشروع (اللفة الثانية)
     if (g.declared.count { it.faces.isNotEmpty() } > prev.declared.count { it.faces.isNotEmpty() }) Sounds.projectReveal()
