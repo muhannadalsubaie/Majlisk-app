@@ -60,6 +60,32 @@ final class Hub: ObservableObject {
     private var task: URLSessionWebSocketTask?
     private var loop: Task<Void, Never>?
 
+    /// الحساب مفتوح في جهاز ثاني: هالجهاز «مقفول» (بدون تسجيل خروج). أي جهاز يفتح التطبيق ياخذ الحساب
+    /// على طول والثاني يتقفل؛ لو رجعت فتحته هنا ينفتح ويتقفل الثاني.
+    @Published private(set) var locked = false
+
+    /// فتحت التطبيق (أو رجعت له): هالجهاز ياخذ الحساب، والجهاز الثاني يتقفل
+    func takeOver() {
+        guard let uid = Auth.auth().currentUser?.uid else { return }
+        Task { @MainActor in
+            guard (try? await Api.post("/profile/claim-device", ["device": Prefs.deviceId])) != nil else { return }
+            Prefs.claimedUid = uid
+            if self.locked { self.locked = false; self.start() }
+        }
+    }
+
+    /// تسجيل خروج: ما يبقى القفل لحساب ثاني يدخل
+    func clearLock() { DispatchQueue.main.async { self.locked = false } }
+
+    /// جهاز ثاني أخذ الحساب: نقفل هالجهاز (نوقف الاتصال والمحادثة الصوتية) بدون تسجيل خروج
+    @MainActor func lock() {
+        guard !locked else { return }
+        locked = true
+        stop()
+        Voice.shared.leave(quiet: true)
+        Announcer.announce("حسابك انفتح في جهاز ثاني. افتح التطبيق هنا متى ما بغيت ترجع له")
+    }
+
     func start() {
         guard loop == nil else { return }
         Online.shared.start()
@@ -71,6 +97,11 @@ final class Hub: ObservableObject {
                 if let uid = Auth.auth().currentUser?.uid, Prefs.claimedUid != uid {
                     if (try? await Api.post("/profile/claim-device", ["device": Prefs.deviceId])) != nil { Prefs.claimedUid = uid }
                     else { try? await Task.sleep(nanoseconds: 3_000_000_000); continue }
+                } else if Auth.auth().currentUser != nil,
+                          let r = try? await Api.post("/profile/device-status", ["device": Prefs.deviceId]), (r["current"] as? Bool) == false {
+                    // رجع الاتصال (بعد انقطاع) وجهاز ثاني أخذ الحساب وقتها: نتقفل بدل ما نرجع ناخذه
+                    await MainActor.run { self?.lock() }
+                    break
                 }
                 let url = URL(string: Api.wsURL("/me/ws", token: token).absoluteString + "&device=" + Prefs.deviceId)!
                 let ws = URLSession.shared.webSocketTask(with: url)
@@ -98,16 +129,13 @@ final class Hub: ObservableObject {
             let s = HubState(friends: friends(msg, "friends"), requests: friends(msg, "requests"), invites: invites(msg))
             DispatchQueue.main.async { self.state = s }
         case "presence": DispatchQueue.main.async { self.presence += 1 }
-        // الحساب انفتح من جوال ثاني: نسجّل خروج هالجوال
+        // الحساب انفتح من جهاز ثاني: نقفل هالجهاز (بدون تسجيل خروج)
         case "loggedOut":
             Task { @MainActor in
-                // نتأكد من الخادم إن جوال ثاني فعلاً أخذ الحساب (ما نطلع بالغلط). لو ما قدرنا نتأكد ما نطلع
+                // نتأكد من الخادم إن جهاز ثاني فعلاً أخذ الحساب (ما نتقفل بالغلط)
                 guard let r = try? await Api.post("/profile/device-status", ["device": Prefs.deviceId]),
                       (r["current"] as? Bool) == false else { return }
-                Prefs.claimedUid = nil
-                Messaging.messaging().deleteToken { _ in }
-                Announcer.announce("انفتح حسابك من جوال ثاني، فتسجّل خروجك من هالجوال")
-                Session.shared.signOut()
+                self.lock()
             }
         case "notice": Sounds.shared.notify(); Announcer.announce(msg.str("text"))
         case "invite": Sounds.shared.inviteIn(); Announcer.announce("\(msg.obj("invite")?.str("fromName") ?? "") يدعوك لطاولته")

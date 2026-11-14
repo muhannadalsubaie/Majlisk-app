@@ -72,6 +72,36 @@ object Hub {
     private var job: Job? = null
     private var enabled = false
 
+    /**
+     * الحساب مفتوح في جهاز ثاني: هالجهاز «مقفول» (بدون تسجيل خروج). أي جهاز يفتح التطبيق ياخذ الحساب
+     * على طول والثاني يتقفل؛ لو رجعت فتحته هنا ينفتح ويتقفل الثاني.
+     */
+    private val _locked = MutableStateFlow(false)
+    val locked: StateFlow<Boolean> = _locked
+
+    /** فتحت التطبيق (أو رجعت له): هالجهاز ياخذ الحساب، والجهاز الثاني يتقفل */
+    fun takeOver() {
+        val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid ?: return
+        Session.scope.launch {
+            val ok = runCatching { Api.post("/profile/claim-device", jsonOf("device" to Prefs.deviceId)) }.isSuccess
+            if (!ok) return@launch
+            Prefs.claimedUid = uid
+            if (_locked.value) { _locked.value = false; start() }
+        }
+    }
+
+    /** تسجيل خروج: ما يبقى القفل لحساب ثاني يدخل */
+    fun clearLock() { _locked.value = false }
+
+    /** جهاز ثاني أخذ الحساب: نقفل هالجهاز (نوقف الاتصال والمحادثة الصوتية) بدون تسجيل خروج */
+    private fun lock() {
+        if (_locked.value) return
+        _locked.value = true
+        stop()
+        com.majlisk.app.voice.Voice.leave(quiet = true)
+        Announcer.announce("حسابك انفتح في جهاز ثاني. افتح التطبيق هنا متى ما بغيت ترجع له")
+    }
+
     fun start() {
         if (enabled) return
         enabled = true
@@ -81,11 +111,15 @@ object Hub {
             while (enabled) {
                 val token = runCatching { Api.token() }.getOrNull()
                 if (token == null) { delay(3000); continue }
-                // دخول جديد بهالحساب على هالجوال: يصير هو جوال الحساب (والجوال الثاني يتسجل خروجه) قبل ما نتصل
+                // دخول جديد بهالحساب على هالجوال: يصير هو جهاز الحساب (والجهاز الثاني يتقفل) قبل ما نتصل
                 val uid = com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid
                 if (uid != null && Prefs.claimedUid != uid) {
                     val ok = runCatching { Api.post("/profile/claim-device", jsonOf("device" to Prefs.deviceId)) }.isSuccess
                     if (ok) Prefs.claimedUid = uid else { delay(3000); continue }
+                } else if (uid != null) {
+                    // رجع الاتصال (بعد انقطاع): لو جهاز ثاني أخذ الحساب وقتها، نتقفل بدل ما نرجع ناخذه
+                    val current = runCatching { Api.post("/profile/device-status", jsonOf("device" to Prefs.deviceId)).optBoolean("current", true) }.getOrDefault(true)
+                    if (!current) { Session.scope.launch { lock() }; break }
                 }
                 val closed = kotlinx.coroutines.CompletableDeferred<Unit>()
                 ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/me/ws", token) + "&device=" + Prefs.deviceId).build(), object : WebSocketListener() {
@@ -96,15 +130,11 @@ object Hub {
                         when (msg.optString("type")) {
                             "state" -> _state.value = HubState(friends(msg, "friends"), friends(msg, "requests"), invites(msg))
                             "presence" -> _presence.value++
-                            // الحساب انفتح من جوال ثاني: نسجّل خروج هالجوال
+                            // الحساب انفتح من جهاز ثاني: نقفل هالجهاز (بدون تسجيل خروج)
                             "loggedOut" -> Session.scope.launch {
-                                // نتأكد من الخادم إن جوال ثاني فعلاً أخذ الحساب (ما نطلع بالغلط). لو ما قدرنا نتأكد ما نطلع
+                                // نتأكد من الخادم إن جهاز ثاني فعلاً أخذ الحساب (ما نتقفل بالغلط)
                                 val current = runCatching { Api.post("/profile/device-status", jsonOf("device" to Prefs.deviceId)).optBoolean("current", true) }.getOrDefault(true)
-                                if (current) return@launch
-                                Prefs.claimedUid = null
-                                runCatching { com.google.firebase.messaging.FirebaseMessaging.getInstance().deleteToken() }
-                                Announcer.announce("انفتح حسابك من جوال ثاني، فتسجّل خروجك من هالجوال")
-                                Session.signOut()
+                                if (!current) lock()
                             }
                             "notice" -> { Sounds.notifyTone(); Announcer.announce(msg.optString("text")) }
                             "invite" -> { Sounds.inviteIn(); Announcer.announce("${msg.optJSONObject("invite")?.optString("fromName")} يدعوك لطاولته") }

@@ -45,7 +45,7 @@ fun AppRoot() {
     val signedIn = user != null && !profile?.username.isNullOrEmpty()
     // مركز اللاعب (الأصدقاء والدعوات)، واستكمال أي شراء دُفع ولم تُسلَّم عملاته
     LaunchedEffect(signedIn) {
-        if (signedIn) { Hub.start(); Billing.recover() } else Hub.stop()
+        if (signedIn) { Hub.start(); Billing.recover() } else { Hub.stop(); Hub.clearLock() }
     }
 
     // زر الرجوع في الجهاز: يرجع للصفحة السابقة، ومن الرئيسية يسأل قبل الخروج
@@ -60,7 +60,15 @@ fun AppRoot() {
     val needsUsername = user != null && profile?.loaded == true && profile?.username.isNullOrEmpty() && screen != Route.Splash
     // حساب جديد بالبريد لم يضغط رابط التحقق بعد
     var verified by remember(user?.uid) { mutableStateOf(!com.majlisk.app.data.AuthService.needsVerification(user)) }
+    // الحساب مفتوح في جهاز ثاني: هالجهاز مقفول (بدون تسجيل خروج) لين ترجع تفتحه هنا
+    val locked by Hub.locked.collectAsState()
     when {
+        user != null && locked -> Screen {
+            Title("حسابك مفتوح في جهاز ثاني")
+            Body("فتحت حسابك من جهاز ثاني، فتقفل هنا. حسابك ما تسجّل خروجه.")
+            PrimaryButton("استخدم حسابي هنا", { Hub.takeOver() })
+            Note("أي جهاز تفتح فيه التطبيق ياخذ الحساب على طول، والجهاز الثاني يتقفل.")
+        }
         user != null && !verified && screen != Route.Splash -> VerifyEmailScreen(user?.email.orEmpty()) { verified = true }
         needsUsername -> ChooseUsernameScreen()
         // المشترك: علامات التبويب ثابتة تحت، وكل تبويب يفتح فوقها (ما يفتح صفحة مستقلة)

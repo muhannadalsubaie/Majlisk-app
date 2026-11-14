@@ -22,7 +22,9 @@ struct AppRoot: View {
         // المشترك: كل صفحات التطبيق بالشكل الذهبي (تتلون من جديد لما يتغير اشتراكه)
         content.id(session.profile?.isPro == true)
             .onChange(of: session.uid) { uid in if uid == nil && route != .splash { route = .auth } }
-            .onChange(of: signedIn) { on in if on { hub.start(); Store.recover(); Push.shared.register(); openPushTable() } else { hub.stop() } }
+            .onChange(of: signedIn) { on in if on { hub.start(); Store.recover(); Push.shared.register(); openPushTable() } else { hub.stop(); hub.clearLock() } }
+            // فتحت التطبيق أو رجعت له: هالجهاز ياخذ الحساب والجهاز الثاني يتقفل
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in if signedIn { hub.takeOver() } }
             .onAppear { if signedIn { hub.start(); Store.recover(); Push.shared.register() } }
             // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
             .onChange(of: push.pendingTable) { _ in openPushTable() }
@@ -47,7 +49,15 @@ struct AppRoot: View {
     }
 
     @ViewBuilder private var content: some View {
-        if session.uid != nil && session.needsVerify && route != .splash {
+        // الحساب مفتوح في جهاز ثاني: هالجهاز مقفول (بدون تسجيل خروج) لين ترجع تفتحه هنا
+        if session.uid != nil && hub.locked {
+            Screen {
+                Title("حسابك مفتوح في جهاز ثاني")
+                BodyText("فتحت حسابك من جهاز ثاني، فتقفل هنا. حسابك ما تسجّل خروجه.")
+                MButton("استخدم حسابي هنا", .primary) { hub.takeOver() }
+                Note("أي جهاز تفتح فيه التطبيق ياخذ الحساب على طول، والجهاز الثاني يتقفل.")
+            }
+        } else if session.uid != nil && session.needsVerify && route != .splash {
             VerifyEmailScreen()
         } else if needsUsername {
             ChooseUsernameScreen()

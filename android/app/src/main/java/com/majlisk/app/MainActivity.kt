@@ -59,6 +59,12 @@ class MainActivity : ComponentActivity() {
     }
 
 
+    /** فتحت التطبيق أو رجعت له: هالجهاز ياخذ الحساب والجهاز الثاني يتقفل */
+    override fun onResume() {
+        super.onResume()
+        com.majlisk.app.data.Hub.takeOver()
+    }
+
     override fun onNewIntent(intent: android.content.Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
