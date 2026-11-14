@@ -656,7 +656,8 @@ private struct PlayerTag: View {
         let s = v.seat(seat)
         let turn = g.turn == seat && g.phase != "matchOver"
         let label = (s?.username ?? "مقعد \(seat + 1)") + (s?.isBot == true ? " (روبوت)" : "") + (s?.away == true ? " (انقطع الاتصال)" : "") + (partner ? " (شريكك)" : "")
-        VStack(spacing: 4) {
+        let across = (partner || wide) && !faces.isEmpty
+        let who = VStack(spacing: 4) {
             Avatar(uid: v.seatUid(seat), name: s?.username ?? "", size: 34)
             HStack(spacing: 4) {
                 Text(label)
@@ -666,7 +667,13 @@ private struct PlayerTag: View {
                 TurnClock(v: v, seat: seat, turn: turn)
             }
             if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
-            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner || wide ? 220 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) }).padding(.top, 2) }
+        }
+        let fan = ProjectFaces(faces: faces, maxWidth: across ? 170 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) })
+        Group {
+            // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
+            if across { HStack(spacing: 14) { who; fan } }
+            // على الجنب: المروحة تحت الاسم (الطاولة أطول منها فما تزيد الشاشة)
+            else { VStack(spacing: 4) { who; if !faces.isEmpty { fan.padding(.top, 2) } } }
         }
             .padding(.horizontal, 4).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
@@ -685,9 +692,9 @@ private struct ProjectFaces: View {
     var onTap: (() -> Void)? = nil
     var body: some View {
         // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
-        let w: CGFloat = maxWidth < 100 ? 34 : 44, h: CGFloat = w * 1.45
+        let w: CGFloat = maxWidth < 100 ? 34 : 38, h: CGFloat = w * 1.45
         let n = faces.count
-        let step: CGFloat = n > 1 ? min(maxWidth < 100 ? 14 : 24, (maxWidth - w) / CGFloat(n - 1)) : 0
+        let step: CGFloat = n > 1 ? min(maxWidth < 100 ? 14 : 22, (maxWidth - w) / CGFloat(n - 1)) : 0
         let angle = min(12, 40 / Double(max(1, n - 1)))
         Group {
             if true {

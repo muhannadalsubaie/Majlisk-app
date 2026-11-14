@@ -576,21 +576,27 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         if (s?.away == true) append(" (انقطع الاتصال)")
         if (partner) append(" (شريكك)")
     }
-    Column(
-        modifier
-            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
-            .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
-            .padding(horizontal = 4.dp, vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
+    val box = modifier
+        .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
+        .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
+        .padding(horizontal = 4.dp, vertical = 8.dp)
+    val who: @Composable () -> Unit = {
         com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(seat), s?.username.orEmpty(), 34.dp)
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
             TurnClock(v, seat, turn)
         }
         if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
-        if (faces.isNotEmpty()) ProjectFaces(faces, if (wide) 220f else 62f, onTap = { projectSpot.value = Spot("أوراق ${s?.username ?: "اللاعب"}", faces) })
+    }
+    val onTap = { projectSpot.value = Spot("أوراق ${s?.username ?: "اللاعب"}", faces) }
+    // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
+    if (wide && faces.isNotEmpty()) Row(box, horizontalArrangement = Arrangement.spacedBy(14.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) { who() }
+        ProjectFaces(faces, 170f, onTap = onTap)
+    } else Column(box, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        who()
+        // على الجنب: المروحة تحت الاسم (الطاولة أطول منها فما تزيد الشاشة)
+        if (faces.isNotEmpty()) ProjectFaces(faces, 62f, onTap = onTap)
     }
 }
 
@@ -599,12 +605,12 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -> Unit)? = null) {
     // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
-    val w = if (maxWidth < 100f) 34f else 44f; val h = w * 1.45f
+    val w = if (maxWidth < 100f) 34f else 38f; val h = w * 1.45f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
         // مروحة لكل اللاعبين (فوق وتحت والجنب): كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
         if (true) {
             val n = faces.size
-            val step = if (n > 1) minOf(if (maxWidth < 100f) 14f else 24f, (maxWidth - w) / (n - 1)) else 0f
+            val step = if (n > 1) minOf(if (maxWidth < 100f) 14f else 22f, (maxWidth - w) / (n - 1)) else 0f
             val mid = (n - 1) / 2f
             Box(
                 Modifier.clearAndSetSemantics { }.size((w + step * (n - 1)).dp, (h + 8f).dp)
