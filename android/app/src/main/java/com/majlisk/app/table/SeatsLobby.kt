@@ -133,7 +133,7 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
                 com.majlisk.app.ui.SwitchRow("إعلان المشاريع يدوي", manual, { manual = it }, description = "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى")
                 com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it }, description = "اللعب حر، واللي يغلط يتسجّل عليه بزر تسجيلة")
                 com.majlisk.app.ui.SwitchRow("زر سوا", sawa, { sawa = it }, description = "زر سوا يطلع للكل، ولو توقفه ما يطلع لأحد في هالمباراة")
-                Note("🔒 هذي الخيارات تنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
+                Note("🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
             } else if (com.majlisk.app.data.Session.profile.collectAsState().value?.proAccess == true)
                 Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
         }

@@ -195,7 +195,7 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                 })
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
                 // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
-                if (v.ownerUid == uid && v.playing && com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true)
+                if (v.ownerUid == uid && v.playing && v.allPro && com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true)
                     com.majlisk.app.ui.BackButton({ timerOpen = true }, "⏱ المؤقت")
                 if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(

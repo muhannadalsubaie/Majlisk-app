@@ -99,7 +99,7 @@ struct TableScreen: View {
                     }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
                 // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
-                if v.ownerUid == uid && v.playing && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
+                if v.ownerUid == uid && v.playing && v.allPro && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                 Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim)
