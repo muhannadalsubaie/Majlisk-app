@@ -77,7 +77,6 @@ val PRO_FEATURES = listOf(
     "اللعب بدون عملات طول مدة الاشتراك",
     "طاولات وألوان وأشكال مميزة لكل الألعاب",
     "طاولة ثابتة باسمك وبكلمة مرور",
-    "إخفاء ظهورك أنك متصل",
     "إعلان المشاريع يدوي، والقيد والقطع",
     "زر «ورق» متاح لك حتى لو مو دورك",
     "تشغيل وإيقاف المؤقت أثناء اللعب",
@@ -214,19 +213,8 @@ fun ProScreen(profile: Profile?, onBack: () -> Unit, onGift: () -> Unit, onLook:
             busy = true
             scope.launch { Billing.buyPro(); busy = false }
         }, enabled = !busy, emerald = true)
-        // إعدادات المشترك: تخصيص الشكل، وإخفاء الظهور
-        if (profile?.isPro == true) {
-            GoldButton("🎨 تخصيص الشكل", onLook)
-            var hidden by remember { mutableStateOf(false) }
-            LaunchedEffect(Unit) { runCatching { hidden = Api.post("/pro/settings").optBoolean("hideOnline") } }
-            SwitchRow("إخفاء ظهوري أني متصل", hidden, { on ->
-                hidden = on
-                scope.launch {
-                    runCatching { hidden = Api.post("/pro/settings", jsonOf("hideOnline" to on)).optBoolean("hideOnline") }
-                    Announcer.announce(if (hidden) "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" else "صرت تظهر متصل")
-                }
-            }, description = "ما تطلع في قائمة المتصلين، وأصدقاؤك يشوفونك غير متصل")
-        }
+        // إعدادات المشترك: تخصيص الشكل
+        if (profile?.isPro == true) GoldButton("🎨 تخصيص الشكل", onLook)
         SecondaryButton("🎁 إهداء الباقة للاعب ثاني", onGift, fill = true)
         SecondaryButton("استعادة المشتريات", { scope.launch { Billing.syncPro(announce = true) } }, fill = true)
         Note("الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من اشتراكات Google Play.")
@@ -292,19 +280,4 @@ fun GiftScreen(onBack: () -> Unit) {
             Note("يوصله إشعار بالهدية وتتفعل الباقة عنده شهر. ما تتجدد تلقائياً، وإذا انتهى الشهر تقدر تدفع وتجدد له شهر ثاني.")
         }
     }
-}
-
-/** مفتاح إخفاء الظهور (للمشترك): في صفحة الباقة، وقائمة الطاولة */
-@Composable
-fun HideOnlineSwitch() {
-    val scope = rememberCoroutineScope()
-    var hidden by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) { runCatching { hidden = Api.post("/pro/settings").optBoolean("hideOnline") } }
-    SwitchRow("إخفاء ظهوري أني متصل", hidden, { on ->
-        hidden = on
-        scope.launch {
-            runCatching { hidden = Api.post("/pro/settings", jsonOf("hideOnline" to on)).optBoolean("hideOnline") }
-            Announcer.announce(if (hidden) "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" else "صرت تظهر متصل")
-        }
-    }, description = "ما تطلع في قائمة المتصلين، وأصدقاؤك يشوفونك غير متصل")
 }

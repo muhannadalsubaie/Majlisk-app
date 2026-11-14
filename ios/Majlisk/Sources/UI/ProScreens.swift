@@ -18,7 +18,6 @@ enum Pro {
         "اللعب بدون عملات طول مدة الاشتراك",
         "طاولات وألوان وأشكال مميزة لكل الألعاب",
         "طاولة ثابتة باسمك وبكلمة مرور",
-        "إخفاء ظهورك أنك متصل",
         "إعلان المشاريع يدوي، والقيد والقطع",
         "زر «ورق» متاح لك حتى لو مو دورك",
         "تشغيل وإيقاف المؤقت أثناء اللعب",
@@ -142,7 +141,6 @@ struct ProScreen: View {
     var onLook: () -> Void = {}
     @State private var price = Store.proPriceFallback
     @State private var busy = false
-    @State private var hidden = false
     var body: some View {
         Screen {
             TopBar("الباقة الاحترافية", onBack: onBack)
@@ -178,17 +176,8 @@ struct ProScreen: View {
                     Task { @MainActor in _ = await Store.buyPro(); busy = false }
                 }
             }
-            // إعدادات المشترك: تخصيص الشكل، وإخفاء الظهور
-            if profile?.isPro == true {
-                GoldButton(title: "🎨 تخصيص الشكل", action: onLook)
-                SwitchRow(label: "إخفاء ظهوري أني متصل", isOn: hidden, onChange: { on in
-                    hidden = on
-                    Task { @MainActor in
-                        if let r = try? await Api.post("/pro/settings", ["hideOnline": on]) { hidden = r.bool("hideOnline") }
-                        Announcer.announce(hidden ? "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" : "صرت تظهر متصل")
-                    }
-                })
-            }
+            // إعدادات المشترك: تخصيص الشكل
+            if profile?.isPro == true { GoldButton(title: "🎨 تخصيص الشكل", action: onLook) }
             MButton("🎁 إهداء الباقة للاعب ثاني", action: onGift)
             MButton("استعادة المشتريات") { Task { await Store.syncPro(announce: true) } }
             Note("الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من إعدادات اشتراكات Apple.")
@@ -200,7 +189,6 @@ struct ProScreen: View {
         }
         .task {
             price = await Store.proPrice()
-            if profile?.isPro == true, let r = try? await Api.post("/pro/settings") { hidden = r.bool("hideOnline") }
         }
     }
 }
@@ -267,17 +255,3 @@ struct GiftScreen: View {
     }
 }
 
-/// مفتاح إخفاء الظهور (للمشترك): في صفحة الباقة، وقائمة الطاولة
-struct HideOnlineSwitch: View {
-    @State private var hidden = false
-    var body: some View {
-        SwitchRow(label: "إخفاء ظهوري أني متصل", isOn: hidden, onChange: { on in
-            hidden = on
-            Task { @MainActor in
-                if let r = try? await Api.post("/pro/settings", ["hideOnline": on]) { hidden = r.bool("hideOnline") }
-                Announcer.announce(hidden ? "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" : "صرت تظهر متصل")
-            }
-        })
-        .task { if let r = try? await Api.post("/pro/settings") { hidden = r.bool("hideOnline") } }
-    }
-}

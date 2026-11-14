@@ -130,10 +130,7 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                         .clickable(role = Role.Button) { navigate(Route.Profile) }.semantics(mergeDescendants = true) { contentDescription = "الملف الشخصي" },
                 ) { Avatar(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid, profile?.username.orEmpty(), 50.dp) }
                 Column(Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text(profile?.username.orEmpty(), color = Color(0xFFF4EFE2), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f, fill = false).semantics { heading() })
-                        HideOnlineButton()
-                    }
+                    Text(profile?.username.orEmpty(), color = Color(0xFFF4EFE2), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.semantics { heading() })
                     Text("👑 عضو ذهبي", color = Pro.goldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                 }
                 Text(
@@ -216,32 +213,3 @@ fun GoldTabs(current: Route, navigate: (Route) -> Unit, content: @Composable () 
     }
 }
 
-/** زر إخفاء الظهور جنب اسمك: 👁 ظاهر، 🙈 مخفي */
-@Composable
-private fun HideOnlineButton() {
-    val scope = androidx.compose.runtime.rememberCoroutineScope()
-    var hidden by remember { mutableStateOf<Boolean?>(null) }
-    androidx.compose.runtime.LaunchedEffect(Unit) {
-        runCatching { hidden = com.majlisk.app.net.Api.post("/pro/settings").optBoolean("hideOnline") }
-    }
-    val on = hidden == true
-    Text(
-        if (on) "🙈 مخفي" else "👁 ظاهر",
-        color = if (on) Pro.ink else Pro.goldLight, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1,
-        modifier = Modifier.clip(RoundedCornerShape(50))
-            .background(if (on) Pro.gold else Color(0xFF232D38))
-            .border(1.dp, Pro.gold.copy(alpha = 0.6f), RoundedCornerShape(50))
-            .toggleable(value = on, enabled = hidden != null, role = Role.Switch) { want ->
-                hidden = want
-                scope.launch {
-                    runCatching { hidden = com.majlisk.app.net.Api.post("/pro/settings", com.majlisk.app.net.jsonOf("hideOnline" to want)).optBoolean("hideOnline") }
-                    com.majlisk.app.a11y.Announcer.announce(if (hidden == true) "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" else "صرت تظهر متصل")
-                }
-            }
-            .heightIn(min = 36.dp).padding(horizontal = 10.dp, vertical = 8.dp)
-            .clearAndSetSemantics {
-                contentDescription = "إخفاء ظهوري أني متصل"
-                stateDescription = if (on) "مفعّل" else "متوقف"
-            },
-    )
-}

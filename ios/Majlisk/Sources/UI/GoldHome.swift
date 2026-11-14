@@ -94,10 +94,7 @@ struct GoldMenuScreen: View {
                         }
                         .buttonStyle(.plain).accessibilityLabel("الملف الشخصي")
                         VStack(alignment: .leading, spacing: 2) {
-                            HStack(spacing: 8) {
-                                Text(profile?.username ?? "").font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
-                                HideOnlineButton()
-                            }
+                            Text(profile?.username ?? "").font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
                             Text("👑 عضو ذهبي").font(.system(size: 12, weight: .bold)).foregroundColor(Pro.goldLight)
                         }
                         Spacer()
@@ -204,31 +201,3 @@ struct GoldTabs<Content: View>: View {
     }
 }
 
-/// زر إخفاء الظهور جنب اسمك: 👁 ظاهر، 🙈 مخفي
-private struct HideOnlineButton: View {
-    @State private var hidden: Bool?
-    var body: some View {
-        let on = hidden == true
-        Button {
-            let want = !on
-            hidden = want
-            Task { @MainActor in
-                if let r = try? await Api.post("/pro/settings", ["hideOnline": want]) { hidden = r.bool("hideOnline") }
-                Announcer.announce(hidden == true ? "صرت مخفي: ما تطلع في المتصلين ولا يشوفك أصدقاؤك متصل" : "صرت تظهر متصل")
-            }
-        } label: {
-            Text(on ? "🙈 مخفي" : "👁 ظاهر")
-                .font(.system(size: 12, weight: .bold)).lineLimit(1)
-                .foregroundColor(on ? Pro.ink : Pro.goldLight)
-                .padding(.horizontal, 10).frame(minHeight: 32)
-                .background(on ? Pro.gold : Color(red: 0.137, green: 0.176, blue: 0.22))
-                .clipShape(Capsule())
-                .overlay(Capsule().stroke(Pro.gold.opacity(0.6), lineWidth: 1))
-        }
-        .buttonStyle(.plain)
-        .disabled(hidden == nil)
-        .accessibilityLabel("إخفاء ظهوري أني متصل")
-        .accessibilityValue(on ? "مفعّل" : "متوقف")
-        .task { if let r = try? await Api.post("/pro/settings") { hidden = r.bool("hideOnline") } }
-    }
-}
