@@ -9,6 +9,10 @@ object Prefs {
     lateinit var app: Context
     fun init(c: Context) { app = c.applicationContext; sp = c.getSharedPreferences("majlisk", Context.MODE_PRIVATE) }
 
+    /** شكل أوراقك في البلوت: مروحة (fan) أو كروت جنب بعض (row) — يتحدث على الطاولة على طول */
+    val handStyle: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("handStyle", "fan") ?: "fan") }
+    fun setHandStyle(v: String) { handStyle.value = v; sp.edit().putString("handStyle", v).apply() }
+
     var muted: Boolean
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }

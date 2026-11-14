@@ -49,6 +49,10 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         TopBar("الإعدادات", onBack = onBack)
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
+        SectionTitle("شكل الورق")
+        // اختيارك أنت فقط ويتحفظ على جوالك
+        SwitchRow("مروحة (الأوراق فوق بعض)", Prefs.handStyle.value == "fan", { if (it) Prefs.setHandStyle("fan") })
+        SwitchRow("كروت جنب بعض (مفصولة)", Prefs.handStyle.value == "row", { if (it) Prefs.setHandStyle("row") })
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
         val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()

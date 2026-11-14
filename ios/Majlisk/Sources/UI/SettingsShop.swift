@@ -6,6 +6,7 @@ struct SettingsScreen: View {
     let embedded: Bool
     let onBack: () -> Void
     @State private var muted = Prefs.muted
+    @AppStorage("handStyle") private var handStyle = "fan"
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
@@ -20,6 +21,10 @@ struct SettingsScreen: View {
             TopBar("الإعدادات", onBack: onBack)
             SectionTitle("الصوت")
             SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
+            SectionTitle("شكل الورق")
+            // اختيارك أنت فقط ويتحفظ على جوالك
+            SwitchRow(label: "مروحة (الأوراق فوق بعض)", isOn: handStyle == "fan", onChange: { if $0 { handStyle = "fan" } })
+            SwitchRow(label: "كروت جنب بعض (مفصولة)", isOn: handStyle == "row", onChange: { if $0 { handStyle = "row" } })
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
             ForEach(ChatMode.allCases, id: \.self) { m in

@@ -180,6 +180,8 @@ struct BalootBoard: View {
     @ObservedObject var conn: TableConnection
     /// آخر أكلة انتهت مهلة عرضها (بعدها تختفي أوراقها). الحساب فوري في نفس الإطار، فما تختفي الأوراق وترجع
     @State private var releasedTrick: Int?
+    /// شكل أوراقك (من الإعدادات): fan مروحة، row كروت جنب بعض
+    @AppStorage("handStyle") private var handStyle = "fan"
     /// مؤشر VoiceOver: حين يختفي العنصر اللي ضغطته (ورقة لعبتها، أو أزرار المزايدة) ينتقل لأقرب عنصر
     /// بدل ما يقفز لأعلى الشاشة، وإعلان حركتك يقطع قراءته
     /// بعد ما تضغط زر شراء/دبل: الورقة اللي يروح لها المؤشر لما تختفي الأزرار
@@ -334,6 +336,24 @@ struct BalootBoard: View {
                     let hand = sortHand(g.myHand)
                     // كل ورقة عنصر لحالها (تتنقل بينها يمين ويسار)، بس العنصر مربوط بمكانه في اليد مو بالورقة:
                     // لما تلعب ورقة يبقى مكانها (ويصير فيه الورقة اللي جنبها) فالمؤشر ما يقفز
+                    // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)
+                    if handStyle == "row" {
+                        FlowLayout(spacing: 6) {
+                            ForEach(0..<hand.count, id: \.self) { i in
+                                let c = hand[i]
+                                HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions, small: true) {
+                                    if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents(); playedPos = i }
+                                    act(["type": "play", "card": c.json])
+                                }
+                                    .accessibilityFocused($slotFocus, equals: i)
+                                    .accessibilitySortPriority(Double(i))
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.bottom, 6)
+                        .environment(\.layoutDirection, .leftToRight)
+                        .accessibilityElement(children: .contain)
+                    } else {
                     ZStack(alignment: .bottom) {
                         ForEach(0..<hand.count, id: \.self) { i in
                             let c = hand[i]
@@ -355,6 +375,7 @@ struct BalootBoard: View {
                     .environment(\.layoutDirection, .leftToRight)
                     // ترتيب الأوراق لـ VoiceOver داخل اليد فقط
                     .accessibilityElement(children: .contain)
+                    }
                 } else {
                     // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
                     PlayerTag(v: v, g: g, seat: 0, faces: shownFaces(0), note: seatNote(g, 0))
@@ -691,9 +712,11 @@ private struct HandCard: View {
     var actions: [(String, () -> Void)] = []
     /// سحب لفوق/تحت على الورقة (وقت اللعب): ينقلك للورقة اللي بعدها/قبلها
     var step: ((AccessibilityAdjustmentDirection) -> Void)? = nil
+    /// كروت جنب بعض (من الإعدادات): أصغر شوي عشان تكفي
+    var small = false
     let play: () -> Void
     var body: some View {
-        TableCard(card: card, width: 80, height: 116)
+        TableCard(card: card, width: small ? 58 : 80, height: small ? 84 : 116)
             // المسموح لعبها بإطار ذهبي فقط، فيبقى شكل المروحة واحداً
             .overlay(RoundedRectangle(cornerRadius: 6).stroke(legal ? Palette.goldSoft : .clear, lineWidth: 3))
             .contentShape(Rectangle())

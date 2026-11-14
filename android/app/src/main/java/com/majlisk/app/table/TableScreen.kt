@@ -459,7 +459,30 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
-            Box(Modifier.fillMaxWidth().height(152.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
+            // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)
+            if (com.majlisk.app.data.Prefs.handStyle.value == "row") androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+                FlowRow(
+                    Modifier.fillMaxWidth().padding(top = 4.dp).semantics { isTraversalGroup = true },
+                    horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    hand.forEachIndexed { i, c ->
+                        androidx.compose.runtime.key(i) {
+                            val fr = remember { FocusRequester() }
+                            androidx.compose.runtime.DisposableEffect(Unit) {
+                                slotFocus[i] = fr
+                                onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
+                            }
+                            HandCard(
+                                c, legal = g.actions.legal.contains(c), fanAngle = 0f, actions = cardActions,
+                                modifier = Modifier.size(58.dp, 84.dp).focusRequester(fr).semantics { traversalIndex = (hand.size - i).toFloat() },
+                            ) {
+                                if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i }
+                                act(jsonOf("type" to "play", "card" to c.toJson()))
+                            }
+                        }
+                    }
+                }
+            } else Box(Modifier.fillMaxWidth().height(152.dp).padding(top = 4.dp).semantics { isTraversalGroup = true }) {
                 hand.forEachIndexed { i, c ->
                     // مربوط بالمكان (i) مو بالورقة
                     androidx.compose.runtime.key(i) {
