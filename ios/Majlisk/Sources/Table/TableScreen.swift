@@ -939,6 +939,7 @@ private struct QaidButtons: View {
             if g.actions.canKaboot { SmallButton("قيد كبوت", primary: true) { kabootOpen = true } }
         }
         .frame(maxWidth: .infinity)
+        .onChange(of: g.actions.canShowProject) { can in if !can { hub.choosing = false } }
         // قيد الكبوت: تأكيد قبل (لو طلع غلط يروح الكبوت للفريق الثاني)
         .sheet(isPresented: $kabootOpen) {
             Sheet(title: "قيد كبوت") {
