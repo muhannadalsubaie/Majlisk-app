@@ -164,10 +164,12 @@ struct LudoView {
     static func absPos(_ owner: Int, _ p: Int) -> Int { (STARTS[owner] + p) % 52 }
 
     let seats: [Int]
-    let tokens: [[Int]]
+    var tokens: [[Int]]
     let turn: Int
     let phase: String
     let dice: Int?, lastRoll: Int?, winner: Int?
+    /// نسخة بأماكن أحجار ثانية (للرسم قبل ما تبدأ الحركة)
+    func withTokens(_ t: [[Int]]) -> LudoView { var c = self; c.tokens = t; return c }
     /// من رمى آخر رمية
     let lastSeat: Int?
     let teams: Bool

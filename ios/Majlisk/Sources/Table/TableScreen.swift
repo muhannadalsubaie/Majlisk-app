@@ -306,7 +306,7 @@ struct BalootBoard: View {
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-                if v.qaid && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canKaboot || g.actions.canShowProject) {
+                if v.qaid && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
                     QaidButtons(v: v, g: g, act: act)
                 } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
@@ -926,7 +926,6 @@ private struct QaidButtons: View {
     @State private var qaidOpen = false
     @State private var target: Int?
     @State private var projectOpen = false
-    @State private var kabootOpen = false
     @ObservedObject private var hub = ProjectSpot.shared
     var body: some View {
         // أزرار صغيرة (عشان الطاولة ما تطول وتتحرك فوق وتحت)
@@ -936,18 +935,9 @@ private struct QaidButtons: View {
             // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
             if g.actions.canShowProject && !hub.choosing { SmallButton("فرش المشروع", primary: true) { hub.choosing = true } }
             if g.actions.canSawa { SmallButton("سوا", primary: true) { act(["type": "sawa"]) } }
-            if g.actions.canKaboot { SmallButton("قيد كبوت", primary: true) { kabootOpen = true } }
         }
         .frame(maxWidth: .infinity)
         .onChange(of: g.actions.canShowProject) { can in if !can { hub.choosing = false } }
-        // قيد الكبوت: تأكيد قبل (لو طلع غلط يروح الكبوت للفريق الثاني)
-        .sheet(isPresented: $kabootOpen) {
-            Sheet(title: "قيد كبوت") {
-                Note("تطالب إن فريقك ياكل كل الأكلات الباقية مهما لعب الخصم. لو صح ينحسب لكم كبوت، ولو غلط ينحسب الكبوت للفريق الثاني.")
-                SmallButton("أطالب بالكبوت", primary: true) { kabootOpen = false; act(["type": "kabootClaim"]) }
-                SmallButton("إلغاء") { kabootOpen = false }
-            }
-        }
         .sheet(isPresented: $qaidOpen) {
             if let t = target {
                 Sheet(title: "تسجيلة على \(v.seat(t)?.username ?? "")") {

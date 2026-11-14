@@ -101,8 +101,6 @@ struct GameActions {
     var declareKinds: [String] = []
     var canShowProject = false
     var qaidTargets: [Int] = []
-    /// قيد كبوت: فريقك أكل كل الأكلات اللي قبل
-    var canKaboot = false
 }
 
 struct GameView {
@@ -297,8 +295,7 @@ struct TableView {
                 canProject: a.bool("canProject"),
                 declareKinds: a.arr("declareKinds").compactMap { $0 as? String },
                 canShowProject: a.bool("canShowProject"),
-                qaidTargets: a.arr("qaidTargets").compactMap { ($0 as? NSNumber)?.intValue },
-                canKaboot: a.bool("canKaboot")
+                qaidTargets: a.arr("qaidTargets").compactMap { ($0 as? NSNumber)?.intValue }
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },
             secondHokmSeat: g.intOrNil("secondHokmSeat"),

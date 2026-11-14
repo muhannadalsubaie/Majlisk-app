@@ -231,7 +231,7 @@ struct AuthScreen: View {
                     let mail = email.trimmingCharacters(in: .whitespaces)
                     if signup {
                         try await AuthService.signUp(username: name, email: mail, password: password)
-                        Announcer.announce("أهلاً \(name.trimmingCharacters(in: .whitespaces))، حصلت على 400 عملة ترحيبية")
+                        Announcer.announce("أهلاً \(name.trimmingCharacters(in: .whitespaces))، حصلت على 30 عملة ترحيبية وشهر مجاني من الباقة الذهبية")
                     } else {
                         try await AuthService.signIn(email: mail, password: password)
                         Announcer.announce("تم تسجيل الدخول")

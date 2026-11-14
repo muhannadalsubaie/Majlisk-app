@@ -892,13 +892,14 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     // حركة الأحجار: الحجر يقفز خانة خانة لين يوصل (نفس توقيت نقرات الخطوات)، والمأكول يطير لبيته
     val hops = remember { androidx.compose.runtime.mutableStateMapOf<Pair<Int, Int>, LudoHop>() }
     val prevTokens = remember { arrayOf<Any?>(null, null) } // الأحجار والمرحلة قبل التحديث
-    var clock by remember { mutableStateOf(System.currentTimeMillis()) }
+    // ساعة الإطارات (نفس أساس withFrameNanos) عشان الحركة تمشي مع كل إطار بدون تقطيع
+    var clock by remember { mutableStateOf(System.nanoTime() / 1_000_000) }
     androidx.compose.runtime.LaunchedEffect(l.tokens) {
         @Suppress("UNCHECKED_CAST") val before = prevTokens[0] as List<List<Int>>?
         val wasPhase = prevTokens[1] as String?
         prevTokens[0] = l.tokens; prevTokens[1] = l.phase
         if (before == null || !LUDO_3D) return@LaunchedEffect
-        val now = System.currentTimeMillis()
+        val now = System.nanoTime() / 1_000_000
         // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
         val delayMs = if (wasPhase != "move") 600L else 0L
         var moverEnd = now + delayMs
@@ -921,7 +922,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
     }
     androidx.compose.runtime.LaunchedEffect(hops.size) {
         while (hops.isNotEmpty()) {
-            androidx.compose.runtime.withFrameNanos { clock = System.currentTimeMillis() }
+            androidx.compose.runtime.withFrameNanos { clock = it / 1_000_000 }
             hops.entries.filter { clock >= it.value.end }.map { it.key }.forEach { hops.remove(it) }
         }
     }
@@ -1078,7 +1079,11 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 Modifier.widthIn(max = ludoSide()).fillMaxWidth().aspectRatio(1f)
                     // اللمس يستخدم آخر حالة دائماً (ما يعلق على حالة قديمة لو تغيّرت بدون ما تتغير البصمة)
                     .pointerInput(reader) { if (!reader) detectTapGestures { latestTap.value(it, size.width.toFloat()) } },
-            ) { drawLudo(l, mySeat ?: 0, movable, hops, clock) }
+            ) {
+                // قبل ما تنحسب طريق الحجر: نرسمه في مكانه القديم (بدل ما يقفز للنهاية ويرجع = ذبذبة)
+                @Suppress("UNCHECKED_CAST") val shownTokens = (prevTokens[0] as List<List<Int>>?)?.takeIf { LUDO_3D && it != l.tokens } ?: l.tokens
+                drawLudo(if (shownTokens === l.tokens) l else l.copy(tokens = shownTokens), mySeat ?: 0, movable, hops, clock)
+            }
         }
         cornerRow(false)
         if (l.phase == "over") {
@@ -1253,7 +1258,8 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
                 val t = ((clock - hop.startAt).toFloat() / hop.stepMs).coerceIn(0f, (hop.path.size - 1).toFloat())
                 val k = min(t.toInt(), hop.path.size - 2)
                 val f = t - k
-                val e = f * f * (3 - 2 * f)
+                // سرعة ثابتة بين الخانات (بدون وقفة عند كل خانة)، والقفزة فوق بس
+                val e = if (hop.path.size == 2) f * f * (3 - 2 * f) else f
                 val a = xy(hop.path[k]); val b = xy(hop.path[k + 1])
                 val lift = if (t <= 0f) 0f else sin(PI * f).toFloat() * (if (hop.path.size == 2 && hop.stepMs > 400) 1.6f else 1f)
                 flying += Triple(o, Offset(a.x + (b.x - a.x) * e, a.y + (b.y - a.y) * e), lift)

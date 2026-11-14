@@ -1133,7 +1133,9 @@ struct LudoBoard: View {
             // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
             TimelineView(.animation(paused: hops.isEmpty)) { tl in
                 Canvas { ctx, size in
-                    drawLudo(ctx, size, l, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [],
+                    // قبل ما تنحسب طريق الحجر: نرسمه في مكانه القديم (بدل ما يقفز للنهاية ويرجع = ذبذبة)
+                    let shown = LUDO_3D && prevTokens != nil && prevTokens! != l.tokens ? l.withTokens(prevTokens!) : l
+                    drawLudo(ctx, size, shown, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [],
                              hops: hops, now: tl.date.timeIntervalSince1970)
                 }
             }
@@ -1373,7 +1375,8 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
                 let t = min(max((now - hop.startAt) / hop.step, 0), Double(hop.path.count - 1))
                 let k = min(Int(t), hop.path.count - 2)
                 let f = CGFloat(t - Double(k))
-                let e = f * f * (3 - 2 * f)
+                // سرعة ثابتة بين الخانات (بدون وقفة عند كل خانة)، والقفزة فوق بس
+                let e = hop.path.count == 2 ? f * f * (3 - 2 * f) : f
                 let a = xy(hop.path[k]), b = xy(hop.path[k + 1])
                 let lift = t <= 0 ? 0 : CGFloat(sin(Double.pi * Double(f))) * (hop.path.count == 2 && hop.step > 0.4 ? 1.6 : 1)
                 flying.append((o, CGPoint(x: a.x + (b.x - a.x) * e, y: a.y + (b.y - a.y) * e), lift))
