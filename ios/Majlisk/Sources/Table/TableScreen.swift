@@ -387,7 +387,7 @@ struct BalootBoard: View {
                     }
                 } else {
                     // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
-                    PlayerTag(v: v, g: g, seat: 0, faces: shownFaces(0), note: seatNote(g, 0))
+                    PlayerTag(v: v, g: g, seat: 0, faces: shownFaces(0), note: seatNote(g, 0), wide: true)
                 }
             }
         }
@@ -647,6 +647,8 @@ private struct PlayerTag: View {
     var faces: [Card] = []
     var note: String? = nil
     var partner = false
+    /// مكان عريض (فوق أو تحت): أوراق المشروع جنب بعض بدون ما تتراكب
+    var wide = false
     var body: some View {
         let s = v.seat(seat)
         let turn = g.turn == seat && g.phase != "matchOver"
@@ -661,7 +663,7 @@ private struct PlayerTag: View {
                 TurnClock(v: v, seat: seat, turn: turn)
             }
             if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
-            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner ? 200 : 62).padding(.top, 2) }
+            if !faces.isEmpty { ProjectFaces(faces: faces, maxWidth: partner || wide ? 220 : 62).padding(.top, 2) }
         }
             .padding(.horizontal, 4).padding(.vertical, 8)
             .frame(maxWidth: .infinity)
@@ -677,15 +679,14 @@ private struct ProjectFaces: View {
     /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
     var maxWidth: CGFloat = 200
     var body: some View {
-        // تحت اسم صاحبه: الأوراق مروحة مثل اليد (كل ورقة فوق اللي على يسارها، فيبان رمزها في زاويتها)
+        // تحت اسم صاحبه: أوراق كبيرة واضحة جنب بعض (مفصولة لو فيه مكان، وإلا فوق بعض ويبان رمز كل ورقة في زاويتها اليسرى)
         let n = faces.count
-        let w: CGFloat = maxWidth < 100 ? 30 : 36, h: CGFloat = w * 1.45
-        let step: CGFloat = n > 1 ? min(w * 0.5, max(9, (maxWidth - w - 12) / CGFloat(n - 1))) : 0
+        let w: CGFloat = maxWidth < 100 ? 34 : 46, h: CGFloat = w * 1.45
+        let step: CGFloat = n > 1 ? min(w + 4, max(12, (maxWidth - w - 8) / CGFloat(n - 1))) : 0
         ZStack(alignment: .bottom) {
             ForEach(0..<n, id: \.self) { i in
                 let k = CGFloat(i) - CGFloat(n - 1) / 2
                 TableCard(card: faces[i], width: w, height: h)
-                    .rotationEffect(.degrees(Double(k) * 7), anchor: UnitPoint(x: 0.5, y: 2.4))
                     .offset(x: k * step)
             }
         }

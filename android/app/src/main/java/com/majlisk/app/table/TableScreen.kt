@@ -511,7 +511,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
         }
         // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
-        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = g.sawaHands?.getOrNull(seatOf(0)) ?: text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth())
+        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = g.sawaHands?.getOrNull(seatOf(0)) ?: text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth(), wide = true)
         }
     }
 }
@@ -563,7 +563,7 @@ private fun seatNote(g: GameView, seat: Int): String? {
 }
 
 @Composable
-private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, note: String? = null, modifier: Modifier = Modifier) {
+private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, note: String? = null, modifier: Modifier = Modifier, wide: Boolean = partner) {
     val s = v.seats.getOrNull(seat)
     val turn = g.turn == seat && g.phase != "matchOver"
     val label = buildString {
@@ -586,17 +586,17 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
             TurnClock(v, seat, turn)
         }
         if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
-        if (faces.isNotEmpty()) ProjectFaces(faces, if (partner) 200f else 62f)
+        if (faces.isNotEmpty()) ProjectFaces(faces, if (wide) 220f else 62f)
     }
 }
 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
-    // تحت اسم صاحبه: الأوراق مروحة مثل اليد (كل ورقة فوق اللي على يسارها، فيبان رمزها في زاويتها)
+    // تحت اسم صاحبه: أوراق كبيرة واضحة جنب بعض (مفصولة لو فيه مكان، وإلا فوق بعض ويبان رمز كل ورقة في زاويتها اليسرى)
     val n = faces.size
-    val w = if (maxWidth < 100f) 30f else 36f; val h = w * 1.45f
-    val step = if (n > 1) minOf(w * 0.5f, maxOf(9f, (maxWidth - w - 12f) / (n - 1))) else 0f
+    val w = if (maxWidth < 100f) 34f else 46f; val h = w * 1.45f
+    val step = if (n > 1) minOf(w + 4f, maxOf(12f, (maxWidth - w - 8f) / (n - 1))) else 0f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
         Box(
             Modifier.clearAndSetSemantics { }.size((w + step * maxOf(n - 1, 0) + 14f).dp, (h + 10f).dp),
@@ -606,10 +606,7 @@ private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
                 val k = i - (n - 1) / 2f
                 CardFaceBox(c, Modifier.size(w.dp, h.dp)
                     .absoluteOffset(x = (k * step).dp)
-                    .graphicsLayer {
-                        rotationZ = k * 7f
-                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 2.4f)
-                    })
+                )
             }
         }
     }
