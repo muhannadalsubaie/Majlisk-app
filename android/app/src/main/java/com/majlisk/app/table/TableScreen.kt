@@ -344,7 +344,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.weight(0.8f))
-                PlayerTag(v, g, seatOf(2), faces = g.sawaHands?.getOrNull(seatOf(2)) ?: text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f))
+                PlayerTag(v, g, seatOf(2), faces = g.sawaHands?.getOrNull(seatOf(2)) ?: text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f), wide = true)
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {

@@ -255,7 +255,7 @@ struct BalootBoard: View {
             GeometryReader { geo in
                 let unit = geo.size.width / 4.5
                 VStack(spacing: 6) {
-                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil).frame(width: unit * 3)
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil, wide: true).frame(width: unit * 3)
                     HStack(spacing: 6) {
                         PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.7)
                         // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٢٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
