@@ -250,15 +250,15 @@ struct BalootBoard: View {
                     PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil).frame(width: unit * 3)
                     HStack(spacing: 6) {
                         PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.7)
-                        // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٨٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
+                        // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٢٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
                         trickArea.frame(width: min(unit * 3.1, 360), height: min(unit * 3.1, 360))
-                            .frame(height: min(unit * 3.1, 360) * 0.78)
+                            .frame(height: min(unit * 3.1, 360) * 0.72)
                         PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.7)
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
-            .frame(height: min(min(UIScreen.main.bounds.width - 32, 520) / 4.5 * 3.1, 360) * 0.78 + 70)
+            .frame(height: min(min(UIScreen.main.bounds.width - 32, 520) / 4.5 * 3.1, 360) * 0.72 + 70)
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
 
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
@@ -780,35 +780,43 @@ private struct QaidButtons: View {
     @State private var target: Int?
     @State private var projectOpen = false
     var body: some View {
+        // أزرار صغيرة (عشان الطاولة ما تطول وتتحرك فوق وتحت)
         HStack(spacing: 8) {
-            if !g.actions.qaidTargets.isEmpty { MButton("تسجيلة", .primary) { target = nil; qaidOpen = true } }
-            if !g.actions.declareKinds.isEmpty { MButton("إعلان مشروع", .primary) { projectOpen = true } }
-            if g.actions.canSawa { MButton("سوا", .primary) { act(["type": "sawa"]) } }
+            if !g.actions.qaidTargets.isEmpty { SmallButton("تسجيلة", primary: true) { target = nil; qaidOpen = true } }
+            if !g.actions.declareKinds.isEmpty { SmallButton("إعلان مشروع", primary: true) { projectOpen = true } }
+            if g.actions.canSawa { SmallButton("سوا", primary: true) { act(["type": "sawa"]) } }
         }
+        .frame(maxWidth: .infinity)
         .sheet(isPresented: $qaidOpen) {
             if let t = target {
                 Sheet(title: "تسجيلة على \(v.seat(t)?.username ?? "")") {
-                    ForEach(QAID_OPTIONS.filter { $0.0 != "badSawa" || v.sawaOn }, id: \.0) { kind, name in
-                        MButton(name, .primary) { qaidOpen = false; act(["type": "qaid", "target": t, "kind": kind]) }
+                    FlowLayout(spacing: 8) {
+                        ForEach(QAID_OPTIONS.filter { $0.0 != "badSawa" || v.sawaOn }, id: \.0) { kind, name in
+                            SmallButton(name, primary: true) { qaidOpen = false; act(["type": "qaid", "target": t, "kind": kind]) }
+                        }
                     }
-                    MButton("رجوع") { target = nil }
+                    SmallButton("رجوع") { target = nil }
                 }
             } else {
                 Sheet(title: "تسجيلة على مين؟") {
-                    ForEach(g.actions.qaidTargets, id: \.self) { s in
-                        MButton(v.seat(s)?.username ?? "لاعب", .primary) { target = s }
+                    FlowLayout(spacing: 8) {
+                        ForEach(g.actions.qaidTargets, id: \.self) { s in
+                            SmallButton(v.seat(s)?.username ?? "لاعب", primary: true) { target = s }
+                        }
                     }
-                    MButton("إلغاء") { qaidOpen = false }
+                    SmallButton("إلغاء") { qaidOpen = false }
                 }
             }
         }
         .sheet(isPresented: $projectOpen) {
             Sheet(title: "نوع مشروعك") {
-                ForEach(g.actions.declareKinds, id: \.self) { k in
-                    MButton(PROJECT_KIND_NAMES[k] ?? k, .primary) { projectOpen = false; act(["type": "declareKind", "kind": k]) }
+                FlowLayout(spacing: 8) {
+                    ForEach(g.actions.declareKinds, id: \.self) { k in
+                        SmallButton(PROJECT_KIND_NAMES[k] ?? k, primary: true) { projectOpen = false; act(["type": "declareKind", "kind": k]) }
+                    }
                 }
                 Note("في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.")
-                MButton("إلغاء") { projectOpen = false }
+                SmallButton("إلغاء") { projectOpen = false }
             }
         }
     }
@@ -831,7 +839,7 @@ private struct ShowProjectPanel: View {
     }
     var body: some View {
         if !choosing {
-            MButton("فرش المشروع", .primary) { choosing = true }
+            SmallButton("فرش المشروع", primary: true) { choosing = true }.frame(maxWidth: .infinity)
         } else {
             VStack(alignment: .leading, spacing: 8) {
                 Text("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع").bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)

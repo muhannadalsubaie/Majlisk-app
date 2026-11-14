@@ -606,10 +606,10 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
     }
     Box(
         Modifier
-            // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٨٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
+            // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٢٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
             .layout { m, c ->
                 val p = m.measure(c)
-                val h = (p.height * 0.78f).toInt()
+                val h = (p.height * 0.72f).toInt()
                 layout(p.width, h) { p.place(0, (h - p.height) / 2) }
             }
             .widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)
@@ -798,34 +798,42 @@ private val QAID_OPTIONS = listOf(
 )
 
 /** القيد والقطع: أزرار تسجيلة، وإعلان مشروع، وسوا */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) -> Unit) {
     var qaidOpen by remember { mutableStateOf(false) }
     var target by remember { mutableStateOf<Int?>(null) }
     var projectOpen by remember { mutableStateOf(false) }
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        if (g.actions.qaidTargets.isNotEmpty()) PrimaryButton("تسجيلة", { target = null; qaidOpen = true }, modifier = Modifier.weight(1f))
-        if (g.actions.declareKinds.isNotEmpty()) PrimaryButton("إعلان مشروع", { projectOpen = true }, modifier = Modifier.weight(1f))
-        if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) }, modifier = Modifier.weight(1f))
+    // أزرار صغيرة (عشان الطاولة ما تطول وتتحرك فوق وتحت)
+    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
+        if (g.actions.qaidTargets.isNotEmpty()) com.majlisk.app.ui.SmallButton("تسجيلة", { target = null; qaidOpen = true }, primary = true)
+        if (g.actions.declareKinds.isNotEmpty()) com.majlisk.app.ui.SmallButton("إعلان مشروع", { projectOpen = true }, primary = true)
+        if (g.actions.canSawa) com.majlisk.app.ui.SmallButton("سوا", { act(jsonOf("type" to "sawa")) }, primary = true)
     }
     if (qaidOpen) {
         val t = target
         if (t == null) com.majlisk.app.ui.MajliskDialog("تسجيلة على مين؟", { qaidOpen = false }) {
-            g.actions.qaidTargets.forEach { s -> PrimaryButton(v.seats.getOrNull(s)?.username ?: "لاعب", { target = s }) }
-            SecondaryButton("إلغاء", { qaidOpen = false }, fill = true)
-        } else com.majlisk.app.ui.MajliskDialog("تسجيلة على ${v.seats.getOrNull(t)?.username ?: ""}", { qaidOpen = false }) {
-            QAID_OPTIONS.filter { it.first != "badSawa" || v.sawaOn }.forEach { (kind, name) ->
-                PrimaryButton(name, { qaidOpen = false; act(jsonOf("type" to "qaid", "target" to t, "kind" to kind)) })
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                g.actions.qaidTargets.forEach { s -> com.majlisk.app.ui.SmallButton(v.seats.getOrNull(s)?.username ?: "لاعب", { target = s }, primary = true) }
             }
-            SecondaryButton("رجوع", { target = null }, fill = true)
+            com.majlisk.app.ui.SmallButton("إلغاء", { qaidOpen = false })
+        } else com.majlisk.app.ui.MajliskDialog("تسجيلة على ${v.seats.getOrNull(t)?.username ?: ""}", { qaidOpen = false }) {
+            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                QAID_OPTIONS.filter { it.first != "badSawa" || v.sawaOn }.forEach { (kind, name) ->
+                    com.majlisk.app.ui.SmallButton(name, { qaidOpen = false; act(jsonOf("type" to "qaid", "target" to t, "kind" to kind)) }, primary = true)
+                }
+            }
+            com.majlisk.app.ui.SmallButton("رجوع", { target = null })
         }
     }
     if (projectOpen) com.majlisk.app.ui.MajliskDialog("نوع مشروعك", { projectOpen = false }) {
-        g.actions.declareKinds.forEach { k ->
-            PrimaryButton(PROJECT_KIND_NAMES[k] ?: k, { projectOpen = false; act(jsonOf("type" to "declareKind", "kind" to k)) })
+        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+            g.actions.declareKinds.forEach { k ->
+                com.majlisk.app.ui.SmallButton(PROJECT_KIND_NAMES[k] ?: k, { projectOpen = false; act(jsonOf("type" to "declareKind", "kind" to k)) }, primary = true)
+            }
         }
         Note("في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.")
-        SecondaryButton("إلغاء", { projectOpen = false }, fill = true)
+        com.majlisk.app.ui.SmallButton("إلغاء", { projectOpen = false })
     }
 }
 
@@ -840,7 +848,7 @@ private fun ShowProjectPanel(v: TableView, g: GameView, act: (org.json.JSONObjec
     var picked by remember { mutableStateOf(setOf<com.majlisk.app.model.Card>()) }
     var choosing by remember { mutableStateOf(false) }
     // أول ضغطة «فرش المشروع» تفتح اختيار الأوراق (وتقدر تلعب بدون ما تفرش)، وبعد ما تحدد تضغطه مرة ثانية فينكشف للكل
-    if (!choosing) { PrimaryButton("فرش المشروع", { choosing = true }); return }
+    if (!choosing) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { com.majlisk.app.ui.SmallButton("فرش المشروع", { choosing = true }, primary = true) }; return }
     Column(
         Modifier.fillMaxWidth().background(Palette.green800, RoundedCornerShape(14.dp)).border(1.dp, Palette.gold, RoundedCornerShape(14.dp)).padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
