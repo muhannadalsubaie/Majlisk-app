@@ -599,8 +599,26 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -> Unit)? = null) {
     // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
-    val w = if (maxWidth < 100f) 30f else 44f; val h = w * 1.45f
+    val w = if (maxWidth < 100f) 34f else 44f; val h = w * 1.45f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+        // اللاعبين على الجنب (مكان ضيق): مروحة — كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
+        if (maxWidth < 100f) {
+            val n = faces.size
+            val step = if (n > 1) minOf(14f, (maxWidth - w) / (n - 1)) else 0f
+            val mid = (n - 1) / 2f
+            Box(
+                Modifier.clearAndSetSemantics { }.size((w + step * (n - 1)).dp, (h + 8f).dp)
+                    .pointerInput(faces) { detectTapGestures { if (Palette.goldMode) onTap?.invoke() } },
+            ) {
+                faces.forEachIndexed { i, c ->
+                    CardFaceBox(c, Modifier.absoluteOffset(x = (i * step).dp, y = 6.dp).size(w.dp, h.dp).graphicsLayer {
+                        rotationZ = (i - mid) * minOf(12f, 40f / maxOf(1, n - 1))
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1.3f)
+                    })
+                }
+            }
+            return@CompositionLocalProvider
+        }
         FlowRow(
             Modifier.clearAndSetSemantics { }.widthIn(max = maxWidth.dp)
                 // لمسة على الأوراق الصغيرة تكبّرها وسط الطاولة

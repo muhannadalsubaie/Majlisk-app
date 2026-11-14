@@ -685,11 +685,28 @@ private struct ProjectFaces: View {
     var onTap: (() -> Void)? = nil
     var body: some View {
         // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
-        let w: CGFloat = maxWidth < 100 ? 30 : 44, h: CGFloat = w * 1.45
-        FlowLayout(spacing: 4) {
-            ForEach(0..<faces.count, id: \.self) { i in TableCard(card: faces[i], width: w, height: h) }
+        let w: CGFloat = maxWidth < 100 ? 34 : 44, h: CGFloat = w * 1.45
+        let n = faces.count
+        let step: CGFloat = n > 1 ? min(14, (maxWidth - w) / CGFloat(n - 1)) : 0
+        let angle = min(12, 40 / Double(max(1, n - 1)))
+        Group {
+            if maxWidth < 100 {
+                // اللاعبين على الجنب (مكان ضيق): مروحة — كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
+                ZStack(alignment: .topLeading) {
+                    ForEach(0..<n, id: \.self) { i in
+                        TableCard(card: faces[i], width: w, height: h)
+                            .rotationEffect(.degrees((Double(i) - Double(n - 1) / 2) * angle), anchor: UnitPoint(x: 0.5, y: 1.3))
+                            .offset(x: CGFloat(i) * step, y: 6)
+                    }
+                }
+                .frame(width: w + step * CGFloat(n - 1), height: h + 8, alignment: .topLeading)
+            } else {
+                FlowLayout(spacing: 4) {
+                    ForEach(0..<n, id: \.self) { i in TableCard(card: faces[i], width: w, height: h) }
+                }
+                .frame(maxWidth: maxWidth)
+            }
         }
-        .frame(maxWidth: maxWidth)
         .environment(\.layoutDirection, .leftToRight)
         .contentShape(Rectangle())
         .onTapGesture { if Palette.goldMode { onTap?() } }
