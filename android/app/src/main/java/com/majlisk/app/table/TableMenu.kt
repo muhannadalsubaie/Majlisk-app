@@ -198,7 +198,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             MajliskDialog(if (p.ban) "حظر $name؟" else "طرد $name؟", { page = Page.Member(p.uid) }) {
                 Body(
                     (if (p.ban) "سيخرج من الطاولة، ولن يستطيع دخول هذه الطاولة ولا أي طاولة تملكها."
-                    else "سيخرج من الطاولة. يستطيع دخول أي طاولة أخرى فوراً، والعودة لهذه الطاولة بعد ساعة.") +
+                    else "سيخرج من الطاولة. يستطيع دخول أي طاولة أخرى فوراً، والعودة لهذه الطاولة بعد ساعة، أو قبلها لو أرسلت له دعوة.") +
                         if (v.playing && p.uid in v.seatUids) " يحل روبوت مكانه في اللعب." else "",
                 )
                 DangerButton(if (p.ban) "حظر" else "طرد", { conn.send(if (p.ban) "ban" else "kick", "uid" to p.uid); page = Page.Players })

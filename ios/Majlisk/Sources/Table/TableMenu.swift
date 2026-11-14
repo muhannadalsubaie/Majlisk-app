@@ -175,7 +175,7 @@ struct TableMenu: View {
             let name = nameOf(u) ?? "هذا الشخص"
             Sheet(title: ban ? "حظر \(name)؟" : "طرد \(name)؟") {
                 BodyText((ban ? "سيخرج من الطاولة، ولن يستطيع دخول هذه الطاولة ولا أي طاولة تملكها."
-                    : "سيخرج من الطاولة. يستطيع دخول أي طاولة أخرى فوراً، والعودة لهذه الطاولة بعد ساعة.")
+                    : "سيخرج من الطاولة. يستطيع دخول أي طاولة أخرى فوراً، والعودة لهذه الطاولة بعد ساعة، أو قبلها لو أرسلت له دعوة.")
                     + (view.playing && view.seatUids.contains(u) ? " يحل روبوت مكانه في اللعب." : ""))
                 MButton(ban ? "حظر" : "طرد", .danger) { conn.send(ban ? "ban" : "kick", ["uid": u]); page = .players }
                 MButton("إلغاء") { page = .member(u) }
