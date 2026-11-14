@@ -109,7 +109,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     val window = (androidx.compose.ui.platform.LocalContext.current as? android.app.Activity)?.window
     DisposableEffect(window) {
         window?.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
-        onDispose { window?.clearFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON) }
+        // الشاشة ما تنطفي طول ما التطبيق مفتوح (حتى برا الطاولة)، فما نرجّعها هنا
+        onDispose { }
     }
     // العودة للتطبيق (بعد مكالمة أو تطبيق آخر): نعيد الاتصال فوراً
     val lifecycle = LocalLifecycleOwner.current.lifecycle

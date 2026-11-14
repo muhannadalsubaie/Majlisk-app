@@ -24,8 +24,15 @@ struct AppRoot: View {
             .onChange(of: session.uid) { uid in if uid == nil && route != .splash { route = .auth } }
             .onChange(of: signedIn) { on in if on { hub.start(); Store.recover(); Push.shared.register(); openPushTable() } else { hub.stop(); hub.clearLock() } }
             // فتحت التطبيق أو رجعت له: هالجهاز ياخذ الحساب والجهاز الثاني يتقفل
-            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in if signedIn { hub.takeOver() } }
-            .onAppear { if signedIn { hub.start(); Store.recover(); Push.shared.register() } }
+            .onReceive(NotificationCenter.default.publisher(for: UIApplication.didBecomeActiveNotification)) { _ in
+                UIApplication.shared.isIdleTimerDisabled = true
+                if signedIn { hub.takeOver() }
+            }
+            .onAppear {
+                // الشاشة ما تنطفي أبداً طول ما التطبيق مفتوح قدامك
+                UIApplication.shared.isIdleTimerDisabled = true
+                if signedIn { hub.start(); Store.recover(); Push.shared.register() }
+            }
             // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
             .onChange(of: push.pendingTable) { _ in openPushTable() }
             // نافذة عرض الباقة: أول ما يفتح التطبيق على القائمة، لغير المشتركين، ومرة كل يومين بالكثير

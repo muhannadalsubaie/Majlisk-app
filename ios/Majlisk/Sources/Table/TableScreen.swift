@@ -80,7 +80,8 @@ struct TableScreen: View {
         }
         // لا نمسح آخر طاولة هنا: إغلاق التطبيق من مبدّل التطبيقات (والمحادثة الصوتية شغالة بالخلفية)
         // يهدم الشاشات فيستدعي onDisappear. نمسحها فقط عند الخروج من الطاولة بنفسك
-        .onDisappear { UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
+        // الشاشة تبقى شغالة بعد ما تطلع من الطاولة (طول ما التطبيق مفتوح)
+        .onDisappear { conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
         // تغيّرت اللعبة داخل الطاولة (مو أول ما تدخل)
         .onChange(of: conn.view?.kind) { k in
             guard let k else { return }

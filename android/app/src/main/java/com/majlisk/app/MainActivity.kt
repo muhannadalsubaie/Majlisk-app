@@ -45,6 +45,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // الشاشة ما تنطفي أبداً طول ما التطبيق مفتوح قدامك
+        window.addFlags(android.view.WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
         Announcer.attach(this)
         current = this
         if (savedInstanceState == null) Sounds.appOpen()
