@@ -692,7 +692,7 @@ private struct ProjectFaces: View {
         .frame(maxWidth: maxWidth)
         .environment(\.layoutDirection, .leftToRight)
         .contentShape(Rectangle())
-        .onTapGesture { onTap?() }
+        .onTapGesture { if Palette.goldMode { onTap?() } }
         .accessibilityHidden(true)
     }
 }
@@ -719,7 +719,8 @@ private struct ProjectSpotlight: View {
     @State private var queue: [Spot] = []
     var body: some View {
         ZStack {
-            if let spot = hub.spot { SpotPanel(spot: spot).id(spot.id) }
+            // ميزة للمشتركين في الباقة الاحترافية بس (غيرهم يشوفون الأوراق الصغيرة تحت الاسم)
+            if Palette.goldMode, let spot = hub.spot { SpotPanel(spot: spot).id(spot.id) }
         }
         .onAppear { scan() }
         .onChange(of: faces.map(\.count)) { _ in scan() }

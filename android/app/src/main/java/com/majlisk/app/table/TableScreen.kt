@@ -604,7 +604,7 @@ private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -
         FlowRow(
             Modifier.clearAndSetSemantics { }.widthIn(max = maxWidth.dp)
                 // لمسة على الأوراق الصغيرة تكبّرها وسط الطاولة
-                .pointerInput(faces) { detectTapGestures { onTap?.invoke() } },
+                .pointerInput(faces) { detectTapGestures { if (Palette.goldMode) onTap?.invoke() } },
             horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
@@ -623,6 +623,8 @@ private val projectSpot = mutableStateOf<Spot?>(null)
  */
 @Composable
 private fun ProjectSpotlight(v: TableView, g: GameView, text: BalootText) {
+    // ميزة للمشتركين في الباقة الاحترافية بس (غيرهم يشوفون الأوراق الصغيرة تحت الاسم)
+    if (!Palette.goldMode) return
     val seen = remember { mutableSetOf<Int>() }
     val queue = remember { androidx.compose.runtime.mutableStateListOf<Spot>() }
     val now = (0..3).map { text.faces(it) }
