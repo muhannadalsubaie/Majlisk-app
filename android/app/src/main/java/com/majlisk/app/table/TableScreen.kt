@@ -591,23 +591,18 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 }
 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f) {
-    // تحت اسم صاحبه: أوراق كبيرة واضحة جنب بعض (مفصولة لو فيه مكان، وإلا فوق بعض ويبان رمز كل ورقة في زاويتها اليسرى)
-    val n = faces.size
-    val w = if (maxWidth < 100f) 34f else 46f; val h = w * 1.45f
-    val step = if (n > 1) minOf(w + 4f, maxOf(12f, (maxWidth - w - 8f) / (n - 1))) else 0f
+    // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
+    val w = if (maxWidth < 100f) 30f else 44f; val h = w * 1.45f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-        Box(
-            Modifier.clearAndSetSemantics { }.size((w + step * maxOf(n - 1, 0) + 14f).dp, (h + 10f).dp),
-            contentAlignment = Alignment.BottomCenter,
+        FlowRow(
+            Modifier.clearAndSetSemantics { }.widthIn(max = maxWidth.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
-            faces.forEachIndexed { i, c ->
-                val k = i - (n - 1) / 2f
-                CardFaceBox(c, Modifier.size(w.dp, h.dp)
-                    .absoluteOffset(x = (k * step).dp)
-                )
-            }
+            faces.forEach { c -> CardFaceBox(c, Modifier.size(w.dp, h.dp)) }
         }
     }
 }

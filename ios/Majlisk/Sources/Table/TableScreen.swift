@@ -679,18 +679,12 @@ private struct ProjectFaces: View {
     /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
     var maxWidth: CGFloat = 200
     var body: some View {
-        // تحت اسم صاحبه: أوراق كبيرة واضحة جنب بعض (مفصولة لو فيه مكان، وإلا فوق بعض ويبان رمز كل ورقة في زاويتها اليسرى)
-        let n = faces.count
-        let w: CGFloat = maxWidth < 100 ? 34 : 46, h: CGFloat = w * 1.45
-        let step: CGFloat = n > 1 ? min(w + 4, max(12, (maxWidth - w - 8) / CGFloat(n - 1))) : 0
-        ZStack(alignment: .bottom) {
-            ForEach(0..<n, id: \.self) { i in
-                let k = CGFloat(i) - CGFloat(n - 1) / 2
-                TableCard(card: faces[i], width: w, height: h)
-                    .offset(x: k * step)
-            }
+        // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
+        let w: CGFloat = maxWidth < 100 ? 30 : 44, h: CGFloat = w * 1.45
+        FlowLayout(spacing: 4) {
+            ForEach(0..<faces.count, id: \.self) { i in TableCard(card: faces[i], width: w, height: h) }
         }
-        .frame(width: w + step * CGFloat(max(n - 1, 0)) + 14, height: h + 10, alignment: .bottom)
+        .frame(maxWidth: maxWidth)
         .environment(\.layoutDirection, .leftToRight)
         .accessibilityHidden(true)
     }
