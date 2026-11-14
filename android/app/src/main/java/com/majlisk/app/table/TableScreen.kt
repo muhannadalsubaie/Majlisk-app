@@ -39,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.layout
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.draw.alpha
@@ -604,7 +605,14 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
         else -> androidx.compose.foundation.shape.CircleShape
     }
     Box(
-        Modifier.widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)
+        Modifier
+            // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٨٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
+            .layout { m, c ->
+                val p = m.measure(c)
+                val h = (p.height * 0.78f).toInt()
+                layout(p.width, h) { p.place(0, (h - p.height) / 2) }
+            }
+            .widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)
             .graphicsLayer { rotationX = 40f; cameraDistance = 12f * density }
             .shadow(14.dp, tableShape)
             .background(Brush.radialGradient(look.rim), tableShape)

@@ -250,13 +250,15 @@ struct BalootBoard: View {
                     PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil).frame(width: unit * 3)
                     HStack(spacing: 6) {
                         PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.7)
+                        // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٨٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
                         trickArea.frame(width: min(unit * 3.1, 360), height: min(unit * 3.1, 360))
+                            .frame(height: min(unit * 3.1, 360) * 0.78)
                         PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.7)
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
-            .frame(height: min(min(UIScreen.main.bounds.width - 32, 520) / 4.5 * 3.1, 360) + 70)
+            .frame(height: min(min(UIScreen.main.bounds.width - 32, 520) / 4.5 * 3.1, 360) * 0.78 + 70)
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
 
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
