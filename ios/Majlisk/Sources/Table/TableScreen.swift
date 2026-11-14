@@ -687,11 +687,11 @@ private struct ProjectFaces: View {
         // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
         let w: CGFloat = maxWidth < 100 ? 34 : 44, h: CGFloat = w * 1.45
         let n = faces.count
-        let step: CGFloat = n > 1 ? min(14, (maxWidth - w) / CGFloat(n - 1)) : 0
+        let step: CGFloat = n > 1 ? min(maxWidth < 100 ? 14 : 24, (maxWidth - w) / CGFloat(n - 1)) : 0
         let angle = min(12, 40 / Double(max(1, n - 1)))
         Group {
-            if maxWidth < 100 {
-                // اللاعبين على الجنب (مكان ضيق): مروحة — كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
+            if true {
+                // مروحة لكل اللاعبين (فوق وتحت والجنب) — كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
                 ZStack(alignment: .topLeading) {
                     ForEach(0..<n, id: \.self) { i in
                         TableCard(card: faces[i], width: w, height: h)

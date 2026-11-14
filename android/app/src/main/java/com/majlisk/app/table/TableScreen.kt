@@ -601,10 +601,10 @@ private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -
     // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
     val w = if (maxWidth < 100f) 34f else 44f; val h = w * 1.45f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
-        // اللاعبين على الجنب (مكان ضيق): مروحة — كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
-        if (maxWidth < 100f) {
+        // مروحة لكل اللاعبين (فوق وتحت والجنب): كل ورقة فوق اللي قبلها ومايلة، ورمزها في الزاوية يبقى ظاهر
+        if (true) {
             val n = faces.size
-            val step = if (n > 1) minOf(14f, (maxWidth - w) / (n - 1)) else 0f
+            val step = if (n > 1) minOf(if (maxWidth < 100f) 14f else 24f, (maxWidth - w) / (n - 1)) else 0f
             val mid = (n - 1) / 2f
             Box(
                 Modifier.clearAndSetSemantics { }.size((w + step * (n - 1)).dp, (h + 8f).dp)
