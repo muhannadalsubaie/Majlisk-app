@@ -200,6 +200,8 @@ struct TableView {
     var sawaOn = true
     /// كل اللاعبين مشتركين: المالك يقدر يغير المؤقت أثناء اللعب
     var allPro = false
+    /// طاولة ثابتة بكلمة مرور (المالك يغيّرها من القائمة)
+    var pinned = false
     /// عنوان الطاولة: اسم اللعبة (والدومينو بهدفه)
     var title: String { kind == "domino" ? "دومينو \(optTarget)" : gameTitle(kind, variant) }
 
@@ -241,6 +243,7 @@ struct TableView {
         qaid = o.bool("qaid")
         sawaOn = (o["sawaOn"] as? Bool) ?? true
         allPro = o.bool("allPro")
+        pinned = o.bool("pinned")
         ludo = o.obj("ludo").map { LudoView($0, ui, log: o.strs("ludoLog")) }
     }
 

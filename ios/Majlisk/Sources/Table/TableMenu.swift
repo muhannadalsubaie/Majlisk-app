@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum Page: Equatable {
-    case main, players, invite, friends, settings, stop, changeGame
+    case main, players, invite, friends, settings, stop, changeGame, password
     case replace(Int), member(String), confirm(ban: Bool, uid: String)
 }
 
@@ -19,6 +19,7 @@ struct TableMenu: View {
     @ObservedObject private var voice = Voice.shared
     @ObservedObject private var hub = Hub.shared
     @State private var page: Page = .main
+    @State private var newPass = ""
     @State private var friendState: [String: String] = [:]
 
     private var view: TableView { conn.view ?? v }
@@ -70,10 +71,20 @@ struct TableMenu: View {
                     onClose()
                 }
                 MButton("الإعدادات") { page = .settings }
+                // الطاولة الثابتة: المالك يغيّر كلمة المرور
+                if isOwner && view.pinned { MButton("🔒 تغيير كلمة المرور") { page = .password } }
                 if isOwner { MButton("تغيير اللعبة") { page = .changeGame } }
                 if isOwner && (view.hasGame || view.seats.contains { $0 != nil }) { MButton("إيقاف اللعبة", .danger) { page = .stop } }
                 MButton("مغادرة الطاولة", .danger, action: onLeave)
                 MButton("إغلاق القائمة", action: onClose)
+            }
+        case .password:
+            // الطاولة الثابتة: المالك يغيّر كلمة المرور (٦ أرقام)
+            Sheet(title: "كلمة مرور الطاولة") {
+                Field(label: "كلمة المرور الجديدة (٦ أرقام)", text: $newPass, digits: 6)
+                Note("اللي داخل الطاولة الحين يبقى، والجديد يدخل بكلمة المرور الجديدة.")
+                MButton("حفظ", .primary, enabled: newPass.count == 6) { conn.send("setPassword", ["password": newPass]); newPass = ""; page = .main }
+                MButton("رجوع") { page = .main }
             }
         case .stop:
             Sheet(title: "إيقاف اللعبة") {

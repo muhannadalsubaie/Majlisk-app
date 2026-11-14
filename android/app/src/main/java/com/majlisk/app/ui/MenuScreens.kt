@@ -141,8 +141,9 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
         if (profile?.isPro == true) {
             SwitchRow("👑 طاولة ثابتة بكلمة مرور", pinned, { pinned = it }, description = "ما تتقفل لو فضيت، وتدخلها بكلمة مرور")
             if (pinned) androidx.compose.material3.OutlinedTextField(
-                value = password, onValueChange = { password = it.take(20) }, label = { Text("كلمة المرور (4 أحرف أو أكثر)") },
-                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                // كلمة المرور: ٦ أرقام (لوحة أرقام بس)
+                value = password, onValueChange = { password = it.filter(Char::isDigit).take(6) }, label = { Text("كلمة المرور (٦ أرقام)") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim),
             )
         }
@@ -155,7 +156,7 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
                     .onFailure { error = Tables.error(it, "تعذّر إنشاء الطاولة، حاول مرة أخرى"); Announcer.announce(error) }
                 busy = false
             }
-        }, enabled = !busy && (!pinned || password.trim().length >= 4))
+        }, enabled = !busy && (!pinned || password.length == 6))
     }
 }
 
@@ -217,8 +218,8 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
     asking?.let { r ->
         MajliskDialog("كلمة مرور طاولة ${r.ownerName}", { asking = null }) {
             androidx.compose.material3.OutlinedTextField(
-                value = pass, onValueChange = { pass = it.take(20); passError = "" }, label = { Text("كلمة المرور") },
-                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                value = pass, onValueChange = { pass = it.filter(Char::isDigit).take(6); passError = "" }, label = { Text("كلمة المرور (٦ أرقام)") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(), keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
                 colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim),
             )
             if (passError.isNotEmpty()) Text(passError, color = Palette.goldSoft)

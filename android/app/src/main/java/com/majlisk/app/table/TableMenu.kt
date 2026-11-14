@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 
 private sealed interface Page {
     data object Main : Page
+    data object Password : Page
     data object Players : Page
     data object Invite : Page
     data object Friends : Page
@@ -92,6 +93,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 enabled = !voice.busy, fill = true,
             )
             SecondaryButton("الإعدادات", { page = Page.Settings }, fill = true)
+            // الطاولة الثابتة: المالك يغيّر كلمة المرور
+            if (isOwner && v.pinned) SecondaryButton("🔒 تغيير كلمة المرور", { page = Page.Password }, fill = true)
             if (isOwner) SecondaryButton("تغيير اللعبة", { page = Page.ChangeGame }, fill = true)
             if (isOwner && (v.hasGame || v.seats.any { it != null })) DangerButton("إيقاف اللعبة", { page = Page.Stop })
             DangerButton("مغادرة الطاولة", onLeave)
@@ -126,6 +129,18 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 }
                 onClose()
             })
+        }
+        Page.Password -> MajliskDialog("كلمة مرور الطاولة", { page = Page.Main }) {
+            var pw by remember { mutableStateOf("") }
+            androidx.compose.material3.OutlinedTextField(
+                value = pw, onValueChange = { pw = it.filter(Char::isDigit).take(6) }, label = { Text("كلمة المرور الجديدة (٦ أرقام)") },
+                singleLine = true, modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(keyboardType = androidx.compose.ui.text.input.KeyboardType.NumberPassword),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim),
+            )
+            Note("اللي داخل الطاولة الحين يبقى، والجديد يدخل بكلمة المرور الجديدة.")
+            PrimaryButton("حفظ", { conn.send("setPassword", "password" to pw); page = Page.Main }, enabled = pw.length == 6)
+            SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }
         Page.Settings -> MajliskDialog("إعدادات", { page = Page.Main }) {
             SettingsScreen(onBack = { page = Page.Main }, embedded = true)

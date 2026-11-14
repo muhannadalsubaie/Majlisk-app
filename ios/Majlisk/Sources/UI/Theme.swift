@@ -235,6 +235,8 @@ struct Field: View {
     var secure = false
     var email = false
     var ltr = false
+    /// لوحة أرقام بس (كلمة مرور الطاولة: ٦ أرقام)
+    var digits: Int? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
             Text(label).foregroundColor(Palette.textDim).accessibilityHidden(true)
@@ -243,7 +245,12 @@ struct Field: View {
             }
             .textInputAutocapitalization(.never)
             .autocorrectionDisabled()
-            .keyboardType(email ? .emailAddress : .default)
+            .keyboardType(digits != nil ? .numberPad : email ? .emailAddress : .default)
+            .onChange(of: text) { v in
+                guard let n = digits else { return }
+                let clean = String(v.filter(\.isNumber).prefix(n))
+                if clean != v { text = clean }
+            }
             .textContentType(secure ? .password : email ? .emailAddress : .username)
             .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
             .padding(12)

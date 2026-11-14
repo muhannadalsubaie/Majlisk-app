@@ -91,10 +91,10 @@ struct CreateTableScreen: View {
                 // الطاولة الثابتة بكلمة مرور: للمشترك في الباقة الاحترافية (ما تتقفل لو فضيت)
                 if profile?.isPro == true {
                     SwitchRow(label: "👑 طاولة ثابتة بكلمة مرور", isOn: pinned, onChange: { pinned = $0 })
-                    if pinned { Field(label: "كلمة المرور (4 أحرف أو أكثر)", text: $password) }
+                    if pinned { Field(label: "كلمة المرور (٦ أرقام)", text: $password, digits: 6) }
                 }
                 if !error.isEmpty { Text(error).foregroundColor(Palette.goldSoft) }
-                MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy && (!pinned || password.trimmingCharacters(in: .whitespaces).count >= 4)) {
+                MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy && (!pinned || password.count == 6)) {
                     busy = true; error = ""
                     Task { @MainActor in
                         do {
@@ -169,7 +169,7 @@ struct JoinTableScreen: View {
         .onChange(of: showing?.id) { id in if id == nil { longPressed = nil } }
         .sheet(item: $asking) { r in
             Sheet(title: "كلمة مرور طاولة \(r.ownerName)") {
-                Field(label: "كلمة المرور", text: $pass)
+                Field(label: "كلمة المرور (٦ أرقام)", text: $pass, digits: 6)
                 if !passError.isEmpty { Text(passError).foregroundColor(Palette.goldSoft) }
                 MButton("دخول", .primary, enabled: !pass.trimmingCharacters(in: .whitespaces).isEmpty && busy.isEmpty) {
                     busy = r.id
