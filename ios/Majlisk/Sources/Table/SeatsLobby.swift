@@ -31,7 +31,7 @@ struct SeatsLobby: View {
     @ObservedObject private var session = Session.shared
     @State private var manual = false
     @State private var qaid = false
-    @State private var sawa = false
+    @State private var sawa = true
     private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
 
@@ -135,7 +135,7 @@ struct SeatsLobby: View {
                         Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
                     }
                 }
-                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": pro && sawa]) }
+                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": !pro || sawa]) }
                 MButton("إلغاء") { setup = false }
             }
         }
