@@ -438,10 +438,10 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-            if (v.qaid && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canKaboot)) {
+            if (v.qaid && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canKaboot || g.actions.canShowProject)) {
                 QaidButtons(v, g, act)
             } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
-            if (g.actions.canShowProject) ShowProjectPanel(v, g, act)
+            if (g.actions.canShowProject) ShowProjectPanel(v, g, act) else projectChoosing.value = false
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
             if (g.actions.canProject && v.manualProjects) PrimaryButton("أعلن مشروعك", { act(jsonOf("type" to "declareProject")) })
             // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
@@ -636,6 +636,9 @@ private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -
         }
     }
 }
+
+/** فرش المشروع: لوحة اختيار الأوراق مفتوحة؟ (الزر فوق مع أزرار القيد، واللوحة تحت) */
+private val projectChoosing = mutableStateOf(false)
 
 /** لوحة كشف المشروع: عنوانها وأوراقها */
 private data class Spot(val title: String, val cards: List<Card>)
@@ -929,6 +932,8 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)) {
         if (g.actions.qaidTargets.isNotEmpty()) com.majlisk.app.ui.SmallButton("تسجيلة", { target = null; qaidOpen = true }, primary = true)
         if (g.actions.declareKinds.isNotEmpty()) com.majlisk.app.ui.SmallButton("إعلان مشروع", { projectOpen = true }, primary = true)
+        // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
+        if (g.actions.canShowProject && !projectChoosing.value) com.majlisk.app.ui.SmallButton("فرش المشروع", { projectChoosing.value = true }, primary = true)
         if (g.actions.canSawa) com.majlisk.app.ui.SmallButton("سوا", { act(jsonOf("type" to "sawa")) }, primary = true)
         if (g.actions.canKaboot) com.majlisk.app.ui.SmallButton("قيد كبوت", { kabootOpen = true }, primary = true)
     }
@@ -975,9 +980,10 @@ private fun ShowProjectPanel(v: TableView, g: GameView, act: (org.json.JSONObjec
     // الأوراق الثمان كاملة حتى لو لعبت منها (السيرفر يرسلها وقت الفرش)
     val cards = sortHand(g.myInitial.ifEmpty { (g.myHand + listOfNotNull(mine)).distinct() })
     var picked by remember { mutableStateOf(setOf<com.majlisk.app.model.Card>()) }
-    var choosing by remember { mutableStateOf(false) }
+    var choosing by projectChoosing
     // أول ضغطة «فرش المشروع» تفتح اختيار الأوراق (وتقدر تلعب بدون ما تفرش)، وبعد ما تحدد تضغطه مرة ثانية فينكشف للكل
-    if (!choosing) { Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) { com.majlisk.app.ui.SmallButton("فرش المشروع", { choosing = true }, primary = true) }; return }
+    // الزر نفسه صار فوق مع أزرار القيد؛ هنا لوحة الاختيار بس
+    if (!choosing) return
     Column(
         Modifier.fillMaxWidth().background(Palette.green800, RoundedCornerShape(14.dp)).border(1.dp, Palette.gold, RoundedCornerShape(14.dp)).padding(10.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),

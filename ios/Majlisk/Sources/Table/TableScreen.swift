@@ -306,12 +306,12 @@ struct BalootBoard: View {
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-                if v.qaid && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canKaboot) {
+                if v.qaid && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canKaboot || g.actions.canShowProject) {
                     QaidButtons(v: v, g: g, act: act)
                 } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
                 }
-                if g.actions.canShowProject { ShowProjectPanel(v: v, g: g, act: act) }
+                if g.actions.canShowProject { ShowProjectPanel(v: v, g: g, act: act).onDisappear { ProjectSpot.shared.choosing = false } }
                 // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
                 if g.actions.canProject && v.manualProjects {
                     MButton("أعلن مشروعك", .primary) { act(["type": "declareProject"]) }
@@ -730,6 +730,8 @@ struct Spot: Identifiable {
 final class ProjectSpot: ObservableObject {
     static let shared = ProjectSpot()
     @Published var spot: Spot?
+    /// فرش المشروع: لوحة اختيار الأوراق مفتوحة؟ (الزر فوق مع أزرار القيد، واللوحة تحت)
+    @Published var choosing = false
 }
 
 /// كشف المشروع: أول ما ينفرش مشروع تطلع أوراقه كبيرة وسط الطاولة في لوحة ذهبية (تنقلب ورقة ورقة)،
@@ -925,11 +927,14 @@ private struct QaidButtons: View {
     @State private var target: Int?
     @State private var projectOpen = false
     @State private var kabootOpen = false
+    @ObservedObject private var hub = ProjectSpot.shared
     var body: some View {
         // أزرار صغيرة (عشان الطاولة ما تطول وتتحرك فوق وتحت)
         HStack(spacing: 8) {
             if !g.actions.qaidTargets.isEmpty { SmallButton("تسجيلة", primary: true) { target = nil; qaidOpen = true } }
             if !g.actions.declareKinds.isEmpty { SmallButton("إعلان مشروع", primary: true) { projectOpen = true } }
+            // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
+            if g.actions.canShowProject && !hub.choosing { SmallButton("فرش المشروع", primary: true) { hub.choosing = true } }
             if g.actions.canSawa { SmallButton("سوا", primary: true) { act(["type": "sawa"]) } }
             if g.actions.canKaboot { SmallButton("قيد كبوت", primary: true) { kabootOpen = true } }
         }
@@ -983,7 +988,7 @@ private struct ShowProjectPanel: View {
     let v: TableView
     let g: GameView
     let act: (JSON) -> Void
-    @State private var choosing = false
+    @ObservedObject private var hub = ProjectSpot.shared
     @State private var picked: Set<Card> = []
     private var cards: [Card] {
         // الأوراق الثمان كاملة حتى لو لعبت منها (السيرفر يرسلها وقت الفرش)
@@ -995,9 +1000,8 @@ private struct ShowProjectPanel: View {
         return sortHand(out)
     }
     var body: some View {
-        if !choosing {
-            SmallButton("فرش المشروع", primary: true) { choosing = true }.frame(maxWidth: .infinity)
-        } else {
+        // الزر نفسه صار فوق مع أزرار القيد؛ هنا لوحة الاختيار بس
+        if hub.choosing {
             VStack(alignment: .leading, spacing: 8) {
                 Text("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع").bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
                 FlowLayout(spacing: 6) {
@@ -1011,9 +1015,9 @@ private struct ShowProjectPanel: View {
                 MButton("فرش المشروع", .primary, enabled: picked.count >= 3) {
                     // تنكشف للكل بنفس ترتيبها في يدك
                     act(["type": "showProject", "cards": sortHand(Array(picked)).map { $0.json }])
-                    picked = []; choosing = false
+                    picked = []; hub.choosing = false
                 }
-                MButton("إلغاء") { choosing = false; picked = [] }
+                MButton("إلغاء") { hub.choosing = false; picked = [] }
             }
             .padding(10)
             .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
