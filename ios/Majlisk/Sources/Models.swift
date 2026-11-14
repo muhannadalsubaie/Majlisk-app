@@ -140,6 +140,8 @@ struct GameView {
     var sawaHands: [[Card]]? = nil
     /// القيد: أنواع المشاريع اللي أعلنها اللاعبين (صوت المشروع يشتغل أول ما ينعلن)
     var kindDeclared: [(seat: Int, kind: String)] = []
+    /// القيد: نتيجة آخر تسجيلة (صحيحة؟) — nil لو ما فيه
+    var qaidCorrect: Bool? = nil
 
     var myTurn: Bool {
         !actions.bids.isEmpty || actions.doubleLabel != nil || actions.canPassDouble || actions.chooseLock || !actions.legal.isEmpty || actions.waraqDecision
@@ -294,7 +296,8 @@ struct TableView {
             dealing: g.bool("dealing"),
             pendingBuy: g.obj("pendingBuy").map { (seat: $0.int("seat"), kind: $0.str("kind")) },
             sawaHands: g.obj("sawaReveal").map { r in r.arr("hands").map { (($0 as? [Any]) ?? []).compactMap { ($0 as? JSON).flatMap { Card($0) } } } },
-            kindDeclared: g.objs("kindDeclared").map { (seat: $0.int("seat"), kind: $0.str("kind")) }
+            kindDeclared: g.objs("kindDeclared").map { (seat: $0.int("seat"), kind: $0.str("kind")) },
+            qaidCorrect: g.obj("qaidResult").map { $0.bool("correct") }
         )
     }
 

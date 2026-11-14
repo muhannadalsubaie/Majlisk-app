@@ -1457,6 +1457,7 @@ final class OtherGameSounds {
                 // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
                 if (first && d.line.isEmpty && d.phase == "playing") || (phase != nil && phase != "playing" && d.phase == "playing") { s.dominoShuffle() }
                 else if !first && (d.lastKind == "play" || d.lastKind == "draw") { s.dominoTile() }
+                else if !first && d.lastKind == "pass" { s.dominoPass() }
                 // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
                 if !first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver") { s.dominoEnd(at: 0.5) }
             } else if let j {

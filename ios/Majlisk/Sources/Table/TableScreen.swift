@@ -18,6 +18,8 @@ struct TableScreen: View {
     /// الصفحة اللي تنفتح عليها القائمة (من إجراءات قارئ الشاشة على زر القائمة)
     /// القائمة مفتوحة على أي صفحة (عنصر وحده بدل قيمتين: الإجراءات كانت تفتح القائمة الرئيسية بدل الصفحة المطلوبة)
     @State private var menuSheet: TableMenuStart?
+    /// اللعبة الحالية في الطاولة: لما تتغير يشتغل صوت تغيير اللعبة
+    @State private var lastKind: String?
     @State private var chatOpen = false
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var historyOpen = false
@@ -79,6 +81,12 @@ struct TableScreen: View {
         // لا نمسح آخر طاولة هنا: إغلاق التطبيق من مبدّل التطبيقات (والمحادثة الصوتية شغالة بالخلفية)
         // يهدم الشاشات فيستدعي onDisappear. نمسحها فقط عند الخروج من الطاولة بنفسك
         .onDisappear { UIApplication.shared.isIdleTimerDisabled = false; conn.stop(); Voice.shared.dispose(); Gestures.shared.handler = nil }
+        // تغيّرت اللعبة داخل الطاولة (مو أول ما تدخل)
+        .onChange(of: conn.view?.kind) { k in
+            guard let k else { return }
+            if let old = lastKind, old != k { Sounds.shared.gameChange() }
+            lastKind = k
+        }
         .onReceive(NotificationCenter.default.publisher(for: .appForeground)) { _ in conn.reconnectNow(); Voice.shared.onForeground() }
     }
 
@@ -572,6 +580,8 @@ final class GameSoundTracker {
         // كشف أوراق المشروع (اللفة الثانية)
         if g.declared.filter({ !$0.faces.isEmpty }).count > prev.declared.filter({ !$0.faces.isEmpty }).count { s.projectReveal() }
         if g.balootSeat != nil && prev.balootSeat == nil { s.baloot() }
+        // القيد: صوت التسجيلة الصحيحة أو الغلط
+        if let c = g.qaidCorrect, prev.qaidCorrect == nil { s.qaid(c) }
         // نهاية الصكة (بعد صوت سحب الأكلة الأخيرة)، ثم نهاية المباراة
         if let r = g.lastHand, prev.lastHand == nil {
             let team = mySeat.map(teamOf)

@@ -107,6 +107,12 @@ object Sounds {
     /** الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة */
     fun dominoShuffle() = play("domino-shuffle", gain = 1f, vary = false)
     fun dominoTile() = play("domino-tile", gain = 1f)
+    /** الدومينو: لاعب جلا (ما عنده قطعة تصلح) */
+    fun dominoPass() = play("domino-pass", gain = 0.9f, vary = false)
+    /** تغيّرت اللعبة داخل الطاولة */
+    fun gameChange() = play("game-change", gain = 0.9f, vary = false)
+    /** القيد: التسجيلة صحيحة أو غلط */
+    fun qaid(correct: Boolean) = play(if (correct) "qaid-right" else "qaid-wrong", gain = 0.9f, vary = false)
     /** نهاية الصكة في الدومينو: هارب هادئ */
     fun dominoEnd(at: Double = 0.0) = play("domino-end", at = at, gain = 1f, vary = false)
     /** الجاكارو: صوت وضع الورقة */

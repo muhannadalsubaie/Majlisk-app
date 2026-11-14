@@ -79,6 +79,8 @@ data class GameView(
     val declared: List<Declared>,
     /** القيد: أنواع المشاريع اللي أعلنها اللاعبين (صوت المشروع يشتغل أول ما ينعلن) */
     val kindDeclared: List<Pair<Int, String>> = emptyList(),
+    /** القيد: نتيجة آخر تسجيلة (صحيحة؟) — null لو ما فيه */
+    val qaidCorrect: Boolean? = null,
     val actions: GameActions,
     val hokmBidKey: String?,
     /** من اشترى الحكم الثاني (قبل وبعد ما يحدد اللون) */
@@ -217,6 +219,7 @@ data class TableView(
                 balootTrick = g.optIntOrNull("balootTrick"),
                 projectsWinningTeam = g.optJSONObject("projects")?.optIntOrNull("winningTeam"),
                 kindDeclared = g.optJSONArray("kindDeclared").objects().map { it.optInt("seat") to it.optString("kind") },
+                qaidCorrect = g.optJSONObject("qaidResult")?.optBoolean("correct"),
                 declared = g.optJSONArray("declared").objects().map {
                     Declared(
                         it.optInt("seat"),

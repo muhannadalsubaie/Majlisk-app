@@ -1337,6 +1337,7 @@ class OtherGameSounds {
                     when {
                         (first && d.line.isEmpty() && d.phase == "playing") || (phase != null && phase != "playing" && d.phase == "playing") -> Sounds.dominoShuffle()
                         !first && (d.lastKind == "play" || d.lastKind == "draw") -> Sounds.dominoTile()
+                        !first && d.lastKind == "pass" -> Sounds.dominoPass()
                     }
                     // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
                     if (!first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver")) Sounds.dominoEnd(0.5)

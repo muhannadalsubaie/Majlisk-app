@@ -88,6 +88,12 @@ final class Sounds {
     /// الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة
     func dominoShuffle() { play("domino-shuffle", gain: 1, vary: false) }
     func dominoTile() { play("domino-tile", gain: 1) }
+    /// الدومينو: لاعب جلا (ما عنده قطعة تصلح)
+    func dominoPass() { play("domino-pass", gain: 0.9, vary: false) }
+    /// تغيّرت اللعبة داخل الطاولة
+    func gameChange() { play("game-change", gain: 0.9, vary: false) }
+    /// القيد: التسجيلة صحيحة أو غلط
+    func qaid(_ correct: Bool) { play(correct ? "qaid-right" : "qaid-wrong", gain: 0.9, vary: false) }
     /// نهاية الصكة في الدومينو: هارب هادئ
     func dominoEnd(at: Double = 0) { play("domino-end", at: at, gain: 1, vary: false) }
     /// الجاكارو: صوت وضع الورقة

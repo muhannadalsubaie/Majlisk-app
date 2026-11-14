@@ -173,6 +173,10 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
     // نغمة الانضمام يسمعها المنضم نفسه أول ما تفتح الطاولة (الموجودون يسمعونها من إعلان الخادم)
     // المحادثة الصوتية ما تدخلها تلقائياً: اللي يبيها يضغط ضغطة مطولة على زر الميكروفون
     LaunchedEffect(tableId) { Sounds.tableJoin() }
+    // تغيّرت اللعبة داخل الطاولة (مو أول ما تدخل)
+    val kindNow = v.kind
+    var lastKind by remember { mutableStateOf<String?>(null) }
+    LaunchedEffect(kindNow) { if (lastKind != null && lastKind != kindNow) Sounds.gameChange(); lastKind = kindNow }
     // متابعة المنضمين للمحادثة الصوتية صارت في اتصال الطاولة نفسه (تشتغل والتطبيق في الخلفية)
 
     val leave = { conn.send("leave"); exit() }
@@ -796,6 +800,8 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
     // كشف أوراق المشروع (اللفة الثانية)
     if (g.declared.count { it.faces.isNotEmpty() } > prev.declared.count { it.faces.isNotEmpty() }) Sounds.projectReveal()
     if (g.balootSeat != null && prev.balootSeat == null) Sounds.baloot()
+    // القيد: صوت التسجيلة الصحيحة أو الغلط
+    g.qaidCorrect?.let { if (prev.qaidCorrect == null) Sounds.qaid(it) }
     // نهاية الصكة (بعد صوت سحب الأكلة الأخيرة)، ثم نهاية المباراة
     val r = g.lastHand
     if (r != null && prev.lastHand == null) {
