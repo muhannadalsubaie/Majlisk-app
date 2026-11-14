@@ -70,7 +70,7 @@ private fun joinTableOf(p: OnlinePlayer, scope: CoroutineScope, openTable: (Stri
         try {
             if (p.tablePrivate) {
                 var (st, mins) = Tables.requestJoin(id)
-                if (st == "pending") Announcer.announce("أُرسل طلب الانضمام إلى طاولة ${p.username}، ننتظر موافقة صاحبها")
+                if (st == "pending") Announcer.announce("أُرسل طلب الانضمام لمالك الطاولة، ننتظر موافقته")
                 var n = 0
                 while (st == "pending" && n < 155) {
                     delay(2000)
@@ -79,9 +79,9 @@ private fun joinTableOf(p: OnlinePlayer, scope: CoroutineScope, openTable: (Stri
                 }
                 when (st) {
                     "accepted" -> { Tables.join(id); openTable(id) }
-                    "rejected" -> Announcer.announce("رُفض طلب الانضمام، تقدر تحاول بعد ${minutesText(mins)}")
-                    "waiting" -> Announcer.announce("عندك طلب انضمام معلّق لهالطاولة، تقدر ترسل طلب جديد بعد ${minutesText(mins)}")
-                    else -> Announcer.announce("انتهى طلب الانضمام بدون رد")
+                    "rejected" -> Announcer.announce("رفض مالك الطاولة طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد ${minutesText(mins)}")
+                    "waiting" -> Announcer.announce("أرسلت نفس الطلب لهالطاولة قبل، ننتظر رد مالكها")
+                    else -> Announcer.announce("انتهى طلب الانضمام بدون رد من مالك الطاولة")
                 }
             } else {
                 Tables.join(id)

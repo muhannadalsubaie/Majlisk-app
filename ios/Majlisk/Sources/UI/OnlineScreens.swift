@@ -45,7 +45,7 @@ private struct OnlineSheet: View {
             do {
                 if p.tablePrivate {
                     var (st, mins) = try await Tables.requestJoin(id)
-                    if st == "pending" { say("أُرسل طلب الانضمام إلى طاولة \(p.username)، ننتظر موافقة صاحبها") }
+                    if st == "pending" { say("أُرسل طلب الانضمام لمالك الطاولة، ننتظر موافقته") }
                     var n = 0
                     while st == "pending" && n < 155 {
                         try? await Task.sleep(nanoseconds: 2_000_000_000)
@@ -54,9 +54,9 @@ private struct OnlineSheet: View {
                     }
                     switch st {
                     case "accepted": try await Tables.join(id); player = nil; openTable(id)
-                    case "rejected": say("رُفض طلب الانضمام، تقدر تحاول بعد \(minutesText(mins))")
-                    case "waiting": say("عندك طلب انضمام معلّق لهالطاولة، تقدر ترسل طلب جديد بعد \(minutesText(mins))")
-                    default: say("انتهى طلب الانضمام بدون رد")
+                    case "rejected": say("رفض مالك الطاولة طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد \(minutesText(mins))")
+                    case "waiting": say("أرسلت نفس الطلب لهالطاولة قبل، ننتظر رد مالكها")
+                    default: say("انتهى طلب الانضمام بدون رد من مالك الطاولة")
                     }
                 } else {
                     try await Tables.join(id); player = nil; openTable(id)

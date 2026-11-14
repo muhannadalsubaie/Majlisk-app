@@ -48,7 +48,7 @@ struct FriendsScreen: View {
             defer { joining = false }
             do {
                 var (st, mins) = try await Tables.requestJoin(id)
-                if st == "pending" { say("أُرسل طلب الانضمام إلى \(f.username)، ننتظر موافقته") }
+                if st == "pending" { say("أُرسل طلب الانضمام لمالك الطاولة، ننتظر موافقته") }
                 // ننتظر رده طول مدة الطلب (5 دقائق): قبول = ندخل على طول
                 var n = 0
                 while st == "pending" && n < 155 {
@@ -58,9 +58,9 @@ struct FriendsScreen: View {
                 }
                 switch st {
                 case "accepted": try await Tables.join(id); profileOf = nil; openTable(id)
-                case "rejected": say("رفض \(f.username) طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد \(minutesText(mins))")
-                case "waiting": say("عندك طلب انضمام معلّق عند \(f.username)، تقدر ترسل طلب جديد بعد \(minutesText(mins))")
-                default: say("انتهى طلب الانضمام بدون رد من \(f.username)")
+                case "rejected": say("رفض مالك الطاولة طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد \(minutesText(mins))")
+                case "waiting": say("أرسلت نفس الطلب لهالطاولة قبل، ننتظر رد مالكها")
+                default: say("انتهى طلب الانضمام بدون رد من مالك الطاولة")
                 }
             } catch { say(Tables.error(error, "تعذّر إرسال طلب الانضمام")) }
         }

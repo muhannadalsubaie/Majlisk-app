@@ -57,7 +57,7 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                 scope.launch {
                     try {
                         var (st, mins) = com.majlisk.app.data.Tables.requestJoin(id)
-                        if (st == "pending") say("أُرسل طلب الانضمام إلى ${f.username}، ننتظر موافقته")
+                        if (st == "pending") say("أُرسل طلب الانضمام لمالك الطاولة، ننتظر موافقته")
                         // ننتظر رده طول مدة الطلب (5 دقائق): قبول = ندخل على طول
                         var n = 0
                         while (st == "pending" && n < 155) {
@@ -67,9 +67,9 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                         }
                         when (st) {
                             "accepted" -> { com.majlisk.app.data.Tables.join(id); profileOf = null; openTable(id) }
-                            "rejected" -> say("رفض ${f.username} طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد ${minutesText(mins)}")
-                            "waiting" -> say("عندك طلب انضمام معلّق عند ${f.username}، تقدر ترسل طلب جديد بعد ${minutesText(mins)}")
-                            else -> say("انتهى طلب الانضمام بدون رد من ${f.username}")
+                            "rejected" -> say("رفض مالك الطاولة طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد ${minutesText(mins)}")
+                            "waiting" -> say("أرسلت نفس الطلب لهالطاولة قبل، ننتظر رد مالكها")
+                            else -> say("انتهى طلب الانضمام بدون رد من مالك الطاولة")
                         }
                     } catch (e: Exception) {
                         say(com.majlisk.app.data.Tables.error(e, "تعذّر إرسال طلب الانضمام"))
