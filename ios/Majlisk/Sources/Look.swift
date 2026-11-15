@@ -36,7 +36,7 @@ final class Look: ObservableObject {
     /// وجه الورق (البلوت)
     static let faces = ["كلاسيكي", "خط كبير", "ذهبي", "ليلي"]
     static let tiles = [
-        LookOption(name: "عاجي", colors: [rgb(0xFAF7EE), rgb(0x1A1A1A), rgb(0x9E9886)]),
+        LookOption(name: "عادي", colors: [rgb(0xFAF7EE), rgb(0x1A1A1A), rgb(0x9E9886)]),
         LookOption(name: "أسود بنقط ذهبية", colors: [rgb(0x2A2E33), rgb(0xF1DDA0), rgb(0x0B0F14)]),
         LookOption(name: "ذهبي", colors: [rgb(0xF1DDA0), rgb(0x2A1E05), rgb(0x8A6A22)]),
         LookOption(name: "أزرق", colors: [rgb(0x3A68AC), .white, rgb(0x1B3157)]),
@@ -48,7 +48,7 @@ final class Look: ObservableObject {
         LookOption(name: "ليلي وذهب", colors: [rgb(0x1F3B66), rgb(0x0E1C33), rgb(0xD9B45A)]),
     ]
     static let dice = [
-        LookOption(name: "عاجي", colors: [.white, Color(white: 0.1)]),
+        LookOption(name: "عادي", colors: [.white, Color(white: 0.1)]),
         LookOption(name: "ذهبي", colors: [rgb(0xF1DDA0), rgb(0x2A1E05)]),
         LookOption(name: "أسود", colors: [rgb(0x2A2E33), rgb(0xF1DDA0)]),
         LookOption(name: "ياقوتي", colors: [rgb(0xC8394B), .white]),

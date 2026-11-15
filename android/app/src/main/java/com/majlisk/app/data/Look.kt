@@ -42,7 +42,7 @@ object Look {
     val FACES = listOf("كلاسيكي", "خط كبير", "ذهبي", "ليلي")
     /** أحجار الدومينو: [الوجه، النقاط، الحافة] */
     val TILES = listOf(
-        LookOption("عاجي", listOf(Color(0xFFFAF7EE), Color(0xFF1A1A1A), Color(0xFF9E9886))),
+        LookOption("عادي", listOf(Color(0xFFFAF7EE), Color(0xFF1A1A1A), Color(0xFF9E9886))),
         LookOption("أسود بنقط ذهبية", listOf(Color(0xFF2A2E33), Color(0xFFF1DDA0), Color(0xFF0B0F14))),
         LookOption("ذهبي", listOf(Color(0xFFF1DDA0), Color(0xFF2A1E05), Color(0xFF8A6A22))),
         LookOption("أزرق", listOf(Color(0xFF3A68AC), Color(0xFFFFFFFF), Color(0xFF1B3157))),
@@ -56,7 +56,7 @@ object Look {
     )
     /** نرد اللودو: [الوجه، النقاط] */
     val DICE = listOf(
-        LookOption("عاجي", listOf(Color.White, Color(0xFF1A1A1A))),
+        LookOption("عادي", listOf(Color.White, Color(0xFF1A1A1A))),
         LookOption("ذهبي", listOf(Color(0xFFF1DDA0), Color(0xFF2A1E05))),
         LookOption("أسود", listOf(Color(0xFF2A2E33), Color(0xFFF1DDA0))),
         LookOption("ياقوتي", listOf(Color(0xFFC8394B), Color.White)),
