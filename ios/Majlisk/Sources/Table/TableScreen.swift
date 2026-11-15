@@ -309,12 +309,11 @@ struct BalootBoard: View {
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-                if v.qaid && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
+                if (v.qaid || v.manualProjects) && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
                     QaidButtons(v: v, g: g, act: act)
                 } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
                 }
-                if g.actions.canShowProject { ShowProjectPanel(v: v, g: g, act: act).onDisappear { ProjectSpot.shared.choosing = false } }
                 // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
                 if g.actions.canProject && v.manualProjects {
                     MButton("أعلن مشروعك", .primary) { act(["type": "declareProject"]) }
@@ -426,6 +425,7 @@ struct BalootBoard: View {
         if g.actions.canProject && v.manualProjects { out.append(("مشروع", { act(["type": "declareProject"]) })) }
         // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)، وفرشه، والتسجيلة من الأزرار
         for k in g.actions.declareKinds { out.append(("مشروع \(PROJECT_KIND_NAMES[k] ?? k)", { act(["type": "declareKind", "kind": k]) })) }
+        if g.actions.canShowProject { out.append(("فرش المشروع", { act(["type": "showProject"]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
         if g.actions.chooseLock {
@@ -936,7 +936,8 @@ private struct QaidButtons: View {
             if !g.actions.qaidTargets.isEmpty { SmallButton("تسجيلة", primary: true) { target = nil; qaidOpen = true } }
             if !g.actions.declareKinds.isEmpty { SmallButton("إعلان مشروع", primary: true) { projectOpen = true } }
             // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
-            if g.actions.canShowProject && !hub.choosing { SmallButton("فرش المشروع", primary: true) { hub.choosing = true } }
+            // فرش المشروع (اللفة الثانية): ضغطة وحدة وينفرش لحاله. ما تضغطه = تلعب عادي ويروح المشروع
+            if g.actions.canShowProject { SmallButton("فرش المشروع", primary: true) { act(["type": "showProject"]) } }
             if g.actions.canSawa { SmallButton("سوا", primary: true) { act(["type": "sawa"]) } }
         }
         .frame(maxWidth: .infinity)
@@ -969,7 +970,7 @@ private struct QaidButtons: View {
                         SmallButton(PROJECT_KIND_NAMES[k] ?? k, primary: true) { projectOpen = false; act(["type": "declareKind", "kind": k]) }
                     }
                 }
-                Note("في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.")
+                Note("في اللفة اللي بعدها اضغط «فرش المشروع» وينفرش لحاله.")
                 SmallButton("إلغاء") { projectOpen = false }
             }
         }

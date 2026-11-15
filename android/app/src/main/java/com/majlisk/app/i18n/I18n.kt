@@ -113,7 +113,6 @@ object I18n {
 
 /** ترجمة نص للغة التطبيق */
 fun tr(s: String): String = I18n.tr(s)
-fun tr(s: String?): String? = s?.let { I18n.tr(it) }
 
 /** نفس Text حق Material لكن يترجم النص للغة المختارة */
 @Composable

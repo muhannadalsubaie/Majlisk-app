@@ -402,6 +402,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             if (g.actions.canProject && v.manualProjects) add("مشروع" to { act(jsonOf("type" to "declareProject")) })
             // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)
             g.actions.declareKinds.forEach { k -> add("مشروع ${PROJECT_KIND_NAMES[k] ?: k}" to { act(jsonOf("type" to "declareKind", "kind" to k)) }) }
+            if (g.actions.canShowProject) add("فرش المشروع" to { act(jsonOf("type" to "showProject")) })
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
@@ -438,10 +439,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-            if (v.qaid && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject)) {
+            if ((v.qaid || v.manualProjects) && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject)) {
                 QaidButtons(v, g, act)
             } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
-            if (g.actions.canShowProject) ShowProjectPanel(v, g, act) else projectChoosing.value = false
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
             if (g.actions.canProject && v.manualProjects) PrimaryButton("أعلن مشروعك", { act(jsonOf("type" to "declareProject")) })
             // «ورق»: أوراقك الخمس الأولى كلها ٧ و٨ و٩ بس — يعاد التوزيع. بعد الشراء يجيك دورك: بس أو ورق
@@ -933,7 +933,8 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
         if (g.actions.qaidTargets.isNotEmpty()) com.majlisk.app.ui.SmallButton("تسجيلة", { target = null; qaidOpen = true }, primary = true)
         if (g.actions.declareKinds.isNotEmpty()) com.majlisk.app.ui.SmallButton("إعلان مشروع", { projectOpen = true }, primary = true)
         // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
-        if (g.actions.canShowProject && !projectChoosing.value) com.majlisk.app.ui.SmallButton("فرش المشروع", { projectChoosing.value = true }, primary = true)
+        // فرش المشروع (اللفة الثانية): ضغطة وحدة وينفرش لحاله. ما تضغطه = تلعب عادي ويروح المشروع
+        if (g.actions.canShowProject) com.majlisk.app.ui.SmallButton("فرش المشروع", { act(jsonOf("type" to "showProject")) }, primary = true)
         if (g.actions.canSawa) com.majlisk.app.ui.SmallButton("سوا", { act(jsonOf("type" to "sawa")) }, primary = true)
     }
     if (qaidOpen) {
@@ -958,7 +959,7 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
                 com.majlisk.app.ui.SmallButton(PROJECT_KIND_NAMES[k] ?: k, { projectOpen = false; act(jsonOf("type" to "declareKind", "kind" to k)) }, primary = true)
             }
         }
-        Note("في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.")
+        Note("في اللفة اللي بعدها اضغط «فرش المشروع» وينفرش لحاله.")
         com.majlisk.app.ui.SmallButton("إلغاء", { projectOpen = false })
     }
 }

@@ -4810,5 +4810,21 @@
  "يختار الحجر": {
   "en": "choosing the piece",
   "fr": "choisit le pion"
+ },
+ "في اللفة اللي بعدها اضغط «فرش المشروع» وينفرش لحاله.": {
+  "en": "In the next trick, tap \"Show project\" and it is shown automatically.",
+  "fr": "Au pli suivant, touchez « Montrer l'annonce » et elle s'affiche automatiquement."
+ },
+ "ما معه المشروع اللي أعلنه": {
+  "en": "doesn't have the declared project",
+  "fr": "n'a pas l'annonce déclarée"
+ },
+ "إلغاء الرقم السري": {
+  "en": "Remove the password",
+  "fr": "Supprimer le mot de passe"
+ },
+ "حذف الطاولة": {
+  "en": "Delete the table",
+  "fr": "Supprimer la table"
  }
 }
