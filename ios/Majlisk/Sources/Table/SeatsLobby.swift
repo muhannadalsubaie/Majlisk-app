@@ -32,6 +32,7 @@ struct SeatsLobby: View {
     @State private var manual = false
     @State private var qaid = false
     @State private var sawa = true
+    @State private var autoLast = true
     private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
 
@@ -130,12 +131,13 @@ struct SeatsLobby: View {
                         SwitchRow(label: "إعلان المشاريع يدوي", isOn: manual, onChange: { manual = $0 })
                         SwitchRow(label: "القيد والقطع", isOn: qaid, onChange: { qaid = $0 })
                         SwitchRow(label: "زر سوا", isOn: sawa, onChange: { sawa = $0 })
+                        SwitchRow(label: "السحب التلقائي للورقة الأخيرة", isOn: autoLast, onChange: { autoLast = $0 })
                         Note("🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
                     } else if session.profile?.proAccess == true {
                         Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
                     }
                 }
-                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": !pro || sawa]) }
+                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": !pro || sawa, "autoLast": !pro || autoLast]) }
                 MButton("إلغاء") { setup = false }
             }
         }
