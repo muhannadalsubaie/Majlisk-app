@@ -13,6 +13,10 @@ object Prefs {
     val handStyle: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("handStyle", "fan") ?: "fan") }
     fun setHandStyle(v: String) { handStyle.value = v; sp.edit().putString("handStyle", v).apply() }
 
+    /** السحب التلقائي للورقة الأخيرة (آخر أكلة في البلوت): مفعّل افتراضياً */
+    val autoLast: kotlinx.coroutines.flow.MutableStateFlow<Boolean> by lazy { kotlinx.coroutines.flow.MutableStateFlow(sp.getBoolean("autoLast", true)) }
+    fun setAutoLast(v: Boolean) { autoLast.value = v; sp.edit().putBoolean("autoLast", v).apply() }
+
     var muted: Boolean
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }

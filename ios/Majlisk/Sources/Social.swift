@@ -368,6 +368,7 @@ final class TableConnection: ObservableObject {
     /// آخر رسالة وصلت (تظهر لحظات في زاوية الشاشة)
     @Published private(set) var toast: ChatMessage?
     private var chatModeSub: Any?
+    private var autoLastSub: Any?
 
     func sendChat(_ text: String) {
         let t = text.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -389,6 +390,10 @@ final class TableConnection: ObservableObject {
             self.ws?.send(.string("{\"type\":\"chatPref\",\"off\":\(m == .off)}")) { _ in }
             if m == .off { DispatchQueue.main.async { self.chat = []; self.unread = 0; self.toast = nil } }
         }
+        // السحب التلقائي للورقة الأخيرة: نبلغ الخادم كل ما تغيّر
+        autoLastSub = NotificationCenter.default.publisher(for: UserDefaults.didChangeNotification).compactMap { _ in UserDefaults.standard.object(forKey: "autoLast") as? Bool }.removeDuplicates().sink { [weak self] on in
+            self?.ws?.send(.string("{\"type\":\"autoLast\",\"on\":\(on)}")) { _ in }
+        }
     }
 
     func start() {
@@ -403,6 +408,7 @@ final class TableConnection: ObservableObject {
                     ws.resume()
                     ws.send(.string(self.chatPrefMessage())) { _ in }
                     ws.send(.string("{\"type\":\"caps\",\"voice\":true}")) { _ in }
+                    ws.send(.string("{\"type\":\"autoLast\",\"on\":\(UserDefaults.standard.object(forKey: "autoLast") as? Bool ?? true)}")) { _ in }
                     // حركة انرسلت والاتصال ميت (ضاعت): نعيد إرسالها مع الاتصال الجديد
                     if let p = self.pending {
                         if Date().timeIntervalSince(p.at) < 20 { self.resent = true; ws.send(.string(p.text)) { _ in } } else { self.pending = nil }

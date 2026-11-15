@@ -177,7 +177,13 @@ class TableConnection(val tableId: String) {
         ws?.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString())
     }
 
+    private fun sendAutoLast() {
+        ws?.send(org.json.JSONObject().put("type", "autoLast").put("on", Prefs.autoLast.value).toString())
+    }
+
     init {
+        // السحب التلقائي للورقة الأخيرة: نبلغ الخادم كل ما تغيّر
+        scope.launch { Prefs.autoLast.collect { sendAutoLast() } }
         // تغيّر اختيارك للدردشة: نبلغ الخادم فوراً، وإن أطفأتها نمسح الرسائل
         scope.launch {
             ChatSettings.mode.collect { m ->
@@ -206,6 +212,7 @@ class TableConnection(val tableId: String) {
                             _connected.value = true; retry = 0
                             webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString())
                             webSocket.send("{\"type\":\"caps\",\"voice\":true}")
+                            webSocket.send(org.json.JSONObject().put("type", "autoLast").put("on", Prefs.autoLast.value).toString())
                             // حركة انرسلت والاتصال ميت (ضاعت): نعيد إرسالها مع الاتصال الجديد
                             pending?.let { (text, at) -> if (System.currentTimeMillis() - at < 20_000) { resent = true; webSocket.send(text) } else pending = null }
                         }
