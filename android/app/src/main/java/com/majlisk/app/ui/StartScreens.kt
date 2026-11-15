@@ -101,6 +101,8 @@ fun Field(label: String, value: String, onChange: (String) -> Unit, password: Bo
         OutlinedTextField(
             value = value, onValueChange = onChange, label = { Text(label) }, singleLine = true,
             modifier = Modifier.fillMaxWidth(),
+            // العنوان على اليمين (التطبيق عربي)، والإيميل وكلمة المرور تنكتب من اليسار
+            textStyle = if (ltr) androidx.compose.material3.LocalTextStyle.current.copy(textDirection = androidx.compose.ui.text.style.TextDirection.Ltr, textAlign = androidx.compose.ui.text.style.TextAlign.Left) else androidx.compose.material3.LocalTextStyle.current,
             visualTransformation = if (password) PasswordVisualTransformation() else androidx.compose.ui.text.input.VisualTransformation.None,
             keyboardOptions = KeyboardOptions(keyboardType = when { password -> KeyboardType.Password; email -> KeyboardType.Email; else -> KeyboardType.Text }),
             shape = androidx.compose.foundation.shape.RoundedCornerShape(14.dp),
@@ -112,7 +114,7 @@ fun Field(label: String, value: String, onChange: (String) -> Unit, password: Bo
             ),
         )
     }
-    if (ltr) CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Ltr) { field() } else field()
+    field()
 }
 
 /** حقل اسم المستخدم مع فحص فوري للصيغة والتوفر (القرار النهائي في الخادم) */
