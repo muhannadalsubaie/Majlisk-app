@@ -4838,5 +4838,21 @@
  "حذف المالك الطاولة": {
   "en": "The owner deleted the table",
   "fr": "Le propriétaire a supprimé la table"
+ },
+ "دق ولد": {
+  "en": "Shuffle teams",
+  "fr": "Tirer les équipes"
+ },
+ "اختر اللاعبين (أربعة أو أكثر)، وينختار منهم أربعة عشوائياً ويتوزعون على الفريقين.": {
+  "en": "Pick the players (four or more); four of them are chosen at random and split into the two teams.",
+  "fr": "Choisissez les joueurs (quatre ou plus) ; quatre d'entre eux sont tirés au sort et répartis en deux équipes."
+ },
+ "دق ولد: الفريق الأول {0} و{1}، والفريق الثاني {2} و{3}": {
+  "en": "Teams drawn: team one {0} and {1}, team two {2} and {3}",
+  "fr": "Équipes tirées : équipe un {0} et {1}, équipe deux {2} et {3}"
+ },
+ "اختر أربعة لاعبين أو أكثر": {
+  "en": "Pick four or more players",
+  "fr": "Choisissez quatre joueurs ou plus"
  }
 }

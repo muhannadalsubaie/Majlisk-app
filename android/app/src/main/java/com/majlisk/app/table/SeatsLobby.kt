@@ -83,6 +83,24 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     }
 
     SectionTitle("المقاعد")
+    // «دق ولد» (للمالك المشترك، البلوت): يختار من الموجودين ٤ أو أكثر، وينختار ٤ عشوائياً على الفريقين
+    if (isOwner && v.kind == "baloot" && com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true) {
+        var daq by remember { mutableStateOf(false) }
+        androidx.compose.foundation.layout.Row(Modifier.fillMaxWidth()) { SmallButton("دق ولد", { daq = true }, primary = true) }
+        if (daq) {
+            val people = v.seats.mapIndexedNotNull { i, s -> if (s != null && !s.isBot) (v.seatUids.getOrNull(i) ?: "") to s.username else null }.filter { it.first.isNotEmpty() } +
+                v.spectators.map { it.uid to it.username }
+            var picked by remember { mutableStateOf(people.map { it.first }.toSet()) }
+            com.majlisk.app.ui.MajliskDialog("دق ولد", { daq = false }) {
+                Note("اختر اللاعبين (أربعة أو أكثر)، وينختار منهم أربعة عشوائياً ويتوزعون على الفريقين.")
+                people.forEach { (u, name) ->
+                    com.majlisk.app.ui.SwitchRow(name, u in picked, { on -> picked = if (on) picked + u else picked - u })
+                }
+                PrimaryButton("دق ولد", { conn.send("daqWalad", "uids" to org.json.JSONArray(picked.toList())); daq = false }, enabled = picked.size >= 4)
+                SecondaryButton("إلغاء", { daq = false }, fill = true)
+            }
+        }
+    }
     listOf("الفريق الأول" to listOf(0, 2), "الفريق الثاني" to listOf(1, 3)).forEach { (title, seats) ->
         Text(title, color = Palette.goldSoft)
         seats.forEach { i ->

@@ -35,6 +35,12 @@ struct SeatsLobby: View {
     @State private var autoLast = true
     private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
+    @State private var daq = false
+    @State private var daqPicked: Set<String> = []
+    /// الموجودين في الطاولة (الجالسين بدون الروبوتات، والمشاهدين)
+    private var daqPeople: [Person] {
+        v.seats.enumerated().compactMap { i, s in s.flatMap { $0.isBot ? nil : Person(uid: v.seatUid(i), username: $0.username) } }.filter { !$0.uid.isEmpty } + v.spectators
+    }
 
     /// كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
     private func candidates(_ seat: Int) -> [Candidate] {
@@ -87,6 +93,10 @@ struct SeatsLobby: View {
         VStack(alignment: .leading, spacing: 10) {
             options
             SectionTitle("المقاعد")
+            // «دق ولد» (للمالك المشترك، البلوت): يختار من الموجودين ٤ أو أكثر، وينختار ٤ عشوائياً على الفريقين
+            if isOwner && pro && v.kind == "baloot" {
+                HStack { SmallButton("دق ولد", primary: true) { daqPicked = Set(daqPeople.map(\.uid)); daq = true }; Spacer() }
+            }
             ForEach([Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
                 Text(tr(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
@@ -110,6 +120,16 @@ struct SeatsLobby: View {
             // «بدء المباراة» يفتح نافذة إعدادات المباراة: فيها وقت كل دور (قائمة منسدلة) وأي إعدادات تنضاف بعدين، ثم «ابدأ»
             if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = true } }
             else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
+        }
+        .sheet(isPresented: $daq) {
+            Sheet(title: "دق ولد") {
+                Note("اختر اللاعبين (أربعة أو أكثر)، وينختار منهم أربعة عشوائياً ويتوزعون على الفريقين.")
+                ForEach(daqPeople, id: \.uid) { p in
+                    SwitchRow(label: p.username, isOn: daqPicked.contains(p.uid), onChange: { on in if on { daqPicked.insert(p.uid) } else { daqPicked.remove(p.uid) } })
+                }
+                MButton("دق ولد", .primary, enabled: daqPicked.count >= 4) { conn.send("daqWalad", ["uids": Array(daqPicked)]); daq = false }
+                MButton("إلغاء") { daq = false }
+            }
         }
         .sheet(isPresented: $setup) {
             Sheet(title: "إعدادات المباراة") {
