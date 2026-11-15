@@ -997,46 +997,42 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             val distinct = l.pool.distinct()
             // رميات هالدور (للي عليه الدور بس)
             val pool = if (turn) l.pool else emptyList()
+            // النرد الكبير تضغطه وترمي، وتحته نرد صغير لكل رقم جاك في هالدور (اللي تلعبه يختفي).
+            // لك ولو عندك أكثر من رقم: تضغط النرد الصغير وتختار الرقم اللي تلعبه، ثم تلمس الحجر
+            val selectable = mine && l.myTurn && l.phase == "move" && distinct.size > 1
+            val usable = l.options.map { it.die }.toSet()
+            val chosen = pickedDie?.takeIf { it in usable } ?: l.options.firstOrNull()?.die
             val dice: @Composable () -> Unit = {
-                if (mine && l.myTurn && l.phase == "move" && distinct.size > 1) {
-                    // أكثر من رقم: كل رقم نرد صغير، تختار واحد ثم تلمس الحجر
-                    val usable = l.options.map { it.die }.toSet()
-                    Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-                        distinct.forEach { d ->
-                            val on = (pickedDie ?: l.options.firstOrNull()?.die) == d
+                val canTap = mine && l.canRoll
+                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                    Box(
+                        Modifier.graphicsLayer { rotationZ = spin.value }
+                            // النرد نفسه زر الرمي (وقارئ الشاشة يقرأه «ارمِ النرد»)
+                            .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp)
+                                .clickable(onClickLabel = com.majlisk.app.i18n.tr("ارمِ النرد"), role = androidx.compose.ui.semantics.Role.Button) { doRoll() }
+                                .semantics { contentDescription = com.majlisk.app.i18n.tr("ارمِ النرد") } else Modifier),
+                    ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
+                    if (pool.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        pool.forEach { d ->
                             Box(
-                                Modifier.border(3.dp, if (on) Palette.gold else Color.Transparent, RoundedCornerShape(8.dp)).padding(2.dp)
-                                    .graphicsLayer { alpha = if (d in usable) 1f else 0.4f }
-                                    .clickable(enabled = d in usable) { pickedDie = d },
-                            ) { Dice(d, LUDO_COLORS[o], 32) }
-                        }
-                    }
-                } else {
-                    val canTap = mine && l.canRoll
-                    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                        Box(
-                            Modifier.graphicsLayer { rotationZ = spin.value }
-                                // النرد نفسه زر الرمي (وقارئ الشاشة يقرأه «ارمِ النرد»)
-                                .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp)
-                                    .clickable(onClickLabel = com.majlisk.app.i18n.tr("ارمِ النرد"), role = androidx.compose.ui.semantics.Role.Button) { doRoll() }
-                                    .semantics { contentDescription = com.majlisk.app.i18n.tr("ارمِ النرد") } else Modifier),
-                        ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
-                        // الرميات اللي عنده هالدور (ستة ثم ستة ثم ثلاثة...): نرد صغير لكل وحدة، تختفي لما يلعبها
-                        if (pool.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
-                            pool.forEach { Dice(it, LUDO_COLORS[o], 20) }
+                                Modifier.border(2.5.dp, if (selectable && chosen == d) Palette.gold else Color.Transparent, RoundedCornerShape(6.dp)).padding(1.dp)
+                                    .graphicsLayer { alpha = if (!selectable || d in usable) 1f else 0.4f }
+                                    .then(if (selectable && d in usable) Modifier.clickable { pickedDie = d } else Modifier),
+                            ) { Dice(d, LUDO_COLORS[o], if (selectable) 26 else 20) }
                         }
                     }
                 }
             }
+            // الصورة يسار والنرد يمين مهما كانت لغة التطبيق
+            androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
             Row(
                 Modifier.semantics(mergeDescendants = true) {
                     contentDescription = com.majlisk.app.i18n.tr("${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (pool.size > 1) "، رمياته ${pool.joinToString(" و")}" else ""}${if (turn) "، عليه الدور" else ""}")
                 },
-                verticalAlignment = Alignment.CenterVertically,
+                verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // النرد جهة اللوحة: لاعب اليسار نرده يمين صورته، ولاعب اليمين يسارها
-                if (!left) dice()
+                // الصورة على اليسار والنرد على يمينها (لكل اللاعبين)
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Box(
                         Modifier.border(3.dp, if (turn) Palette.gold else LUDO_COLORS[o], androidx.compose.foundation.shape.CircleShape).padding(3.dp),
@@ -1049,7 +1045,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                     }
                     Text("وصل ${l.home(o)}/4", color = Palette.textDim, fontSize = 11.sp)
                 }
-                if (left) dice()
+                dice()
+            }
             }
         }
         val cornerRow: @Composable (Boolean) -> Unit = { top ->
@@ -1095,15 +1092,18 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
             Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+            // أزرار صغيرة جنب بعض: فوق الأرقام (لو عندك أكثر من رقم)، وتحتها الأحجار
             val dice = l.options.map { it.die }.distinct()
-            if (dice.size > 1) Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            val die = pickedDie?.takeIf { it in dice } ?: dice.firstOrNull()
+            if (dice.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 dice.forEach { d ->
-                    SecondaryButton(if (pickedDie == d) "✓ بالـ$d" else "بالـ$d", { pickedDie = if (pickedDie == d) null else d },
-                        modifier = Modifier.weight(1f).semantics { selected = pickedDie == d }, fill = true)
+                    com.majlisk.app.ui.SmallButton(if (die == d) "✓ $d" else "$d", { pickedDie = d }, primary = die == d, description = "بالـ$d${if (die == d) "، محدد" else ""}")
                 }
             }
-            l.options.filter { pickedDie == null || pickedDie !in dice || it.die == pickedDie }.forEach { o ->
-                SecondaryButton(o.text, { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, fill = true)
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                l.options.filter { it.die == die }.forEach { o ->
+                    com.majlisk.app.ui.SmallButton("حجر ${o.token + 1}", { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, primary = true, description = o.text)
+                }
             }
         }
     }
@@ -1155,7 +1155,12 @@ private val CENTER_SPOT = listOf(7f to 6.25f, 6.25f to 7f, 7f to 7.75f, 7.75f to
 /** خانة الحجر (قبل تدوير اللوحة) حسب تقدّمه: البيت، المسار، ممر المنزل، المنزل */
 private fun ludoCell(o: Int, i: Int, p: Int): Pair<Float, Float> = when {
     p == -1 -> (YARDS[o].first + YARD_SPOTS[i].first - 0.5f) to (YARDS[o].second + YARD_SPOTS[i].second - 0.5f)
-    p == LudoView.FINISH -> CENTER_SPOT[o]
+    // في المنزل: كل حجر له مكانه الثابت بالترتيب على طرف مثلث لونه (ما تتكدس فوق بعض)
+    p == LudoView.FINISH -> {
+        val c = CENTER_SPOT[o]; val dx = c.first - 7f; val dy = c.second - 7f; val len = maxOf(0.01f, kotlin.math.hypot(dx, dy))
+        val k = (i - 1.5f) * 0.42f
+        (c.first - dy / len * k) to (c.second + dx / len * k)
+    }
     // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
     p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
     p > LudoView.LAST_TRACK -> ((HOME_CELLS[o][4].first + CENTER_SPOT[o].first) / 2) to ((HOME_CELLS[o][4].second + CENTER_SPOT[o].second) / 2)
@@ -1177,14 +1182,9 @@ private fun ludoTokenPoints(width: Float, l: LudoView, bottom: Int): List<Triple
     val seen = HashMap<String, Int>()
     for (o in l.seats) {
         l.tokens.getOrNull(o).orEmpty().forEachIndexed { i, p ->
-            val cell = when {
-                p == -1 -> (YARDS[o].first + YARD_SPOTS[i].first - 0.5f) to (YARDS[o].second + YARD_SPOTS[i].second - 0.5f)
-                p == LudoView.FINISH -> CENTER_SPOT[o]
-                p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 -> HOME_CELLS[o][p - LudoView.LAST_TRACK - 1]
-                p > LudoView.LAST_TRACK -> ((HOME_CELLS[o][4].first + CENTER_SPOT[o].first) / 2) to ((HOME_CELLS[o][4].second + CENTER_SPOT[o].second) / 2)
-                else -> TRACK_CELLS[LudoView.absPos(o, p)]
-            }
-            val pt = xy(cell)
+            val pt = xy(ludoCell(o, i, p))
+            // البيت والمنزل: كل حجر له مكانه الثابت (ما يتكدس)
+            if (p == -1 || p == LudoView.FINISH) { out += Triple(o, i, pt); return@forEachIndexed }
             val key = "${pt.x.toInt()},${pt.y.toInt()}"
             val n = seen[key] ?: 0
             seen[key] = n + 1
@@ -1263,8 +1263,10 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
             }
             val pt = xy(ludoCell(o, i, p))
             val key = "${pt.x.toInt()},${pt.y.toInt()}"
-            val n = seen[key] ?: 0
-            seen[key] = n + 1
+            // البيت والمنزل: كل حجر له مكانه الثابت (ما يتكدس)
+            val fixed = p == -1 || p == LudoView.FINISH
+            val n = if (fixed) 0 else seen[key] ?: 0
+            if (!fixed) seen[key] = n + 1
             val q = Offset(pt.x + n * U * 0.18f, pt.y - n * U * 0.18f)
             if (movable.any { it.first == o && it.second == i }) drawCircle(Color(0xFFD4AF37), U * 0.5f, q, style = Stroke(U * 0.14f))
             if (LUDO_3D) drawPawn(LUDO_COLORS[o], q, if (p == LudoView.FINISH) U * 0.25f else U * 0.36f, 0f, U)

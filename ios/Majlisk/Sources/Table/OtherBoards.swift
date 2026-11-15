@@ -1027,11 +1027,9 @@ struct LudoBoard: View {
     @ViewBuilder private func label(_ o: Int, names: [String], mySeat: Int?, partner: Int) -> some View {
         let n = o < names.count ? names[o] : ""
         let turn = l.turn == o && l.phase != "over"
-        let left = corner(o, mySeat).left
         let dice = myDice(o, mySeat: mySeat)
-        HStack(spacing: 8) {
-            // النرد جهة اللوحة: لاعب اليسار نرده يمين صورته، ولاعب اليمين يسارها
-            if !left { dice }
+        // الصورة على اليسار والنرد على يمينها (لكل اللاعبين)
+        HStack(alignment: .top, spacing: 8) {
             VStack(spacing: 2) {
                 Avatar(uid: v.seatUid(o), name: n, size: 52)
                     .padding(3)
@@ -1045,7 +1043,7 @@ struct LudoBoard: View {
                 }
                 Text(tr("وصل \(l.home(o))/4")).font(.system(size: 11)).foregroundColor(Palette.textDim)
             }
-            if left { dice }
+            dice
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(tr("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turnPool(o).count > 1 ? "، رمياته " + turnPool(o).map(String.init).joined(separator: " و") : "")\(turn ? "، عليه الدور" : "")"))
@@ -1058,37 +1056,30 @@ struct LudoBoard: View {
     /// رميات هالدور (للي عليه الدور بس)
     private func turnPool(_ o: Int) -> [Int] { l.turn == o && l.phase != "over" ? l.pool : [] }
 
-    /// النرد جنب الاسم. لك (بدون قارئ الشاشة): تضغطه وترمي، ولو عندك أكثر من رقم تختار الرقم منه
+    /// النرد على يمين الصورة: الكبير تضغطه وترمي، وتحته نرد صغير لكل رقم جاك في هالدور (اللي تلعبه يختفي).
+    /// لك (بدون قارئ الشاشة) ولو عندك أكثر من رقم: تضغط النرد الصغير وتختار الرقم اللي تلعبه، ثم تلمس الحجر
     @ViewBuilder private func myDice(_ o: Int, mySeat: Int?) -> some View {
         let mine = o == mySeat && !reader
-        let distinct = l.pool.reduce(into: [Int]()) { if !$0.contains($1) { $0.append($1) } }
-        if mine && l.myTurn && l.phase == "move" && distinct.count > 1 {
-            // أكثر من رقم: كل رقم نرد صغير، تختار واحد ثم تلمس الحجر
-            let usable = Set(l.options.map(\.die))
-            HStack(spacing: 4) {
-                ForEach(distinct, id: \.self) { d in
-                    let on = (pickedDie ?? l.options.first?.die) == d
-                    DiceView(value: d, color: LUDO_COLORS[o], size: 32)
-                        .padding(2)
-                        .overlay(RoundedRectangle(cornerRadius: 8).stroke(on ? Palette.gold : .clear, lineWidth: 3))
-                        .opacity(usable.contains(d) ? 1 : 0.4)
-                        .onTapGesture { if usable.contains(d) { pickedDie = d } }
-                }
-            }
-        } else {
-            let canTap = mine && l.canRoll
-            let pool = turnPool(o)
-            VStack(spacing: 4) {
-                DiceView(value: canTap && l.pool.isEmpty ? nil : shownRoll(o), color: LUDO_COLORS[o], size: canTap ? 46 : 40)
-                    .rotationEffect(.degrees(Double(l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0)) * 360))
-                    .animation(.easeOut(duration: 0.45), value: l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0))
-                    .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
-                    .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
-                    .onTapGesture { if canTap { act(["type": "roll"]) } }
-                // الرميات اللي عنده هالدور (ستة ثم ستة ثم ثلاثة...): نرد صغير لكل وحدة، تختفي لما يلعبها
-                if !pool.isEmpty {
-                    HStack(spacing: 3) {
-                        ForEach(Array(pool.enumerated()), id: \.offset) { _, d in DiceView(value: d, color: LUDO_COLORS[o], size: 20) }
+        let canTap = mine && l.canRoll
+        let pool = turnPool(o)
+        let selectable = mine && l.myTurn && l.phase == "move" && Set(pool).count > 1
+        let usable = Set(l.options.map(\.die))
+        let chosen = pickedDie.flatMap { usable.contains($0) ? $0 : nil } ?? l.options.first?.die
+        VStack(spacing: 4) {
+            DiceView(value: canTap && l.pool.isEmpty ? nil : shownRoll(o), color: LUDO_COLORS[o], size: canTap ? 46 : 40)
+                .rotationEffect(.degrees(Double(l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0)) * 360))
+                .animation(.easeOut(duration: 0.45), value: l.rollSeq > 0 ? (l.rolledSeat == o ? l.rollSeq : 0) : (rollTicks[o] ?? 0))
+                .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
+                .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
+                .onTapGesture { if canTap { act(["type": "roll"]) } }
+            if !pool.isEmpty {
+                HStack(spacing: 4) {
+                    ForEach(Array(pool.enumerated()), id: \.offset) { _, d in
+                        DiceView(value: d, color: LUDO_COLORS[o], size: selectable ? 26 : 20)
+                            .padding(1)
+                            .overlay(RoundedRectangle(cornerRadius: 6).stroke(selectable && chosen == d ? Palette.gold : .clear, lineWidth: 2.5))
+                            .opacity(!selectable || usable.contains(d) ? 1 : 0.4)
+                            .onTapGesture { if selectable && usable.contains(d) { pickedDie = d } }
                     }
                 }
             }
@@ -1178,17 +1169,20 @@ struct LudoBoard: View {
             if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
                 Text(tr(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+                // أزرار صغيرة جنب بعض: فوق الأرقام (لو عندك أكثر من رقم)، وتحتها الأحجار
                 let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
+                let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
                 if dice.count > 1 {
-                    HStack(spacing: 8) {
+                    HStack(spacing: 6) {
                         ForEach(dice, id: \.self) { d in
-                            MButton(pickedDie == d ? "✓ بالـ\(d)" : "بالـ\(d)") { pickedDie = pickedDie == d ? nil : d }
-                                .accessibilityAddTraits(pickedDie == d ? .isSelected : [])
+                            SmallButton(die == d ? "✓ \(d)" : "\(d)", primary: die == d, label: "بالـ\(d)\(die == d ? "، محدد" : "")") { pickedDie = d }
                         }
                     }
                 }
-                ForEach(l.options.filter { pickedDie == nil || !dice.contains(pickedDie!) || $0.die == pickedDie }) { o in
-                    MButton(o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
+                HStack(spacing: 6) {
+                    ForEach(l.options.filter { $0.die == die }) { o in
+                        SmallButton("حجر \(o.token + 1)", primary: true, label: o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
+                    }
                 }
             }
         }
@@ -1285,7 +1279,12 @@ private let CENTER_SPOT: [Cell] = [(7, 6.25), (6.25, 7), (7, 7.75), (7.75, 7)]
 /// خانة الحجر (قبل تدوير اللوحة) حسب تقدّمه: البيت، المسار، ممر المنزل، المنزل
 private func ludoCell(_ o: Int, _ i: Int, _ p: Int) -> Cell {
     if p == -1 { return (YARDS[o].0 + YARD_SPOTS[i].0 - 0.5, YARDS[o].1 + YARD_SPOTS[i].1 - 0.5) }
-    if p == LudoView.FINISH { return CENTER_SPOT[o] }
+    // في المنزل: كل حجر له مكانه الثابت بالترتيب على طرف مثلث لونه (ما تتكدس فوق بعض)
+    if p == LudoView.FINISH {
+        let c = CENTER_SPOT[o], dx = c.0 - 7, dy = c.1 - 7, len = max(0.01, hypot(dx, dy))
+        let k = (CGFloat(i) - 1.5) * 0.42
+        return (c.0 - dy / len * k, c.1 + dx / len * k)
+    }
     // ممر المنزل 6 خانات: الخمس الملوّنة، والسادسة عند حافة الوسط
     if p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 { return HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
     if p > LudoView.LAST_TRACK { return ((HOME_CELLS[o][4].0 + CENTER_SPOT[o].0) / 2, (HOME_CELLS[o][4].1 + CENTER_SPOT[o].1) / 2) }
@@ -1311,13 +1310,9 @@ private func ludoTokenPoints(_ size: CGSize, _ l: LudoView, _ bottom: Int) -> [(
     for o in l.seats {
         let row = o < l.tokens.count ? l.tokens[o] : []
         for (i, p) in row.enumerated() {
-            let cell: Cell
-            if p == -1 { cell = (YARDS[o].0 + YARD_SPOTS[i].0 - 0.5, YARDS[o].1 + YARD_SPOTS[i].1 - 0.5) }
-            else if p == LudoView.FINISH { cell = CENTER_SPOT[o] }
-            else if p > LudoView.LAST_TRACK && p - LudoView.LAST_TRACK - 1 < 5 { cell = HOME_CELLS[o][p - LudoView.LAST_TRACK - 1] }
-            else if p > LudoView.LAST_TRACK { cell = ((HOME_CELLS[o][4].0 + CENTER_SPOT[o].0) / 2, (HOME_CELLS[o][4].1 + CENTER_SPOT[o].1) / 2) }
-            else { cell = TRACK_CELLS[LudoView.absPos(o, p)] }
-            let pt = xy(cell)
+            let pt = xy(ludoCell(o, i, p))
+            // البيت والمنزل: كل حجر له مكانه الثابت (ما يتكدس)
+            if p == -1 || p == LudoView.FINISH { out.append((o, i, pt)); continue }
             let key = "\(Int(pt.x)),\(Int(pt.y))"
             let n = seen[key] ?? 0
             seen[key] = n + 1
@@ -1389,8 +1384,9 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
             }
             let pt = xy(ludoCell(o, i, p))
             let key = "\(Int(pt.x)),\(Int(pt.y))"
-            let n = seen[key] ?? 0
-            seen[key] = n + 1
+            // البيت والمنزل: كل حجر له مكانه الثابت (ما يتكدس)
+            let n = p == -1 || p == LudoView.FINISH ? 0 : (seen[key] ?? 0)
+            if p != -1 && p != LudoView.FINISH { seen[key] = n + 1 }
             let q = CGPoint(x: pt.x + CGFloat(n) * U * 0.18, y: pt.y - CGFloat(n) * U * 0.18)
             if movable.contains(where: { $0.0 == o && $0.1 == i }) { ctx.stroke(circle(q, U * 0.5), with: .color(Palette.gold), lineWidth: U * 0.14) }
             if LUDO_3D { drawPawn(ctx, LUDO_COLORS[o], q, p == LudoView.FINISH ? U * 0.25 : U * 0.36, 0, U) } else {
