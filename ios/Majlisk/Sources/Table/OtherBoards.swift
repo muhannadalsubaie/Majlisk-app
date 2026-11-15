@@ -1336,7 +1336,18 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
         let x0 = min(a.1, b.1) * U, y0 = min(a.0, b.0) * U
         ctx.fill(Path(roundedRect: CGRect(x: x0 + 1, y: y0 + 1, width: 6 * U - 2, height: 6 * U - 2), cornerRadius: U * 0.45),
                  with: .color(LUDO_COLORS[o].opacity(l.seats.contains(o) ? 0.9 : 0.25)))
-        ctx.fill(Path(roundedRect: CGRect(x: x0 + U, y: y0 + U, width: 4 * U, height: 4 * U), cornerRadius: U * 0.35), with: .color(paper))
+        // داخل البيت بنفس لون الجهة: تدرج من فاتح لغامق مع حفر غامقة لأماكن الحجار
+        let on = l.seats.contains(o)
+        let inner = Path(roundedRect: CGRect(x: x0 + U, y: y0 + U, width: 4 * U, height: 4 * U), cornerRadius: U * 0.35)
+        ctx.fill(inner, with: .color(LUDO_COLORS[o].opacity(on ? 1 : 0.3)))
+        ctx.fill(inner, with: .linearGradient(Gradient(colors: [Color.white.opacity(0.32), Color.clear, Color.black.opacity(0.32)]),
+                                              startPoint: CGPoint(x: x0 + U, y: y0 + U), endPoint: CGPoint(x: x0 + 5 * U, y: y0 + 5 * U)))
+        for (sr, sc) in YARD_SPOTS {
+            let q = xy((y.0 + sr - 0.5, y.1 + sc - 0.5))
+            ctx.fill(circle(q, U * 0.42), with: .color(Color.black.opacity(on ? 0.30 : 0.15)))
+            ctx.stroke(circle(CGPoint(x: q.x, y: q.y - U * 0.05), U * 0.42), with: .color(Color.black.opacity(0.18)), lineWidth: U * 0.06)
+            ctx.stroke(circle(q, U * 0.42), with: .color(Color.white.opacity(0.22)), lineWidth: U * 0.04)
+        }
     }
     for (i, cell) in TRACK_CELLS.enumerated() {
         let p = xy(cell)

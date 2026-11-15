@@ -1210,7 +1210,22 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
         val a = rot(y); val b = rot(y.first + 5 to y.second + 5)
         val x0 = min(a.second, b.second) * U; val y0 = min(a.first, b.first) * U
         drawRoundRect(LUDO_COLORS[o].copy(alpha = if (o in l.seats) 0.9f else 0.25f), Offset(x0 + 1, y0 + 1), Size(6 * U - 2, 6 * U - 2), CornerRadius(U * 0.45f))
-        drawRoundRect(paper, Offset(x0 + U, y0 + U), Size(4 * U, 4 * U), CornerRadius(U * 0.35f))
+        // داخل البيت بنفس لون الجهة: تدرج من فاتح لغامق مع حفر غامقة لأماكن الحجار
+        val on = o in l.seats
+        drawRoundRect(LUDO_COLORS[o].copy(alpha = if (on) 1f else 0.3f), Offset(x0 + U, y0 + U), Size(4 * U, 4 * U), CornerRadius(U * 0.35f))
+        drawRoundRect(
+            androidx.compose.ui.graphics.Brush.linearGradient(
+                listOf(Color.White.copy(alpha = 0.32f), Color.Transparent, Color.Black.copy(alpha = 0.32f)),
+                start = Offset(x0 + U, y0 + U), end = Offset(x0 + 5 * U, y0 + 5 * U)
+            ),
+            Offset(x0 + U, y0 + U), Size(4 * U, 4 * U), CornerRadius(U * 0.35f)
+        )
+        YARD_SPOTS.forEach { (sr, sc) ->
+            val q = xy((y.first + sr - 0.5f) to (y.second + sc - 0.5f))
+            drawCircle(Color.Black.copy(alpha = if (on) 0.30f else 0.15f), U * 0.42f, q)
+            drawCircle(Color.Black.copy(alpha = 0.18f), U * 0.42f, q + Offset(0f, -U * 0.05f), style = Stroke(U * 0.06f))
+            drawCircle(Color.White.copy(alpha = 0.22f), U * 0.42f, q, style = Stroke(U * 0.04f))
+        }
     }
     TRACK_CELLS.forEachIndexed { i, cell ->
         val p = xy(cell)
