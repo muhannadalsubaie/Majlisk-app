@@ -145,24 +145,6 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF141B22)).border(1.dp, Pro.goldLight.copy(alpha = 0.18f), RoundedCornerShape(16.dp)).padding(14.dp)) {
                 OnlineLine(openTable)
             }
-            // بطاقة «العب الآن» بطاولة مجسمة
-            Box(
-                Modifier.fillMaxWidth().height(220.dp).shadow(16.dp, RoundedCornerShape(26.dp))
-                    .background(Brush.linearGradient(listOf(Color(0xFF23303D), Color(0xFF10161C))), RoundedCornerShape(26.dp))
-                    .border(1.dp, Pro.goldLight.copy(alpha = 0.18f), RoundedCornerShape(26.dp)),
-            ) {
-                MiniTable(Modifier.fillMaxWidth().height(150.dp).padding(horizontal = 40.dp, vertical = 8.dp))
-                Row(
-                    Modifier.align(Alignment.BottomCenter).fillMaxWidth().padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp),
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text("مجلسك الذهبي", color = Pro.goldLight, fontSize = 22.sp, fontWeight = FontWeight.ExtraBold)
-                        Text("طاولتك بشكلها المميز", color = Pro.dim, fontSize = 13.sp)
-                    }
-                    RaisedButton("العب الآن", { play(null) }, base = Pro.gold, content = Pro.ink, minHeight = 48.dp, fontSize = 16.sp)
-                }
-            }
             // الألعاب
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("الألعاب", color = Color(0xFFF4EFE2), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f).semantics { heading() })

@@ -113,27 +113,6 @@ struct GoldMenuScreen: View {
                         .frame(maxWidth: .infinity, alignment: .leading).padding(14)
                         .background(Color(red: 0.078, green: 0.106, blue: 0.133)).clipShape(RoundedRectangle(cornerRadius: 16))
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
-                    // بطاقة «العب الآن» بطاولة مجسمة
-                    ZStack(alignment: .bottom) {
-                        MiniTable().padding(.top, 6).frame(maxHeight: .infinity, alignment: .top)
-                        HStack(spacing: 12) {
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(tr("مجلسك الذهبي")).font(.system(size: 22, weight: .heavy)).foregroundColor(Pro.goldLight)
-                                Text(tr("طاولتك بشكلها المميز")).font(.system(size: 13)).foregroundColor(Pro.dim)
-                            }
-                            Spacer()
-                            Button { play(nil) } label: {
-                                Text(tr("العب الآن")).font(.system(size: 16, weight: .heavy)).padding(.horizontal, 20).frame(minHeight: 48)
-                            }
-                            .buttonStyle(RaisedStyle(base: Pro.gold, fg: Pro.ink))
-                        }
-                        .padding(16)
-                    }
-                    .frame(height: 220)
-                    .background(LinearGradient(colors: [Color(red: 0.137, green: 0.188, blue: 0.24), Pro.night], startPoint: .topLeading, endPoint: .bottomTrailing))
-                    .clipShape(RoundedRectangle(cornerRadius: 26))
-                    .overlay(RoundedRectangle(cornerRadius: 26).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
-                    .shadow(color: .black.opacity(0.6), radius: 16, y: 10)
                     // الألعاب
                     HStack {
                         Text(tr("الألعاب")).font(.system(size: 17, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)

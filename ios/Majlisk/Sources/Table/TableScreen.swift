@@ -660,17 +660,20 @@ private struct PlayerTag: View {
         let turn = g.turn == seat && g.phase != "matchOver"
         let label = (s?.username ?? "مقعد \(seat + 1)") + (s?.isBot == true ? " (روبوت)" : "") + (s?.away == true ? " (انقطع الاتصال)" : "") + (partner ? " (شريكك)" : "")
         let across = (partner || wide) && !faces.isEmpty
+        // اللي عليه الدور: إطار على قد اللاعب نفسه (صورته واسمه) — مو على عرض المكان كله،
+        // والمؤقت فوق صورته (بحجمها) ويروح للي بعده أول ما يلعب
         let who = VStack(spacing: 4) {
-            Avatar(uid: v.seatUid(seat), name: s?.username ?? "", size: 34)
-            HStack(spacing: 4) {
-                Text(tr(label))
-                    .font(.system(size: 14, weight: .bold))
-                    .multilineTextAlignment(.center)
-                    .minimumScaleFactor(0.7)
-                TurnClock(v: v, seat: seat, turn: turn)
-            }
+            TurnAvatar(v: v, seat: seat, turn: turn, uid: v.seatUid(seat), name: s?.username ?? "", size: 40)
+            Text(tr(label))
+                .font(.system(size: 14, weight: .bold))
+                .multilineTextAlignment(.center)
+                .minimumScaleFactor(0.7)
             if let note { Text(tr(note)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
         }
+        .padding(.horizontal, 8).padding(.vertical, 6)
+        .background(turn ? Palette.gold.opacity(0.08) : .clear)
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
         let fan = ProjectFaces(faces: faces, maxWidth: across ? 170 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) })
         Group {
             // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
@@ -678,11 +681,8 @@ private struct PlayerTag: View {
             // على الجنب: المروحة تحت الاسم (الطاولة أطول منها فما تزيد الشاشة)
             else { VStack(spacing: 4) { who; if !faces.isEmpty { fan.padding(.top, 2) } } }
         }
-            .padding(.horizontal, 4).padding(.vertical, 8)
+            .padding(.horizontal, 4).padding(.vertical, 4)
             .frame(maxWidth: .infinity)
-            .background(turn ? Palette.gold.opacity(0.08) : .clear)
-            .clipShape(RoundedRectangle(cornerRadius: 14))
-            .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
     }
 }
 

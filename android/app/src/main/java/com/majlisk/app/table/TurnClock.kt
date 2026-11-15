@@ -15,6 +15,8 @@ import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.graphics.Color
+import androidx.compose.foundation.layout.size
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.model.TableView
 import com.majlisk.app.ui.Palette
@@ -48,5 +50,41 @@ fun TurnClock(v: TableView, seat: Int, turn: Boolean) {
     Row(Modifier.clearAndSetSemantics { }, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(2.dp)) {
         Text("⏱", fontSize = 13.sp)
         if (secs != null) Text("$secs", color = if (secs <= 5) Palette.goldSoft else Palette.text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+/**
+ * مؤقت الدور فوق صورة اللاعب: حلقة ذهبية حول الصورة تنقص مع الوقت، والثواني الباقية في وسطها
+ * (بحجم الصورة نفسها). تطلع عند اللي عليه الدور بس، وتنتقل للي بعده أول ما يلعب.
+ */
+@Composable
+fun TurnAvatar(v: TableView, seat: Int, turn: Boolean, uid: String?, name: String, size: androidx.compose.ui.unit.Dp) {
+    androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+        com.majlisk.app.ui.Avatar(uid, name, size)
+        if (!turn) return@Box
+        val deadline = if (v.clockLimit > 0 && v.clockSeat == seat) v.clockDeadline else null
+        var now by remember { mutableStateOf(System.currentTimeMillis()) }
+        LaunchedEffect(deadline) {
+            var warned = false
+            while (deadline != null) {
+                now = System.currentTimeMillis()
+                val left = deadline - now
+                if (!warned && seat == v.mySeat && left in 1..5_000) { warned = true; Announcer.announce("باقي ٥ ثواني") }
+                if (left <= 0) break
+                delay(100)
+            }
+        }
+        val left = deadline?.let { (it - now).coerceAtLeast(0) }
+        val frac = if (left != null && v.clockLimit > 0) (left / (v.clockLimit * 1000f)).coerceIn(0f, 1f) else 1f
+        val secs = left?.let { (it + 999) / 1000 }
+        val ring = if (secs != null && secs <= 5) Color(0xFFE5533D) else Palette.gold
+        androidx.compose.foundation.Canvas(Modifier.size(size + 8.dp).clearAndSetSemantics { }) {
+            val stroke = 3.dp.toPx()
+            drawCircle(Color(0x88000000), radius = this.size.minDimension / 2 - stroke)
+            drawArc(Color(0x44FFFFFF), 0f, 360f, false, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke))
+            drawArc(ring, -90f, 360f * frac, false, style = androidx.compose.ui.graphics.drawscope.Stroke(stroke, cap = androidx.compose.ui.graphics.StrokeCap.Round))
+        }
+        Text(if (secs != null) "$secs" else "⏱", color = if (secs != null && secs <= 5) Color(0xFFFFC2B8) else Color.White,
+            fontSize = (size.value * 0.42f).sp, fontWeight = FontWeight.Bold, modifier = Modifier.clearAndSetSemantics { })
     }
 }

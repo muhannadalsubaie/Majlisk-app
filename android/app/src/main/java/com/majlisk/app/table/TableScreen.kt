@@ -576,17 +576,21 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         if (s?.away == true) append(" (انقطع الاتصال)")
         if (partner) append(" (شريكك)")
     }
-    val box = modifier
-        .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
-        .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
-        .padding(horizontal = 4.dp, vertical = 8.dp)
+    val box = modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+    // اللي عليه الدور: إطار على قد اللاعب نفسه (صورته واسمه) — مو على عرض المكان كله،
+    // والمؤقت فوق صورته (بحجمها) ويروح للي بعده أول ما يلعب
     val who: @Composable () -> Unit = {
-        com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(seat), s?.username.orEmpty(), 34.dp)
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(
+            Modifier
+                .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
+                .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
+                .padding(horizontal = 8.dp, vertical = 6.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TurnAvatar(v, seat, turn, v.seatUids.getOrNull(seat), s?.username.orEmpty(), 40.dp)
             Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
-            TurnClock(v, seat, turn)
+            if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
-        if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
     }
     val onTap = { projectSpot.value = Spot("أوراق ${s?.username ?: "اللاعب"}", faces) }
     // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
