@@ -156,6 +156,12 @@ struct JackarooView {
 
 struct LudoOption: Identifiable { var id: Int { token * 10 + die }; let token: Int; let die: Int; let text: String }
 
+struct LudoAnimKey: Equatable {
+    let moveSig: String, lastSig: String, phase: String
+    let owner: Int, index: Int, from: Int, to: Int
+    let captured: [[Int]]
+}
+
 struct LudoView {
     /// المسار 0..50 (51 خانة)، ممر المنزل 51..55 (5 خانات)، المنزل 56
     static let FINISH = 56, LAST_TRACK = 50
@@ -170,6 +176,11 @@ struct LudoView {
     let dice: Int?, lastRoll: Int?, winner: Int?
     /// نسخة بأماكن أحجار ثانية (للرسم قبل ما تبدأ الحركة)
     func withTokens(_ t: [[Int]]) -> LudoView { var c = self; c.tokens = t; return c }
+    /// آخر حركة من السيرفر: أي حجر، من وين لوين، ومين انأكل (الحركة على الشاشة والصوت كلهم منها)
+    var lastOwner = -1, lastIndex = -1, lastFrom = -1, lastTo = -1
+    var lastCaptured: [[Int]] = []
+    /// كل اللي تحتاجه حركة الحجر، في قيمة وحدة (تتغير = حالة جديدة من السيرفر)
+    var animKey: LudoAnimKey { LudoAnimKey(moveSig: moveSig, lastSig: lastSig, phase: phase, owner: lastOwner, index: lastIndex, from: lastFrom, to: lastTo, captured: lastCaptured) }
     /// من رمى آخر رمية
     let lastSeat: Int?
     let teams: Bool
@@ -219,6 +230,10 @@ struct LudoView {
         captures = last?.objs("captured").count ?? 0
         finished = last?.bool("finished") ?? false
         if let f = last?.intOrNil("from"), let t = last?.intOrNil("to") { lastSteps = f == -1 ? 1 : t - f } else { lastSteps = 0 }
+        if let tok = last?.obj("token"), let f = last?.intOrNil("from"), let t = last?.intOrNil("to") {
+            lastOwner = tok.int("owner"); lastIndex = tok.int("index"); lastFrom = f; lastTo = t
+            lastCaptured = (last?.objs("captured") ?? []).map { [$0.int("owner"), $0.int("index")] }
+        }
         myTurn = ui.bool("myTurn")
         options = ui.objs("options").map { LudoOption(token: $0.int("token"), die: $0.int("die", s.int("dice")), text: $0.str("text")) }
         movableOwner = ui.int("movableOwner", -1)

@@ -955,35 +955,41 @@ struct LudoBoard: View {
     @State private var pickedDie: Int?
     /// حركة الأحجار: الحجر يقفز خانة خانة لين يوصل (نفس توقيت نقرات الخطوات)، والمأكول يطير لبيته
     @State private var hops: [String: LudoHop] = [:]
-    @State private var prevTokens: [[Int]]?
-    @State private var prevTokPhase: String?
+    /// آخر حركة حرّكناها على الشاشة، والمرحلة اللي قبلها (عشان نعرف هل الرمية والحركة جو مع بعض)
+    @State private var seenSig: String?
+    @State private var seenPhase: String?
 
     private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
 
-    /// تغيّرت أماكن الأحجار: نحسب طريق كل حجر تحرك
-    private func animateMoves() {
-        let before = prevTokens, wasPhase = prevTokPhase
-        prevTokens = l.tokens; prevTokPhase = l.phase
-        guard let before, LUDO_3D else { return }
+    /// حالة جديدة من السيرفر: لو فيها حركة حجر جديدة نحسب طريقه من الحركة نفسها (من وين لوين).
+    /// كل القيم من k (الحالة الجديدة) — فالحركة على الشاشة دايماً هي نفس حركة السيرفر ونفس عدد نقرات الصوت.
+    private func animate(_ k: LudoAnimKey) {
+        let wasPhase = seenPhase
+        seenPhase = k.phase
+        guard k.lastSig != seenSig else { return }
+        seenSig = k.lastSig
+        guard LUDO_3D, k.index >= 0 else { return }
         let now = Date().timeIntervalSince1970
         hops = hops.filter { $0.value.end > now }
-        // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
+        // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس توقيت نقرات الخطوات)
         let delay = wasPhase != "move" ? 0.6 : 0
-        var moverEnd = now + delay
-        var captured: [(Int, Int, Int)] = []
-        for o in l.seats {
-            let row = o < l.tokens.count ? l.tokens[o] : []
-            for (i, p1) in row.enumerated() {
-                guard o < before.count, i < before[o].count else { continue }
-                let p0 = before[o][i]
-                if p0 == p1 { continue }
-                if p1 == -1 { captured.append((o, i, p0)) }
-                else if p0 == -1 { let h = LudoHop(path: [ludoCell(o, i, -1), ludoCell(o, i, p1)], startAt: now + delay, step: 0.32); hops["\(o)-\(i)"] = h; moverEnd = max(moverEnd, h.end) }
-                else if p1 > p0 { let h = LudoHop(path: (p0...p1).map { ludoCell(o, i, $0) }, startAt: now + delay, step: Sounds.stepGap); hops["\(o)-\(i)"] = h; moverEnd = max(moverEnd, h.end) }
-            }
-        }
+        let o = k.owner, i = k.index
+        let h = k.from == -1
+            ? LudoHop(path: [ludoCell(o, i, -1), ludoCell(o, i, k.to)], startAt: now + delay, step: Sounds.stepGap)
+            : LudoHop(path: (k.from...max(k.from, k.to)).map { ludoCell(o, i, $0) }, startAt: now + delay, step: Sounds.stepGap)
+        hops["\(o)-\(i)"] = h
         // المأكول: يبقى مكانه لين يوصله اللي أكله، وبعدها يطير لبيته
-        for (o, i, p0) in captured { hops["\(o)-\(i)"] = LudoHop(path: [ludoCell(o, i, p0), ludoCell(o, i, -1)], startAt: moverEnd, step: 0.52) }
+        for c in k.captured where c.count == 2 {
+            hops["\(c[0])-\(c[1])"] = LudoHop(path: [ludoCell(o, i, k.to), ludoCell(c[0], c[1], -1)], startAt: h.end, step: 0.52)
+        }
+    }
+
+    /// وصلت الحركة والطريق لسا ما انحسب (إطار واحد): نرسم الحجر في مكانه القديم بدل ما يطلع في مكان الوصول ويرجع
+    private var shownLudo: LudoView {
+        guard LUDO_3D, seenSig != nil, l.lastSig != seenSig, l.lastIndex >= 0, l.lastOwner < l.tokens.count, l.lastIndex < l.tokens[l.lastOwner].count else { return l }
+        var t = l.tokens
+        t[l.lastOwner][l.lastIndex] = l.lastFrom
+        return l.withTokens(t)
     }
 
     /// النرد اللي يطلع جنب اللاعب: آخر رمية من السيرفر مباشرة (تتحدث على طول لكل اللاعبين)، وإلا آخر رمية محفوظة له
@@ -1134,13 +1140,12 @@ struct LudoBoard: View {
             TimelineView(.animation(paused: hops.isEmpty)) { tl in
                 Canvas { ctx, size in
                     // قبل ما تنحسب طريق الحجر: نرسمه في مكانه القديم (بدل ما يقفز للنهاية ويرجع = ذبذبة)
-                    let shown = LUDO_3D && prevTokens != nil && prevTokens! != l.tokens ? l.withTokens(prevTokens!) : l
-                    drawLudo(ctx, size, shown, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [],
+                    drawLudo(ctx, size, shownLudo, mySeat ?? 0, l.myTurn && l.phase == "move" ? l.options.map { (l.movableOwner, $0.token) } : [],
                              hops: hops, now: tl.date.timeIntervalSince1970)
                 }
             }
-            .onChange(of: l.tokens) { _ in animateMoves() }
-            .onAppear { prevTokens = l.tokens; prevTokPhase = l.phase }
+            .onChange(of: l.animKey) { k in animate(k) }
+            .onAppear { seenSig = l.lastSig; seenPhase = l.phase }
             // بعد ما توصل كل الأحجار: نوقف التحديث المستمر للرسم
             .task(id: hops.values.map(\.end).max() ?? 0) {
                 guard let end = hops.values.map(\.end).max() else { return }
@@ -1488,7 +1493,8 @@ final class OtherGameSounds {
                 if rolledNow { s.dice() }
                 if moveChanged && l.moved {
                     let at = rolledNow && !newTurnRoll ? 0.6 : 0
-                    s.steps(l.lastSteps, at: at)
+                    // النقرة مع نزول الحجر على كل خانة (مو مع بداية القفزة)
+                    s.steps(l.lastSteps, at: at + Sounds.stepGap)
                     // أكل حجر: بعد ما يوصل الحجر
                     if l.captures > 0 { s.capture(at: at + Double(min(max(l.lastSteps, 1), 13)) * Sounds.stepGap) }
                     // وصل الحجر المنزل

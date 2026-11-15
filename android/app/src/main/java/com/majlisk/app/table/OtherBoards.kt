@@ -891,34 +891,29 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
 
     // حركة الأحجار: الحجر يقفز خانة خانة لين يوصل (نفس توقيت نقرات الخطوات)، والمأكول يطير لبيته
     val hops = remember { androidx.compose.runtime.mutableStateMapOf<Pair<Int, Int>, LudoHop>() }
-    val prevTokens = remember { arrayOf<Any?>(null, null) } // الأحجار والمرحلة قبل التحديث
     // ساعة الإطارات (نفس أساس withFrameNanos) عشان الحركة تمشي مع كل إطار بدون تقطيع
     var clock by remember { mutableStateOf(System.nanoTime() / 1_000_000) }
-    androidx.compose.runtime.LaunchedEffect(l.tokens) {
-        @Suppress("UNCHECKED_CAST") val before = prevTokens[0] as List<List<Int>>?
-        val wasPhase = prevTokens[1] as String?
-        prevTokens[0] = l.tokens; prevTokens[1] = l.phase
-        if (before == null || !LUDO_3D) return@LaunchedEffect
+    // آخر حركة حرّكناها على الشاشة، والمرحلة اللي قبلها (عشان نعرف هل الرمية والحركة جو مع بعض)
+    var seenSig by remember { mutableStateOf(l.lastSig) }
+    val seenPhase = remember { arrayOf(l.phase) }
+    // حالة جديدة من السيرفر: لو فيها حركة حجر جديدة نحسب طريقه من الحركة نفسها (من وين لوين)،
+    // فالحركة على الشاشة دايماً هي نفس حركة السيرفر ونفس عدد نقرات الصوت
+    androidx.compose.runtime.LaunchedEffect(l.moveSig) {
+        val wasPhase = seenPhase[0]
+        seenPhase[0] = l.phase
+        if (l.lastSig == seenSig) return@LaunchedEffect
+        seenSig = l.lastSig
+        if (!LUDO_3D || l.lastIndex < 0) return@LaunchedEffect
         val now = System.nanoTime() / 1_000_000
-        // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس الصوت)
+        // رمى وتحرك بنفس اللحظة: الحجر يبدأ بعد صوت النرد (نفس توقيت نقرات الخطوات)
         val delayMs = if (wasPhase != "move") 600L else 0L
-        var moverEnd = now + delayMs
-        val captured = mutableListOf<Triple<Int, Int, Int>>()
-        for (o in l.seats) l.tokens.getOrNull(o).orEmpty().forEachIndexed { i, p1 ->
-            val p0 = before.getOrNull(o)?.getOrNull(i) ?: return@forEachIndexed
-            if (p0 == p1) return@forEachIndexed
-            when {
-                p1 == -1 -> captured += Triple(o, i, p0)
-                p0 == -1 -> { hops[o to i] = LudoHop(listOf(ludoCell(o, i, -1), ludoCell(o, i, p1)), now + delayMs, 320); moverEnd = maxOf(moverEnd, now + delayMs + 320) }
-                p1 > p0 -> {
-                    val path = (p0..p1).map { ludoCell(o, i, it) }
-                    hops[o to i] = LudoHop(path, now + delayMs, (Sounds.STEP_GAP * 1000).toLong())
-                    moverEnd = maxOf(moverEnd, now + delayMs + (path.size - 1) * (Sounds.STEP_GAP * 1000).toLong())
-                }
-            }
-        }
+        val stepMs = (Sounds.STEP_GAP * 1000).toLong()
+        val o = l.lastOwner; val i = l.lastIndex
+        val path = if (l.lastFrom == -1) listOf(ludoCell(o, i, -1), ludoCell(o, i, l.lastTo)) else (l.lastFrom..maxOf(l.lastFrom, l.lastTo)).map { ludoCell(o, i, it) }
+        val hop = LudoHop(path, now + delayMs, stepMs)
+        hops[o to i] = hop
         // المأكول: يبقى مكانه لين يوصله اللي أكله، وبعدها يطير لبيته
-        for ((o, i, p0) in captured) hops[o to i] = LudoHop(listOf(ludoCell(o, i, p0), ludoCell(o, i, -1)), moverEnd, 520)
+        for ((co, ci) in l.lastCaptured) hops[co to ci] = LudoHop(listOf(ludoCell(o, i, l.lastTo), ludoCell(co, ci, -1)), hop.end, 520)
     }
     androidx.compose.runtime.LaunchedEffect(hops.size) {
         while (hops.isNotEmpty()) {
@@ -1080,9 +1075,10 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                     // اللمس يستخدم آخر حالة دائماً (ما يعلق على حالة قديمة لو تغيّرت بدون ما تتغير البصمة)
                     .pointerInput(reader) { if (!reader) detectTapGestures { latestTap.value(it, size.width.toFloat()) } },
             ) {
-                // قبل ما تنحسب طريق الحجر: نرسمه في مكانه القديم (بدل ما يقفز للنهاية ويرجع = ذبذبة)
-                @Suppress("UNCHECKED_CAST") val shownTokens = (prevTokens[0] as List<List<Int>>?)?.takeIf { LUDO_3D && it != l.tokens } ?: l.tokens
-                drawLudo(if (shownTokens === l.tokens) l else l.copy(tokens = shownTokens), mySeat ?: 0, movable, hops, clock)
+                // وصلت الحركة والطريق لسا ما انحسب (إطار واحد): نرسم الحجر في مكانه القديم بدل ما يطلع في مكان الوصول ويرجع
+                val pending = LUDO_3D && l.lastSig != seenSig && l.lastIndex >= 0 && l.tokens.getOrNull(l.lastOwner)?.getOrNull(l.lastIndex) != null
+                val shown = if (!pending) l else l.copy(tokens = l.tokens.mapIndexed { o, row -> if (o != l.lastOwner) row else row.mapIndexed { i, p -> if (i == l.lastIndex) l.lastFrom else p } })
+                drawLudo(shown, mySeat ?: 0, movable, hops, clock)
             }
         }
         cornerRow(false)
@@ -1375,7 +1371,8 @@ class OtherGameSounds {
                     if (rolledNow) Sounds.dice()
                     if (moveChanged && l.moved) {
                         val at = if (rolledNow && !newTurnRoll) 0.6 else 0.0
-                        Sounds.steps(l.lastSteps, at = at)
+                        // النقرة مع نزول الحجر على كل خانة (مو مع بداية القفزة)
+                        Sounds.steps(l.lastSteps, at = at + Sounds.STEP_GAP)
                         // أكل حجر: بعد ما يوصل الحجر
                         if (l.captures > 0) Sounds.capture(at = at + l.lastSteps.coerceIn(1, 13) * Sounds.STEP_GAP)
                         // وصل الحجر المنزل

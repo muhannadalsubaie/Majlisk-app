@@ -220,6 +220,9 @@ data class LudoView(
     val captures: Int = 0,
     /** آخر حركة وصّلت حجر المنزل (لصوت الدخول) */
     val finished: Boolean = false,
+    /** آخر حركة من السيرفر: أي حجر، من وين لوين، ومين انأكل (الحركة على الشاشة والصوت كلهم منها) */
+    val lastOwner: Int = -1, val lastIndex: Int = -1, val lastFrom: Int = -1, val lastTo: Int = -1,
+    val lastCaptured: List<Pair<Int, Int>> = emptyList(),
     val myTurn: Boolean,
     val options: List<LudoOption>,
     val movableOwner: Int,
@@ -265,6 +268,11 @@ data class LudoView(
                 moved = last?.optJSONObject("token") != null,
                 lastSig = "${s.opt("lastMove")}",
                 captures = last?.optJSONArray("captured")?.length() ?: 0,
+                lastOwner = last?.optJSONObject("token")?.optInt("owner", -1) ?: -1,
+                lastIndex = last?.optJSONObject("token")?.optInt("index", -1) ?: -1,
+                lastFrom = if (last == null || last.isNull("from")) -1 else last.optInt("from", -1),
+                lastTo = if (last == null || last.isNull("to")) -1 else last.optInt("to", -1),
+                lastCaptured = last?.optJSONArray("captured")?.let { a -> (0 until a.length()).mapNotNull { a.optJSONObject(it)?.let { c -> c.optInt("owner") to c.optInt("index") } } } ?: emptyList(),
                 finished = last?.optBoolean("finished") == true,
                 lastSteps = last?.let { m ->
                     val from = m.optIntOrNull("from"); val to = m.optIntOrNull("to")
