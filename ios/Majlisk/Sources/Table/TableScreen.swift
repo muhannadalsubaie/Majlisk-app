@@ -918,7 +918,7 @@ private struct StepAdjust: ViewModifier {
 private let PROJECT_KIND_NAMES = ["sira": "سرا", "fifty": "خمسين", "hundred": "مية", "fourHundred": "أربعمية"]
 private let QAID_OPTIONS: [(String, String)] = [
     ("noRaise", "ما طلع بالحكم"), ("noTrump", "ما دق بالحكم"), ("revoke", "قاطع"),
-    ("lockedLead", "تربيع بحكم مقفل"), ("badProject", "مشروع غلط"), ("badSawa", "سوا غلط"),
+    ("lockedLead", "تربيع بحكم مقفل"), ("badSawa", "سوا غلط"),
 ]
 
 /// القيد والقطع: أزرار تسجيلة، وإعلان مشروع، وسوا

@@ -918,7 +918,7 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
 private val PROJECT_KIND_NAMES = mapOf("sira" to "سرا", "fifty" to "خمسين", "hundred" to "مية", "fourHundred" to "أربعمية")
 private val QAID_OPTIONS = listOf(
     "noRaise" to "ما طلع بالحكم", "noTrump" to "ما دق بالحكم", "revoke" to "قاطع",
-    "lockedLead" to "تربيع بحكم مقفل", "badProject" to "مشروع غلط", "badSawa" to "سوا غلط",
+    "lockedLead" to "تربيع بحكم مقفل", "badSawa" to "سوا غلط",
 )
 
 /** القيد والقطع: أزرار تسجيلة، وإعلان مشروع، وسوا */
