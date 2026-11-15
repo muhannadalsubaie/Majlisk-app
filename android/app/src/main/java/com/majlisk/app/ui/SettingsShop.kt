@@ -3,7 +3,7 @@ package com.majlisk.app.ui
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -47,6 +47,8 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
 
     val body = @Composable {
         TopBar("الإعدادات", onBack = onBack)
+        SectionTitle("اللغة")
+        com.majlisk.app.i18n.LanguageButton()
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
         SectionTitle("شكل الورق")

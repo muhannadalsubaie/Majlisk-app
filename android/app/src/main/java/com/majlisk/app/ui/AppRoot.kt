@@ -37,6 +37,8 @@ fun AppRoot() {
     val openTable: (String) -> Unit = { tableId = it; screen = Route.Table }
 
     // المشترك: كل صفحات التطبيق بالشكل الذهبي
+    // لغة التطبيق: نبلغ الخادم مرة بعد الدخول (للإشعارات)
+    LaunchedEffect(profile?.loaded) { if (profile?.loaded == true) com.majlisk.app.i18n.I18n.sync() }
     LaunchedEffect(profile?.isPro) { Palette.goldMode = profile?.isPro == true }
     // بعد تسجيل الخروج (أو حذف الحساب) من أي شاشة نعود لشاشة الدخول
     LaunchedEffect(user) {

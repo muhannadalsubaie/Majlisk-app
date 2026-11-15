@@ -20,7 +20,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -153,7 +153,7 @@ private fun NewTicket(kind: String, onDone: () -> Unit) {
                 val bmp = remember(b64) { Base64.decode(b64, Base64.NO_WRAP).let { BitmapFactory.decodeByteArray(it, 0, it.size)?.asImageBitmap() } }
                 Box(Modifier.size(72.dp).clip(RoundedCornerShape(12.dp)).background(Palette.green800)
                     .clickable { images = images.filterIndexed { j, _ -> j != i }; Announcer.announce("حُذفت الصورة ${i + 1}") }
-                    .semantics { contentDescription = "الصورة ${i + 1}، اضغط لحذفها" }) {
+                    .semantics { contentDescription = com.majlisk.app.i18n.tr("الصورة ${i + 1}، اضغط لحذفها") }) {
                     bmp?.let { Image(it, null, contentScale = ContentScale.Crop, modifier = Modifier.size(72.dp)) }
                 }
             }
@@ -180,7 +180,7 @@ private fun TicketImage(id: String, i: Int) {
         value = Api.bytes("/support/image/$id/$i")?.let { b -> BitmapFactory.decodeByteArray(b, 0, b.size)?.asImageBitmap() }
     }
     Box(Modifier.fillMaxWidth().heightIn(min = 120.dp).clip(RoundedCornerShape(14.dp)).background(Palette.green800)
-        .semantics { contentDescription = "صورة مرفقة ${i + 1}" }) {
+        .semantics { contentDescription = com.majlisk.app.i18n.tr("صورة مرفقة ${i + 1}") }) {
         img?.let { Image(it, null, contentScale = ContentScale.FillWidth, modifier = Modifier.fillMaxWidth()) } ?: Note("جارٍ تحميل الصورة…", Modifier.padding(12.dp))
     }
 }

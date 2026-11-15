@@ -34,7 +34,7 @@ struct GoldButton: View {
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(title).font(.system(size: 19, weight: .heavy)).frame(maxWidth: .infinity, minHeight: 56)
+            Text(tr(title)).font(.system(size: 19, weight: .heavy)).frame(maxWidth: .infinity, minHeight: 56)
         }
         .buttonStyle(RaisedStyle(base: emerald ? Pro.emerald : Pro.gold, fg: emerald ? .white : Pro.ink))
         .opacity(enabled ? 1 : 0.5).disabled(!enabled)
@@ -44,7 +44,7 @@ struct GoldButton: View {
 private struct Crown: View {
     let size: CGFloat
     var body: some View {
-        Text("👑").font(.system(size: size * 0.5))
+        Text(tr("👑")).font(.system(size: size * 0.5))
             .frame(width: size, height: size)
             .background(LinearGradient(colors: [Pro.goldLight, Pro.gold, Pro.goldDark], startPoint: .top, endPoint: .bottom))
             .clipShape(RoundedRectangle(cornerRadius: size * 0.3))
@@ -59,8 +59,8 @@ private struct FeatureTile: View {
     let label: String
     var body: some View {
         VStack(spacing: 6) {
-            Text(icon).font(.system(size: 28)).accessibilityHidden(true)
-            Text(label).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.cream).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            Text(tr(icon)).font(.system(size: 28)).accessibilityHidden(true)
+            Text(tr(label)).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.cream).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 10).padding(.horizontal, 4)
         .background(Pro.deep).clipShape(RoundedRectangle(cornerRadius: 18))
@@ -73,17 +73,17 @@ private struct PriceCard: View {
     let price: String
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(price).font(.system(size: 30, weight: .heavy)).foregroundColor(Pro.goldLight)
-            Text("/ شهر").font(.system(size: 14, weight: .bold)).foregroundColor(Pro.cream)
+            Text(tr(price)).font(.system(size: 30, weight: .heavy)).foregroundColor(Pro.goldLight)
+            Text(tr("/ شهر")).font(.system(size: 14, weight: .bold)).foregroundColor(Pro.cream)
             Spacer()
-            Text("عرض لمدة\n6 أشهر فقط").font(.system(size: 12, weight: .bold)).foregroundColor(Pro.dim).multilineTextAlignment(.trailing)
+            Text(tr("عرض لمدة\n6 أشهر فقط")).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.dim).multilineTextAlignment(.trailing)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .background(LinearGradient(colors: [Color(red: 0.165, green: 0.14, blue: 0.075), Color(red: 0.1, green: 0.086, blue: 0.043)], startPoint: .top, endPoint: .bottom))
         .clipShape(RoundedRectangle(cornerRadius: 20))
         .overlay(RoundedRectangle(cornerRadius: 20).stroke(Pro.gold, lineWidth: 1.5))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("السعر \(price) في الشهر، عرض لمدة 6 أشهر فقط")
+        .accessibilityLabel(tr("السعر \(price) في الشهر، عرض لمدة 6 أشهر فقط"))
     }
 }
 
@@ -99,7 +99,7 @@ struct ProOfferView: View {
             Color.black.opacity(0.72).ignoresSafeArea().onTapGesture(perform: onDismiss).accessibilityHidden(true)
             ScrollView {
                 VStack(spacing: 12) {
-                    Text("عرض لفترة محدودة").font(.system(size: 13, weight: .heavy)).foregroundColor(Pro.ink)
+                    Text(tr("عرض لفترة محدودة")).font(.system(size: 13, weight: .heavy)).foregroundColor(Pro.ink)
                         .padding(.horizontal, 18).padding(.vertical, 6)
                         .background(LinearGradient(colors: [Pro.goldLight, Pro.gold], startPoint: .top, endPoint: .bottom))
                         .clipShape(RoundedRectangle(cornerRadius: 14)).padding(.top, -6)
@@ -108,16 +108,16 @@ struct ProOfferView: View {
                             .padding(.top, 10).padding(.trailing, 10)
                         Crown(size: 38)
                     }
-                    .accessibilityLabel("شعار مجلسك")
-                    Text("الباقة الاحترافية").font(.system(size: 28, weight: .heavy)).foregroundColor(Pro.goldLight).accessibilityAddTraits(.isHeader)
-                    Text("ارفع مستوى مجلسك").font(.system(size: 14)).foregroundColor(Pro.dim)
+                    .accessibilityLabel(tr("شعار مجلسك"))
+                    Text(tr("الباقة الاحترافية")).font(.system(size: 28, weight: .heavy)).foregroundColor(Pro.goldLight).accessibilityAddTraits(.isHeader)
+                    Text(tr("ارفع مستوى مجلسك")).font(.system(size: 14)).foregroundColor(Pro.dim)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                         ForEach(tiles, id: \.1) { FeatureTile(icon: $0.0, label: $0.1) }
                     }
                     PriceCard(price: price)
                     GoldButton(title: "اشترك الآن", emerald: true, action: onSubscribe)
                     Button(action: onDismiss) {
-                        Text("ليس الآن").font(.system(size: 15, weight: .bold)).foregroundColor(Pro.dim).frame(maxWidth: .infinity, minHeight: 44)
+                        Text(tr("ليس الآن")).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.dim).frame(maxWidth: .infinity, minHeight: 44)
                     }
                 }
                 .padding(.horizontal, 18).padding(.bottom, 16)
@@ -128,7 +128,7 @@ struct ProOfferView: View {
                 .padding(.horizontal, 16).padding(.vertical, 40)
             }
         }
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, I18n.direction)
         .accessibilityAddTraits(.isModal)
         .task { price = await Store.proPrice() }
     }
@@ -148,12 +148,12 @@ struct ProScreen: View {
             HStack(spacing: 14) {
                 Crown(size: 60)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("الباقة الاحترافية").font(.system(size: 26, weight: .heavy)).foregroundColor(Pro.goldLight)
-                    Text("كل مزايا مجلسك في اشتراك واحد").font(.system(size: 13)).foregroundColor(Pro.dim)
+                    Text(tr("الباقة الاحترافية")).font(.system(size: 26, weight: .heavy)).foregroundColor(Pro.goldLight)
+                    Text(tr("كل مزايا مجلسك في اشتراك واحد")).font(.system(size: 13)).foregroundColor(Pro.dim)
                 }
             }
             if let p = profile, p.isPro {
-                Text("✓ مشترك في الباقة حتى \(Date(timeIntervalSince1970: p.proUntil / 1000).formatted(.dateTime.day().month().year()))")
+                Text(tr("✓ مشترك في الباقة حتى \(Date(timeIntervalSince1970: p.proUntil / 1000).formatted(.dateTime.day().month().year()))"))
                     .font(.system(size: 16, weight: .bold)).foregroundColor(Pro.goldLight)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(14)
                     .background(Pro.deep).clipShape(RoundedRectangle(cornerRadius: 16))
@@ -162,8 +162,8 @@ struct ProScreen: View {
             VStack(alignment: .leading, spacing: 9) {
                 ForEach(Pro.features, id: \.self) { f in
                     HStack(spacing: 9) {
-                        Text("✓").font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.gold).accessibilityHidden(true)
-                        Text(f).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.cream)
+                        Text(tr("✓")).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.gold).accessibilityHidden(true)
+                        Text(tr(f)).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.cream)
                     }
                 }
             }
@@ -183,8 +183,8 @@ struct ProScreen: View {
             MButton("استعادة المشتريات") { Task { await Store.syncPro(announce: true) } }
             Note("الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من إعدادات اشتراكات Apple.")
             HStack(spacing: 16) {
-                Link("الشروط", destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
-                Link("الخصوصية", destination: URL(string: Api.site + "/privacy.html")!)
+                Link(tr("الشروط"), destination: URL(string: "https://www.apple.com/legal/internet-services/itunes/dev/stdeula/")!)
+                Link(tr("الخصوصية"), destination: URL(string: Api.site + "/privacy.html")!)
             }
             .font(.system(size: 13, weight: .bold)).foregroundColor(Pro.goldLight).frame(maxWidth: .infinity)
         }
@@ -206,7 +206,7 @@ struct GiftScreen: View {
             TopBar("إهداء الباقة", onBack: onBack)
             HStack {
                 Spacer()
-                Text("🎁").font(.system(size: 50)).frame(width: 96, height: 96)
+                Text(tr("🎁")).font(.system(size: 50)).frame(width: 96, height: 96)
                     .background(LinearGradient(colors: [Pro.goldLight, Pro.gold, Pro.goldDark], startPoint: .top, endPoint: .bottom))
                     .clipShape(RoundedRectangle(cornerRadius: 28)).shadow(color: .black.opacity(0.5), radius: 12, y: 6)
                     .rotationEffect(.degrees(4)).accessibilityHidden(true)
@@ -229,17 +229,17 @@ struct GiftScreen: View {
                     }
                 }
             }
-            if !error.isEmpty { Text(error).foregroundColor(Pro.goldLight) }
+            if !error.isEmpty { Text(tr(error)).foregroundColor(Pro.goldLight) }
             if let who = found {
                 HStack(spacing: 12) {
-                    Text(String(who.prefix(1))).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
+                    Text(tr(String(who.prefix(1)))).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
                         .frame(width: 46, height: 46).background(Pro.emerald).clipShape(Circle())
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(who).font(.system(size: 17, weight: .bold)).foregroundColor(Pro.cream)
-                        Text("الباقة الاحترافية · شهر واحد · \(Store.proPriceFallback)").font(.system(size: 13)).foregroundColor(Pro.dim)
+                        Text(tr(who)).font(.system(size: 17, weight: .bold)).foregroundColor(Pro.cream)
+                        Text(tr("الباقة الاحترافية · شهر واحد · \(Store.proPriceFallback)")).font(.system(size: 13)).foregroundColor(Pro.dim)
                     }
                     Spacer()
-                    Text("✓").font(.system(size: 22, weight: .heavy)).foregroundColor(Palette.online)
+                    Text(tr("✓")).font(.system(size: 22, weight: .heavy)).foregroundColor(Palette.online)
                 }
                 .padding(12).background(Pro.night2).clipShape(RoundedRectangle(cornerRadius: 18))
                 .accessibilityElement(children: .combine)

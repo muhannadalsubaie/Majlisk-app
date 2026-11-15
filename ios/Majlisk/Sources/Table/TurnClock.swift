@@ -20,9 +20,9 @@ struct TurnClock: View {
             TimelineView(.periodic(from: start, by: deadline == nil ? 3600 : 1)) { ctx in
                 let secs = deadline.map { max(0, Int(ceil($0.timeIntervalSince(ctx.date)))) }
                 HStack(spacing: 2) {
-                    Text("⏱").font(.system(size: 13))
+                    Text(tr("⏱")).font(.system(size: 13))
                     if let secs {
-                        Text("\(secs)").font(.system(size: 13, weight: .bold)).foregroundColor(secs <= 5 ? Palette.goldSoft : Palette.text)
+                        Text(tr("\(secs)")).font(.system(size: 13, weight: .bold)).foregroundColor(secs <= 5 ? Palette.goldSoft : Palette.text)
                             .onChange(of: secs) { s in
                                 if s == 5, seat == v.mySeat, let d = deadline, warnedFor != d { warnedFor = d; Announcer.announce("باقي ٥ ثواني") }
                             }

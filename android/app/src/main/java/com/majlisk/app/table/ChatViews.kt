@@ -13,7 +13,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -52,7 +52,7 @@ fun ChatButton(conn: TableConnection, onOpen: () -> Unit) {
         modifier = Modifier.widthIn(max = 200.dp).heightIn(min = 40.dp)
             .background(Palette.gold, RoundedCornerShape(20.dp))
             .clickable(onClick = onOpen)
-            .clearAndSetSemantics { contentDescription = label; role = Role.Button; onClick { onOpen(); true } }
+            .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr(label); role = Role.Button; onClick { onOpen(); true } }
             .padding(horizontal = 12.dp, vertical = 10.dp),
     )
 }
@@ -94,7 +94,7 @@ fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
                         Modifier.widthIn(max = 300.dp)
                             .background(if (m.mine) androidx.compose.ui.graphics.Color(0xFF3B5E2E) else Palette.green700, RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .semantics(mergeDescendants = true) { contentDescription = "${if (m.mine) "أنت" else m.name}: ${m.text}" },
+                            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("${if (m.mine) "أنت" else m.name}: ${m.text}") },
                     ) {
                         Text(if (m.mine) "أنت" else m.name, color = Palette.goldSoft, fontSize = 12.sp)
                         Text(m.text, color = Palette.text, fontSize = 15.sp)

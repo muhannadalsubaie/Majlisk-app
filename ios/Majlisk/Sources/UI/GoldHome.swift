@@ -37,9 +37,9 @@ private struct GameCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading) {
-                Text(icon).font(.system(size: 28))
+                Text(tr(icon)).font(.system(size: 28))
                 Spacer()
-                Text(name).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream)
+                Text(tr(name)).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream)
             }
             .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading).padding(14)
             .background(LinearGradient(colors: featured ? [Color(red: 0.12, green: 0.48, blue: 0.35), Color(red: 0.07, green: 0.28, blue: 0.21)] : [Color(red: 0.17, green: 0.23, blue: 0.29), Color(red: 0.09, green: 0.13, blue: 0.17)], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -48,7 +48,7 @@ private struct GameCard: View {
             .shadow(color: .black.opacity(0.5), radius: 10, y: 8)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("طاولة \(name)")
+        .accessibilityLabel(tr("طاولة \(name)"))
     }
 }
 
@@ -60,13 +60,13 @@ private struct NavItem: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
-                Text(icon).font(.system(size: 20))
-                Text(label).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8).foregroundColor(active ? Pro.goldLight : Pro.dim)
+                Text(tr(icon)).font(.system(size: 20))
+                Text(tr(label)).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8).foregroundColor(active ? Pro.goldLight : Pro.dim)
             }
             .frame(maxWidth: .infinity, minHeight: 56)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(label)
+        .accessibilityLabel(tr(label))
         .accessibilityAddTraits(active ? [.isSelected] : [])
     }
 }
@@ -92,21 +92,21 @@ struct GoldMenuScreen: View {
                                 .padding(3)
                                 .overlay(Circle().stroke(AngularGradient(colors: [Pro.goldLight, Pro.goldDark, Pro.goldLight, Pro.gold, Pro.goldLight], center: .center), lineWidth: 3))
                         }
-                        .buttonStyle(.plain).accessibilityLabel("الملف الشخصي")
+                        .buttonStyle(.plain).accessibilityLabel(tr("الملف الشخصي"))
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(profile?.username ?? "").font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
-                            Text("👑 عضو ذهبي").font(.system(size: 12, weight: .bold)).foregroundColor(Pro.goldLight)
+                            Text(tr(profile?.username ?? "")).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
+                            Text(tr("👑 عضو ذهبي")).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.goldLight)
                         }
                         Spacer()
                         Button { getCoins = true } label: {
-                            Text(profile?.unlimited == true ? "🪙 ∞" : "🪙 \(profile?.coins.map(String.init) ?? "…")")
+                            Text(tr(profile?.unlimited == true ? "🪙 ∞" : "🪙 \(profile?.coins.map(String.init) ?? "…")"))
                                 .font(.system(size: 15, weight: .heavy)).foregroundColor(Pro.cream)
                                 .padding(.horizontal, 14).padding(.vertical, 8)
                                 .background(LinearGradient(colors: [Color(red: 0.137, green: 0.176, blue: 0.22), Color(red: 0.078, green: 0.106, blue: 0.133)], startPoint: .top, endPoint: .bottom))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel("رصيدك \(profile?.coins.map(String.init) ?? "") عملة، الحصول على عملات")
+                        .accessibilityLabel(tr("رصيدك \(profile?.coins.map(String.init) ?? "") عملة، الحصول على عملات"))
                     }
                     // المتصلون
                     OnlineLine(openTable: openTable)
@@ -118,12 +118,12 @@ struct GoldMenuScreen: View {
                         MiniTable().padding(.top, 6).frame(maxHeight: .infinity, alignment: .top)
                         HStack(spacing: 12) {
                             VStack(alignment: .leading, spacing: 2) {
-                                Text("مجلسك الذهبي").font(.system(size: 22, weight: .heavy)).foregroundColor(Pro.goldLight)
-                                Text("طاولتك بشكلها المميز").font(.system(size: 13)).foregroundColor(Pro.dim)
+                                Text(tr("مجلسك الذهبي")).font(.system(size: 22, weight: .heavy)).foregroundColor(Pro.goldLight)
+                                Text(tr("طاولتك بشكلها المميز")).font(.system(size: 13)).foregroundColor(Pro.dim)
                             }
                             Spacer()
                             Button { play(nil) } label: {
-                                Text("العب الآن").font(.system(size: 16, weight: .heavy)).padding(.horizontal, 20).frame(minHeight: 48)
+                                Text(tr("العب الآن")).font(.system(size: 16, weight: .heavy)).padding(.horizontal, 20).frame(minHeight: 48)
                             }
                             .buttonStyle(RaisedStyle(base: Pro.gold, fg: Pro.ink))
                         }
@@ -136,9 +136,9 @@ struct GoldMenuScreen: View {
                     .shadow(color: .black.opacity(0.6), radius: 16, y: 10)
                     // الألعاب
                     HStack {
-                        Text("الألعاب").font(.system(size: 17, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)
+                        Text(tr("الألعاب")).font(.system(size: 17, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)
                         Spacer()
-                        Button("انضمام إلى طاولة") { navigate(.joinTable) }.font(.system(size: 14, weight: .bold)).foregroundColor(Pro.goldLight)
+                        Button(tr("انضمام إلى طاولة")) { navigate(.joinTable) }.font(.system(size: 14, weight: .bold)).foregroundColor(Pro.goldLight)
                     }
                     HStack(spacing: 14) {
                         GameCard(name: "بلوت", icon: "🃏", featured: true) { play("baloot") }
@@ -154,7 +154,7 @@ struct GoldMenuScreen: View {
             .modifier(BounceOnlyWhenScrolls())
         }
         .foregroundColor(Pro.cream)
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, I18n.direction)
         .sheet(isPresented: $getCoins) {
             Sheet(title: "الحصول على عملات") {
                 MButton("شراء عملات", .primary) { getCoins = false; navigate(.shop) }
@@ -194,7 +194,7 @@ struct GoldTabs<Content: View>: View {
                     .clipShape(RoundedRectangle(cornerRadius: 22))
                     .ignoresSafeArea(edges: .bottom)
             )
-            .environment(\.layoutDirection, .rightToLeft)
+            .environment(\.layoutDirection, I18n.direction)
             .accessibilityElement(children: .contain)
         }
         .background(Pro.deep.ignoresSafeArea())

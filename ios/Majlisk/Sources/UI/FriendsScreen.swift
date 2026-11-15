@@ -71,10 +71,10 @@ struct FriendsScreen: View {
             TopBar(title: "الأصدقاء", onBack: { navigate(.menu) }) {
                 SmallButton("إضافة صديق") { adding = true }
             }
-            Picker("القائمة", selection: $tab) {
-                Text("الأصدقاء\(friends.map { " (\($0.count))" } ?? "")").tag(0)
-                Text("طلبات الصداقة\(hub.requests.isEmpty ? "" : " \(hub.requests.count)")").tag(1)
-                Text("المحظورون").tag(2)
+            Picker(tr("القائمة"), selection: $tab) {
+                Text(tr("الأصدقاء\(friends.map { " (\($0.count))" } ?? "")")).tag(0)
+                Text(tr("طلبات الصداقة\(hub.requests.isEmpty ? "" : " \(hub.requests.count)")")).tag(1)
+                Text(tr("المحظورون")).tag(2)
             }
             .pickerStyle(.segmented)
             switch tab {
@@ -85,22 +85,22 @@ struct FriendsScreen: View {
                     // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
                     ItemRow {
                         Avatar(uid: f.uid, name: f.username, size: 40)
-                        Text("\(f.online ? "🟢" : "⚪") \(f.username)، \(status(f))").frame(maxWidth: .infinity, alignment: .leading)
+                        Text(tr("\(f.online ? "🟢" : "⚪") \(f.username)، \(status(f))")).frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .contentShape(Rectangle())
                     .onTapGesture { profileOf = f }
                     .onLongPressGesture { joinFriend(f) }
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel("\(f.username)، \(status(f))")
+                    .accessibilityLabel(tr("\(f.username)، \(status(f))"))
                     .accessibilityAddTraits(.isButton)
                     .accessibilityAction { profileOf = f }
-                    .accessibilityAction(named: "دخول طاولته") { joinFriend(f) }
+                    .accessibilityAction(named: tr("دخول طاولته")) { joinFriend(f) }
                 }
             case 1:
                 if hub.requests.isEmpty { Note("لا توجد طلبات صداقة.") }
                 ForEach(hub.requests) { r in
                     ItemRow {
-                        Text(r.username).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(tr(r.username)).frame(maxWidth: .infinity, alignment: .leading)
                         SmallButton("قبول", label: "قبول طلب \(r.username)") {
                             Task { @MainActor in
                                 do { try await Social.respondFriend(r.uid, accept: true); say("أصبحت أنت و\(r.username) أصدقاء"); refresh() } catch { say(Social.error(error)) }
@@ -118,7 +118,7 @@ struct FriendsScreen: View {
                 else if bans!.isEmpty { Note("لا يوجد محظورون.") }
                 ForEach(bans ?? []) { b in
                     ItemRow {
-                        Text(b.username).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(tr(b.username)).frame(maxWidth: .infinity, alignment: .leading)
                         SmallButton("رفع الحظر", label: "رفع الحظر عن \(b.username)") {
                             Task { @MainActor in
                                 do { try await Social.unban(b.uid); bans?.removeAll { $0.uid == b.uid }; Announcer.announce("رُفع الحظر عن \(b.username)") }

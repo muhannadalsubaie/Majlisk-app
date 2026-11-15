@@ -28,7 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -105,7 +105,7 @@ private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken
             .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(12.dp))
             .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(12.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp)
-            .let { m -> if (spoken != null) m.semantics(mergeDescendants = true) { contentDescription = spoken } else m },
+            .let { m -> if (spoken != null) m.semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(spoken) } else m },
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(8.dp),
     ) {
@@ -165,7 +165,7 @@ private fun JkSeatTag(name: String, uid: String?, color: Color, count: Int, turn
             .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(10.dp))
             .background(if (turn) Palette.gold.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(10.dp))
             .padding(4.dp)
-            .clearAndSetSemantics { contentDescription = spoken },
+            .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr(spoken) },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -183,7 +183,7 @@ private fun DominoSeatTag(name: String, uid: String?, count: Int, partner: Boole
             .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(10.dp))
             .background(if (turn) Palette.gold.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(10.dp))
             .padding(4.dp)
-            .clearAndSetSemantics { contentDescription = "$name${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}" },
+            .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("$name${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}") },
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(2.dp),
     ) {
@@ -330,7 +330,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             Modifier.fillMaxWidth().height(36.dp)
                 .background(Color(0xFF173D2C), RoundedCornerShape(18.dp))
                 .border(1.dp, Color(0xFF2C5A44), RoundedCornerShape(18.dp))
-                .semantics(mergeDescendants = true) { contentDescription = d.scoreText },
+                .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(d.scoreText) },
             horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
         ) {
             d.scores.forEachIndexed { side, n ->
@@ -353,7 +353,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             val n = if (seat == mySeat) "أنت" else names.getOrElse(seat) { "" }
             val count = d.handCounts.getOrElse(seat) { 0 }
             Column(
-                m.clearAndSetSemantics { contentDescription = "$n${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}" },
+                m.clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("$n${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}") },
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Box(
@@ -435,7 +435,7 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                                 else -> act(conn, "domino", jsonOf("type" to "play", "tile" to h.tile.json()))
                             }
                         }
-                        .semantics(mergeDescendants = true) { contentDescription = h.label }
+                        .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(h.label) }
                         .padding(4.dp),
                 ) { DominoTileView(h.tile, vertical = true, unit = 24f * com.majlisk.app.data.Look.tileScale, dim = d.myTurn && !h.legal) }
             }
@@ -521,7 +521,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                 val who = if (o == mySeat) "أنت" else names.getOrElse(o) { "" }
                 Column(
                     Modifier.width(84.dp)
-                        .clearAndSetSemantics { contentDescription = "$who، ${JK_COLOR_NAMES[o].removePrefix("ال")}، ${j.safeOf(o)} من 4${if (turn) "، عليه الدور" else ""}" }
+                        .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("$who، ${JK_COLOR_NAMES[o].removePrefix("ال")}، ${j.safeOf(o)} من 4${if (turn) "، عليه الدور" else ""}") }
                         .background(if (turn) Palette.gold.copy(alpha = 0.18f) else JK_COLORS[o].copy(alpha = 0.18f), RoundedCornerShape(10.dp))
                         .border(if (turn) 3.dp else 2.dp, if (turn) Palette.gold else JK_COLORS[o], RoundedCornerShape(10.dp))
                         .padding(vertical = 6.dp, horizontal = 4.dp),
@@ -581,7 +581,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                                     else -> picked = h
                                 }
                             }
-                            .semantics(mergeDescendants = true) { contentDescription = h.label },
+                            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(h.label) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text("${h.card.rank}${h.card.symbol}", color = if (h.card.red) Color(0xFFC62828) else Color(0xFF1A1A1A), fontSize = 22.sp, fontWeight = FontWeight.Bold)
@@ -1023,8 +1023,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                             Modifier.graphicsLayer { rotationZ = spin.value }
                                 // النرد نفسه زر الرمي (وقارئ الشاشة يقرأه «ارمِ النرد»)
                                 .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp)
-                                    .clickable(onClickLabel = "ارمِ النرد", role = androidx.compose.ui.semantics.Role.Button) { doRoll() }
-                                    .semantics { contentDescription = "ارمِ النرد" } else Modifier),
+                                    .clickable(onClickLabel = com.majlisk.app.i18n.tr("ارمِ النرد"), role = androidx.compose.ui.semantics.Role.Button) { doRoll() }
+                                    .semantics { contentDescription = com.majlisk.app.i18n.tr("ارمِ النرد") } else Modifier),
                         ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
                         // الرميات اللي عنده هالدور (ستة ثم ستة ثم ثلاثة...): نرد صغير لكل وحدة، تختفي لما يلعبها
                         if (pool.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -1035,7 +1035,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             }
             Row(
                 Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = "${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (pool.size > 1) "، رمياته ${pool.joinToString(" و")}" else ""}${if (turn) "، عليه الدور" else ""}"
+                    contentDescription = com.majlisk.app.i18n.tr("${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (pool.size > 1) "، رمياته ${pool.joinToString(" و")}" else ""}${if (turn) "، عليه الدور" else ""}")
                 },
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),

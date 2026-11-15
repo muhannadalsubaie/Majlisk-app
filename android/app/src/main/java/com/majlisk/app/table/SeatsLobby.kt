@@ -1,7 +1,7 @@
 package com.majlisk.app.table
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.LaunchedEffect

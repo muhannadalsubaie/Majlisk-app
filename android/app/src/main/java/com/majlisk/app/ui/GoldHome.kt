@@ -28,7 +28,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -91,7 +91,7 @@ private fun GameCard(name: String, icon: String, featured: Boolean, modifier: Mo
             .background(Brush.linearGradient(if (featured) listOf(Color(0xFF1F7A5A), Color(0xFF124836)) else listOf(Color(0xFF2B3A4A), Color(0xFF18212B))), shape)
             .border(1.dp, Pro.goldLight.copy(alpha = 0.22f), shape)
             .clickable(role = Role.Button, onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = "طاولة $name" }
+            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("طاولة $name") }
             .padding(14.dp),
         verticalArrangement = Arrangement.SpaceBetween,
     ) {
@@ -103,7 +103,7 @@ private fun GameCard(name: String, icon: String, featured: Boolean, modifier: Mo
 @Composable
 private fun NavItem(icon: String, label: String, active: Boolean, modifier: Modifier, onClick: () -> Unit) {
     Column(
-        modifier.heightIn(min = 56.dp).clickable(role = Role.Tab, onClick = onClick).semantics(mergeDescendants = true) { contentDescription = label; selected = active },
+        modifier.heightIn(min = 56.dp).clickable(role = Role.Tab, onClick = onClick).semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(label); selected = active },
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
         Text(icon, fontSize = 20.sp, modifier = Modifier.clearAndSetSemantics { })
@@ -127,7 +127,7 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 Box(
                     Modifier.clip(CircleShape).border(3.dp, Brush.sweepGradient(listOf(Pro.goldLight, Pro.goldDark, Pro.goldLight, Pro.gold, Pro.goldLight)), CircleShape).padding(3.dp)
-                        .clickable(role = Role.Button) { navigate(Route.Profile) }.semantics(mergeDescendants = true) { contentDescription = "الملف الشخصي" },
+                        .clickable(role = Role.Button) { navigate(Route.Profile) }.semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("الملف الشخصي") },
                 ) { Avatar(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid, profile?.username.orEmpty(), 50.dp) }
                 Column(Modifier.weight(1f)) {
                     Text(profile?.username.orEmpty(), color = Color(0xFFF4EFE2), fontSize = 18.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.semantics { heading() })
@@ -138,7 +138,7 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                     color = Color(0xFFF4EFE2), fontSize = 15.sp, fontWeight = FontWeight.ExtraBold,
                     modifier = Modifier.clip(RoundedCornerShape(50)).background(Brush.verticalGradient(listOf(Color(0xFF232D38), Color(0xFF141B22))))
                         .clickable(role = Role.Button) { getCoins = true }.padding(horizontal = 14.dp, vertical = 8.dp)
-                        .semantics { contentDescription = "رصيدك ${profile?.coins ?: ""} عملة، الحصول على عملات" },
+                        .semantics { contentDescription = com.majlisk.app.i18n.tr("رصيدك ${profile?.coins ?: ""} عملة، الحصول على عملات") },
                 )
             }
             // المتصلون

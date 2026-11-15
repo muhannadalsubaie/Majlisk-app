@@ -11,7 +11,7 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -98,18 +98,18 @@ fun VoiceButton(tableId: String, uid: String) {
             // نمسح دلالات الضغط نفسها (مو بس النص)، فما يعرّفه قارئ الشاشة كزر وقت الصمت
             .clearAndSetSemantics {
                 if (!silent) {
-                    contentDescription = status
+                    contentDescription = com.majlisk.app.i18n.tr(status)
                     role = Role.Button
                     onClick { toggleMute(); true }
                     onLongClick { toggleJoin(); true }
                     // إجراءات قارئ الشاشة (مثل الآيفون): الانضمام/الخروج من المحادثة، وفتح/قفل المايك
                     customActions = buildList {
-                        add(CustomAccessibilityAction(if (s.joined) "الخروج من المحادثة الصوتية" else "الانضمام للمحادثة الصوتية") { toggleJoin(); true })
-                        if (s.joined) add(CustomAccessibilityAction(if (s.muted) "فتح الميكروفون" else "قفل الميكروفون") { toggleMute(); true })
+                        add(com.majlisk.app.i18n.A11yAction(if (s.joined) "الخروج من المحادثة الصوتية" else "الانضمام للمحادثة الصوتية") { toggleJoin(); true })
+                        if (s.joined) add(com.majlisk.app.i18n.A11yAction(if (s.muted) "فتح الميكروفون" else "قفل الميكروفون") { toggleMute(); true })
                     }
                 } else {
                     // علامة اتجاه غير مسموعة: تخلي المؤشر يقدر يوقف هنا بدون كلام
-                    contentDescription = "\u200F"
+                    contentDescription = com.majlisk.app.i18n.tr("\u200F")
                 }
             }
             .focusable()

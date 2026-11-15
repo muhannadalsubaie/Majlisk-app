@@ -5,7 +5,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
@@ -50,7 +50,7 @@ fun CoinsBadge(profile: Profile?) {
         profile?.coins == null -> "الرصيد غير متاح بعد"
         else -> "رصيدك ${profile?.coins} عملة"
     }
-    Text(text, color = Palette.gold, style = androidx.compose.material3.MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = spoken })
+    Text(text, color = Palette.gold, style = androidx.compose.material3.MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { contentDescription = com.majlisk.app.i18n.tr(spoken) })
 }
 
 @Composable
@@ -60,7 +60,7 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             // صورتك الدائرية: تفتح الملف الشخصي
             Box(Modifier.clickable(role = androidx.compose.ui.semantics.Role.Button) { navigate(Route.Profile) }
-                .semantics(mergeDescendants = true) { contentDescription = "الملف الشخصي" }) {
+                .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("الملف الشخصي") }) {
                 Avatar(com.google.firebase.auth.FirebaseAuth.getInstance().currentUser?.uid, profile?.username.orEmpty(), 48.dp)
             }
             Column(Modifier.weight(1f)) {
@@ -254,7 +254,7 @@ fun GameTile(name: String, image: Int, onClick: () -> Unit) {
             .shadow(10.dp, shape)
             .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0xFFE2C45E), Palette.gold, Color(0xFFAE8E2D))), shape)
             .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
-            .semantics(mergeDescendants = true) { contentDescription = name }
+            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(name) }
             .padding(horizontal = 20.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

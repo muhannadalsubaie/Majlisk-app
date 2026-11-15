@@ -56,10 +56,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = scene as? UIWindowScene else { return }
         let window = MajliskWindow(windowScene: windowScene)
-        // التطبيق عربي بالكامل: من اليمين لليسار دائماً، مهما كانت لغة الجهاز
-        let root = RootOrDemo()
-            .environment(\.layoutDirection, .rightToLeft)
-            .environment(\.locale, Locale(identifier: "ar"))
+        // اتجاه الشاشة من لغة التطبيق (مو لغة الجهاز): العربي من اليمين، والإنجليزي والفرنسي من اليسار
+        let root = LangRoot { RootOrDemo() }
             .preferredColorScheme(.dark)
         let host = UIHostingController(rootView: root)
         host.view.backgroundColor = UIColor(Palette.green900)
@@ -116,7 +114,7 @@ struct DemoTable: View {
             Screen(fill: true) {
                 HStack(spacing: 8) {
                     SmallButton("القائمة") {}
-                    Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
+                    Text(tr("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 if let d = v.domino { DominoBoard(v: v, d: d, conn: conn, isOwner: true) {} }
                 else if let j = v.jackaroo {
@@ -133,7 +131,7 @@ struct DemoTable: View {
                 HStack { Spacer(); VoiceButton(tableId: v.id, uid: "u1") }
             }
         } else {
-            Text("demo not found: \(name)")
+            Text(tr("demo not found: \(name)"))
         }
     }
 }

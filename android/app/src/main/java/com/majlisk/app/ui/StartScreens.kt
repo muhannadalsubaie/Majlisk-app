@@ -12,7 +12,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -174,6 +174,8 @@ fun AuthScreen(done: () -> Unit) {
     }
 
     Screen {
+        // تغيير اللغة قبل تسجيل الدخول
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.TopEnd) { com.majlisk.app.i18n.LanguageButton() }
         Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { Logo(120) }
         Title(if (signup) "حساب جديد" else "تسجيل الدخول")
         if (signup) UsernameField(name) { name = it }

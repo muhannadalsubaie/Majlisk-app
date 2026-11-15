@@ -122,7 +122,7 @@ struct TableMenu: View {
                     let vt = view.seat(i).map { $0.isBot || $0.away ? "" : voiceTag(u) } ?? ""
                     ItemRow {
                         if canManage(u) { MButton(seatLabel(i) + vt + muted) { page = .member(u) } }
-                        else { Text(seatLabel(i) + vt).frame(maxWidth: .infinity, alignment: .leading) }
+                        else { Text(tr(seatLabel(i) + vt)).frame(maxWidth: .infinity, alignment: .leading) }
                         let s = view.seat(i)
                         // المالك يستبدل المقعد الفاضي أو الروبوت، أو نفسه (حتى أثناء اللعب: يصير مشاهد ويبقى المالك)
                         if isOwner && !canManage(u) && (s == nil || s!.isBot || i == view.mySeat) {

@@ -23,7 +23,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -117,7 +117,7 @@ private fun PriceCard(price: String) {
     Row(
         Modifier.fillMaxWidth().clip(RoundedCornerShape(20.dp)).background(Brush.verticalGradient(listOf(Color(0xFF2A2413), Color(0xFF1A160B))))
             .border(1.5.dp, Pro.gold, RoundedCornerShape(20.dp)).padding(horizontal = 16.dp, vertical = 12.dp)
-            .semantics(mergeDescendants = true) { contentDescription = "السعر $price في الشهر، عرض لمدة 6 أشهر فقط" },
+            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("السعر $price في الشهر، عرض لمدة 6 أشهر فقط") },
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(price, color = Pro.goldLight, fontSize = 30.sp, fontWeight = FontWeight.ExtraBold)
@@ -152,7 +152,7 @@ fun ProOfferDialog(onSubscribe: () -> Unit, onDismiss: () -> Unit) {
                         .background(Brush.verticalGradient(listOf(Pro.goldLight, Pro.gold))).padding(horizontal = 18.dp, vertical = 6.dp))
                 // الشعار مع التاج
                 Box(Modifier.size(112.dp)) {
-                    Image(painterResource(R.drawable.logo), contentDescription = "شعار مجلسك",
+                    Image(painterResource(R.drawable.logo), contentDescription = com.majlisk.app.i18n.tr("شعار مجلسك"),
                         modifier = Modifier.size(104.dp).align(Alignment.BottomStart).shadow(14.dp, RoundedCornerShape(26.dp))
                             .clip(RoundedCornerShape(26.dp)).border(3.dp, Pro.gold, RoundedCornerShape(26.dp)))
                     Crown(38, Modifier.align(Alignment.TopEnd).clearAndSetSemantics { })

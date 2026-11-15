@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -49,8 +49,8 @@ fun OnlineLine(openTable: (String) -> Unit) {
         if (n == null) "المتصلون: …" else "المتصلون: $n",
         color = Palette.goldSoft, fontSize = 14.sp, fontWeight = FontWeight.Bold,
         modifier = Modifier
-            .clickable(role = Role.Button, onClickLabel = "عرض المتصلين") { open = true }
-            .semantics { contentDescription = if (n == null) "المتصلون، جارٍ التحميل" else "المتصلون الآن $n" },
+            .clickable(role = Role.Button, onClickLabel = com.majlisk.app.i18n.tr("عرض المتصلين")) { open = true }
+            .semantics { contentDescription = com.majlisk.app.i18n.tr(if (n == null) "المتصلون، جارٍ التحميل" else "المتصلون الآن $n") },
     )
     if (open) OnlineDialog({ open = false }, openTable)
 }
@@ -138,15 +138,15 @@ private fun OnlineDialog(onClose: () -> Unit, openTable: (String) -> Unit) {
                     val relation = when { p.me -> "أنت"; friend -> "صديقك"; p.uid in sent -> "أُرسل طلب الصداقة"; else -> null }
                     ItemRow(
                         Modifier.combinedClickable(
-                            onClickLabel = "فتح ملفه", onClick = { player = p },
+                            onClickLabel = com.majlisk.app.i18n.tr("فتح ملفه"), onClick = { player = p },
                             onLongClickLabel = if (p.tableId != null && !p.me) (if (p.tablePrivate) "طلب انضمام لطاولته" else "دخول طاولته") else null,
                             onLongClick = { if (!p.me) enter(p) },
                         ).semantics(mergeDescendants = true) {
-                            contentDescription = listOfNotNull(p.username, place, relation).joinToString("، ")
+                            contentDescription = com.majlisk.app.i18n.tr(listOfNotNull(p.username, place, relation).joinToString("، "))
                             // قارئ الشاشة: الإضافة والدخول كإجراءات على السطر
                             customActions = buildList {
-                                if (!p.me && !friend && p.uid !in sent) add(CustomAccessibilityAction(if (asked) "قبول طلب الصداقة" else "إضافة صديق") { if (asked) acceptFriend(p) else addFriend(p); true })
-                                if (!p.me && p.tableId != null) add(CustomAccessibilityAction(if (p.tablePrivate) "طلب انضمام لطاولته" else "دخول طاولته") { enter(p); true })
+                                if (!p.me && !friend && p.uid !in sent) add(com.majlisk.app.i18n.A11yAction(if (asked) "قبول طلب الصداقة" else "إضافة صديق") { if (asked) acceptFriend(p) else addFriend(p); true })
+                                if (!p.me && p.tableId != null) add(com.majlisk.app.i18n.A11yAction(if (p.tablePrivate) "طلب انضمام لطاولته" else "دخول طاولته") { enter(p); true })
                             }
                         },
                     ) {

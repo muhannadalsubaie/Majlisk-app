@@ -48,8 +48,9 @@ object Announcer {
     }
 
     /** يُقرأ بعد ما يخلص اللي قبله (ما يقطعه) */
-    fun announce(text: String) {
-        if (text.isBlank()) return
+    fun announce(text0: String) {
+        if (text0.isBlank()) return
+        val text = com.majlisk.app.i18n.tr(text0)
         main.post {
             queue.addLast(text)
             if (!scheduled) pump()
@@ -72,8 +73,9 @@ object Announcer {
      * يُقرأ الآن: يقطع ما يقرؤه TalkBack (إعلان قديم تأخر) ويقرأ الجديد مباشرة.
      * لأحداث اللعب وردود الإيماءات، فلا تتراكم القراءة خلف اللعب.
      */
-    fun announceNow(text: String) {
-        if (text.isBlank()) return
+    fun announceNow(text0: String) {
+        if (text0.isBlank()) return
+        val text = com.majlisk.app.i18n.tr(text0)
         main.post {
             // اللي ينتظر في الطابور قديم: الجديد يحل محله
             queue.clear()

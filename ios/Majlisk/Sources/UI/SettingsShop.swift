@@ -19,6 +19,8 @@ struct SettingsScreen: View {
     @ViewBuilder private var settings: some View {
         Screen {
             TopBar("الإعدادات", onBack: onBack)
+            SectionTitle("اللغة")
+            HStack { LanguageButton(); Spacer() }
             SectionTitle("الصوت")
             SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
             SectionTitle("شكل الورق")
@@ -38,11 +40,11 @@ struct SettingsScreen: View {
                 MButton("حذف الحساب", .danger) { confirmDelete = true }
                 MButton("سياسة الخصوصية") { UIApplication.shared.open(URL(string: Api.site + "/privacy.html")!) }
                 // في آخر الإعدادات العامة فقط، بخط صغير جداً: رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
-                Text("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0.")
+                Text(tr("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0."))
                     .font(.system(size: 10)).foregroundColor(Palette.textDim)
-                Link("مصدر صور الكروت", destination: URL(string: "https://github.com/richardschneider/cardsJS/tree/master/cards")!)
+                Link(tr("مصدر صور الكروت"), destination: URL(string: "https://github.com/richardschneider/cardsJS/tree/master/cards")!)
                     .font(.system(size: 10)).foregroundColor(Palette.textDim)
-                Link("رخصة صور الكروت", destination: URL(string: "https://www.gnu.org/licenses/lgpl-3.0.html")!)
+                Link(tr("رخصة صور الكروت"), destination: URL(string: "https://www.gnu.org/licenses/lgpl-3.0.html")!)
                     .font(.system(size: 10)).foregroundColor(Palette.textDim)
             }
         }
@@ -75,8 +77,8 @@ struct ShopScreen: View {
                 let spoken = "\(base) عملة\(p.bonus > 0 ? " زائد \(p.bonus) هدية" : "")، بسعر \(p.price)"
                 ItemRow {
                     VStack(alignment: .leading) {
-                        Text("\(base) عملة").bold()
-                        if p.bonus > 0 { Text("+ \(p.bonus) هدية").foregroundColor(Palette.goldSoft) }
+                        Text(tr("\(base) عملة")).bold()
+                        if p.bonus > 0 { Text(tr("+ \(p.bonus) هدية")).foregroundColor(Palette.goldSoft) }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityHidden(true)

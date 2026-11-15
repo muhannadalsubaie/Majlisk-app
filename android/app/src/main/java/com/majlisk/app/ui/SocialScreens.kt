@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -120,13 +120,13 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                     val status = friendStatus(f)
                     ItemRow(
                         Modifier.combinedClickable(
-                            onClickLabel = "فتح ملفه", onClick = { profileOf = f },
+                            onClickLabel = com.majlisk.app.i18n.tr("فتح ملفه"), onClick = { profileOf = f },
                             onLongClickLabel = if (f.tableId != null) "دخول طاولته" else null,
                             onLongClick = { joinFriend(f) },
                         ).semantics(mergeDescendants = true) {
-                            contentDescription = "${f.username}، $status"
+                            contentDescription = com.majlisk.app.i18n.tr("${f.username}، $status")
                             // قارئ الشاشة: «دخول طاولته» إجراء (سحب لفوق أو تحت) مثل الآيفون
-                            customActions = listOf(CustomAccessibilityAction("دخول طاولته") { joinFriend(f); true })
+                            customActions = listOf(com.majlisk.app.i18n.A11yAction("دخول طاولته") { joinFriend(f); true })
                         },
                     ) {
                         Avatar(f.uid, f.username, 40.dp)

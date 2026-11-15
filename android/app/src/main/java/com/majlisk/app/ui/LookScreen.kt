@@ -20,7 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CutCornerShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,7 +53,7 @@ private fun Choice(name: String, selected: Boolean, onPick: () -> Unit, swatch: 
         Modifier.width(86.dp).clip(RoundedCornerShape(16.dp)).background(Pro.deep)
             .border(if (selected) 2.dp else 1.dp, if (selected) Pro.gold else Pro.goldLight.copy(alpha = 0.2f), RoundedCornerShape(16.dp))
             .clickable(role = Role.Button) { onPick(); Announcer.announce("اخترت $name") }
-            .semantics(mergeDescendants = true) { contentDescription = name; this.selected = selected }
+            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(name); this.selected = selected }
             .padding(vertical = 10.dp, horizontal = 4.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {

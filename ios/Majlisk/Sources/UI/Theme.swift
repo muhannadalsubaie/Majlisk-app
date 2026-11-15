@@ -55,7 +55,7 @@ struct MButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(title)
+            Text(tr(title))
                 .font(.system(size: 18, weight: .bold))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: fill ? .infinity : nil, minHeight: 50)
@@ -67,7 +67,7 @@ struct MButton: View {
             border: kind == .secondary ? Palette.gold : nil))
         .opacity(enabled ? 1 : 0.5)
         .disabled(!enabled)
-        .accessibilityLabel(label ?? title)
+        .accessibilityLabel(tr(label ?? title))
     }
 }
 
@@ -83,7 +83,7 @@ struct SmallButton: View {
     }
     var body: some View {
         Button(action: action) {
-            Text(title)
+            Text(tr(title))
                 .font(.system(size: 15, weight: .bold))
                 .frame(minWidth: 64, minHeight: 42)
                 .padding(.horizontal, 12)
@@ -91,7 +91,7 @@ struct SmallButton: View {
         .buttonStyle(RaisedStyle(base: primary ? Palette.gold : Palette.green700, fg: primary ? Palette.green900 : Palette.text, border: primary ? nil : Palette.gold))
         .opacity(enabled ? 1 : 0.5)
         .disabled(!enabled)
-        .accessibilityLabel(label ?? title)
+        .accessibilityLabel(tr(label ?? title))
     }
 }
 
@@ -132,7 +132,7 @@ struct Title: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(text).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+        Text(tr(text)).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -140,20 +140,20 @@ struct SectionTitle: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(text).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+        Text(tr(text)).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
     }
 }
 
 struct Note: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View { Text(text).font(.system(size: 14)).foregroundColor(Palette.textDim).fixedSize(horizontal: false, vertical: true) }
+    var body: some View { Text(tr(text)).font(.system(size: 14)).foregroundColor(Palette.textDim).fixedSize(horizontal: false, vertical: true) }
 }
 
 struct BodyText: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View { Text(text).font(.system(size: 18)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true) }
+    var body: some View { Text(tr(text)).font(.system(size: 18)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true) }
 }
 
 /// شريط أعلى الشاشة: العنوان، وزر الرجوع
@@ -183,7 +183,7 @@ struct SwitchRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Toggle(isOn: Binding(get: { isOn }, set: onChange)) {
-                Text(label).font(.system(size: 18)).foregroundColor(Palette.text)
+                Text(tr(label)).font(.system(size: 18)).foregroundColor(Palette.text)
             }
             .tint(Palette.gold)
         }
@@ -217,13 +217,13 @@ struct Sheet<Content: View>: View {
             Palette.green800.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(title).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+                    Text(tr(title)).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
                     content()
                 }.padding(16)
             }
         }
         .foregroundColor(Palette.text)
-        .environment(\.layoutDirection, .rightToLeft)
+        .environment(\.layoutDirection, I18n.direction)
         .accessibilityAddTraits(.isModal)
     }
 }
@@ -239,7 +239,7 @@ struct Field: View {
     var digits: Int? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(label).foregroundColor(Palette.textDim).accessibilityHidden(true)
+            Text(tr(label)).foregroundColor(Palette.textDim).accessibilityHidden(true)
             Group {
                 if secure { SecureField("", text: $text) } else { TextField("", text: $text) }
             }
@@ -252,13 +252,13 @@ struct Field: View {
                 if clean != v { text = clean }
             }
             .textContentType(secure ? .password : email ? .emailAddress : .username)
-            .environment(\.layoutDirection, ltr ? .leftToRight : .rightToLeft)
+            .environment(\.layoutDirection, ltr ? .leftToRight : I18n.direction)
             .padding(12)
             .background(Palette.green800)
             .clipShape(RoundedRectangle(cornerRadius: 14))
             .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.green700, lineWidth: 1))
             .foregroundColor(Palette.text)
-            .accessibilityLabel(label)
+            .accessibilityLabel(tr(label))
         }
     }
 }
@@ -282,8 +282,8 @@ extension View {
     func confirm(_ title: String, isPresented: Binding<Bool>, message: String, confirm: String, destructive: Bool = false, action: @escaping () -> Void) -> some View {
         alert(title, isPresented: isPresented) {
             Button(confirm, role: destructive ? .destructive : nil, action: action)
-            Button("إلغاء", role: .cancel) {}
-        } message: { Text(message) }
+            Button(tr("إلغاء"), role: .cancel) {}
+        } message: { Text(tr(message)) }
     }
 }
 

@@ -32,7 +32,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -194,10 +194,10 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                 // الإجراءات على الزر نفسه (كانت على غلاف حوله، فيصير عنصر فاضي ما يفتح القائمة)
                 com.majlisk.app.ui.BackButton({ menuStart = TableMenuStart.Main; menuOpen = true }, "القائمة", Modifier.semantics {
                     customActions = listOfNotNull(
-                        CustomAccessibilityAction("اللاعبون") { menuStart = TableMenuStart.Players; menuOpen = true; true },
-                        CustomAccessibilityAction("الأصدقاء") { menuStart = TableMenuStart.Friends; menuOpen = true; true },
-                        if (v.ownerUid == uid) CustomAccessibilityAction("دعوة صديق") { menuStart = TableMenuStart.Invite; menuOpen = true; true } else null,
-                        CustomAccessibilityAction("مغادرة الطاولة") { confirmLeave = true; true },
+                        com.majlisk.app.i18n.A11yAction("اللاعبون") { menuStart = TableMenuStart.Players; menuOpen = true; true },
+                        com.majlisk.app.i18n.A11yAction("الأصدقاء") { menuStart = TableMenuStart.Friends; menuOpen = true; true },
+                        if (v.ownerUid == uid) com.majlisk.app.i18n.A11yAction("دعوة صديق") { menuStart = TableMenuStart.Invite; menuOpen = true; true } else null,
+                        com.majlisk.app.i18n.A11yAction("مغادرة الطاولة") { confirmLeave = true; true },
                     )
                 })
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
@@ -327,7 +327,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         val themLabel = if (mySeat == null) teamName(1) else "لهم"
         Row(
             Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)
-                .semantics(mergeDescendants = true) { contentDescription = "النقاط: $usLabel $us، $themLabel $them. الفوز عند 152" },
+                .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("النقاط: $usLabel $us، $themLabel $them. الفوز عند 152") },
             horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
             ScoreBox(usLabel, us, mine = mySeat != null, modifier = Modifier.weight(1f).fillMaxHeight())
@@ -743,7 +743,7 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
             .border(1.dp, Color(0x55D4AF37), tableShape)
             .clickable { reads.getValue(SwipeDir.Left)() }
             .semantics(mergeDescendants = true) {
-                contentDescription = "وسط الطاولة: ${text.trick()}"
+                contentDescription = com.majlisk.app.i18n.tr("وسط الطاولة: ${text.trick()}")
                 // النقر مرتين يعيد قراءة أوراق الطاولة؛ باقي القراءات بالإيماءات (الإجراءات للشراء والمايك والقائمة بس)
             },
         contentAlignment = Alignment.Center,
@@ -805,11 +805,11 @@ private fun HandCard(card: Card, legal: Boolean, fanAngle: Float, modifier: Modi
             .focusable()
             // اسم الورقة دائماً (ما نفرّغه أبداً: كان يُقرأ "فاضي" أو "مسافة")
             .clickable { tap() }.semantics(mergeDescendants = true) {
-                contentDescription = card.label
+                contentDescription = com.majlisk.app.i18n.tr(card.label)
                 role = Role.Button
                 onClick { tap(); true }
                 // الشراء والدبل كإجراءات على الورقة (للمكفوفين: ما يحتاجون يروحون للأزرار)
-                if (actions.isNotEmpty()) customActions = actions.map { (label, run) -> CustomAccessibilityAction(label) { run(); true } }
+                if (actions.isNotEmpty()) customActions = actions.map { (label, run) -> com.majlisk.app.i18n.A11yAction(label) { run(); true } }
             },
     ) { CardFaceBox(card, Modifier.fillMaxSize()) }
 }

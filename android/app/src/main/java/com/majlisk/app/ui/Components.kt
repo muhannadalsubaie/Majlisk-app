@@ -40,7 +40,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
-import androidx.compose.material3.Text
+import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
@@ -163,7 +163,7 @@ fun RaisedButton(
             .describe(description)
             // قارئ الشاشة: الضغطة المطولة إجراء باسمها (سحب لفوق أو تحت) مثل الآيفون
             .then(if (onLongClick != null && longClickLabel != null) Modifier.semantics {
-                customActions = listOf(CustomAccessibilityAction(longClickLabel) { onLongClick(); true })
+                customActions = listOf(com.majlisk.app.i18n.A11yAction(longClickLabel) { onLongClick(); true })
             } else Modifier)
             .padding(padding),
         contentAlignment = Alignment.Center,
@@ -212,7 +212,7 @@ fun DangerButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifie
 
 /** وصف مختلف عن النص الظاهر (مثل "دعوة صديق للمقعد 2") */
 fun Modifier.describe(description: String?): Modifier =
-    if (description == null) this else this.semantics(mergeDescendants = true) { contentDescription = description }
+    if (description == null) this else this.semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(description) }
 
 @Composable
 fun Note(text: String, modifier: Modifier = Modifier) {
@@ -232,7 +232,7 @@ fun SwitchRow(label: String, checked: Boolean, onChange: (Boolean) -> Unit, desc
             .background(Palette.green800, RoundedCornerShape(14.dp))
             .border(1.dp, if (checked) Palette.gold else Palette.green700, RoundedCornerShape(14.dp))
             .toggleable(value = checked, role = Role.Switch, onValueChange = onChange)
-            .semantics(mergeDescendants = true) { stateDescription = if (checked) "مفعّل" else "متوقف" }
+            .semantics(mergeDescendants = true) { stateDescription = com.majlisk.app.i18n.tr(if (checked) "مفعّل" else "متوقف") }
             .heightIn(min = 56.dp)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {

@@ -1,0 +1,4814 @@
+{
+ " (انقطع الاتصال)": {
+  "en": " (disconnected)",
+  "fr": " (déconnecté)"
+ },
+ " (روبوت)": {
+  "en": " (bot)",
+  "fr": " (robot)"
+ },
+ " (شريكك)": {
+  "en": " (your partner)",
+  "fr": " (votre partenaire)"
+ },
+ " (مفتوح)": {
+  "en": " (open)",
+  "fr": " (ouvert)"
+ },
+ " (مقفل)": {
+  "en": " (locked)",
+  "fr": " (fermé)"
+ },
+ " / شهر": {
+  "en": " / month",
+  "fr": " / mois"
+ },
+ " إلى ⟦sq|{0}|0⟧": {
+  "en": " to ⟦sq|{0}|0⟧",
+  "fr": " vers ⟦sq|{0}|0⟧"
+ },
+ " على اليسار": {
+  "en": " on the left",
+  "fr": " à gauche"
+ },
+ " على اليمين": {
+  "en": " on the right",
+  "fr": " à droite"
+ },
+ " فرق": {
+  "en": " teams",
+  "fr": " équipes"
+ },
+ " كمبلكس": {
+  "en": " complex",
+  "fr": " complexe"
+ },
+ " مفتوح": {
+  "en": " open",
+  "fr": " ouvert"
+ },
+ " مقفل": {
+  "en": " locked",
+  "fr": " fermé"
+ },
+ " من {0}": {
+  "en": " from {0}",
+  "fr": " de {0}"
+ },
+ " منك": {
+  "en": " from you",
+  "fr": " de vous"
+ },
+ " و": {
+  "en": " and ",
+  "fr": " et "
+ },
+ " يحل روبوت مكانه في اللعب.": {
+  "en": " A bot takes over their play.",
+  "fr": " Un robot prend sa place dans le jeu."
+ },
+ " ⟦tok|{0}|{1}⟧، ورجع للبيت": {
+  "en": " ⟦tok|{0}|{1}⟧, and it went back home",
+  "fr": " ⟦tok|{0}|{1}⟧, et il est rentré à la maison"
+ },
+ "%n أكل": {
+  "en": "%n captured",
+  "fr": "%n a capturé"
+ },
+ "%n رمى {0}، لا حركة": {
+  "en": "%n rolled {0}, no move",
+  "fr": "%n a fait {0}, aucun coup"
+ },
+ "%n رمى {0}، و{1}": {
+  "en": "%n rolled {0}, and {1}",
+  "fr": "%n a fait {0}, et {1}"
+ },
+ "%n رمى ستة ثالثة، ضاع الدور": {
+  "en": "%n rolled a third six, turn lost",
+  "fr": "%n a fait un troisième six, tour perdu"
+ },
+ "%n رمى ستة، وطلّع{0}": {
+  "en": "%n rolled a six and brought out{0}",
+  "fr": "%n a fait six et a sorti{0}"
+ },
+ "%n رمى ستة، ويرمي مرة ثانية": {
+  "en": "%n rolled a six and rolls again",
+  "fr": "%n a fait six et rejoue"
+ },
+ "%n طلّع{0}": {
+  "en": "%n brought out{0}",
+  "fr": "%n a sorti{0}"
+ },
+ "%n يرمي مرة أخرى": {
+  "en": "%n rolls again",
+  "fr": "%n rejoue"
+ },
+ "+ {0} هدية": {
+  "en": "+ {0} bonus",
+  "fr": "+ {0} en cadeau"
+ },
+ "{0} (أنت)": {
+  "en": "{0} (you)",
+  "fr": "{0} (vous)"
+ },
+ "{0} (روبوت)": {
+  "en": "{0} (bot)",
+  "fr": "{0} (robot)"
+ },
+ "{0} {1} يتقدم {2}": {
+  "en": "{0} {1} moves {2}",
+  "fr": "{0} {1} avance de {2}"
+ },
+ "{0} {1}، {2}": {
+  "en": "{0} {1}, {2}",
+  "fr": "{0} {1}, {2}"
+ },
+ "{0} {1}، {2} {3}": {
+  "en": "{0} {1}, {2} {3}",
+  "fr": "{0} {1}, {2} {3}"
+ },
+ "{0} {1}، يتقدم {2}": {
+  "en": "{0} {1}, moves {2}",
+  "fr": "{0} {1}, avance de {2}"
+ },
+ "{0} {1}، يتقدم {2} ويأكل كل حجر يمر عليه": {
+  "en": "{0} {1}, moves {2} and captures every marble it passes",
+  "fr": "{0} {1}, avance de {2} et capture chaque bille sur son passage"
+ },
+ "{0} {1}، يرجع {2} للخلف": {
+  "en": "{0} {1}, moves {2} back",
+  "fr": "{0} {1}, recule de {2}"
+ },
+ "{0} أرسل دعوة": {
+  "en": "{0} sent an invite",
+  "fr": "{0} a envoyé une invitation"
+ },
+ "{0} أرسل دعوة إلى {1}{2}": {
+  "en": "{0} sent an invite to {1}{2}",
+  "fr": "{0} a envoyé une invitation à {1}{2}"
+ },
+ "{0} أصبح مشاهداً": {
+  "en": "{0} became a spectator",
+  "fr": "{0} est devenu spectateur"
+ },
+ "{0} أكد الحكم": {
+  "en": "{0} confirmed Hokm",
+  "fr": "{0} a confirmé le Hokm"
+ },
+ "{0} أكد الحكم، {1}": {
+  "en": "{0} confirmed Hokm, {1}",
+  "fr": "{0} a confirmé le Hokm, {1}"
+ },
+ "{0} أهداك الباقة الاحترافية لمدة شهر": {
+  "en": "{0} gifted you the Pro plan for one month",
+  "fr": "{0} vous a offert l'abonnement Pro pour un mois"
+ },
+ "{0} أوراق": {
+  "en": "{0} cards",
+  "fr": "{0} cartes"
+ },
+ "{0} اختار شريكه {1} يبدأ": {
+  "en": "{0} chose their partner {1} to start",
+  "fr": "{0} a choisi son partenaire {1} pour commencer"
+ },
+ "{0} اختار يبدأ بنفسه": {
+  "en": "{0} chose to start",
+  "fr": "{0} a choisi de commencer"
+ },
+ "{0} اشترى {1}": {
+  "en": "{0} bought {1}",
+  "fr": "{0} a pris {1}"
+ },
+ "{0} اشترى {1}، {2}": {
+  "en": "{0} bought {1}, {2}",
+  "fr": "{0} a pris {1}, {2}"
+ },
+ "{0} اشترى دبل": {
+  "en": "{0} called Double",
+  "fr": "{0} a annoncé Double"
+ },
+ "{0} الموزع. ورقة الأرض: {1}": {
+  "en": "{0} is the dealer. Table card: {1}",
+  "fr": "{0} est le donneur. Carte retournée : {1}"
+ },
+ "{0} انضم للمحادثة الصوتية": {
+  "en": "{0} joined voice chat",
+  "fr": "{0} a rejoint le chat vocal"
+ },
+ "{0} ثانية": {
+  "en": "{0} seconds",
+  "fr": "{0} secondes"
+ },
+ "{0} جلا": {
+  "en": "{0} passed",
+  "fr": "{0} passe"
+ },
+ "{0} جلس في المقعد {1}": {
+  "en": "{0} sat in seat {1}",
+  "fr": "{0} s'est assis à la place {1}"
+ },
+ "{0} جلس مكان {1}": {
+  "en": "{0} took {1}'s seat",
+  "fr": "{0} a pris la place de {1}"
+ },
+ "{0} حرق {1}": {
+  "en": "{0} burned {1}",
+  "fr": "{0} a brûlé {1}"
+ },
+ "{0} دعاك للعب {1}": {
+  "en": "{0} invited you to play {1}",
+  "fr": "{0} vous invite à jouer au {1}"
+ },
+ "{0} دقائق": {
+  "en": "{0} minutes",
+  "fr": "{0} minutes"
+ },
+ "{0} دقيقة": {
+  "en": "{0} minutes",
+  "fr": "{0} minutes"
+ },
+ "{0} سجّل على {1}: {2} — {3}": {
+  "en": "{0} called a foul on {1}: {2} — {3}",
+  "fr": "{0} a signalé une faute de {1} : {2} — {3}"
+ },
+ "{0} سحب قطعة": {
+  "en": "{0} drew a tile",
+  "fr": "{0} a pioché un domino"
+ },
+ "{0} طلب الانضمام": {
+  "en": "{0} asked to join",
+  "fr": "{0} demande à rejoindre"
+ },
+ "{0} عملة": {
+  "en": "{0} coins",
+  "fr": "{0} pièces"
+ },
+ "{0} عملة زائد {1} هدية": {
+  "en": "{0} coins plus {1} bonus",
+  "fr": "{0} pièces plus {1} en cadeau"
+ },
+ "{0} عملة{1}، بسعر {2}": {
+  "en": "{0} coins{1}, for {2}",
+  "fr": "{0} pièces{1}, pour {2}"
+ },
+ "{0} غادر المحادثة الصوتية": {
+  "en": "{0} left voice chat",
+  "fr": "{0} a quitté le chat vocal"
+ },
+ "{0} فرش {1}: {2}": {
+  "en": "{0} showed {1}: {2}",
+  "fr": "{0} a montré {1} : {2}"
+ },
+ "{0} فرق": {
+  "en": "{0} teams",
+  "fr": "{0} équipes"
+ },
+ "{0} في اللعب": {
+  "en": "{0} in play",
+  "fr": "{0} en jeu"
+ },
+ "{0} قطع": {
+  "en": "{0} trumped",
+  "fr": "{0} a coupé"
+ },
+ "{0} كمبلكس": {
+  "en": "{0} complex",
+  "fr": "{0} complexe"
+ },
+ "{0} لا تصلح الآن": {
+  "en": "{0} can't be played now",
+  "fr": "{0} ne peut pas être joué maintenant"
+ },
+ "{0} لعب {1}: {2}": {
+  "en": "{0} played {1}: {2}",
+  "fr": "{0} a joué {1} : {2}"
+ },
+ "{0} لعب {1}{2}": {
+  "en": "{0} played {1}{2}",
+  "fr": "{0} a joué {1}{2}"
+ },
+ "{0} ما عنده لعب، انحرقت أوراقه": {
+  "en": "{0} has no play, their cards are burned",
+  "fr": "{0} ne peut pas jouer, ses cartes sont brûlées"
+ },
+ "{0} من {1}": {
+  "en": "{0} of {1}",
+  "fr": "{0} sur {1}"
+ },
+ "{0} مو على طاولة الحين": {
+  "en": "{0} isn't at a table right now",
+  "fr": "{0} n'est pas à une table en ce moment"
+ },
+ "{0} و{1}": {
+  "en": "{0} and {1}",
+  "fr": "{0} et {1}"
+ },
+ "{0} يتقدم {1}": {
+  "en": "{0} moves {1}",
+  "fr": "{0} avance de {1}"
+ },
+ "{0} يتقدم {1} ويأكل كل حجر يمر عليه": {
+  "en": "{0} moves {1} and captures every marble it passes",
+  "fr": "{0} avance de {1} et capture chaque bille sur son passage"
+ },
+ "{0} يحرق ورقة ويضيع دوره": {
+  "en": "{0} burns a card and loses the turn",
+  "fr": "{0} brûle une carte et perd son tour"
+ },
+ "{0} يختار من يبدأ": {
+  "en": "{0} chooses who starts",
+  "fr": "{0} choisit qui commence"
+ },
+ "{0} يدعوك لطاولته": {
+  "en": "{0} invites you to their table",
+  "fr": "{0} vous invite à sa table"
+ },
+ "{0} يدعوك للعب معه في طاولته.": {
+  "en": "{0} invites you to play at their table.",
+  "fr": "{0} vous invite à jouer à sa table."
+ },
+ "{0} يرجع {1} للخلف": {
+  "en": "{0} moves {1} back",
+  "fr": "{0} recule de {1}"
+ },
+ "{0} يقدر يفرش مشروعه": {
+  "en": "{0} can show their project",
+  "fr": "{0} peut montrer son annonce"
+ },
+ "{0} — من المقعد {1}": {
+  "en": "{0} — from seat {1}",
+  "fr": "{0} — de la place {1}"
+ },
+ "{0}: أُلغي المشروع": {
+  "en": "{0}: project cancelled",
+  "fr": "{0} : annonce annulée"
+ },
+ "{0}: اختر الحركة": {
+  "en": "{0}: choose the move",
+  "fr": "{0} : choisissez le coup"
+ },
+ "{0}: بس": {
+  "en": "{0}: pass",
+  "fr": "{0} : passe"
+ },
+ "{0}: بلوت": {
+  "en": "{0}: Baloot",
+  "fr": "{0} : Baloot"
+ },
+ "{0}: سوا — {1}": {
+  "en": "{0}: Sawa — {1}",
+  "fr": "{0} : Sawa — {1}"
+ },
+ "{0}: مشروع {1}": {
+  "en": "{0}: {1} project",
+  "fr": "{0} : annonce {1}"
+ },
+ "{0}: مفتوح": {
+  "en": "{0}: open",
+  "fr": "{0} : ouvert"
+ },
+ "{0}: مقفل": {
+  "en": "{0}: locked",
+  "fr": "{0} : fermé"
+ },
+ "{0}: ورق — يعاد التوزيع{1}": {
+  "en": "{0}: Waraq — redeal{1}",
+  "fr": "{0} : Waraq — nouvelle donne{1}"
+ },
+ "{0}: يتقدم {1}، من {2} إلى {3}": {
+  "en": "{0}: moves {1}, from {2} to {3}",
+  "fr": "{0} : avance de {1}, de {2} à {3}"
+ },
+ "{0}: يطلع من البيت": {
+  "en": "{0}: leaves home",
+  "fr": "{0} : sort de la maison"
+ },
+ "{0}{1} — مشاهد": {
+  "en": "{0}{1} — spectator",
+  "fr": "{0}{1} — spectateur"
+ },
+ "{0}{1}، {2}": {
+  "en": "{0}{1}, {2}",
+  "fr": "{0}{1}, {2}"
+ },
+ "{0}{1}، {2} قطع{3}": {
+  "en": "{0}{1}, {2} trumped{3}",
+  "fr": "{0}{1}, {2} a coupé{3}"
+ },
+ "{0}{1}، {2}، {3} أوراق{4}": {
+  "en": "{0}{1}, {2}, {3} cards{4}",
+  "fr": "{0}{1}, {2}, {3} cartes{4}"
+ },
+ "{0}{1}، {2}، وصل {3} من 4{4}{5}{6}": {
+  "en": "{0}{1}, {2}, {3} of 4 home{4}{5}{6}",
+  "fr": "{0}{1}, {2}, {3} sur 4 arrivées{4}{5}{6}"
+ },
+ "{0}، {1}": {
+  "en": "{0}, {1}",
+  "fr": "{0}, {1}"
+ },
+ "{0}، {1}، {2} من 4{3}": {
+  "en": "{0}, {1}, {2} of 4{3}",
+  "fr": "{0}, {1}, {2} sur 4{3}"
+ },
+ "{0}، الحالي": {
+  "en": "{0}, current",
+  "fr": "{0}, actuel"
+ },
+ "{0}، تصلح على الطرفين": {
+  "en": "{0}, fits both ends",
+  "fr": "{0}, se pose aux deux bouts"
+ },
+ "{0}، لا تصلح": {
+  "en": "{0}, doesn't fit",
+  "fr": "{0}, ne se pose pas"
+ },
+ "{0}، محددة": {
+  "en": "{0}, selected",
+  "fr": "{0}, sélectionnée"
+ },
+ "{0}طاولة {1} · {2} · الموجودين {3} · {4}": {
+  "en": "{0}Table {1} · {2} · present {3} · {4}",
+  "fr": "{0}Table {1} · {2} · présents {3} · {4}"
+ },
+ "{0}متصل، {1}": {
+  "en": "{0}online, {1}",
+  "fr": "{0}en ligne, {1}"
+ },
+ "،": {
+  "en": ",",
+  "fr": ","
+ },
+ "، ": {
+  "en": ", ",
+  "fr": ", "
+ },
+ "، انقطع اتصاله": {
+  "en": ", disconnected",
+  "fr": ", déconnecté"
+ },
+ "، خارج المحادثة الصوتية": {
+  "en": ", out of voice chat",
+  "fr": ", hors du chat vocal"
+ },
+ "، روبوت": {
+  "en": ", bot",
+  "fr": ", robot"
+ },
+ "، في المحادثة الصوتية": {
+  "en": ", in voice chat",
+  "fr": ", dans le chat vocal"
+ },
+ "، مكتوم": {
+  "en": ", muted",
+  "fr": ", muet"
+ },
+ "، و": {
+  "en": ", and ",
+  "fr": ", et "
+ },
+ "، وترمي مرة أخرى": {
+  "en": ", and you roll again",
+  "fr": ", et vous rejouez"
+ },
+ "، ورقة الأرض {0}": {
+  "en": ", table card {0}",
+  "fr": ", carte retournée {0}"
+ },
+ "، ويرمي مرة أخرى": {
+  "en": ", and rolls again",
+  "fr": ", et rejoue"
+ },
+ "آخر": {
+  "en": "Other",
+  "fr": "Autre"
+ },
+ "آخر رمية: {0} {1}": {
+  "en": "Last roll: {0} {1}",
+  "fr": "Dernier lancer : {0} {1}"
+ },
+ "آيفون": {
+  "en": "iPhone",
+  "fr": "iPhone"
+ },
+ "أبدأ أنا": {
+  "en": "I'll start",
+  "fr": "Je commence"
+ },
+ "أحجار {0}": {
+  "en": "{0}'s marbles",
+  "fr": "Billes de {0}"
+ },
+ "أحجارك": {
+  "en": "Your marbles",
+  "fr": "Vos billes"
+ },
+ "أحد الحاضرين": {
+  "en": "Someone present",
+  "fr": "Une personne présente"
+ },
+ "أخرج مالك الطاولة {0}": {
+  "en": "The table owner removed {0}",
+  "fr": "Le propriétaire de la table a exclu {0}"
+ },
+ "أخرجك مالك الطاولة": {
+  "en": "The table owner removed you",
+  "fr": "Le propriétaire de la table vous a exclu"
+ },
+ "أخضر زمردي": {
+  "en": "Emerald green",
+  "fr": "Vert émeraude"
+ },
+ "أخلِ مقعدي وأصبح مشاهداً": {
+  "en": "Leave my seat and become a spectator",
+  "fr": "Libérer ma place et devenir spectateur"
+ },
+ "أدخل كلمة المرور": {
+  "en": "Enter the password",
+  "fr": "Saisissez le mot de passe"
+ },
+ "أربعة": {
+  "en": "Four",
+  "fr": "Quatre"
+ },
+ "أربعمية": {
+  "en": "Four Hundred",
+  "fr": "Quatre-cents"
+ },
+ "أرسلت له دعوة قبل شوي. تقدر ترسل له دعوة ثانية بعد ١٠ دقائق من الأولى": {
+  "en": "You invited them a moment ago. You can invite them again 10 minutes after the first invite",
+  "fr": "Vous l'avez invité il y a un instant. Vous pourrez le réinviter 10 minutes après la première invitation"
+ },
+ "أرسلت نفس الطلب لهالطاولة قبل، ننتظر رد مالكها": {
+  "en": "You already sent this request to this table; waiting for the owner's reply",
+  "fr": "Vous avez déjà envoyé cette demande à cette table ; en attente de la réponse du propriétaire"
+ },
+ "أرسلنا الرابط مرة ثانية إلى {0}": {
+  "en": "We sent the link again to {0}",
+  "fr": "Nous avons renvoyé le lien à {0}"
+ },
+ "أرسلنا رابط استعادة كلمة المرور إلى بريدك": {
+  "en": "We sent a password reset link to your email",
+  "fr": "Nous avons envoyé un lien de réinitialisation à votre e-mail"
+ },
+ "أرسلنا رابط تحقق إلى {0} افتح الإيميل واضغط الرابط، ثم ارجع للتطبيق. إذا ما لقيته شوف مجلد الرسائل غير المرغوب فيها.": {
+  "en": "We sent a verification link to {0} Open the email and tap the link, then come back to the app. If you can't find it, check your spam folder.",
+  "fr": "Nous avons envoyé un lien de vérification à {0} Ouvrez l'e-mail et touchez le lien, puis revenez dans l'application. Si vous ne le trouvez pas, vérifiez vos courriers indésirables."
+ },
+ "أرسلنا رابط تحقق إلى {0}. افتح الإيميل واضغط الرابط، ثم ارجع للتطبيق. إذا ما لقيته شوف مجلد الرسائل غير المرغوب فيها.": {
+  "en": "We sent a verification link to {0}. Open the email and tap the link, then come back to the app. If you can't find it, check your spam folder.",
+  "fr": "Nous avons envoyé un lien de vérification à {0}. Ouvrez l'e-mail et touchez le lien, puis revenez dans l'application. Si vous ne le trouvez pas, vérifiez vos courriers indésirables."
+ },
+ "أزرق": {
+  "en": "Blue",
+  "fr": "Bleu"
+ },
+ "أزرق ليلي": {
+  "en": "Midnight blue",
+  "fr": "Bleu nuit"
+ },
+ "أسود": {
+  "en": "Black",
+  "fr": "Noir"
+ },
+ "أسود بنقط ذهبية": {
+  "en": "Black with gold dots",
+  "fr": "Noir à points dorés"
+ },
+ "أسود وخشب": {
+  "en": "Black and wood",
+  "fr": "Noir et bois"
+ },
+ "أشكل": {
+  "en": "Ashkal",
+  "fr": "Ashkal"
+ },
+ "أصبح {0} صديقك": {
+  "en": "{0} is now your friend",
+  "fr": "{0} est maintenant votre ami"
+ },
+ "أصبح {0} مالك الطاولة": {
+  "en": "{0} is now the table owner",
+  "fr": "{0} est maintenant propriétaire de la table"
+ },
+ "أصبحت أنت و{0} أصدقاء": {
+  "en": "You and {0} are now friends",
+  "fr": "Vous et {0} êtes maintenant amis"
+ },
+ "أصبحت الطاولة خاصة: الدخول بالدعوة فقط": {
+  "en": "The table is now private: invite only",
+  "fr": "La table est maintenant privée : sur invitation uniquement"
+ },
+ "أصبحت الطاولة عامة: تظهر لكل اللاعبين": {
+  "en": "The table is now public: visible to all players",
+  "fr": "La table est maintenant publique : visible par tous les joueurs"
+ },
+ "أضف رسالة": {
+  "en": "Add a message",
+  "fr": "Ajouter un message"
+ },
+ "أعلن مشروعك": {
+  "en": "Declare your project",
+  "fr": "Déclarez votre annonce"
+ },
+ "أكة": {
+  "en": "Ace",
+  "fr": "As"
+ },
+ "أكد الحكم": {
+  "en": "Confirm Hokm",
+  "fr": "Confirmer le Hokm"
+ },
+ "أكل {0}، ورجع للبيت": {
+  "en": "Captured {0}, and it went back home",
+  "fr": "A capturé {0}, qui est rentré à la maison"
+ },
+ "أكلت": {
+  "en": "You captured",
+  "fr": "Vous avez capturé"
+ },
+ "أكّد الحكم": {
+  "en": "Confirm Hokm",
+  "fr": "Confirmer le Hokm"
+ },
+ "ألغى مالك الطاولة كتم {0}": {
+  "en": "The table owner unmuted {0}",
+  "fr": "Le propriétaire de la table a réactivé le micro de {0}"
+ },
+ "أماكن الأحجار": {
+  "en": "Marble positions",
+  "fr": "Positions des billes"
+ },
+ "أنت": {
+  "en": "You",
+  "fr": "Vous"
+ },
+ "أنت {0}": {
+  "en": "You {0}",
+  "fr": "Vous {0}"
+ },
+ "أنت اشتريت {0}": {
+  "en": "You bought {0}",
+  "fr": "Vous avez pris {0}"
+ },
+ "أنت خارج المحادثة الصوتية": {
+  "en": "You're out of voice chat",
+  "fr": "Vous êtes hors du chat vocal"
+ },
+ "أنت طلّعت{0}": {
+  "en": "You brought out{0}",
+  "fr": "Vous avez sorti{0}"
+ },
+ "أنت في المحادثة الصوتية، والميكروفون مغلق": {
+  "en": "You're in voice chat, and your microphone is off",
+  "fr": "Vous êtes dans le chat vocal, micro coupé"
+ },
+ "أنت مشترك أصلاً": {
+  "en": "You're already subscribed",
+  "fr": "Vous êtes déjà abonné"
+ },
+ "أنت: {0}": {
+  "en": "You: {0}",
+  "fr": "Vous : {0}"
+ },
+ "أنتما صديقان بالفعل": {
+  "en": "You're already friends",
+  "fr": "Vous êtes déjà amis"
+ },
+ "أندرويد": {
+  "en": "Android",
+  "fr": "Android"
+ },
+ "أهدِ الباقة لصديقك": {
+  "en": "Gift the plan to a friend",
+  "fr": "Offrez l'abonnement à un ami"
+ },
+ "أهلاً {0}": {
+  "en": "Welcome {0}",
+  "fr": "Bienvenue {0}"
+ },
+ "أهلاً {0}، حصلت على 30 عملة ترحيبية وشهر مجاني من الباقة الذهبية": {
+  "en": "Welcome {0}, you got 30 welcome coins and a free month of the Gold plan",
+  "fr": "Bienvenue {0}, vous recevez 30 pièces de bienvenue et un mois gratuit de l'abonnement Or"
+ },
+ "أوراق {0}": {
+  "en": "{0}'s cards",
+  "fr": "Cartes de {0}"
+ },
+ "أوراق {0}: {1}": {
+  "en": "{0}'s cards: {1}",
+  "fr": "Cartes de {0} : {1}"
+ },
+ "أوراقك{0}": {
+  "en": "Your cards{0}",
+  "fr": "Vos cartes{0}"
+ },
+ "أوقف مالك الطاولة اللعبة. النتيجة صفر صفر والمقاعد فارغة، والمالك يختار من يلعب": {
+  "en": "The table owner stopped the game. The score is zero-zero, the seats are empty, and the owner chooses who plays",
+  "fr": "Le propriétaire a arrêté la partie. Le score est de zéro à zéro, les places sont libres, et le propriétaire choisit qui joue"
+ },
+ "أي جهاز تفتح فيه التطبيق ياخذ الحساب على طول، والجهاز الثاني يتقفل.": {
+  "en": "Whichever device opens the app takes the account right away, and the other device is locked.",
+  "fr": "L'appareil qui ouvre l'application prend le compte aussitôt, et l'autre appareil est verrouillé."
+ },
+ "أُخرجت من هذه الطاولة، ويمكنك العودة إليها بعد ساعة من طردك، أو قبلها بدعوة من مالكها. يمكنك دخول أي طاولة أخرى الآن": {
+  "en": "You were removed from this table. You can return one hour after being removed, or sooner with an invite from its owner. You can join any other table now",
+  "fr": "Vous avez été exclu de cette table. Vous pourrez y revenir une heure après l'exclusion, ou avant sur invitation de son propriétaire. Vous pouvez rejoindre une autre table dès maintenant"
+ },
+ "أُرسل": {
+  "en": "Sent",
+  "fr": "Envoyé"
+ },
+ "أُرسل الرد": {
+  "en": "Reply sent",
+  "fr": "Réponse envoyée"
+ },
+ "أُرسل طلب الانضمام لمالك الطاولة، ننتظر موافقته": {
+  "en": "Your join request was sent to the table owner; waiting for approval",
+  "fr": "Votre demande a été envoyée au propriétaire de la table ; en attente de son accord"
+ },
+ "أُرسل طلب الصداقة": {
+  "en": "Friend request sent",
+  "fr": "Demande d'ami envoyée"
+ },
+ "أُرسل طلب الصداقة إلى {0}": {
+  "en": "Friend request sent to {0}",
+  "fr": "Demande d'ami envoyée à {0}"
+ },
+ "أُرسل طلب صداقة إلى {0}": {
+  "en": "Friend request sent to {0}",
+  "fr": "Demande d'ami envoyée à {0}"
+ },
+ "أُرفقت {0} من 4 صور": {
+  "en": "{0} of 4 images attached",
+  "fr": "{0} image(s) sur 4 jointe(s)"
+ },
+ "أُزيل {0}": {
+  "en": "{0} removed",
+  "fr": "{0} retiré"
+ },
+ "أُضيف {0}": {
+  "en": "{0} added",
+  "fr": "{0} ajouté"
+ },
+ "أُضيفت {0} عملة إلى رصيدك": {
+  "en": "{0} coins added to your balance",
+  "fr": "{0} pièces ajoutées à votre solde"
+ },
+ "أُضيفت {0} عملة من شراء سابق إلى رصيدك": {
+  "en": "{0} coins from an earlier purchase added to your balance",
+  "fr": "{0} pièces d'un achat précédent ajoutées à votre solde"
+ },
+ "أُغلقت الطاولة": {
+  "en": "The table was closed",
+  "fr": "La table a été fermée"
+ },
+ "أُلغي الشراء": {
+  "en": "Purchase cancelled",
+  "fr": "Achat annulé"
+ },
+ "أُلغي مشروع {0}": {
+  "en": "{0}'s project was cancelled",
+  "fr": "L'annonce de {0} a été annulée"
+ },
+ "أُوقف مؤقت الدور": {
+  "en": "Turn timer stopped",
+  "fr": "Minuteur de tour arrêté"
+ },
+ "إخلاء المقعد (يصبح مشاهداً)": {
+  "en": "Free the seat (becomes a spectator)",
+  "fr": "Libérer la place (devient spectateur)"
+ },
+ "إرسال": {
+  "en": "Send",
+  "fr": "Envoyer"
+ },
+ "إرسال الرد": {
+  "en": "Send reply",
+  "fr": "Envoyer la réponse"
+ },
+ "إرسال طلب صداقة": {
+  "en": "Send friend request",
+  "fr": "Envoyer une demande d'ami"
+ },
+ "إزالة الروبوت": {
+  "en": "Remove bot",
+  "fr": "Retirer le robot"
+ },
+ "إضافة {0} صديق": {
+  "en": "Add {0} as a friend",
+  "fr": "Ajouter {0} en ami"
+ },
+ "إضافة روبوت (1 🪙)": {
+  "en": "Add a bot (1 🪙)",
+  "fr": "Ajouter un robot (1 🪙)"
+ },
+ "إضافة روبوت، عملة واحدة": {
+  "en": "Add a bot, one coin",
+  "fr": "Ajouter un robot, une pièce"
+ },
+ "إضافة صديق": {
+  "en": "Add friend",
+  "fr": "Ajouter un ami"
+ },
+ "إضافة لاعب": {
+  "en": "Add player",
+  "fr": "Ajouter un joueur"
+ },
+ "إضافة لاعب في المقعد {0}": {
+  "en": "Add a player to seat {0}",
+  "fr": "Ajouter un joueur à la place {0}"
+ },
+ "إطار الورق": {
+  "en": "Card border",
+  "fr": "Bordure des cartes"
+ },
+ "إعادة إرسال الرابط": {
+  "en": "Resend link",
+  "fr": "Renvoyer le lien"
+ },
+ "إعداد غير صالح": {
+  "en": "Invalid setting",
+  "fr": "Paramètre invalide"
+ },
+ "إعدادات": {
+  "en": "Settings",
+  "fr": "Paramètres"
+ },
+ "إعدادات المباراة": {
+  "en": "Match settings",
+  "fr": "Paramètres de la partie"
+ },
+ "إعلان المشاريع يدوي": {
+  "en": "Manual project declaration",
+  "fr": "Annonces manuelles"
+ },
+ "إعلان المشاريع يدوي، والقيد والقطع": {
+  "en": "Manual project declaration, and Qaid",
+  "fr": "Annonces manuelles, et Qaid"
+ },
+ "إعلان مشروع": {
+  "en": "Declare project",
+  "fr": "Déclarer une annonce"
+ },
+ "إغلاق": {
+  "en": "Close",
+  "fr": "Fermer"
+ },
+ "إغلاق التذكرة": {
+  "en": "Close ticket",
+  "fr": "Fermer le ticket"
+ },
+ "إغلاق القائمة": {
+  "en": "Close menu",
+  "fr": "Fermer le menu"
+ },
+ "إلغاء": {
+  "en": "Cancel",
+  "fr": "Annuler"
+ },
+ "إلغاء الكتم في المحادثة الصوتية": {
+  "en": "Unmute in voice chat",
+  "fr": "Réactiver le micro dans le chat vocal"
+ },
+ "إلى {0}": {
+  "en": "To {0}",
+  "fr": "À {0}"
+ },
+ "إنزال {0}": {
+  "en": "Bring out {0}",
+  "fr": "Sortir {0}"
+ },
+ "إنزال {0} {1}": {
+  "en": "Bring out {0} {1}",
+  "fr": "Sortir {0} {1}"
+ },
+ "إنشاء الحساب (+30 🪙)": {
+  "en": "Create account (+30 🪙)",
+  "fr": "Créer un compte (+30 🪙)"
+ },
+ "إنشاء الطاولة (2 🪙)": {
+  "en": "Create table (2 🪙)",
+  "fr": "Créer la table (2 🪙)"
+ },
+ "إنشاء طاولة": {
+  "en": "Create a table",
+  "fr": "Créer une table"
+ },
+ "إهداء الباقة": {
+  "en": "Gift the plan",
+  "fr": "Offrir l'abonnement"
+ },
+ "إهداء الباقة لأي لاعب": {
+  "en": "Gift the plan to any player",
+  "fr": "Offrir l'abonnement à n'importe quel joueur"
+ },
+ "إيقاف اللعبة": {
+  "en": "Stop the game",
+  "fr": "Arrêter la partie"
+ },
+ "إيقاف نهائي: تُلغى المباراة وترجع النتيجة صفر صفر، ويصبح الجميع مشاهدين والمقاعد فارغة. بعدها تختار أنت من يلعب من صفحة اللاعبين.": {
+  "en": "Full stop: the match is cancelled and the score resets to zero-zero; everyone becomes a spectator and the seats are empty. Then you choose who plays from the players page.",
+  "fr": "Arrêt définitif : la partie est annulée et le score revient à zéro-zéro ; tout le monde devient spectateur et les places sont libres. Ensuite, vous choisissez qui joue depuis la page des joueurs."
+ },
+ "ابدأ": {
+  "en": "Start",
+  "fr": "Commencer"
+ },
+ "اثنين": {
+  "en": "Two",
+  "fr": "Deux"
+ },
+ "اختر اسم المستخدم": {
+  "en": "Choose a username",
+  "fr": "Choisissez un nom d'utilisateur"
+ },
+ "اختر اسم مستخدم أولاً": {
+  "en": "Choose a username first",
+  "fr": "Choisissez d'abord un nom d'utilisateur"
+ },
+ "اختر الحجر": {
+  "en": "Choose the piece",
+  "fr": "Choisissez la pièce"
+ },
+ "اختر الحجر أولاً": {
+  "en": "Choose the piece first",
+  "fr": "Choisissez d'abord la pièce"
+ },
+ "اختر الطرف": {
+  "en": "Choose the end",
+  "fr": "Choisissez le bout"
+ },
+ "اختر اللعبة": {
+  "en": "Choose the game",
+  "fr": "Choisissez le jeu"
+ },
+ "اختر نفسك أو شريكك": {
+  "en": "Choose yourself or your partner",
+  "fr": "Choisissez vous-même ou votre partenaire"
+ },
+ "اخترت {0}": {
+  "en": "You chose {0}",
+  "fr": "Vous avez choisi {0}"
+ },
+ "ادفع وأهدِ الباقة": {
+  "en": "Pay and gift the plan",
+  "fr": "Payer et offrir l'abonnement"
+ },
+ "ارفع مستوى مجلسك": {
+  "en": "Level up your Majlisk",
+  "fr": "Passez votre Majlisk au niveau supérieur"
+ },
+ "ارمِ النرد": {
+  "en": "Roll the die",
+  "fr": "Lancez le dé"
+ },
+ "ارمِ النرد أولاً": {
+  "en": "Roll the die first",
+  "fr": "Lancez d'abord le dé"
+ },
+ "استبدال": {
+  "en": "Replace",
+  "fr": "Remplacer"
+ },
+ "استبدال {0}": {
+  "en": "Replace {0}",
+  "fr": "Remplacer {0}"
+ },
+ "استبدال نفسك بمشاهد": {
+  "en": "Replace yourself with a spectator",
+  "fr": "Vous faire remplacer par un spectateur"
+ },
+ "استبداله بمشاهد": {
+  "en": "Replace with a spectator",
+  "fr": "Remplacer par un spectateur"
+ },
+ "استخدم حروفاً عربية أو إنجليزية أو أرقاماً أو _ فقط، بدون مسافات": {
+  "en": "Use only Arabic or English letters, numbers or _, with no spaces",
+  "fr": "Utilisez uniquement des lettres arabes ou anglaises, des chiffres ou _, sans espaces"
+ },
+ "استخدم حسابي هنا": {
+  "en": "Use my account here",
+  "fr": "Utiliser mon compte ici"
+ },
+ "استعادة المشتريات": {
+  "en": "Restore purchases",
+  "fr": "Restaurer les achats"
+ },
+ "استفسار": {
+  "en": "Question",
+  "fr": "Question"
+ },
+ "استفسار جديد": {
+  "en": "New question",
+  "fr": "Nouvelle question"
+ },
+ "اسم المستخدم": {
+  "en": "Username",
+  "fr": "Nom d'utilisateur"
+ },
+ "اسم المستخدم طويل — 16 حرفاً كحد أقصى": {
+  "en": "Username too long — 16 characters max",
+  "fr": "Nom d'utilisateur trop long — 16 caractères maximum"
+ },
+ "اسم المستخدم طويل — {0} حرفاً كحد أقصى": {
+  "en": "Username too long — {0} characters max",
+  "fr": "Nom d'utilisateur trop long — {0} caractères maximum"
+ },
+ "اسم المستخدم قصير — 3 أحرف على الأقل": {
+  "en": "Username too short — at least 3 characters",
+  "fr": "Nom d'utilisateur trop court — au moins 3 caractères"
+ },
+ "اسم المستخدم قصير — {0} أحرف على الأقل": {
+  "en": "Username too short — at least {0} characters",
+  "fr": "Nom d'utilisateur trop court — au moins {0} caractères"
+ },
+ "اسم المستخدم مأخوذ، جرّب اسماً آخر": {
+  "en": "Username taken, try another",
+  "fr": "Nom d'utilisateur déjà pris, essayez-en un autre"
+ },
+ "اسمك الحالي: {0} بعد التغيير ما تقدر تغيّره مرة ثانية إلا بعد ستة أشهر، واسمك القديم يقدر ياخذه أي أحد.": {
+  "en": "Your current name: {0} After changing it you can't change it again for six months, and anyone can take your old name.",
+  "fr": "Votre nom actuel : {0} Après le changement, vous ne pourrez plus le modifier pendant six mois, et n'importe qui pourra prendre votre ancien nom."
+ },
+ "اسمك الحالي: {0}. بعد التغيير ما تقدر تغيّره مرة ثانية إلا بعد ستة أشهر، واسمك القديم يقدر ياخذه أي أحد.": {
+  "en": "Your current name: {0}. After changing it you can't change it again for six months, and anyone can take your old name.",
+  "fr": "Votre nom actuel : {0}. Après le changement, vous ne pourrez plus le modifier pendant six mois, et n'importe qui pourra prendre votre ancien nom."
+ },
+ "اشترك الآن": {
+  "en": "Subscribe now",
+  "fr": "S'abonner maintenant"
+ },
+ "اشترى أشكل": {
+  "en": "Bought Ashkal",
+  "fr": "A pris Ashkal"
+ },
+ "اشترى حكم": {
+  "en": "Bought Hokm",
+  "fr": "A pris Hokm"
+ },
+ "اشترى حكم {0}": {
+  "en": "Bought Hokm {0}",
+  "fr": "A pris Hokm {0}"
+ },
+ "اشترى حكم ثاني": {
+  "en": "Bought second Hokm",
+  "fr": "A pris le second Hokm"
+ },
+ "اشترى صن": {
+  "en": "Bought Sun",
+  "fr": "A pris Sun"
+ },
+ "اشترِ حكم": {
+  "en": "Buy Hokm",
+  "fr": "Prendre Hokm"
+ },
+ "اضغط للعودة إلى الطاولة": {
+  "en": "Tap to return to the table",
+  "fr": "Touchez pour revenir à la table"
+ },
+ "اضغط مرتين لرمي النرد": {
+  "en": "Double-tap to roll the die",
+  "fr": "Touchez deux fois pour lancer le dé"
+ },
+ "اكتب استفسارك": {
+  "en": "Write your question",
+  "fr": "Écrivez votre question"
+ },
+ "اكتب اسم المستخدم اللي تبي تهديه الباقة الاحترافية لمدة شهر، وادفع بالنيابة عنه.": {
+  "en": "Enter the username of the player you want to gift the Pro plan for one month, and pay on their behalf.",
+  "fr": "Saisissez le nom d'utilisateur du joueur à qui offrir l'abonnement Pro pour un mois, et payez pour lui."
+ },
+ "اكتب رسالة…": {
+  "en": "Write a message…",
+  "fr": "Écrivez un message…"
+ },
+ "اكتب شكواك": {
+  "en": "Write your complaint",
+  "fr": "Écrivez votre réclamation"
+ },
+ "الأبناط: {0} {1}، {2} {3}.": {
+  "en": "Points: {0} {1}, {2} {3}.",
+  "fr": "Points : {0} {1}, {2} {3}."
+ },
+ "الأحمر": {
+  "en": "Red",
+  "fr": "Rouge"
+ },
+ "الأخضر": {
+  "en": "Green",
+  "fr": "Vert"
+ },
+ "الأزرق": {
+  "en": "Blue",
+  "fr": "Bleu"
+ },
+ "الأصدقاء": {
+  "en": "Friends",
+  "fr": "Amis"
+ },
+ "الأصدقاء{0}": {
+  "en": "Friends{0}",
+  "fr": "Amis{0}"
+ },
+ "الأصفر": {
+  "en": "Yellow",
+  "fr": "Jaune"
+ },
+ "الأكلات: فريق {0} و{1} {2}، فريق {3} و{4} {5}": {
+  "en": "Tricks: team {0} and {1} {2}, team {3} and {4} {5}",
+  "fr": "Plis : équipe {0} et {1} {2}, équipe {3} et {4} {5}"
+ },
+ "الأكلات: لنا {0}، لهم {1}": {
+  "en": "Tricks: us {0}, them {1}",
+  "fr": "Plis : nous {0}, eux {1}"
+ },
+ "الأكلة لـ{0}": {
+  "en": "Trick to {0}",
+  "fr": "Pli pour {0}"
+ },
+ "الألعاب": {
+  "en": "Games",
+  "fr": "Jeux"
+ },
+ "الأمان {0}": {
+  "en": "Safe zone {0}",
+  "fr": "Zone sûre {0}"
+ },
+ "الإعدادات": {
+  "en": "Settings",
+  "fr": "Paramètres"
+ },
+ "الإهداء غير متاح الآن، حاول لاحقاً": {
+  "en": "Gifting isn't available now, try later",
+  "fr": "L'offre n'est pas disponible pour le moment, réessayez plus tard"
+ },
+ "الاشتراك غير متاح الآن، حاول لاحقاً": {
+  "en": "Subscription isn't available now, try later",
+  "fr": "L'abonnement n'est pas disponible pour le moment, réessayez plus tard"
+ },
+ "الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من إعدادات اشتراكات Apple.": {
+  "en": "The subscription renews automatically every month, and you can cancel it anytime in your Apple subscription settings.",
+  "fr": "L'abonnement se renouvelle automatiquement chaque mois, et vous pouvez l'annuler à tout moment dans les réglages d'abonnement Apple."
+ },
+ "الاشتراك يتجدد تلقائياً كل شهر، وتقدر تلغيه في أي وقت من اشتراكات Google Play.": {
+  "en": "The subscription renews automatically every month, and you can cancel it anytime in Google Play subscriptions.",
+  "fr": "L'abonnement se renouvelle automatiquement chaque mois, et vous pouvez l'annuler à tout moment dans les abonnements Google Play."
+ },
+ "الانضمام للمحادثة الصوتية": {
+  "en": "Join voice chat",
+  "fr": "Rejoindre le chat vocal"
+ },
+ "الباقة": {
+  "en": "Plan",
+  "fr": "Abonnement"
+ },
+ "الباقة الاحترافية": {
+  "en": "Pro plan",
+  "fr": "Abonnement Pro"
+ },
+ "الباقة الاحترافية · شهر واحد · {0}": {
+  "en": "Pro plan · one month · {0}",
+  "fr": "Abonnement Pro · un mois · {0}"
+ },
+ "البداية عند {0}": {
+  "en": "{0} starts",
+  "fr": "{0} commence"
+ },
+ "البداية عندك": {
+  "en": "You start",
+  "fr": "Vous commencez"
+ },
+ "البريد أو كلمة المرور غير صحيحة": {
+  "en": "Wrong email or password",
+  "fr": "E-mail ou mot de passe incorrect"
+ },
+ "البريد الإلكتروني": {
+  "en": "Email",
+  "fr": "E-mail"
+ },
+ "البريد الإلكتروني غير صالح": {
+  "en": "Invalid email",
+  "fr": "E-mail invalide"
+ },
+ "البيت": {
+  "en": "Home",
+  "fr": "Maison"
+ },
+ "التطبيق": {
+  "en": "The app",
+  "fr": "L'application"
+ },
+ "الجهتين {0}": {
+  "en": "Both ends {0}",
+  "fr": "Les deux bouts {0}"
+ },
+ "الجولة التالية": {
+  "en": "Next round",
+  "fr": "Manche suivante"
+ },
+ "الجولة السابقة": {
+  "en": "Previous round",
+  "fr": "Manche précédente"
+ },
+ "الحالية: {0}. لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة. خيارات اللعبة (فردي أو فرق، عادي أو كومبلكس، نهاية المباراة) تختارها من صفحة المقاعد.": {
+  "en": "Current: {0}. If you change it, the current game ends and everyone stays in place for the new game. Game options (solo or teams, normal or complex, match end) are chosen from the seats page.",
+  "fr": "Actuel : {0}. Si vous le changez, la partie en cours se termine et chacun garde sa place pour le nouveau jeu. Les options (solo ou équipes, normal ou complexe, fin de partie) se choisissent sur la page des places."
+ },
+ "الحساب": {
+  "en": "Account",
+  "fr": "Compte"
+ },
+ "الحصول على عملات": {
+  "en": "Get coins",
+  "fr": "Obtenir des pièces"
+ },
+ "الحصول على عملات 🪙": {
+  "en": "Get coins 🪙",
+  "fr": "Obtenir des pièces 🪙"
+ },
+ "الخادم": {
+  "en": "The server",
+  "fr": "Le serveur"
+ },
+ "الخروج من المحادثة الصوتية": {
+  "en": "Leave voice chat",
+  "fr": "Quitter le chat vocal"
+ },
+ "الخروج من مجلسك": {
+  "en": "Sign out of Majlisk",
+  "fr": "Se déconnecter de Majlisk"
+ },
+ "الخصم": {
+  "en": "Opponent",
+  "fr": "Adversaire"
+ },
+ "الخصوصية": {
+  "en": "Privacy",
+  "fr": "Confidentialité"
+ },
+ "الخيارات الإضافية توقفت: لازم كل اللاعبين يكونون مشتركين في الباقة": {
+  "en": "Extra options stopped: all players must be subscribed to the plan",
+  "fr": "Options supplémentaires arrêtées : tous les joueurs doivent être abonnés"
+ },
+ "الخيارات الإضافية ما تفعّلت: لازم كل اللاعبين يكونون مشتركين في الباقة": {
+  "en": "Extra options weren't enabled: all players must be subscribed to the plan",
+  "fr": "Options supplémentaires non activées : tous les joueurs doivent être abonnés"
+ },
+ "الدبل غير متاح": {
+  "en": "Double isn't available",
+  "fr": "Double non disponible"
+ },
+ "الدخول بحساب Apple": {
+  "en": "Sign in with Apple",
+  "fr": "Se connecter avec Apple"
+ },
+ "الدخول بحساب Google": {
+  "en": "Sign in with Google",
+  "fr": "Se connecter avec Google"
+ },
+ "الدردشة": {
+  "en": "Chat",
+  "fr": "Discussion"
+ },
+ "الدردشة الكتابية": {
+  "en": "Text chat",
+  "fr": "Discussion écrite"
+ },
+ "الدردشة مطفأة عندك": {
+  "en": "Chat is turned off for you",
+  "fr": "La discussion est désactivée pour vous"
+ },
+ "الدردشة، {0} رسائل جديدة": {
+  "en": "Chat, {0} new messages",
+  "fr": "Discussion, {0} nouveaux messages"
+ },
+ "الدعم": {
+  "en": "Support",
+  "fr": "Assistance"
+ },
+ "الدعوة لمالك الطاولة فقط": {
+  "en": "Only the table owner can invite",
+  "fr": "Seul le propriétaire de la table peut inviter"
+ },
+ "الدفع قيد المعالجة، وتتفعل الباقة عند اكتماله": {
+  "en": "Payment is processing; the plan activates when it completes",
+  "fr": "Paiement en cours ; l'abonnement s'active une fois terminé"
+ },
+ "الدفع قيد المعالجة، وتوصل الهدية عند اكتماله": {
+  "en": "Payment is processing; the gift arrives when it completes",
+  "fr": "Paiement en cours ; le cadeau arrive une fois terminé"
+ },
+ "الدفع قيد المعالجة، وستُضاف العملات عند اكتماله": {
+  "en": "Payment is processing; coins will be added when it completes",
+  "fr": "Paiement en cours ; les pièces seront ajoutées une fois terminé"
+ },
+ "الذهبي": {
+  "en": "Gold",
+  "fr": "Doré"
+ },
+ "الرئيسية": {
+  "en": "Home",
+  "fr": "Accueil"
+ },
+ "الرد على {0}": {
+  "en": "Reply to {0}",
+  "fr": "Répondre à {0}"
+ },
+ "الرصيد غير متاح بعد": {
+  "en": "Balance not available yet",
+  "fr": "Solde pas encore disponible"
+ },
+ "السجل": {
+  "en": "Log",
+  "fr": "Historique"
+ },
+ "السحب التلقائي للورقة الأخيرة": {
+  "en": "Auto-play last card",
+  "fr": "Jouer automatiquement la dernière carte"
+ },
+ "السحب التلقائي للورقة الأخيرة مقفل": {
+  "en": "Auto-play last card is off",
+  "fr": "Jeu automatique de la dernière carte désactivé"
+ },
+ "السعر {0} في الشهر، عرض لمدة 6 أشهر فقط": {
+  "en": "{0} per month, offer for 6 months only",
+  "fr": "{0} par mois, offre valable 6 mois seulement"
+ },
+ "الشراء غير متاح الآن، حاول لاحقاً": {
+  "en": "Purchasing isn't available now, try later",
+  "fr": "L'achat n'est pas disponible pour le moment, réessayez plus tard"
+ },
+ "الشروط": {
+  "en": "Terms",
+  "fr": "Conditions"
+ },
+ "الشكل": {
+  "en": "Look",
+  "fr": "Apparence"
+ },
+ "الصكة {0}: {1}{2}{3}.": {
+  "en": "Hand {0}: {1}{2}{3}.",
+  "fr": "Donne {0} : {1}{2}{3}."
+ },
+ "الصكة لم تنته": {
+  "en": "The hand isn't over",
+  "fr": "La donne n'est pas terminée"
+ },
+ "الصوت": {
+  "en": "Sound",
+  "fr": "Son"
+ },
+ "الصورة {0}، اضغط لحذفها": {
+  "en": "Image {0}, tap to delete",
+  "fr": "Image {0}, touchez pour supprimer"
+ },
+ "الطاولات": {
+  "en": "Tables",
+  "fr": "Tables"
+ },
+ "الطاولات النشطة": {
+  "en": "Active tables",
+  "fr": "Tables actives"
+ },
+ "الطاولة": {
+  "en": "Table",
+  "fr": "Table"
+ },
+ "الطاولة غير موجودة": {
+  "en": "Table not found",
+  "fr": "Table introuvable"
+ },
+ "الطاولة فارغة": {
+  "en": "The table is empty",
+  "fr": "La table est vide"
+ },
+ "الطاولة لم تعد موجودة": {
+  "en": "The table no longer exists",
+  "fr": "La table n'existe plus"
+ },
+ "الطاولة ممتلئة": {
+  "en": "The table is full",
+  "fr": "La table est pleine"
+ },
+ "العب {0}": {
+  "en": "Play {0}",
+  "fr": "Jouer {0}"
+ },
+ "العب الآن": {
+  "en": "Play now",
+  "fr": "Jouer maintenant"
+ },
+ "العب بدون عملات": {
+  "en": "Play without coins",
+  "fr": "Jouez sans pièces"
+ },
+ "العودة للقائمة الرئيسية": {
+  "en": "Back to the main menu",
+  "fr": "Retour au menu principal"
+ },
+ "الفريق الأول": {
+  "en": "Team one",
+  "fr": "Équipe un"
+ },
+ "الفريق الثاني": {
+  "en": "Team two",
+  "fr": "Équipe deux"
+ },
+ "القائمة": {
+  "en": "Menu",
+  "fr": "Menu"
+ },
+ "القائمة غير متوفرة الحين": {
+  "en": "The list isn't available right now",
+  "fr": "La liste n'est pas disponible pour le moment"
+ },
+ "القطعة تصلح على الطرفين: وش تبي تصير الجهتين؟": {
+  "en": "The tile fits both ends: which side do you want?",
+  "fr": "Le domino se pose aux deux bouts : de quel côté ?"
+ },
+ "القطعة لا تصلح": {
+  "en": "The tile doesn't fit",
+  "fr": "Le domino ne se pose pas"
+ },
+ "القطعة ليست معك": {
+  "en": "You don't have this tile",
+  "fr": "Vous n'avez pas ce domino"
+ },
+ "القيد والقطع": {
+  "en": "Qaid",
+  "fr": "Qaid"
+ },
+ "القيد والقطع مفعّل: اللعب حر، والغلط يتسجّل": {
+  "en": "Qaid is on: free play, and mistakes can be called",
+  "fr": "Qaid activé : jeu libre, et les fautes peuvent être signalées"
+ },
+ "الكل مرّ مرتين — صكة، إعادة توزيع": {
+  "en": "Everyone passed twice — redeal",
+  "fr": "Tout le monde a passé deux fois — nouvelle donne"
+ },
+ "اللاعب": {
+  "en": "Player",
+  "fr": "Joueur"
+ },
+ "اللاعبون": {
+  "en": "Players",
+  "fr": "Joueurs"
+ },
+ "اللاعبين: ": {
+  "en": "Players: ",
+  "fr": "Joueurs : "
+ },
+ "اللعب بدون عملات طول مدة الاشتراك": {
+  "en": "Play without coins for the whole subscription",
+  "fr": "Jouez sans pièces pendant tout l'abonnement"
+ },
+ "اللعب حر، واللي يغلط يتسجّل عليه بزر تسجيلة": {
+  "en": "Free play; anyone who makes a mistake can be called with the Foul button",
+  "fr": "Jeu libre ; toute faute peut être signalée avec le bouton Faute"
+ },
+ "اللعب متوقف": {
+  "en": "Play is paused",
+  "fr": "Le jeu est en pause"
+ },
+ "اللعبة بدأت بالفعل": {
+  "en": "The game has already started",
+  "fr": "La partie a déjà commencé"
+ },
+ "اللعبة: {0}{1}": {
+  "en": "Game: {0}{1}",
+  "fr": "Jeu : {0}{1}"
+ },
+ "اللي داخل الطاولة الحين يبقى، والجديد يدخل بكلمة المرور الجديدة.": {
+  "en": "Whoever is at the table now stays, and new players join with the new password.",
+  "fr": "Ceux qui sont déjà à la table restent, et les nouveaux entrent avec le nouveau mot de passe."
+ },
+ "المباراة {0}: {1} {2}، {3} {4}": {
+  "en": "Match {0}: {1} {2}, {3} {4}",
+  "fr": "Partie {0} : {1} {2}, {3} {4}"
+ },
+ "المباراة جارية — سيحل روبوت مكانك. هل تريد المغادرة؟": {
+  "en": "A match is in progress — a bot will take your place. Do you want to leave?",
+  "fr": "Une partie est en cours — un robot prendra votre place. Voulez-vous partir ?"
+ },
+ "المتصلون الآن": {
+  "en": "Online now",
+  "fr": "En ligne maintenant"
+ },
+ "المتصلون الآن ({0})": {
+  "en": "Online now ({0})",
+  "fr": "En ligne maintenant ({0})"
+ },
+ "المتصلون الآن {0}": {
+  "en": "Online now {0}",
+  "fr": "En ligne maintenant {0}"
+ },
+ "المتصلون: {0}": {
+  "en": "Online: {0}",
+  "fr": "En ligne : {0}"
+ },
+ "المتصلون: …": {
+  "en": "Online: …",
+  "fr": "En ligne : …"
+ },
+ "المتصلون، جارٍ التحميل": {
+  "en": "Online, loading",
+  "fr": "En ligne, chargement"
+ },
+ "المجموع: {0}": {
+  "en": "Total: {0}",
+  "fr": "Total : {0}"
+ },
+ "المجموع: {0} مقابل {1}": {
+  "en": "Total: {0} vs {1}",
+  "fr": "Total : {0} contre {1}"
+ },
+ "المحادثة الصوتية": {
+  "en": "Voice chat",
+  "fr": "Chat vocal"
+ },
+ "المحادثة الصوتية غير مفعّلة بعد": {
+  "en": "Voice chat isn't enabled yet",
+  "fr": "Le chat vocal n'est pas encore activé"
+ },
+ "المحادثة الصوتية وصلت لحدها هذا الشهر، وترجع بداية الشهر الجاي": {
+  "en": "Voice chat has reached its limit this month and comes back at the start of next month",
+  "fr": "Le chat vocal a atteint sa limite ce mois-ci et revient au début du mois prochain"
+ },
+ "المحادثة الصوتية: اضغط مطولاً للانضمام": {
+  "en": "Voice chat: long-press to join",
+  "fr": "Chat vocal : appui long pour rejoindre"
+ },
+ "المحظورون": {
+  "en": "Blocked",
+  "fr": "Bloqués"
+ },
+ "المساعدة": {
+  "en": "Help",
+  "fr": "Aide"
+ },
+ "المساعدة والدعم": {
+  "en": "Help and support",
+  "fr": "Aide et assistance"
+ },
+ "المشاريع: {0}": {
+  "en": "Projects: {0}",
+  "fr": "Annonces : {0}"
+ },
+ "المشاريع: {0}.": {
+  "en": "Projects: {0}.",
+  "fr": "Annonces : {0}."
+ },
+ "المشاهدون": {
+  "en": "Spectators",
+  "fr": "Spectateurs"
+ },
+ "المشاهدون: ": {
+  "en": "Spectators: ",
+  "fr": "Spectateurs : "
+ },
+ "المشاهدين: ": {
+  "en": "Spectators: ",
+  "fr": "Spectateurs : "
+ },
+ "المشتري {0} — {1}{2}{3}": {
+  "en": "Buyer {0} — {1}{2}{3}",
+  "fr": "Preneur {0} — {1}{2}{3}"
+ },
+ "المشتري: {0} ({1}).": {
+  "en": "Buyer: {0} ({1}).",
+  "fr": "Preneur : {0} ({1})."
+ },
+ "المطور": {
+  "en": "Developer",
+  "fr": "Développeur"
+ },
+ "المقاعد": {
+  "en": "Seats",
+  "fr": "Places"
+ },
+ "المقعد {0}": {
+  "en": "Seat {0}",
+  "fr": "Place {0}"
+ },
+ "المقعد {0}: {1}": {
+  "en": "Seat {0}: {1}",
+  "fr": "Place {0} : {1}"
+ },
+ "المقعد محجوز": {
+  "en": "The seat is taken",
+  "fr": "La place est occupée"
+ },
+ "الملف الشخصي": {
+  "en": "Profile",
+  "fr": "Profil"
+ },
+ "المنزل": {
+  "en": "Home",
+  "fr": "Arrivée"
+ },
+ "الموجودين في طاولة {0}": {
+  "en": "Present at {0}'s table",
+  "fr": "Présents à la table de {0}"
+ },
+ "الموزع": {
+  "en": "Dealer",
+  "fr": "Donneur"
+ },
+ "الميكروفون مغلق": {
+  "en": "Microphone off",
+  "fr": "Micro coupé"
+ },
+ "الميكروفون مفتوح": {
+  "en": "Microphone on",
+  "fr": "Micro ouvert"
+ },
+ "النتيجة: {0}": {
+  "en": "Score: {0}",
+  "fr": "Score : {0}"
+ },
+ "النتيجة: {0} {1}، {2} {3}": {
+  "en": "Score: {0} {1}, {2} {3}",
+  "fr": "Score : {0} {1}, {2} {3}"
+ },
+ "النتيجة: {0} — اللعب إلى {1}": {
+  "en": "Score: {0} — playing to {1}",
+  "fr": "Score : {0} — partie en {1}"
+ },
+ "النسخة": {
+  "en": "Version",
+  "fr": "Version"
+ },
+ "النقاط: {0} {1}، {2} {3} الفوز عند 152": {
+  "en": "Points: {0} {1}, {2} {3} Win at 152",
+  "fr": "Points : {0} {1}, {2} {3} Victoire à 152"
+ },
+ "النقاط: {0} {1}، {2} {3}.": {
+  "en": "Points: {0} {1}, {2} {3}.",
+  "fr": "Points : {0} {1}, {2} {3}."
+ },
+ "النقاط: {0} {1}، {2} {3}. الفوز عند 152": {
+  "en": "Points: {0} {1}, {2} {3}. Win at 152",
+  "fr": "Points : {0} {1}, {2} {3}. Victoire à 152"
+ },
+ "النقاط: {0}. الهدف {1}": {
+  "en": "Points: {0}. Target {1}",
+  "fr": "Points : {0}. Objectif {1}"
+ },
+ "الورقة ليست معك": {
+  "en": "You don't have this card",
+  "fr": "Vous n'avez pas cette carte"
+ },
+ "انتظر دقيقة قبل إعادة الإرسال.": {
+  "en": "Wait a minute before resending.",
+  "fr": "Attendez une minute avant de renvoyer."
+ },
+ "انتظر لحظة قبل الرسالة الجاية": {
+  "en": "Wait a moment before your next message",
+  "fr": "Attendez un instant avant votre prochain message"
+ },
+ "انتهت الصكة. نتيجة الصكة: {0} {1}، {2} {3}": {
+  "en": "Hand over. Hand score: {0} {1}, {2} {3}",
+  "fr": "Donne terminée. Score de la donne : {0} {1}, {2} {3}"
+ },
+ "انتهت الصكة، الصكة التالية بعد لحظات": {
+  "en": "Hand over, next hand in a moment",
+  "fr": "Donne terminée, la suivante dans un instant"
+ },
+ "انتهت اللعبة": {
+  "en": "Game over",
+  "fr": "Partie terminée"
+ },
+ "انتهت اللعبة — فاز {0}": {
+  "en": "Game over — {0} won",
+  "fr": "Partie terminée — {0} a gagné"
+ },
+ "انتهت اللعبة، فاز الفريق الآخر": {
+  "en": "Game over, the other team won",
+  "fr": "Partie terminée, l'autre équipe a gagné"
+ },
+ "انتهت اللعبة، فاز فريق {0} و{1}": {
+  "en": "Game over, team {0} and {1} won",
+  "fr": "Partie terminée, l'équipe {0} et {1} a gagné"
+ },
+ "انتهت اللعبة، فاز فريقك": {
+  "en": "Game over, your team won",
+  "fr": "Partie terminée, votre équipe a gagné"
+ },
+ "انتهت المباراة": {
+  "en": "Match over",
+  "fr": "Partie terminée"
+ },
+ "انتهت المباراة — فاز {0}": {
+  "en": "Match over — {0} won",
+  "fr": "Partie terminée — {0} a gagné"
+ },
+ "انتهت صلاحية الدعوة": {
+  "en": "The invite has expired",
+  "fr": "L'invitation a expiré"
+ },
+ "انتهت مهلة {0}، وحلّ مكانه {1}": {
+  "en": "{0}'s time ran out, and {1} took their place",
+  "fr": "Le temps de {0} est écoulé, et {1} a pris sa place"
+ },
+ "انتهى الإعلان، ستُضاف عملتان إلى رصيدك خلال لحظات": {
+  "en": "Ad finished; two coins will be added to your balance in a moment",
+  "fr": "Publicité terminée ; deux pièces seront ajoutées à votre solde dans un instant"
+ },
+ "انتهى طلب الانضمام بدون رد من مالك الطاولة": {
+  "en": "The join request ended without a reply from the table owner",
+  "fr": "La demande a expiré sans réponse du propriétaire de la table"
+ },
+ "انسدّ اللعب": {
+  "en": "Game blocked",
+  "fr": "Jeu bloqué"
+ },
+ "انضم ": {
+  "en": "Join ",
+  "fr": "Rejoindre "
+ },
+ "انضم {0}": {
+  "en": "{0} joined",
+  "fr": "{0} a rejoint"
+ },
+ "انضم للمحادثة الصوتية": {
+  "en": "Join voice chat",
+  "fr": "Rejoindre le chat vocal"
+ },
+ "انضمام إلى طاولة": {
+  "en": "Join a table",
+  "fr": "Rejoindre une table"
+ },
+ "انقطع اتصال": {
+  "en": "Disconnected",
+  "fr": "Déconnecté"
+ },
+ "انقطع اتصال {0}{1}": {
+  "en": "{0} disconnected{1}",
+  "fr": "{0} s'est déconnecté{1}"
+ },
+ "انقطع الاتصال — جارٍ إعادة المحاولة…": {
+  "en": "Disconnected — retrying…",
+  "fr": "Déconnecté — nouvelle tentative…"
+ },
+ "باقي ٥ ثواني": {
+  "en": "5 seconds left",
+  "fr": "Plus que 5 secondes"
+ },
+ "بالـ{0}": {
+  "en": "with {0}",
+  "fr": "avec {0}"
+ },
+ "بانتظار {0}: بس أو ورق": {
+  "en": "Waiting for {0}: pass or Waraq",
+  "fr": "En attente de {0} : passe ou Waraq"
+ },
+ "بانتظار الرد": {
+  "en": "Waiting for a reply",
+  "fr": "En attente de réponse"
+ },
+ "بانتظار قرار الدبل": {
+  "en": "Waiting for the Double decision",
+  "fr": "En attente de la décision de Double"
+ },
+ "بانتظار مالك الطاولة لبدء المباراة": {
+  "en": "Waiting for the table owner to start the match",
+  "fr": "En attente du propriétaire de la table pour lancer la partie"
+ },
+ "بدء المباراة": {
+  "en": "Start the match",
+  "fr": "Lancer la partie"
+ },
+ "بدأت الجاكارو{0}{1}. وُزّعت {2} أوراق، يبدأ {3}": {
+  "en": "Jackaroo started{0}{1}. {2} cards dealt, {3} starts",
+  "fr": "Jackaroo a commencé{0}{1}. {2} cartes distribuées, {3} commence"
+ },
+ "بدأت المباراة": {
+  "en": "The match started",
+  "fr": "La partie a commencé"
+ },
+ "بدأت لودو{0}. {1}": {
+  "en": "Ludo started{0}. {1}",
+  "fr": "Ludo a commencé{0}. {1}"
+ },
+ "بدأت مباراة الدومينو{0}، الهدف {1} نقطة": {
+  "en": "The dominoes match started{0}, target {1} points",
+  "fr": "La partie de dominos a commencé{0}, objectif {1} points"
+ },
+ "بدون دبل": {
+  "en": "No Double",
+  "fr": "Sans Double"
+ },
+ "بدون وقت": {
+  "en": "No time limit",
+  "fr": "Sans limite de temps"
+ },
+ "بريد هذا الحساب مسجّل بطريقة دخول أخرى، ادخل بها": {
+  "en": "This account's email is registered with another sign-in method; use that one",
+  "fr": "L'e-mail de ce compte est associé à une autre méthode de connexion ; utilisez-la"
+ },
+ "بس": {
+  "en": "Pass",
+  "fr": "Passe"
+ },
+ "بلوت": {
+  "en": "Baloot",
+  "fr": "Baloot"
+ },
+ "بنت": {
+  "en": "Queen",
+  "fr": "Dame"
+ },
+ "بنت سوداء: تختار ورقة من أوراق اللاعب التالي ليحرقها": {
+  "en": "Black queen: you pick one of the next player's cards for them to burn",
+  "fr": "Dame noire : vous choisissez une carte du joueur suivant qu'il doit brûler"
+ },
+ "بنفسجي": {
+  "en": "Purple",
+  "fr": "Violet"
+ },
+ "تأكد من الاسم": {
+  "en": "Check the name",
+  "fr": "Vérifiez le nom"
+ },
+ "تأكيد": {
+  "en": "Confirm",
+  "fr": "Confirmer"
+ },
+ "تأكيد التغيير": {
+  "en": "Confirm the change",
+  "fr": "Confirmer le changement"
+ },
+ "تأكيد الحكم": {
+  "en": "Confirm Hokm",
+  "fr": "Confirmer le Hokm"
+ },
+ "تبديل {0} اللي في {1} مع {2} اللي في {3}": {
+  "en": "Swap {0} on {1} with {2} on {3}",
+  "fr": "Échanger {0} sur {1} avec {2} sur {3}"
+ },
+ "تبديل {0} مع {1}": {
+  "en": "Swap {0} with {1}",
+  "fr": "Échanger {0} avec {1}"
+ },
+ "تبدّل حجرك بحجر لاعب آخر": {
+  "en": "Swap your marble with another player's marble",
+  "fr": "Échangez votre bille avec celle d'un autre joueur"
+ },
+ "تتقدم 10، أو تجبر التالي يحرق ورقة ويضيع دوره": {
+  "en": "Move 10, or force the next player to burn a card and lose their turn",
+  "fr": "Avancez de 10, ou forcez le joueur suivant à brûler une carte et perdre son tour"
+ },
+ "تتقدم 12": {
+  "en": "Move 12",
+  "fr": "Avancez de 12"
+ },
+ "تتقدم 7، أو تقسمها بين حجرين": {
+  "en": "Move 7, or split it between two marbles",
+  "fr": "Avancez de 7, ou répartissez entre deux billes"
+ },
+ "تتقدم {0}": {
+  "en": "Move {0}",
+  "fr": "Avancez de {0}"
+ },
+ "تجاهل": {
+  "en": "Ignore",
+  "fr": "Ignorer"
+ },
+ "تحديث القائمة": {
+  "en": "Refresh the list",
+  "fr": "Actualiser la liste"
+ },
+ "تحذير: خصم خلفه قريب": {
+  "en": "Warning: an opponent is close behind",
+  "fr": "Attention : un adversaire est juste derrière"
+ },
+ "تحرك أي حجر على اللوحة 5 للأمام، إلا اللي لسا على قاعدته": {
+  "en": "Move any marble on the board 5 forward, except one still on its base",
+  "fr": "Avancez n'importe quelle bille du plateau de 5, sauf celle encore sur sa case de départ"
+ },
+ "تحقق من بريدك": {
+  "en": "Check your email",
+  "fr": "Vérifiez votre e-mail"
+ },
+ "تحققت": {
+  "en": "I've verified",
+  "fr": "J'ai vérifié"
+ },
+ "تحكم بالمؤقت ومشاريع يدوية": {
+  "en": "Timer control and manual projects",
+  "fr": "Contrôle du minuteur et annonces manuelles"
+ },
+ "تخصيص الشكل": {
+  "en": "Customize the look",
+  "fr": "Personnaliser l'apparence"
+ },
+ "تذاكر الدعم": {
+  "en": "Support tickets",
+  "fr": "Tickets d'assistance"
+ },
+ "تذاكري": {
+  "en": "My tickets",
+  "fr": "Mes tickets"
+ },
+ "تذاكري أنا": {
+  "en": "My own tickets",
+  "fr": "Mes propres tickets"
+ },
+ "تربيع بحكم مقفل": {
+  "en": "Led trump while locked",
+  "fr": "Atout entamé en Double fermé"
+ },
+ "ترجع 4 للخلف": {
+  "en": "Move 4 back",
+  "fr": "Reculez de 4"
+ },
+ "ترمي مرة أخرى": {
+  "en": "You roll again",
+  "fr": "Vous rejouez"
+ },
+ "تسجيل الخروج": {
+  "en": "Sign out",
+  "fr": "Se déconnecter"
+ },
+ "تسجيل الدخول": {
+  "en": "Sign in",
+  "fr": "Se connecter"
+ },
+ "تسجيلة": {
+  "en": "Foul",
+  "fr": "Faute"
+ },
+ "تسجيلة على {0}": {
+  "en": "Foul on {0}",
+  "fr": "Faute de {0}"
+ },
+ "تسجيلة على مين؟": {
+  "en": "Foul on whom?",
+  "fr": "Faute de qui ?"
+ },
+ "تشغيل وإيقاف المؤقت أثناء اللعب": {
+  "en": "Turn the timer on and off during play",
+  "fr": "Activer et désactiver le minuteur pendant la partie"
+ },
+ "تعادل — جولة فاصلة": {
+  "en": "Tie — tiebreak round",
+  "fr": "Égalité — manche décisive"
+ },
+ "تعذّر إتمام الشراء الآن": {
+  "en": "Couldn't complete the purchase now",
+  "fr": "Impossible de finaliser l'achat pour le moment"
+ },
+ "تعذّر إتمام الشراء الآن، لم يُخصم منك شيء أو ستُضاف العملات تلقائياً عند الفتح التالي": {
+  "en": "Couldn't complete the purchase now; you weren't charged, or the coins will be added automatically next time you open the app",
+  "fr": "Impossible de finaliser l'achat ; vous n'avez pas été débité, ou les pièces seront ajoutées automatiquement à la prochaine ouverture"
+ },
+ "تعذّر إرسال طلب الانضمام": {
+  "en": "Couldn't send the join request",
+  "fr": "Impossible d'envoyer la demande"
+ },
+ "تعذّر إنشاء الطاولة، حاول مرة أخرى": {
+  "en": "Couldn't create the table, try again",
+  "fr": "Impossible de créer la table, réessayez"
+ },
+ "تعذّر الإرسال": {
+  "en": "Couldn't send",
+  "fr": "Envoi impossible"
+ },
+ "تعذّر الإرسال، حاول مرة ثانية": {
+  "en": "Couldn't send, try again",
+  "fr": "Envoi impossible, réessayez"
+ },
+ "تعذّر الإهداء الآن، لو انخصم منك توصل الهدية تلقائياً عند الفتح التالي": {
+  "en": "Couldn't gift now; if you were charged, the gift arrives automatically next time you open the app",
+  "fr": "Impossible d'offrir pour le moment ; si vous avez été débité, le cadeau arrivera automatiquement à la prochaine ouverture"
+ },
+ "تعذّر الاتصال بالإنترنت": {
+  "en": "Couldn't connect to the internet",
+  "fr": "Connexion Internet impossible"
+ },
+ "تعذّر الاشتراك الآن، لو انخصم منك تتفعل الباقة تلقائياً عند الفتح التالي": {
+  "en": "Couldn't subscribe now; if you were charged, the plan activates automatically next time you open the app",
+  "fr": "Abonnement impossible pour le moment ; si vous avez été débité, l'abonnement s'activera automatiquement à la prochaine ouverture"
+ },
+ "تعذّر الانضمام": {
+  "en": "Couldn't join",
+  "fr": "Impossible de rejoindre"
+ },
+ "تعذّر الانضمام للمحادثة الصوتية، حاول مرة أخرى": {
+  "en": "Couldn't join voice chat, try again",
+  "fr": "Impossible de rejoindre le chat vocal, réessayez"
+ },
+ "تعذّر التأكد الآن، حاول مرة ثانية": {
+  "en": "Couldn't check right now, try again",
+  "fr": "Vérification impossible pour le moment, réessayez"
+ },
+ "تعذّر التحقق من الشراء": {
+  "en": "Couldn't verify the purchase",
+  "fr": "Impossible de vérifier l'achat"
+ },
+ "تعذّر تفعيل الباقة الآن، تتفعل تلقائياً عند الفتح التالي": {
+  "en": "Couldn't activate the plan now; it activates automatically next time you open the app",
+  "fr": "Impossible d'activer l'abonnement ; il s'activera automatiquement à la prochaine ouverture"
+ },
+ "تعذّر تنفيذ الطلب": {
+  "en": "Couldn't complete the request",
+  "fr": "Impossible de traiter la demande"
+ },
+ "تعذّر حذف الحساب الآن، حاول مرة أخرى": {
+  "en": "Couldn't delete the account now, try again",
+  "fr": "Impossible de supprimer le compte pour le moment, réessayez"
+ },
+ "تعذّر حذف الصورة": {
+  "en": "Couldn't delete the photo",
+  "fr": "Impossible de supprimer la photo"
+ },
+ "تعذّر رفع الصورة، حاول مرة أخرى": {
+  "en": "Couldn't upload the photo, try again",
+  "fr": "Impossible d'envoyer la photo, réessayez"
+ },
+ "تعذّر عرض الإعلان الآن، حاول بعد قليل": {
+  "en": "Couldn't show the ad now, try again shortly",
+  "fr": "Impossible d'afficher la publicité, réessayez dans un instant"
+ },
+ "تعذّر فتح الصورة": {
+  "en": "Couldn't open the photo",
+  "fr": "Impossible d'ouvrir la photo"
+ },
+ "تعذّر فتح الميكروفون، حاول مرة أخرى": {
+  "en": "Couldn't turn on the microphone, try again",
+  "fr": "Impossible d'activer le micro, réessayez"
+ },
+ "تعيينه مالكاً للطاولة": {
+  "en": "Make table owner",
+  "fr": "Nommer propriétaire de la table"
+ },
+ "تغيير": {
+  "en": "Change",
+  "fr": "Modifier"
+ },
+ "تغيير اسم المستخدم": {
+  "en": "Change username",
+  "fr": "Modifier le nom d'utilisateur"
+ },
+ "تغيير الصورة": {
+  "en": "Change photo",
+  "fr": "Modifier la photo"
+ },
+ "تغيير اللعبة": {
+  "en": "Change game",
+  "fr": "Changer de jeu"
+ },
+ "تغيير المقعد {0}": {
+  "en": "Change seat {0}",
+  "fr": "Modifier la place {0}"
+ },
+ "تغيّرت كلمة مرور الطاولة": {
+  "en": "The table password changed",
+  "fr": "Le mot de passe de la table a changé"
+ },
+ "تغيّرت كلمة مرور الطاولة الثابتة": {
+  "en": "The pinned table's password changed",
+  "fr": "Le mot de passe de la table fixe a changé"
+ },
+ "تقدر تغيّر اسم المستخدم مرة كل ستة أشهر، واسمك القديم يصير متاح لغيرك.": {
+  "en": "You can change your username once every six months, and your old name becomes available to others.",
+  "fr": "Vous pouvez changer de nom d'utilisateur une fois tous les six mois, et votre ancien nom devient disponible pour les autres."
+ },
+ "تقدر تغيّر اسمك بعد {0} يوم.": {
+  "en": "You can change your name in {0} days.",
+  "fr": "Vous pourrez changer de nom dans {0} jours."
+ },
+ "تقدر تغيّر وقت الدور أو توقفه والمباراة شغالة.": {
+  "en": "You can change or stop the turn time while the match is running.",
+  "fr": "Vous pouvez modifier ou arrêter le temps par tour pendant la partie."
+ },
+ "تم": {
+  "en": "Done",
+  "fr": "Terminé"
+ },
+ "تم إغلاق نافذة الدخول": {
+  "en": "The sign-in window was closed",
+  "fr": "La fenêtre de connexion a été fermée"
+ },
+ "تم إنشاء الطاولة": {
+  "en": "Table created",
+  "fr": "Table créée"
+ },
+ "تم التحقق من بريدك": {
+  "en": "Your email is verified",
+  "fr": "Votre e-mail est vérifié"
+ },
+ "تم الرد": {
+  "en": "Replied",
+  "fr": "Répondu"
+ },
+ "تم تأكيد شراء {0}": {
+  "en": "Purchase of {0} confirmed",
+  "fr": "Achat de {0} confirmé"
+ },
+ "تم تسجيل الدخول": {
+  "en": "Signed in",
+  "fr": "Connecté"
+ },
+ "تم تغيير اسمك إلى {0}": {
+  "en": "Your name was changed to {0}",
+  "fr": "Votre nom a été changé en {0}"
+ },
+ "تم تغيير صورتك": {
+  "en": "Your photo was changed",
+  "fr": "Votre photo a été modifiée"
+ },
+ "تم حجز اسم المستخدم {0}": {
+  "en": "Username {0} reserved",
+  "fr": "Nom d'utilisateur {0} réservé"
+ },
+ "تم حذف حسابك نهائياً": {
+  "en": "Your account was permanently deleted",
+  "fr": "Votre compte a été définitivement supprimé"
+ },
+ "تم حذف صورتك": {
+  "en": "Your photo was deleted",
+  "fr": "Votre photo a été supprimée"
+ },
+ "تم! أُضيف إلى رصيدك {0}": {
+  "en": "Done! {0} added to your balance",
+  "fr": "C'est fait ! {0} ajouté à votre solde"
+ },
+ "تم! تفعّلت الباقة الاحترافية": {
+  "en": "Done! The Pro plan is active",
+  "fr": "C'est fait ! L'abonnement Pro est actif"
+ },
+ "تم! وصلت الهدية إلى {0}": {
+  "en": "Done! The gift reached {0}",
+  "fr": "C'est fait ! Le cadeau est arrivé à {0}"
+ },
+ "تمت استعادة الاشتراك": {
+  "en": "Subscription restored",
+  "fr": "Abonnement restauré"
+ },
+ "تنزل حجراً": {
+  "en": "Bring out a marble",
+  "fr": "Sortez une bille"
+ },
+ "تنزل حجراً، أو تتقدم 1 أو 11": {
+  "en": "Bring out a marble, or move 1 or 11",
+  "fr": "Sortez une bille, ou avancez de 1 ou 11"
+ },
+ "تنزل حجراً، أو تتقدم 13": {
+  "en": "Bring out a marble, or move 13",
+  "fr": "Sortez une bille, ou avancez de 13"
+ },
+ "تنزل حجراً، أو تتقدم 13 وتأكل كل حجر تمر عليه": {
+  "en": "Bring out a marble, or move 13 and capture every marble you pass",
+  "fr": "Sortez une bille, ou avancez de 13 en capturant chaque bille sur votre passage"
+ },
+ "توزيع جديد": {
+  "en": "New deal",
+  "fr": "Nouvelle donne"
+ },
+ "توزيع جديد: {0} أوراق، يبدأ {1}": {
+  "en": "New deal: {0} cards, {1} starts",
+  "fr": "Nouvelle donne : {0} cartes, {1} commence"
+ },
+ "توصلني بدون قراءة (أرجع لها بنفسي)": {
+  "en": "Notify me without reading (I'll check it myself)",
+  "fr": "Me notifier sans lecture (je regarde moi-même)"
+ },
+ "توصلني ويقرأها قارئ الشاشة": {
+  "en": "Notify me and have the screen reader read it",
+  "fr": "Me notifier et lire avec le lecteur d'écran"
+ },
+ "ثري": {
+  "en": "Three",
+  "fr": "Trois"
+ },
+ "ثلاثة": {
+  "en": "Three",
+  "fr": "Trois"
+ },
+ "ثمانية": {
+  "en": "Eight",
+  "fr": "Huit"
+ },
+ "جارٍ إعادة الاتصال بالطاولة…": {
+  "en": "Reconnecting to the table…",
+  "fr": "Reconnexion à la table…"
+ },
+ "جارٍ الإرسال…": {
+  "en": "Sending…",
+  "fr": "Envoi…"
+ },
+ "جارٍ الاتصال بالطاولة…": {
+  "en": "Connecting to the table…",
+  "fr": "Connexion à la table…"
+ },
+ "جارٍ الاتصال بالمحادثة الصوتية": {
+  "en": "Connecting to voice chat",
+  "fr": "Connexion au chat vocal"
+ },
+ "جارٍ التحقق…": {
+  "en": "Checking…",
+  "fr": "Vérification…"
+ },
+ "جارٍ التحميل": {
+  "en": "Loading",
+  "fr": "Chargement"
+ },
+ "جارٍ التحميل…": {
+  "en": "Loading…",
+  "fr": "Chargement…"
+ },
+ "جارٍ تأكيد الشراء…": {
+  "en": "Confirming purchase…",
+  "fr": "Confirmation de l'achat…"
+ },
+ "جارٍ تحميل الإعلان": {
+  "en": "Loading the ad",
+  "fr": "Chargement de la publicité"
+ },
+ "جارٍ تحميل الباقات…": {
+  "en": "Loading plans…",
+  "fr": "Chargement des offres…"
+ },
+ "جارٍ تحميل الصورة…": {
+  "en": "Uploading photo…",
+  "fr": "Envoi de la photo…"
+ },
+ "جارٍ تفعيل الباقة…": {
+  "en": "Activating the plan…",
+  "fr": "Activation de l'abonnement…"
+ },
+ "جارٍ حذف الحساب…": {
+  "en": "Deleting account…",
+  "fr": "Suppression du compte…"
+ },
+ "جارٍ عرض الإعلان": {
+  "en": "Showing the ad",
+  "fr": "Affichage de la publicité"
+ },
+ "جارٍ…": {
+  "en": "Working…",
+  "fr": "En cours…"
+ },
+ "جاكارو": {
+  "en": "Jackaroo",
+  "fr": "Jackaroo"
+ },
+ "جلا": {
+  "en": "Pass",
+  "fr": "Passe"
+ },
+ "حافة الطاولة": {
+  "en": "Table rim",
+  "fr": "Bord de la table"
+ },
+ "حجر {0}": {
+  "en": "Marble {0}",
+  "fr": "Bille {0}"
+ },
+ "حجر {0} {1}": {
+  "en": "Marble {0} {1}",
+  "fr": "Bille {0} {1}"
+ },
+ "حجر {0}: {1}": {
+  "en": "Marble {0}: {1}",
+  "fr": "Bille {0} : {1}"
+ },
+ "حجر غير صالح": {
+  "en": "Invalid piece",
+  "fr": "Pièce invalide"
+ },
+ "حجرك": {
+  "en": "Your marble",
+  "fr": "Votre bille"
+ },
+ "حجرك {0}": {
+  "en": "Your marble {0}",
+  "fr": "Votre bille {0}"
+ },
+ "حجم الأحجار": {
+  "en": "Piece size",
+  "fr": "Taille des pièces"
+ },
+ "حدث خطأ، حاول مرة أخرى": {
+  "en": "Something went wrong, try again",
+  "fr": "Une erreur s'est produite, réessayez"
+ },
+ "حدد أوراق مشروعك، وبعدها اضغط فرش المشروع": {
+  "en": "Select your project cards, then tap Show project",
+  "fr": "Sélectionnez les cartes de votre annonce, puis touchez Montrer l'annonce"
+ },
+ "حذف": {
+  "en": "Delete",
+  "fr": "Supprimer"
+ },
+ "حذف الحساب": {
+  "en": "Delete account",
+  "fr": "Supprimer le compte"
+ },
+ "حذف الصورة": {
+  "en": "Delete photo",
+  "fr": "Supprimer la photo"
+ },
+ "حذف صديق": {
+  "en": "Remove friend",
+  "fr": "Retirer l'ami"
+ },
+ "حذف من الأصدقاء": {
+  "en": "Remove from friends",
+  "fr": "Retirer des amis"
+ },
+ "حذف نهائياً": {
+  "en": "Delete permanently",
+  "fr": "Supprimer définitivement"
+ },
+ "حرق الورقة رقم {0} من أوراق {1}": {
+  "en": "Burn card number {0} of {1}'s cards",
+  "fr": "Brûler la carte n° {0} de {1}"
+ },
+ "حركة غير صالحة": {
+  "en": "Invalid move",
+  "fr": "Coup invalide"
+ },
+ "حرّك حجراً أولاً": {
+  "en": "Move a marble first",
+  "fr": "Déplacez d'abord une bille"
+ },
+ "حساب جديد": {
+  "en": "New account",
+  "fr": "Nouveau compte"
+ },
+ "حسابك انفتح في جهاز ثاني. افتح التطبيق هنا متى ما بغيت ترجع له": {
+  "en": "Your account was opened on another device. Open the app here whenever you want to come back to it",
+  "fr": "Votre compte a été ouvert sur un autre appareil. Ouvrez l'application ici quand vous voulez y revenir"
+ },
+ "حسابك مفتوح في جهاز ثاني": {
+  "en": "Your account is open on another device",
+  "fr": "Votre compte est ouvert sur un autre appareil"
+ },
+ "حسابي": {
+  "en": "My account",
+  "fr": "Mon compte"
+ },
+ "حظر": {
+  "en": "Block",
+  "fr": "Bloquer"
+ },
+ "حظر {0}؟": {
+  "en": "Block {0}?",
+  "fr": "Bloquer {0} ?"
+ },
+ "حظر مالك الطاولة {0}": {
+  "en": "The table owner blocked {0}",
+  "fr": "Le propriétaire de la table a bloqué {0}"
+ },
+ "حظر من الطاولة": {
+  "en": "Block from the table",
+  "fr": "Bloquer de la table"
+ },
+ "حظرك مالك الطاولة": {
+  "en": "The table owner blocked you",
+  "fr": "Le propriétaire de la table vous a bloqué"
+ },
+ "حفظ": {
+  "en": "Save",
+  "fr": "Enregistrer"
+ },
+ "حفظ نهاية المباراة": {
+  "en": "Save match end",
+  "fr": "Enregistrer la fin de partie"
+ },
+ "حكم": {
+  "en": "Hokm",
+  "fr": "Hokm"
+ },
+ "حكم {0}": {
+  "en": "Hokm {0}",
+  "fr": "Hokm {0}"
+ },
+ "حكم {0} {1}": {
+  "en": "Hokm {0} {1}",
+  "fr": "Hokm {0} {1}"
+ },
+ "حكم ثاني": {
+  "en": "Second Hokm",
+  "fr": "Second Hokm"
+ },
+ "حكم ثاني {0}": {
+  "en": "Second Hokm {0}",
+  "fr": "Second Hokm {0}"
+ },
+ "حلّ {0} مكان {1}": {
+  "en": "{0} took {1}'s place",
+  "fr": "{0} a pris la place de {1}"
+ },
+ "حلّ {0} مكانه": {
+  "en": "{0} took their place",
+  "fr": "{0} a pris sa place"
+ },
+ "حُذفت الصورة {0}": {
+  "en": "Image {0} deleted",
+  "fr": "Image {0} supprimée"
+ },
+ "حُرقت {0} من أوراق {1}": {
+  "en": "{0} of {1}'s cards burned",
+  "fr": "{0} de {1} brûlée"
+ },
+ "خانة آمنة": {
+  "en": "Safe square",
+  "fr": "Case sûre"
+ },
+ "خرج ": {
+  "en": "Left ",
+  "fr": "Parti "
+ },
+ "خرج {0} من الطاولة لانقطاع اتصاله": {
+  "en": "{0} left the table after losing connection",
+  "fr": "{0} a quitté la table suite à une déconnexion"
+ },
+ "خروج": {
+  "en": "Leave",
+  "fr": "Quitter"
+ },
+ "خشب": {
+  "en": "Wood",
+  "fr": "Bois"
+ },
+ "خشب وزمرد": {
+  "en": "Wood and emerald",
+  "fr": "Bois et émeraude"
+ },
+ "خط كبير": {
+  "en": "Large text",
+  "fr": "Grand texte"
+ },
+ "خلص وقت {0}": {
+  "en": "{0}'s time ran out",
+  "fr": "Le temps de {0} est écoulé"
+ },
+ "خمسة": {
+  "en": "Five",
+  "fr": "Cinq"
+ },
+ "خمسين": {
+  "en": "Fifty",
+  "fr": "Cinquante"
+ },
+ "دائرية": {
+  "en": "Round",
+  "fr": "Ronde"
+ },
+ "دبل": {
+  "en": "Double",
+  "fr": "Double"
+ },
+ "دبّل": {
+  "en": "Double",
+  "fr": "Double"
+ },
+ "دخل {0} منطقة الأمان": {
+  "en": "{0} entered the safe zone",
+  "fr": "{0} est entré dans la zone sûre"
+ },
+ "دخول": {
+  "en": "Sign in",
+  "fr": "Connexion"
+ },
+ "دخول طاولته": {
+  "en": "Join their table",
+  "fr": "Rejoindre sa table"
+ },
+ "دعوات اللعب": {
+  "en": "Game invites",
+  "fr": "Invitations de jeu"
+ },
+ "دعوة": {
+  "en": "Invite",
+  "fr": "Inviter"
+ },
+ "دعوة {0}": {
+  "en": "Invite {0}",
+  "fr": "Inviter {0}"
+ },
+ "دعوة صديق": {
+  "en": "Invite a friend",
+  "fr": "Inviter un ami"
+ },
+ "دعوة صديق للمقعد {0}": {
+  "en": "Invite a friend to seat {0}",
+  "fr": "Inviter un ami à la place {0}"
+ },
+ "دعوة لطاولة": {
+  "en": "Table invite",
+  "fr": "Invitation à une table"
+ },
+ "دعوة للعب": {
+  "en": "Game invite",
+  "fr": "Invitation à jouer"
+ },
+ "دقيقة": {
+  "en": "1 minute",
+  "fr": "1 minute"
+ },
+ "دقيقتين": {
+  "en": "2 minutes",
+  "fr": "2 minutes"
+ },
+ "دور {0}": {
+  "en": "{0}'s turn",
+  "fr": "Au tour de {0}"
+ },
+ "دور {0}{1}": {
+  "en": "{0}'s turn{1}",
+  "fr": "Au tour de {0}{1}"
+ },
+ "دور {0}، {1} بس أو {2}": {
+  "en": "{0}'s turn, {1} pass or {2}",
+  "fr": "Au tour de {0}, {1} passe ou {2}"
+ },
+ "دورك": {
+  "en": "Your turn",
+  "fr": "À vous"
+ },
+ "دورك تقرر الدبل": {
+  "en": "Your turn to decide on Double",
+  "fr": "À vous de décider pour le Double"
+ },
+ "دورك. {0}": {
+  "en": "Your turn. {0}",
+  "fr": "À vous. {0}"
+ },
+ "دورك. لا قطعة تصلح، اسحب من البنك. {0}": {
+  "en": "Your turn. No tile fits, draw from the boneyard. {0}",
+  "fr": "À vous. Aucun domino ne se pose, piochez. {0}"
+ },
+ "دورك. لا قطعة تصلح، جلا. {0}": {
+  "en": "Your turn. No tile fits, pass. {0}",
+  "fr": "À vous. Aucun domino ne se pose, passez. {0}"
+ },
+ "دورك: اختر من يبدأ، أنت أو شريكك": {
+  "en": "Your turn: choose who starts, you or your partner",
+  "fr": "À vous : choisissez qui commence, vous ou votre partenaire"
+ },
+ "دورك: بس أو ورق": {
+  "en": "Your turn: pass or Waraq",
+  "fr": "À vous : passe ou Waraq"
+ },
+ "دورك: عليك أن تحرق ورقة": {
+  "en": "Your turn: you must burn a card",
+  "fr": "À vous : vous devez brûler une carte"
+ },
+ "دورك: لا لعب صالح، احرق ورقة": {
+  "en": "Your turn: no valid play, burn a card",
+  "fr": "À vous : aucun coup valide, brûlez une carte"
+ },
+ "دورك، اختر الحجر": {
+  "en": "Your turn, choose the piece",
+  "fr": "À vous, choisissez la pièce"
+ },
+ "دورك، ارمِ النرد": {
+  "en": "Your turn, roll the die",
+  "fr": "À vous, lancez le dé"
+ },
+ "دورك، بس أو {0}": {
+  "en": "Your turn, pass or {0}",
+  "fr": "À vous, passe ou {0}"
+ },
+ "دورك، ما عندك لعب صالح، احرق ورقة": {
+  "en": "Your turn, you have no valid play, burn a card",
+  "fr": "À vous, aucun coup valide, brûlez une carte"
+ },
+ "دومينو": {
+  "en": "Dominoes",
+  "fr": "Dominos"
+ },
+ "دومينو {0}": {
+  "en": "Dominoes {0}",
+  "fr": "Dominos {0}"
+ },
+ "ديمن": {
+  "en": "Diamonds",
+  "fr": "Carreau"
+ },
+ "ذهب": {
+  "en": "Gold",
+  "fr": "Or"
+ },
+ "ذهبي": {
+  "en": "Golden",
+  "fr": "Doré"
+ },
+ "رجوع": {
+  "en": "Back",
+  "fr": "Retour"
+ },
+ "رخام": {
+  "en": "Marble",
+  "fr": "Marbre"
+ },
+ "رخصة صور الكروت": {
+  "en": "Card image license",
+  "fr": "Licence des images de cartes"
+ },
+ "رصيد مالك الطاولة لا يكفي": {
+  "en": "The table owner doesn't have enough coins",
+  "fr": "Le propriétaire de la table n'a pas assez de pièces"
+ },
+ "رصيدك {0} عملة": {
+  "en": "Your balance is {0} coins",
+  "fr": "Votre solde est de {0} pièces"
+ },
+ "رصيدك {0} عملة، الحصول على عملات": {
+  "en": "Your balance is {0} coins, get coins",
+  "fr": "Votre solde est de {0} pièces, obtenir des pièces"
+ },
+ "رصيدك الحالي: {0} 🪙": {
+  "en": "Your current balance: {0} 🪙",
+  "fr": "Votre solde actuel : {0} 🪙"
+ },
+ "رصيدك عملات لا محدودة، حساب المطوّر": {
+  "en": "Unlimited coins, developer account",
+  "fr": "Pièces illimitées, compte développeur"
+ },
+ "رصيدك من العملات لا يكفي": {
+  "en": "You don't have enough coins",
+  "fr": "Vous n'avez pas assez de pièces"
+ },
+ "رفض": {
+  "en": "Decline",
+  "fr": "Refuser"
+ },
+ "رفض طلب {0}": {
+  "en": "Decline {0}'s request",
+  "fr": "Refuser la demande de {0}"
+ },
+ "رفض مالك الطاولة طلب الانضمام، تقدر تدخل بدعوة منه أو تحاول بعد {0}": {
+  "en": "The table owner declined your join request; you can join with their invite or try again in {0}",
+  "fr": "Le propriétaire a refusé votre demande ; vous pouvez entrer sur son invitation ou réessayer dans {0}"
+ },
+ "رفض مالك الطاولة طلب انضمامك، تقدر تدخل بدعوة منه أو بعد نصف ساعة من طلبك": {
+  "en": "The table owner declined your join request; you can join with their invite or half an hour after your request",
+  "fr": "Le propriétaire a refusé votre demande ; vous pouvez entrer sur son invitation ou une demi-heure après votre demande"
+ },
+ "رفع الحظر": {
+  "en": "Unblock",
+  "fr": "Débloquer"
+ },
+ "رفع الحظر عن {0}": {
+  "en": "Unblock {0}",
+  "fr": "Débloquer {0}"
+ },
+ "رمادي فحمي": {
+  "en": "Charcoal grey",
+  "fr": "Gris anthracite"
+ },
+ "رملي": {
+  "en": "Sand",
+  "fr": "Sable"
+ },
+ "رميت {0}: اختر الحجر": {
+  "en": "You rolled {0}: choose the piece",
+  "fr": "Vous avez fait {0} : choisissez le pion"
+ },
+ "رميت {0}، ما عندك حركة": {
+  "en": "You rolled {0}, you have no move",
+  "fr": "Vous avez fait {0}, aucun coup possible"
+ },
+ "رميت {0}، و{1}": {
+  "en": "You rolled {0}, and {1}",
+  "fr": "Vous avez fait {0}, et {1}"
+ },
+ "رميت ستة ثالثة، ضاع دورك": {
+  "en": "You rolled a third six, turn lost",
+  "fr": "Vous avez fait un troisième six, tour perdu"
+ },
+ "رميت ستة، ارمِ مرة ثانية": {
+  "en": "You rolled a six, roll again",
+  "fr": "Vous avez fait six, rejouez"
+ },
+ "رميت ستة، وطلّعت{0}": {
+  "en": "You rolled a six and brought out{0}",
+  "fr": "Vous avez fait six et sorti{0}"
+ },
+ "روبوت": {
+  "en": "Bot",
+  "fr": "Robot"
+ },
+ "روبوت (1 🪙)": {
+  "en": "Bot (1 🪙)",
+  "fr": "Robot (1 🪙)"
+ },
+ "روبوت {0}": {
+  "en": "Bot {0}",
+  "fr": "Robot {0}"
+ },
+ "روبوت مكانه (1 🪙)": {
+  "en": "Bot in their place (1 🪙)",
+  "fr": "Robot à sa place (1 🪙)"
+ },
+ "روبوت مكانه الآن": {
+  "en": "A bot is in their place now",
+  "fr": "Un robot est à sa place maintenant"
+ },
+ "روبوت مكانه، عملة واحدة": {
+  "en": "Bot in their place, one coin",
+  "fr": "Robot à sa place, une pièce"
+ },
+ "روبوت، عملة واحدة": {
+  "en": "Bot, one coin",
+  "fr": "Robot, une pièce"
+ },
+ "رُفض طلب {0}": {
+  "en": "{0}'s request declined",
+  "fr": "Demande de {0} refusée"
+ },
+ "رُفع الحظر عن {0}": {
+  "en": "{0} unblocked",
+  "fr": "{0} débloqué"
+ },
+ "زر «ورق» متاح لك حتى لو مو دورك": {
+  "en": "The «Waraq» button is available to you even when it's not your turn",
+  "fr": "Le bouton « Waraq » est disponible même quand ce n'est pas votre tour"
+ },
+ "زر سوا": {
+  "en": "Sawa button",
+  "fr": "Bouton Sawa"
+ },
+ "زر سوا مقفل": {
+  "en": "Sawa button is off",
+  "fr": "Bouton Sawa désactivé"
+ },
+ "زر سوا يطلع للكل، ولو توقفه ما يطلع لأحد في هالمباراة": {
+  "en": "The Sawa button shows for everyone; if you turn it off, nobody gets it in this match",
+  "fr": "Le bouton Sawa s'affiche pour tous ; si vous le désactivez, personne ne l'a dans cette partie"
+ },
+ "سبيت": {
+  "en": "Spades",
+  "fr": "Pique"
+ },
+ "ستة": {
+  "en": "Six",
+  "fr": "Six"
+ },
+ "سجل الجولة {0}{1}": {
+  "en": "Round {0} log{1}",
+  "fr": "Historique de la manche {0}{1}"
+ },
+ "سحب من البنك": {
+  "en": "Draw from the boneyard",
+  "fr": "Piocher"
+ },
+ "سرا": {
+  "en": "Sira",
+  "fr": "Sira"
+ },
+ "سوا": {
+  "en": "Sawa",
+  "fr": "Sawa"
+ },
+ "سوا غلط": {
+  "en": "Wrong Sawa",
+  "fr": "Sawa erronée"
+ },
+ "سوا غير ممكن": {
+  "en": "Sawa not possible",
+  "fr": "Sawa impossible"
+ },
+ "سوا مقفل": {
+  "en": "Sawa off",
+  "fr": "Sawa désactivée"
+ },
+ "سياسة الخصوصية": {
+  "en": "Privacy policy",
+  "fr": "Politique de confidentialité"
+ },
+ "سيتم حذف حسابك نهائياً: اسم المستخدم، والعملات، وقائمة الأصدقاء، وبيانات الدخول. لا يمكن التراجع عن هذا الإجراء.": {
+  "en": "Your account will be permanently deleted: username, coins, friends list, and sign-in data. This can't be undone.",
+  "fr": "Votre compte sera définitivement supprimé : nom d'utilisateur, pièces, liste d'amis et données de connexion. Cette action est irréversible."
+ },
+ "سيخرج من الطاولة. يستطيع دخول أي طاولة أخرى فوراً، والعودة لهذه الطاولة بعد ساعة، أو قبلها لو أرسلت له دعوة.": {
+  "en": "They'll leave the table. They can join any other table right away, and come back to this one after an hour, or sooner if you invite them.",
+  "fr": "Il quittera la table. Il pourra rejoindre une autre table tout de suite, et revenir à celle-ci après une heure, ou avant si vous l'invitez."
+ },
+ "سيخرج من الطاولة، ولن يستطيع دخول هذه الطاولة ولا أي طاولة تملكها.": {
+  "en": "They'll leave the table and won't be able to join this table or any table you own.",
+  "fr": "Il quittera la table et ne pourra plus rejoindre cette table ni aucune table qui vous appartient."
+ },
+ "شايب": {
+  "en": "King",
+  "fr": "Roi"
+ },
+ "شراء {0}": {
+  "en": "Buy {0}",
+  "fr": "Acheter {0}"
+ },
+ "شراء عملات": {
+  "en": "Buy coins",
+  "fr": "Acheter des pièces"
+ },
+ "شريا": {
+  "en": "Clubs",
+  "fr": "Trèfle"
+ },
+ "شعار مجلسك": {
+  "en": "Majlisk logo",
+  "fr": "Logo Majlisk"
+ },
+ "شكل الطاولة": {
+  "en": "Table shape",
+  "fr": "Forme de la table"
+ },
+ "شكل الورق": {
+  "en": "Card style",
+  "fr": "Style des cartes"
+ },
+ "شكوى": {
+  "en": "Complaint",
+  "fr": "Réclamation"
+ },
+ "شكوى جديدة": {
+  "en": "New complaint",
+  "fr": "Nouvelle réclamation"
+ },
+ "صالح": {
+  "en": "Valid",
+  "fr": "Valide"
+ },
+ "صديقك": {
+  "en": "Your friend",
+  "fr": "Votre ami"
+ },
+ "صديقك غير متصل وما فعّل إشعارات التطبيق": {
+  "en": "Your friend is offline and hasn't enabled app notifications",
+  "fr": "Votre ami est hors ligne et n'a pas activé les notifications"
+ },
+ "صغير": {
+  "en": "Small",
+  "fr": "Petit"
+ },
+ "صكة جديدة": {
+  "en": "New hand",
+  "fr": "Nouvelle donne"
+ },
+ "صكة جديدة، {0} يختار من يبدأ: هو أو شريكه": {
+  "en": "New hand, {0} chooses who starts: them or their partner",
+  "fr": "Nouvelle donne, {0} choisit qui commence : lui ou son partenaire"
+ },
+ "صكة جديدة، يبدأ {0}": {
+  "en": "New hand, {0} starts",
+  "fr": "Nouvelle donne, {0} commence"
+ },
+ "صن": {
+  "en": "Sun",
+  "fr": "Sun"
+ },
+ "صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0.": {
+  "en": "Card images: Vectorized Playing Cards by Chris Aguilar, LGPL-3.0 license. Sound effects: Kenney, CC0 license.",
+  "fr": "Images des cartes : Vectorized Playing Cards de Chris Aguilar, licence LGPL-3.0. Effets sonores : Kenney, licence CC0."
+ },
+ "صورة مرفقة {0}": {
+  "en": "Attached image {0}",
+  "fr": "Image jointe {0}"
+ },
+ "صورتك تطلع دائرية جنب اسمك في الطاولات وعند أصدقائك.": {
+  "en": "Your photo shows as a circle next to your name at tables and for your friends.",
+  "fr": "Votre photo s'affiche en rond à côté de votre nom aux tables et chez vos amis."
+ },
+ "طاولات مميزة": {
+  "en": "Premium tables",
+  "fr": "Tables premium"
+ },
+ "طاولات وألوان وأشكال مميزة لكل الألعاب": {
+  "en": "Premium tables, colors and styles for all games",
+  "fr": "Tables, couleurs et styles premium pour tous les jeux"
+ },
+ "طاولة {0}": {
+  "en": "Table {0}",
+  "fr": "Table {0}"
+ },
+ "طاولة {0}{1}": {
+  "en": "Table {0}{1}",
+  "fr": "Table {0}{1}"
+ },
+ "طاولة {0}، {1}، {2}عدد الموجودين {3}، {4}": {
+  "en": "Table {0}, {1}, {2}present {3}, {4}",
+  "fr": "Table {0}, {1}, {2}présents {3}, {4}"
+ },
+ "طاولة ثابتة باسمك وبكلمة مرور": {
+  "en": "A pinned table in your name, with a password",
+  "fr": "Une table fixe à votre nom, avec mot de passe"
+ },
+ "طاولة ثابتة بكلمة مرور": {
+  "en": "Pinned table with a password",
+  "fr": "Table fixe avec mot de passe"
+ },
+ "طاولة خاصة": {
+  "en": "Private table",
+  "fr": "Table privée"
+ },
+ "طاولة خاصة: الدخول بالدعوة فقط": {
+  "en": "Private table: invite only",
+  "fr": "Table privée : sur invitation uniquement"
+ },
+ "طاولة عامة": {
+  "en": "Public table",
+  "fr": "Table publique"
+ },
+ "طاولتك بشكلها المميز": {
+  "en": "Your table, in its own style",
+  "fr": "Votre table, avec son style unique"
+ },
+ "طرد": {
+  "en": "Remove",
+  "fr": "Exclure"
+ },
+ "طرد {0}؟": {
+  "en": "Remove {0}?",
+  "fr": "Exclure {0} ?"
+ },
+ "طرد من الطاولة": {
+  "en": "Remove from the table",
+  "fr": "Exclure de la table"
+ },
+ "طريقة الدخول هذه غير مفعّلة بعد": {
+  "en": "This sign-in method isn't enabled yet",
+  "fr": "Cette méthode de connexion n'est pas encore activée"
+ },
+ "طلب انضمام": {
+  "en": "Join request",
+  "fr": "Demande pour rejoindre"
+ },
+ "طلب انضمام لطاولته": {
+  "en": "Request to join their table",
+  "fr": "Demander à rejoindre sa table"
+ },
+ "طلب صداقة من {0}": {
+  "en": "Friend request from {0}",
+  "fr": "Demande d'ami de {0}"
+ },
+ "طلبات الصداقة{0}": {
+  "en": "Friend requests{0}",
+  "fr": "Demandes d'ami{0}"
+ },
+ "عادي": {
+  "en": "Normal",
+  "fr": "Normal"
+ },
+ "عدد اللاعبين لا يناسب هذه اللعبة: الدومينو واللودو لاعبين أو ثلاثة أو أربعة (لودو الفرق أربعة)": {
+  "en": "The number of players doesn't fit this game: dominoes and Ludo take two, three or four players (team Ludo takes four)",
+  "fr": "Le nombre de joueurs ne convient pas à ce jeu : dominos et Ludo se jouent à deux, trois ou quatre (Ludo en équipes à quatre)"
+ },
+ "عرض المتصلين": {
+  "en": "Show who's online",
+  "fr": "Voir qui est en ligne"
+ },
+ "عرض الموجودين": {
+  "en": "Show who's here",
+  "fr": "Voir les présents"
+ },
+ "عرض لفترة محدودة": {
+  "en": "Limited-time offer",
+  "fr": "Offre à durée limitée"
+ },
+ "عرض لمدة\n6 أشهر فقط": {
+  "en": "Offer for\n6 months only",
+  "fr": "Offre valable\n6 mois seulement"
+ },
+ "على الطاولة {0} قطع: {1}": {
+  "en": "{0} tiles on the table: {1}",
+  "fr": "{0} dominos sur la table : {1}"
+ },
+ "على المسار، باقي {0} للمنزل{1}": {
+  "en": "On the track, {0} to home{1}",
+  "fr": "Sur le parcours, {0} avant l'arrivée{1}"
+ },
+ "على خانة البداية{0}": {
+  "en": "On the start square{0}",
+  "fr": "Sur la case de départ{0}"
+ },
+ "عليك أن تحرق ورقة": {
+  "en": "You must burn a card",
+  "fr": "Vous devez brûler une carte"
+ },
+ "عنابي": {
+  "en": "Burgundy",
+  "fr": "Bordeaux"
+ },
+ "عندك قطعة تصلح، أو يمكنك السحب": {
+  "en": "You have a tile that fits, or you can draw",
+  "fr": "Vous avez un domino jouable, ou vous pouvez piocher"
+ },
+ "عندك لعب صالح، لا يجوز الحرق": {
+  "en": "You have a valid play; you can't burn",
+  "fr": "Vous avez un coup valide ; vous ne pouvez pas brûler"
+ },
+ "عندي حساب — تسجيل الدخول": {
+  "en": "I have an account — sign in",
+  "fr": "J'ai un compte — se connecter"
+ },
+ "غادر ": {
+  "en": "Left ",
+  "fr": "Parti "
+ },
+ "غادر {0}": {
+  "en": "{0} left",
+  "fr": "{0} est parti"
+ },
+ "غادر {0} وحلّ مكانه {1}": {
+  "en": "{0} left and {1} took their place",
+  "fr": "{0} est parti et {1} a pris sa place"
+ },
+ "غادر المحادثة الصوتية": {
+  "en": "Leave voice chat",
+  "fr": "Quitter le chat vocal"
+ },
+ "غير متاحة": {
+  "en": "Not available",
+  "fr": "Indisponible"
+ },
+ "غير متصل": {
+  "en": "Offline",
+  "fr": "Hors ligne"
+ },
+ "غير معروف": {
+  "en": "Unknown",
+  "fr": "Inconnu"
+ },
+ "غيّر مالك الطاولة اللعبة إلى {0}": {
+  "en": "The table owner changed the game to {0}",
+  "fr": "Le propriétaire de la table a changé le jeu pour {0}"
+ },
+ "فارغ": {
+  "en": "Empty",
+  "fr": "Vide"
+ },
+ "فاز": {
+  "en": "Won",
+  "fr": "Gagné"
+ },
+ "فاز {0}": {
+  "en": "{0} won",
+  "fr": "{0} a gagné"
+ },
+ "فاز الفريق الآخر": {
+  "en": "The other team won",
+  "fr": "L'autre équipe a gagné"
+ },
+ "فاز فريق {0}": {
+  "en": "Team {0} won",
+  "fr": "L'équipe {0} a gagné"
+ },
+ "فاز فريق {0} و{1}": {
+  "en": "Team {0} and {1} won",
+  "fr": "L'équipe {0} et {1} a gagné"
+ },
+ "فاز فريقك بالصكة: اختر من يبدأ، أنت أو شريكك": {
+  "en": "Your team won the hand: choose who starts, you or your partner",
+  "fr": "Votre équipe a gagné la donne : choisissez qui commence, vous ou votre partenaire"
+ },
+ "فاز فريقك!": {
+  "en": "Your team won!",
+  "fr": "Votre équipe a gagné !"
+ },
+ "فتح الميكروفون": {
+  "en": "Turn on microphone",
+  "fr": "Activer le micro"
+ },
+ "فتح ملفه": {
+  "en": "Open their profile",
+  "fr": "Ouvrir son profil"
+ },
+ "فتحت حسابك من جهاز ثاني، فتقفل هنا. حسابك ما تسجّل خروجه.": {
+  "en": "You opened your account on another device, so it's locked here. You haven't been signed out.",
+  "fr": "Vous avez ouvert votre compte sur un autre appareil, il est donc verrouillé ici. Vous n'êtes pas déconnecté."
+ },
+ "فردي": {
+  "en": "Solo",
+  "fr": "Solo"
+ },
+ "فرش المشروع": {
+  "en": "Show project",
+  "fr": "Montrer l'annonce"
+ },
+ "فرق": {
+  "en": "Teams",
+  "fr": "Équipes"
+ },
+ "فريق {0}": {
+  "en": "Team {0}",
+  "fr": "Équipe {0}"
+ },
+ "فريق {0} و{1}": {
+  "en": "Team {0} and {1}",
+  "fr": "Équipe {0} et {1}"
+ },
+ "فريقك": {
+  "en": "Your team",
+  "fr": "Votre équipe"
+ },
+ "فزت!": {
+  "en": "You won!",
+  "fr": "Vous avez gagné !"
+ },
+ "فور": {
+  "en": "Four",
+  "fr": "Quatre"
+ },
+ "في {0}، الخانة {1} من 5": {
+  "en": "In {0}, square {1} of 5",
+  "fr": "Dans {0}, case {1} sur 5"
+ },
+ "في آخر أكلة تنزل ورقة كل لاعب لحالها، ولو توقفه كل واحد يلعب ورقته الأخيرة بنفسه": {
+  "en": "In the last trick each player's card is played automatically; if you turn it off, everyone plays their last card themselves",
+  "fr": "Au dernier pli, la carte de chaque joueur est jouée automatiquement ; si vous désactivez, chacun joue sa dernière carte lui-même"
+ },
+ "في أمان": {
+  "en": "Safe",
+  "fr": "En sécurité"
+ },
+ "في الانتظار": {
+  "en": "Waiting",
+  "fr": "En attente"
+ },
+ "في البيت": {
+  "en": "At home",
+  "fr": "À la maison"
+ },
+ "في الخانة {0}": {
+  "en": "On square {0}",
+  "fr": "Sur la case {0}"
+ },
+ "في الخانة {0}{1}": {
+  "en": "On square {0}{1}",
+  "fr": "Sur la case {0}{1}"
+ },
+ "في الخانة {0}، على قاعدته": {
+  "en": "On square {0}, on its base",
+  "fr": "Sur la case {0}, sur sa case de départ"
+ },
+ "في الرئيسية": {
+  "en": "On the home screen",
+  "fr": "Sur l'accueil"
+ },
+ "في اللفة اللي بعدها تختار أوراق مشروعك وتفرشها.": {
+  "en": "In the next trick you choose your project cards and show them.",
+  "fr": "Au pli suivant, vous choisissez les cartes de votre annonce et les montrez."
+ },
+ "في حاجز، ما ينأكل": {
+  "en": "In a block, can't be captured",
+  "fr": "Dans un blocage, ne peut pas être capturé"
+ },
+ "في خانة آمنة": {
+  "en": "On a safe square",
+  "fr": "Sur une case sûre"
+ },
+ "في خطر، خصم خلفه قريب": {
+  "en": "In danger, an opponent is close behind",
+  "fr": "En danger, un adversaire est juste derrière"
+ },
+ "في ممر المنزل، باقي {0} للمنزل": {
+  "en": "In the home column, {0} to home",
+  "fr": "Dans la colonne d'arrivée, {0} avant l'arrivée"
+ },
+ "في منطقة أمان": {
+  "en": "In a safe zone",
+  "fr": "Dans une zone sûre"
+ },
+ "في منطقة الأمان، الخانة {0} من {1}": {
+  "en": "In the safe zone, square {0} of {1}",
+  "fr": "Dans la zone sûre, case {0} sur {1}"
+ },
+ "قاطع": {
+  "en": "Revoke",
+  "fr": "Renonce"
+ },
+ "قال قبلك": {
+  "en": "Said before you",
+  "fr": "A parlé avant vous"
+ },
+ "قبل {0} طلب صداقتك": {
+  "en": "{0} accepted your friend request",
+  "fr": "{0} a accepté votre demande d'ami"
+ },
+ "قبلك": {
+  "en": "Before you",
+  "fr": "Avant vous"
+ },
+ "قبول": {
+  "en": "Accept",
+  "fr": "Accepter"
+ },
+ "قبول طلب {0}": {
+  "en": "Accept {0}'s request",
+  "fr": "Accepter la demande de {0}"
+ },
+ "قبول طلب الصداقة": {
+  "en": "Accept friend request",
+  "fr": "Accepter la demande d'ami"
+ },
+ "قبول طلب صداقة {0}": {
+  "en": "Accept {0}'s friend request",
+  "fr": "Accepter la demande d'ami de {0}"
+ },
+ "قطعك": {
+  "en": "Your tiles",
+  "fr": "Vos dominos"
+ },
+ "قفل {0}": {
+  "en": "Lock {0}",
+  "fr": "Fermer {0}"
+ },
+ "قفل الميكروفون": {
+  "en": "Turn off microphone",
+  "fr": "Couper le micro"
+ },
+ "قل بس": {
+  "en": "Say pass",
+  "fr": "Dire passe"
+ },
+ "قل بس، لا تدبل": {
+  "en": "Say pass, don't Double",
+  "fr": "Dire passe, ne pas doubler"
+ },
+ "قهوة": {
+  "en": "Gahwa",
+  "fr": "Gahwa"
+ },
+ "قهوة{0}": {
+  "en": "Gahwa{0}",
+  "fr": "Gahwa{0}"
+ },
+ "قيد": {
+  "en": "Qaid",
+  "fr": "Qaid"
+ },
+ "قيد اللعب": {
+  "en": "In play",
+  "fr": "En jeu"
+ },
+ "كبوت": {
+  "en": "Kaboot",
+  "fr": "Kaboot"
+ },
+ "كبير": {
+  "en": "Large",
+  "fr": "Grand"
+ },
+ "كتم عام لجميع الأصوات": {
+  "en": "Mute all sounds",
+  "fr": "Couper tous les sons"
+ },
+ "كتم في المحادثة الصوتية": {
+  "en": "Mute in voice chat",
+  "fr": "Couper le micro dans le chat vocal"
+ },
+ "كتم مالك الطاولة {0} في المحادثة الصوتية": {
+  "en": "The table owner muted {0} in voice chat",
+  "fr": "Le propriétaire de la table a coupé le micro de {0} dans le chat vocal"
+ },
+ "كتمك مالك الطاولة في المحادثة الصوتية": {
+  "en": "The table owner muted you in voice chat",
+  "fr": "Le propriétaire de la table a coupé votre micro dans le chat vocal"
+ },
+ "كتمك مالك الطاولة، لا يمكنك فتح الميكروفون الآن": {
+  "en": "The table owner muted you; you can't turn on your microphone now",
+  "fr": "Le propriétaire de la table a coupé votre micro ; vous ne pouvez pas l'activer maintenant"
+ },
+ "كروت جنب بعض (مفصولة)": {
+  "en": "Cards side by side (separate)",
+  "fr": "Cartes côte à côte (séparées)"
+ },
+ "كشف المشاريع بلوحة كبيرة ثلاثية الأبعاد": {
+  "en": "Project reveal on a large 3D panel",
+  "fr": "Annonces révélées sur un grand panneau 3D"
+ },
+ "كل أصدقائك موجودين في الطاولة.": {
+  "en": "All your friends are at the table.",
+  "fr": "Tous vos amis sont à la table."
+ },
+ "كل التذاكر": {
+  "en": "All tickets",
+  "fr": "Tous les tickets"
+ },
+ "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى": {
+  "en": "Each player declares their own project before their first card",
+  "fr": "Chaque joueur déclare lui-même son annonce avant sa première carte"
+ },
+ "كل مزايا مجلسك في اشتراك واحد": {
+  "en": "All of Majlisk's features in one subscription",
+  "fr": "Toutes les fonctionnalités de Majlisk en un seul abonnement"
+ },
+ "كلاسيكي": {
+  "en": "Classic",
+  "fr": "Classique"
+ },
+ "كلمة المرور": {
+  "en": "Password",
+  "fr": "Mot de passe"
+ },
+ "كلمة المرور (٦ أرقام)": {
+  "en": "Password (6 digits)",
+  "fr": "Mot de passe (6 chiffres)"
+ },
+ "كلمة المرور الجديدة (٦ أرقام)": {
+  "en": "New password (6 digits)",
+  "fr": "Nouveau mot de passe (6 chiffres)"
+ },
+ "كلمة المرور غير صحيحة": {
+  "en": "Wrong password",
+  "fr": "Mot de passe incorrect"
+ },
+ "كلمة المرور قصيرة — 6 أحرف على الأقل": {
+  "en": "Password too short — at least 6 characters",
+  "fr": "Mot de passe trop court — au moins 6 caractères"
+ },
+ "كلمة المرور لازم تكون ٦ أرقام": {
+  "en": "The password must be 6 digits",
+  "fr": "Le mot de passe doit comporter 6 chiffres"
+ },
+ "كلمة المرور من 4 إلى 20 حرف": {
+  "en": "Password must be 4 to 20 characters",
+  "fr": "Le mot de passe doit comporter de 4 à 20 caractères"
+ },
+ "كلمة مرور الطاولة": {
+  "en": "Table password",
+  "fr": "Mot de passe de la table"
+ },
+ "كلمة مرور طاولة {0}": {
+  "en": "Password for table {0}",
+  "fr": "Mot de passe de la table {0}"
+ },
+ "كمبلكس": {
+  "en": "Complex",
+  "fr": "Complexe"
+ },
+ "كومبلكس": {
+  "en": "Complex",
+  "fr": "Complexe"
+ },
+ "كيف نقدر نساعدك؟": {
+  "en": "How can we help?",
+  "fr": "Comment pouvons-nous vous aider ?"
+ },
+ "لا توجد": {
+  "en": "None",
+  "fr": "Aucun"
+ },
+ "لا توجد أوراق على الطاولة": {
+  "en": "No cards on the table",
+  "fr": "Aucune carte sur la table"
+ },
+ "لا توجد طاولات الآن — أنشئ طاولة جديدة.": {
+  "en": "No tables right now — create a new table.",
+  "fr": "Aucune table pour le moment — créez une nouvelle table."
+ },
+ "لا توجد طلبات صداقة.": {
+  "en": "No friend requests.",
+  "fr": "Aucune demande d'ami."
+ },
+ "لا توجد مشاريع معلنة": {
+  "en": "No projects declared",
+  "fr": "Aucune annonce déclarée"
+ },
+ "لا لعب صالح: اختر ورقة لحرقها": {
+  "en": "No valid play: choose a card to burn",
+  "fr": "Aucun coup valide : choisissez une carte à brûler"
+ },
+ "لا محدود": {
+  "en": "Unlimited",
+  "fr": "Illimité"
+ },
+ "لا يمكن بدء صكة جديدة الآن": {
+  "en": "Can't start a new hand now",
+  "fr": "Impossible de commencer une nouvelle donne maintenant"
+ },
+ "لا يمكنك السحب الآن": {
+  "en": "You can't draw now",
+  "fr": "Vous ne pouvez pas piocher maintenant"
+ },
+ "لا يوجد أحد آخر في الطاولة.": {
+  "en": "Nobody else is at the table.",
+  "fr": "Personne d'autre n'est à la table."
+ },
+ "لا يوجد أصدقاء بعد.": {
+  "en": "No friends yet.",
+  "fr": "Pas encore d'amis."
+ },
+ "لا يوجد أصدقاء بعد. أضفهم من شاشة الأصدقاء، أو أضف روبوتاً.": {
+  "en": "No friends yet. Add them from the Friends screen, or add a bot.",
+  "fr": "Pas encore d'amis. Ajoutez-les depuis l'écran Amis, ou ajoutez un robot."
+ },
+ "لا يوجد إعلان متاح الآن، حاول بعد قليل": {
+  "en": "No ad available now, try again shortly",
+  "fr": "Aucune publicité disponible pour le moment, réessayez dans un instant"
+ },
+ "لا يوجد بلوت": {
+  "en": "No Baloot",
+  "fr": "Pas de Baloot"
+ },
+ "لا يوجد لاعب بهذا الاسم": {
+  "en": "No player with this name",
+  "fr": "Aucun joueur avec ce nom"
+ },
+ "لا يوجد محظورون.": {
+  "en": "Nobody blocked.",
+  "fr": "Personne n'est bloqué."
+ },
+ "لا يوجد مشاهدون": {
+  "en": "No spectators",
+  "fr": "Aucun spectateur"
+ },
+ "لا يوجد مشروع": {
+  "en": "No project",
+  "fr": "Aucune annonce"
+ },
+ "لازم كل اللاعبين يكونون مشتركين في الباقة": {
+  "en": "All players must be subscribed to the plan",
+  "fr": "Tous les joueurs doivent être abonnés"
+ },
+ "لاعب": {
+  "en": "Player",
+  "fr": "Joueur"
+ },
+ "لديك اسم مستخدم مسبقاً": {
+  "en": "You already have a username",
+  "fr": "Vous avez déjà un nom d'utilisateur"
+ },
+ "لست عضواً في هذه الطاولة": {
+  "en": "You're not a member of this table",
+  "fr": "Vous n'êtes pas membre de cette table"
+ },
+ "لست في هذه الطاولة": {
+  "en": "You're not at this table",
+  "fr": "Vous n'êtes pas à cette table"
+ },
+ "لعب الفرق لأربعة لاعبين فقط": {
+  "en": "Team play is for four players only",
+  "fr": "Le jeu en équipes se joue à quatre uniquement"
+ },
+ "لعبة جديدة": {
+  "en": "New game",
+  "fr": "Nouvelle partie"
+ },
+ "لقينا {0}": {
+  "en": "We found {0}",
+  "fr": "Nous avons trouvé {0}"
+ },
+ "للانضمام للمحادثة الصوتية اضغط ضغطة مطولة": {
+  "en": "Long-press to join voice chat",
+  "fr": "Appui long pour rejoindre le chat vocal"
+ },
+ "لم تنتهِ أي صكة بعد": {
+  "en": "No hand has finished yet",
+  "fr": "Aucune donne n'est encore terminée"
+ },
+ "لم تُلعب أي قطعة بعد": {
+  "en": "No tile has been played yet",
+  "fr": "Aucun domino n'a encore été joué"
+ },
+ "لم يبق أحد على الطاولة، فأُغلقت تلقائياً.": {
+  "en": "Nobody was left at the table, so it closed automatically.",
+  "fr": "Il ne restait personne à la table, elle a donc été fermée automatiquement."
+ },
+ "لم يشترِ أحد بعد، اللفة {0}{1}، {2}": {
+  "en": "Nobody has bought yet, round {0}{1}, {2}",
+  "fr": "Personne n'a encore pris, tour {0}{1}, {2}"
+ },
+ "لم يعد على الطاولة": {
+  "en": "No longer at the table",
+  "fr": "N'est plus à la table"
+ },
+ "لم يُسمح باستخدام الميكروفون. فعّله من إعدادات الجهاز للتطبيق": {
+  "en": "Microphone access wasn't allowed. Enable it for the app in your device settings",
+  "fr": "L'accès au micro n'a pas été autorisé. Activez-le pour l'application dans les réglages de l'appareil"
+ },
+ "لما يدعوك صديق للعب": {
+  "en": "When a friend invites you to play",
+  "fr": "Quand un ami vous invite à jouer"
+ },
+ "لنا": {
+  "en": "Us",
+  "fr": "Nous"
+ },
+ "لهم": {
+  "en": "Them",
+  "fr": "Eux"
+ },
+ "لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.": {
+  "en": "If a player runs out of time, the bot plays the best move for them.",
+  "fr": "Si un joueur manque de temps, le robot joue le meilleur coup à sa place."
+ },
+ "لوحة الجاكارو": {
+  "en": "Jackaroo board",
+  "fr": "Plateau du Jackaroo"
+ },
+ "لودو": {
+  "en": "Ludo",
+  "fr": "Ludo"
+ },
+ "لون الأحجار": {
+  "en": "Piece color",
+  "fr": "Couleur des pièces"
+ },
+ "لون الطاولة": {
+  "en": "Table color",
+  "fr": "Couleur de la table"
+ },
+ "ليس الآن": {
+  "en": "Not now",
+  "fr": "Pas maintenant"
+ },
+ "ليس دورك": {
+  "en": "Not your turn",
+  "fr": "Ce n'est pas votre tour"
+ },
+ "ليس دورك في الدبل": {
+  "en": "Not your turn to Double",
+  "fr": "Ce n'est pas votre tour de doubler"
+ },
+ "ليس لك اختيار البادئ": {
+  "en": "You don't choose who starts",
+  "fr": "Ce n'est pas à vous de choisir qui commence"
+ },
+ "ليس وقت اختيار مقفل أو مفتوح": {
+  "en": "Not the time to choose locked or open",
+  "fr": "Ce n'est pas le moment de choisir fermé ou ouvert"
+ },
+ "ليلي": {
+  "en": "Midnight",
+  "fr": "Nuit"
+ },
+ "ليلي وذهب": {
+  "en": "Midnight and gold",
+  "fr": "Nuit et or"
+ },
+ "ما انلعبت حجار في هذه الجولة بعد.": {
+  "en": "No tiles have been played this round yet.",
+  "fr": "Aucun domino n'a encore été joué dans cette manche."
+ },
+ "ما تتقفل لو فضيت، وتدخلها بكلمة مرور": {
+  "en": "It doesn't close when empty, and you enter it with a password",
+  "fr": "Elle ne se ferme pas quand elle est vide, et on y entre avec un mot de passe"
+ },
+ "ما تقدر تجلي، اسحب من البنك": {
+  "en": "You can't pass, draw from the boneyard",
+  "fr": "Vous ne pouvez pas passer, piochez"
+ },
+ "ما تقدر تجلي، عندك قطعة تصلح": {
+  "en": "You can't pass, you have a tile that fits",
+  "fr": "Vous ne pouvez pas passer, vous avez un domino jouable"
+ },
+ "ما تقدر تسجّل الحين": {
+  "en": "You can't call a foul now",
+  "fr": "Vous ne pouvez pas signaler de faute maintenant"
+ },
+ "ما تقدر تعلن مشروع الحين": {
+  "en": "You can't declare a project now",
+  "fr": "Vous ne pouvez pas déclarer d'annonce maintenant"
+ },
+ "ما تقدر تغيّر اسمك الحين، مرة كل ستة أشهر": {
+  "en": "You can't change your name now, once every six months",
+  "fr": "Vous ne pouvez pas changer de nom maintenant, une fois tous les six mois"
+ },
+ "ما تقدر تقول ورق الحين": {
+  "en": "You can't call Waraq now",
+  "fr": "Vous ne pouvez pas dire Waraq maintenant"
+ },
+ "ما تم التحقق بعد. اضغط الرابط اللي في الإيميل ثم حاول مرة ثانية.": {
+  "en": "Not verified yet. Tap the link in the email, then try again.",
+  "fr": "Pas encore vérifié. Touchez le lien dans l'e-mail, puis réessayez."
+ },
+ "ما دق بالحكم": {
+  "en": "Didn't trump",
+  "fr": "N'a pas coupé"
+ },
+ "ما رمى أحد بعد": {
+  "en": "Nobody has rolled yet",
+  "fr": "Personne n'a encore lancé"
+ },
+ "ما طلع بالحكم": {
+  "en": "Didn't overtrump",
+  "fr": "N'a pas surcoupé"
+ },
+ "ما عندك تذاكر": {
+  "en": "You have no tickets",
+  "fr": "Vous n'avez aucun ticket"
+ },
+ "ما عندك لعب، انحرقت أوراقك": {
+  "en": "You have no play, your cards are burned",
+  "fr": "Vous ne pouvez pas jouer, vos cartes sont brûlées"
+ },
+ "ما عندك مشروع تفرشه": {
+  "en": "You have no project to show",
+  "fr": "Vous n'avez pas d'annonce à montrer"
+ },
+ "ما عندك هالرقم": {
+  "en": "You don't have this number",
+  "fr": "Vous n'avez pas ce nombre"
+ },
+ "ما عندي حساب — حساب جديد": {
+  "en": "I don't have an account — new account",
+  "fr": "Je n'ai pas de compte — nouveau compte"
+ },
+ "ما فيه أحد متصل الحين": {
+  "en": "Nobody is online right now",
+  "fr": "Personne n'est en ligne pour le moment"
+ },
+ "ما فيه تذاكر": {
+  "en": "No tickets",
+  "fr": "Aucun ticket"
+ },
+ "ما فيه حركات بعد.": {
+  "en": "No moves yet.",
+  "fr": "Aucun coup pour le moment."
+ },
+ "ما فيه رسائل بعد.": {
+  "en": "No messages yet.",
+  "fr": "Aucun message pour le moment."
+ },
+ "ما فيه لاعبين": {
+  "en": "No players",
+  "fr": "Aucun joueur"
+ },
+ "ما فيه مشاهدين": {
+  "en": "No spectators",
+  "fr": "Aucun spectateur"
+ },
+ "ما فيه مشاهدين. تقدر تحط روبوت، أو تدعو صديق وبعد ما يدخل يطلع هنا.": {
+  "en": "No spectators. You can add a bot, or invite a friend and they'll show up here once they join.",
+  "fr": "Aucun spectateur. Vous pouvez ajouter un robot, ou inviter un ami qui apparaîtra ici une fois entré."
+ },
+ "ما لقينا اشتراك على هذا الحساب في المتجر": {
+  "en": "We didn't find a subscription for this account in the store",
+  "fr": "Aucun abonnement trouvé pour ce compte dans la boutique"
+ },
+ "ما لقينا لاعب بهذا الاسم": {
+  "en": "We didn't find a player with this name",
+  "fr": "Aucun joueur trouvé avec ce nom"
+ },
+ "مالك الطاولة": {
+  "en": "Table owner",
+  "fr": "Propriétaire de la table"
+ },
+ "مالك الطاولة حظرك من هذه الطاولة": {
+  "en": "The table owner blocked you from this table",
+  "fr": "Le propriétaire vous a bloqué de cette table"
+ },
+ "مالك هذه الطاولة حظرك، فلا يمكنك دخول طاولاته": {
+  "en": "This table's owner blocked you, so you can't join their tables",
+  "fr": "Le propriétaire de cette table vous a bloqué, vous ne pouvez donc pas rejoindre ses tables"
+ },
+ "مباراة جديدة": {
+  "en": "New match",
+  "fr": "Nouvelle partie"
+ },
+ "متصل، في الرئيسية": {
+  "en": "Online, on the home screen",
+  "fr": "En ligne, sur l'accueil"
+ },
+ "متصل، في طاولة": {
+  "en": "Online, at a table",
+  "fr": "En ligne, à une table"
+ },
+ "متوقف": {
+  "en": "Paused",
+  "fr": "En pause"
+ },
+ "مجلسك": {
+  "en": "Majlisk",
+  "fr": "Majlisk"
+ },
+ "مجلسك الذهبي": {
+  "en": "Majlisk Gold",
+  "fr": "Majlisk Or"
+ },
+ "مجلسك — أنت في طاولة": {
+  "en": "Majlisk — you're at a table",
+  "fr": "Majlisk — vous êtes à une table"
+ },
+ "مجلسك — المحادثة الصوتية تعمل": {
+  "en": "Majlisk — voice chat is on",
+  "fr": "Majlisk — chat vocal actif"
+ },
+ "محاولات كثيرة، حاول بعد قليل": {
+  "en": "Too many attempts, try again shortly",
+  "fr": "Trop de tentatives, réessayez dans un instant"
+ },
+ "مربعة": {
+  "en": "Square",
+  "fr": "Carrée"
+ },
+ "مروحة (الأوراق فوق بعض)": {
+  "en": "Fan (cards overlapping)",
+  "fr": "Éventail (cartes superposées)"
+ },
+ "مزايدة غير مسموحة": {
+  "en": "Bid not allowed",
+  "fr": "Enchère non autorisée"
+ },
+ "مساعد": {
+  "en": "Assistant",
+  "fr": "Assistant"
+ },
+ "مستطيلة": {
+  "en": "Rectangular",
+  "fr": "Rectangulaire"
+ },
+ "مشاهد": {
+  "en": "Spectator",
+  "fr": "Spectateur"
+ },
+ "مشاهدة إعلان (+2 🪙)": {
+  "en": "Watch an ad (+2 🪙)",
+  "fr": "Regarder une publicité (+2 🪙)"
+ },
+ "مشاهدة إعلان للحصول على عملتين": {
+  "en": "Watch an ad to get two coins",
+  "fr": "Regarder une publicité pour obtenir deux pièces"
+ },
+ "مشروع": {
+  "en": "Project",
+  "fr": "Annonce"
+ },
+ "مشروع {0}": {
+  "en": "{0} project",
+  "fr": "Annonce {0}"
+ },
+ "مشروع {0}: {1} — {2}": {
+  "en": "{0}'s project: {1} — {2}",
+  "fr": "Annonce de {0} : {1} — {2}"
+ },
+ "مشروع غلط": {
+  "en": "Wrong project",
+  "fr": "Annonce erronée"
+ },
+ "مشروعك": {
+  "en": "Your project",
+  "fr": "Votre annonce"
+ },
+ "مصدر صور الكروت": {
+  "en": "Card image source",
+  "fr": "Source des images de cartes"
+ },
+ "مطفأة (ما توصلني ولا أرسل)": {
+  "en": "Off (I don't receive or send)",
+  "fr": "Désactivée (je ne reçois ni n'envoie)"
+ },
+ "مغادرة": {
+  "en": "Leave",
+  "fr": "Quitter"
+ },
+ "مغادرة الطاولة": {
+  "en": "Leave the table",
+  "fr": "Quitter la table"
+ },
+ "مغادرة المحادثة الصوتية": {
+  "en": "Leave voice chat",
+  "fr": "Quitter le chat vocal"
+ },
+ "مغلقة": {
+  "en": "Closed",
+  "fr": "Fermée"
+ },
+ "مفتوح": {
+  "en": "Open",
+  "fr": "Ouvert"
+ },
+ "مفعّل": {
+  "en": "On",
+  "fr": "Activé"
+ },
+ "مقعد {0}": {
+  "en": "Seat {0}",
+  "fr": "Place {0}"
+ },
+ "مقعد فارغ": {
+  "en": "Empty seat",
+  "fr": "Place libre"
+ },
+ "مقفل": {
+  "en": "Locked",
+  "fr": "Fermé"
+ },
+ "مقفلة": {
+  "en": "Locked",
+  "fr": "Fermée"
+ },
+ "ممر المنزل {0}": {
+  "en": "Home column {0}",
+  "fr": "Colonne d'arrivée {0}"
+ },
+ "من الطاولة": {
+  "en": "From the table",
+  "fr": "De la table"
+ },
+ "من يجلس مكان {0}؟": {
+  "en": "Who takes {0}'s seat?",
+  "fr": "Qui prend la place de {0} ?"
+ },
+ "من ⟦sq|{0}|{1}⟧ إلى ⟦sq|{2}|{3}⟧": {
+  "en": "From ⟦sq|{0}|{1}⟧ to ⟦sq|{2}|{3}⟧",
+  "fr": "De ⟦sq|{0}|{1}⟧ à ⟦sq|{2}|{3}⟧"
+ },
+ "منطقة أمان": {
+  "en": "Safe zone",
+  "fr": "Zone sûre"
+ },
+ "مية": {
+  "en": "Hundred",
+  "fr": "Cent"
+ },
+ "مية وخمسين": {
+  "en": "Hundred and fifty",
+  "fr": "Cent cinquante"
+ },
+ "نتيجة الصكة: {0}": {
+  "en": "Hand score: {0}",
+  "fr": "Score de la donne : {0}"
+ },
+ "نرد اللودو": {
+  "en": "Ludo die",
+  "fr": "Dé du Ludo"
+ },
+ "نسيت كلمة المرور": {
+  "en": "Forgot password",
+  "fr": "Mot de passe oublié"
+ },
+ "نهاية المباراة": {
+  "en": "Match end",
+  "fr": "Fin de partie"
+ },
+ "نهاية المباراة: {0}": {
+  "en": "Match end: {0}",
+  "fr": "Fin de partie : {0}"
+ },
+ "نهاية المباراة، الحالية {0}": {
+  "en": "Match end, currently {0}",
+  "fr": "Fin de partie, actuellement {0}"
+ },
+ "نوع مشروعك": {
+  "en": "Your project type",
+  "fr": "Type de votre annonce"
+ },
+ "هاص": {
+  "en": "Hearts",
+  "fr": "Cœur"
+ },
+ "هدف المباراة (نقاط)": {
+  "en": "Match target (points)",
+  "fr": "Objectif de la partie (points)"
+ },
+ "هدية": {
+  "en": "Gift",
+  "fr": "Cadeau"
+ },
+ "هدية: أُضيفت {0} عملة إلى رصيدك": {
+  "en": "Gift: {0} coins added to your balance",
+  "fr": "Cadeau : {0} pièces ajoutées à votre solde"
+ },
+ "هذا أنت": {
+  "en": "That's you",
+  "fr": "C'est vous"
+ },
+ "هذا اسمك أنت": {
+  "en": "That's your own name",
+  "fr": "C'est votre propre nom"
+ },
+ "هذا اسمك أنت — للاشتراك لنفسك ارجع لشاشة الباقة": {
+  "en": "That's your own name — to subscribe for yourself, go back to the plan screen",
+  "fr": "C'est votre propre nom — pour vous abonner, revenez à l'écran de l'abonnement"
+ },
+ "هذا اسمك الحالي": {
+  "en": "That's your current name",
+  "fr": "C'est votre nom actuel"
+ },
+ "هذا الإجراء لمالك الطاولة فقط": {
+  "en": "Only the table owner can do this",
+  "fr": "Seul le propriétaire de la table peut faire cela"
+ },
+ "هذا البريد مسجّل مسبقاً، سجّل الدخول بدلاً من ذلك": {
+  "en": "This email is already registered, sign in instead",
+  "fr": "Cet e-mail est déjà enregistré, connectez-vous plutôt"
+ },
+ "هذا الحجر لا يتحرك بهذه الرمية": {
+  "en": "This piece can't move with this roll",
+  "fr": "Ce pion ne peut pas bouger avec ce lancer"
+ },
+ "هذا الشخص": {
+  "en": "This person",
+  "fr": "Cette personne"
+ },
+ "هذا الشخص لم يعد في الطاولة": {
+  "en": "This person is no longer at the table",
+  "fr": "Cette personne n'est plus à la table"
+ },
+ "هذا اللاعب ليس في قائمة أصدقائك": {
+  "en": "This player isn't in your friends list",
+  "fr": "Ce joueur n'est pas dans votre liste d'amis"
+ },
+ "هذه الطاولة بكلمة مرور": {
+  "en": "This table has a password",
+  "fr": "Cette table est protégée par mot de passe"
+ },
+ "هذه طاولة خاصة — تحتاج دعوة من مالكها": {
+  "en": "This is a private table — you need an invite from its owner",
+  "fr": "C'est une table privée — il faut une invitation de son propriétaire"
+ },
+ "هذي الميزة للمشتركين في الباقة الاحترافية": {
+  "en": "This feature is for Pro plan subscribers",
+  "fr": "Cette fonctionnalité est réservée aux abonnés Pro"
+ },
+ "هل تريد الخروج من مجلسك؟": {
+  "en": "Do you want to sign out of Majlisk?",
+  "fr": "Voulez-vous vous déconnecter de Majlisk ?"
+ },
+ "هل تريد حذف {0} من أصدقائك؟": {
+  "en": "Remove {0} from your friends?",
+  "fr": "Retirer {0} de vos amis ?"
+ },
+ "هل تريد مغادرة الطاولة؟": {
+  "en": "Do you want to leave the table?",
+  "fr": "Voulez-vous quitter la table ?"
+ },
+ "و": {
+  "en": "and",
+  "fr": "et"
+ },
+ "واحد": {
+  "en": "One",
+  "fr": "Un"
+ },
+ "وجه الورق": {
+  "en": "Card face",
+  "fr": "Face des cartes"
+ },
+ "ورق": {
+  "en": "Waraq",
+  "fr": "Waraq"
+ },
+ "ورق وأحجار بأشكالك": {
+  "en": "Cards and tiles in your style",
+  "fr": "Cartes et pièces à votre style"
+ },
+ "ورقة الأرض": {
+  "en": "Table card",
+  "fr": "Carte retournée"
+ },
+ "ورقة الأرض لـ{0}": {
+  "en": "Table card goes to {0}",
+  "fr": "Carte retournée pour {0}"
+ },
+ "ورقة الأرض: {0}": {
+  "en": "Table card: {0}",
+  "fr": "Carte retournée : {0}"
+ },
+ "ورقة غير مسموحة": {
+  "en": "Card not allowed",
+  "fr": "Carte non autorisée"
+ },
+ "وسط": {
+  "en": "Medium",
+  "fr": "Moyen"
+ },
+ "وسط الطاولة: {0}": {
+  "en": "Table center: {0}",
+  "fr": "Centre de la table : {0}"
+ },
+ "وصل {0}/4": {
+  "en": "Home {0}/4",
+  "fr": "Arrivées {0}/4"
+ },
+ "وصل المنزل": {
+  "en": "Reached home",
+  "fr": "Arrivé"
+ },
+ "وصلت رسالتك، وراح يوصلك الرد هنا وبإشعار": {
+  "en": "We got your message; the reply will come here and as a notification",
+  "fr": "Nous avons reçu votre message ; la réponse arrivera ici et par notification"
+ },
+ "وصلت للحد اليومي من الإعلانات، جرّب غداً": {
+  "en": "You've reached today's ad limit, try tomorrow",
+  "fr": "Vous avez atteint la limite quotidienne de publicités, réessayez demain"
+ },
+ "وصلت هديتك إلى {0}": {
+  "en": "Your gift reached {0}",
+  "fr": "Votre cadeau est arrivé à {0}"
+ },
+ "وصلك رد من الدعم على {0}": {
+  "en": "Support replied to {0}",
+  "fr": "L'assistance a répondu à {0}"
+ },
+ "وقت كل دور {0} ثانية": {
+  "en": "{0} seconds per turn",
+  "fr": "{0} secondes par tour"
+ },
+ "وقت كل دور: {0} ▾": {
+  "en": "Time per turn: {0} ▾",
+  "fr": "Temps par tour : {0} ▾"
+ },
+ "وقت كل دور، {0}": {
+  "en": "Time per turn, {0}",
+  "fr": "Temps par tour, {0}"
+ },
+ "وقت كل دور، {0}، قائمة": {
+  "en": "Time per turn, {0}, menu",
+  "fr": "Temps par tour, {0}, menu"
+ },
+ "ولا": {
+  "en": "or",
+  "fr": "ou"
+ },
+ "ولد": {
+  "en": "Jack",
+  "fr": "Valet"
+ },
+ "ولد أحمر: تتقدم 11": {
+  "en": "Red jack: move 11",
+  "fr": "Valet rouge : avancez de 11"
+ },
+ "ويدخل ممر المنزل": {
+  "en": "and enters the home column",
+  "fr": "et entre dans la colonne d'arrivée"
+ },
+ "ويصل المنزل": {
+  "en": "and reaches home",
+  "fr": "et arrive"
+ },
+ "يأكل {0}": {
+  "en": "Captures {0}",
+  "fr": "Capture {0}"
+ },
+ "ياقوتي": {
+  "en": "Ruby",
+  "fr": "Rubis"
+ },
+ "يبدأ {0}": {
+  "en": "{0} starts",
+  "fr": "{0} commence"
+ },
+ "يبدأ {0} بـ {1} {2}": {
+  "en": "{0} starts with {1} {2}",
+  "fr": "{0} commence avec {1} {2}"
+ },
+ "يبدأ {0}، صاحب أعلى مجموع": {
+  "en": "{0} starts, with the highest total",
+  "fr": "{0} commence, avec le plus haut total"
+ },
+ "يبدأ شريكي {0}": {
+  "en": "My partner {0} starts",
+  "fr": "Mon partenaire {0} commence"
+ },
+ "يجب أن تكتمل المقاعد الأربعة": {
+  "en": "All four seats must be filled",
+  "fr": "Les quatre places doivent être occupées"
+ },
+ "يجب أن يحتوي اسم المستخدم على حرف أو رقم": {
+  "en": "The username must contain a letter or a number",
+  "fr": "Le nom d'utilisateur doit contenir une lettre ou un chiffre"
+ },
+ "يدوي": {
+  "en": "Manual",
+  "fr": "Manuel"
+ },
+ "يظهر أثناء المحادثة الصوتية حتى تستمر والتطبيق في الخلفية": {
+  "en": "Shown during voice chat so it keeps going while the app is in the background",
+  "fr": "Affiché pendant le chat vocal pour qu'il continue avec l'application en arrière-plan"
+ },
+ "يعرض أسماء المتصلين": {
+  "en": "Shows the names of who's online",
+  "fr": "Affiche les noms des personnes en ligne"
+ },
+ "يمين {0} يسار {1}": {
+  "en": "Right {0} left {1}",
+  "fr": "Droite {0} gauche {1}"
+ },
+ "يمين {0} — يسار {1}{2}": {
+  "en": "Right {0} — left {1}{2}",
+  "fr": "Droite {0} — gauche {1}{2}"
+ },
+ "يوصله إشعار بالهدية وتتفعل الباقة عنده شهر. ما تتجدد تلقائياً، وإذا انتهى الشهر تقدر تدفع وتجدد له شهر ثاني.": {
+  "en": "They get a gift notification and the plan is active for them for a month. It doesn't renew automatically; when the month ends you can pay to renew it for another month.",
+  "fr": "Il reçoit une notification de cadeau et l'abonnement est actif pour lui pendant un mois. Il ne se renouvelle pas automatiquement ; à la fin du mois, vous pouvez payer pour le renouveler un mois de plus."
+ },
+ "⏱ المؤقت": {
+  "en": "⏱ Timer",
+  "fr": "⏱ Minuteur"
+ },
+ "✓ الاسم متاح": {
+  "en": "✓ Name available",
+  "fr": "✓ Nom disponible"
+ },
+ "✓ بالـ{0}": {
+  "en": "✓ with {0}",
+  "fr": "✓ avec {0}"
+ },
+ "✓ مشترك في الباقة حتى {0}": {
+  "en": "✓ Subscribed to the plan until {0}",
+  "fr": "✓ Abonné jusqu'au {0}"
+ },
+ "❓ استفسار": {
+  "en": "❓ Question",
+  "fr": "❓ Question"
+ },
+ "⟦v|{0}|رميت {1}|%n رمى {2}⟧": {
+  "en": "⟦v|{0}|You rolled {1}|%n rolled {2}⟧",
+  "fr": "⟦v|{0}|Vous avez fait {1}|%n a fait {2}⟧"
+ },
+ "⟦v|{0}|فزت!|فاز %n⟧": {
+  "en": "⟦v|{0}|You won!|%n won⟧",
+  "fr": "⟦v|{0}|Vous avez gagné !|%n a gagné⟧"
+ },
+ "🎁 إهداء الباقة للاعب ثاني": {
+  "en": "🎁 Gift the plan to another player",
+  "fr": "🎁 Offrir l'abonnement à un autre joueur"
+ },
+ "🎉 فاز فريقك!": {
+  "en": "🎉 Your team won!",
+  "fr": "🎉 Votre équipe a gagné !"
+ },
+ "🎉 فزت!": {
+  "en": "🎉 You won!",
+  "fr": "🎉 Vous avez gagné !"
+ },
+ "🎨 تخصيص الشكل": {
+  "en": "🎨 Customize the look",
+  "fr": "🎨 Personnaliser l'apparence"
+ },
+ "👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.": {
+  "en": "👑 Manual projects, Qaid, and changing the timer during play: for Pro plan subscribers.",
+  "fr": "👑 Annonces manuelles, Qaid et modification du minuteur en cours de partie : réservés aux abonnés Pro."
+ },
+ "👑 الباقة الاحترافية": {
+  "en": "👑 Pro plan",
+  "fr": "👑 Abonnement Pro"
+ },
+ "👑 باقتك الاحترافية": {
+  "en": "👑 Your Pro plan",
+  "fr": "👑 Votre abonnement Pro"
+ },
+ "👑 طاولة ثابتة بكلمة مرور": {
+  "en": "👑 Pinned table with a password",
+  "fr": "👑 Table fixe avec mot de passe"
+ },
+ "👑 عضو ذهبي": {
+  "en": "👑 Gold member",
+  "fr": "👑 Membre Or"
+ },
+ "💬 الدردشة": {
+  "en": "💬 Chat",
+  "fr": "💬 Discussion"
+ },
+ "💬 الدردشة ({0})": {
+  "en": "💬 Chat ({0})",
+  "fr": "💬 Discussion ({0})"
+ },
+ "💬 المساعدة والدعم": {
+  "en": "💬 Help and support",
+  "fr": "💬 Aide et assistance"
+ },
+ "📎 إرفاق صور ({0} من 4)": {
+  "en": "📎 Attach images ({0} of 4)",
+  "fr": "📎 Joindre des images ({0} sur 4)"
+ },
+ "📝 شكوى": {
+  "en": "📝 Complaint",
+  "fr": "📝 Réclamation"
+ },
+ "🔒 إعلان المشاريع {0}، والقيد والقطع {1}: ينضبطون قبل بداية المباراة بس.": {
+  "en": "🔒 Project declaration {0} and Qaid {1}: set before the match starts only.",
+  "fr": "🔒 Annonces {0} et Qaid {1} : à régler avant le début de la partie uniquement."
+ },
+ "🔒 تغيير كلمة المرور": {
+  "en": "🔒 Change password",
+  "fr": "🔒 Modifier le mot de passe"
+ },
+ "🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.": {
+  "en": "🔒 These options only apply if all players are subscribed to the plan, and are set before the match starts only. Once it starts, only the timer can change.",
+  "fr": "🔒 Ces options ne s'activent que si tous les joueurs sont abonnés, et se règlent avant le début de la partie uniquement. Une fois lancée, seul le minuteur peut changer."
+ },
+ "🛠 تذاكر الدعم (المطور)": {
+  "en": "🛠 Support tickets (developer)",
+  "fr": "🛠 Tickets d'assistance (développeur)"
+ },
+ "أكة سبيت": {
+  "en": "Ace of Spades",
+  "fr": "As de pique"
+ },
+ "أكة هاص": {
+  "en": "Ace of Hearts",
+  "fr": "As de cœur"
+ },
+ "أكة شريا": {
+  "en": "Ace of Clubs",
+  "fr": "As de trèfle"
+ },
+ "أكة ديمن": {
+  "en": "Ace of Diamonds",
+  "fr": "As de carreau"
+ },
+ "شايب سبيت": {
+  "en": "King of Spades",
+  "fr": "Roi de pique"
+ },
+ "شايب هاص": {
+  "en": "King of Hearts",
+  "fr": "Roi de cœur"
+ },
+ "شايب شريا": {
+  "en": "King of Clubs",
+  "fr": "Roi de trèfle"
+ },
+ "شايب ديمن": {
+  "en": "King of Diamonds",
+  "fr": "Roi de carreau"
+ },
+ "بنت سبيت": {
+  "en": "Queen of Spades",
+  "fr": "Dame de pique"
+ },
+ "بنت هاص": {
+  "en": "Queen of Hearts",
+  "fr": "Dame de cœur"
+ },
+ "بنت شريا": {
+  "en": "Queen of Clubs",
+  "fr": "Dame de trèfle"
+ },
+ "بنت ديمن": {
+  "en": "Queen of Diamonds",
+  "fr": "Dame de carreau"
+ },
+ "ولد سبيت": {
+  "en": "Jack of Spades",
+  "fr": "Valet de pique"
+ },
+ "ولد هاص": {
+  "en": "Jack of Hearts",
+  "fr": "Valet de cœur"
+ },
+ "ولد شريا": {
+  "en": "Jack of Clubs",
+  "fr": "Valet de trèfle"
+ },
+ "ولد ديمن": {
+  "en": "Jack of Diamonds",
+  "fr": "Valet de carreau"
+ },
+ "10 سبيت": {
+  "en": "10 of Spades",
+  "fr": "10 de pique"
+ },
+ "10 هاص": {
+  "en": "10 of Hearts",
+  "fr": "10 de cœur"
+ },
+ "10 شريا": {
+  "en": "10 of Clubs",
+  "fr": "10 de trèfle"
+ },
+ "10 ديمن": {
+  "en": "10 of Diamonds",
+  "fr": "10 de carreau"
+ },
+ "9 سبيت": {
+  "en": "9 of Spades",
+  "fr": "9 de pique"
+ },
+ "9 هاص": {
+  "en": "9 of Hearts",
+  "fr": "9 de cœur"
+ },
+ "9 شريا": {
+  "en": "9 of Clubs",
+  "fr": "9 de trèfle"
+ },
+ "9 ديمن": {
+  "en": "9 of Diamonds",
+  "fr": "9 de carreau"
+ },
+ "8 سبيت": {
+  "en": "8 of Spades",
+  "fr": "8 de pique"
+ },
+ "8 هاص": {
+  "en": "8 of Hearts",
+  "fr": "8 de cœur"
+ },
+ "8 شريا": {
+  "en": "8 of Clubs",
+  "fr": "8 de trèfle"
+ },
+ "8 ديمن": {
+  "en": "8 of Diamonds",
+  "fr": "8 de carreau"
+ },
+ "7 سبيت": {
+  "en": "7 of Spades",
+  "fr": "7 de pique"
+ },
+ "7 هاص": {
+  "en": "7 of Hearts",
+  "fr": "7 de cœur"
+ },
+ "7 شريا": {
+  "en": "7 of Clubs",
+  "fr": "7 de trèfle"
+ },
+ "7 ديمن": {
+  "en": "7 of Diamonds",
+  "fr": "7 de carreau"
+ },
+ "6 سبيت": {
+  "en": "6 of Spades",
+  "fr": "6 de pique"
+ },
+ "6 هاص": {
+  "en": "6 of Hearts",
+  "fr": "6 de cœur"
+ },
+ "6 شريا": {
+  "en": "6 of Clubs",
+  "fr": "6 de trèfle"
+ },
+ "6 ديمن": {
+  "en": "6 of Diamonds",
+  "fr": "6 de carreau"
+ },
+ "5 سبيت": {
+  "en": "5 of Spades",
+  "fr": "5 de pique"
+ },
+ "5 هاص": {
+  "en": "5 of Hearts",
+  "fr": "5 de cœur"
+ },
+ "5 شريا": {
+  "en": "5 of Clubs",
+  "fr": "5 de trèfle"
+ },
+ "5 ديمن": {
+  "en": "5 of Diamonds",
+  "fr": "5 de carreau"
+ },
+ "4 سبيت": {
+  "en": "4 of Spades",
+  "fr": "4 de pique"
+ },
+ "4 هاص": {
+  "en": "4 of Hearts",
+  "fr": "4 de cœur"
+ },
+ "4 شريا": {
+  "en": "4 of Clubs",
+  "fr": "4 de trèfle"
+ },
+ "4 ديمن": {
+  "en": "4 of Diamonds",
+  "fr": "4 de carreau"
+ },
+ "3 سبيت": {
+  "en": "3 of Spades",
+  "fr": "3 de pique"
+ },
+ "3 هاص": {
+  "en": "3 of Hearts",
+  "fr": "3 de cœur"
+ },
+ "3 شريا": {
+  "en": "3 of Clubs",
+  "fr": "3 de trèfle"
+ },
+ "3 ديمن": {
+  "en": "3 of Diamonds",
+  "fr": "3 de carreau"
+ },
+ "2 سبيت": {
+  "en": "2 of Spades",
+  "fr": "2 de pique"
+ },
+ "2 هاص": {
+  "en": "2 of Hearts",
+  "fr": "2 de cœur"
+ },
+ "2 شريا": {
+  "en": "2 of Clubs",
+  "fr": "2 de trèfle"
+ },
+ "2 ديمن": {
+  "en": "2 of Diamonds",
+  "fr": "2 de carreau"
+ },
+ "اللغة": {
+  "en": "Language",
+  "fr": "Langue"
+ },
+ "اللعب": {
+  "en": "Play",
+  "fr": "Jeu"
+ },
+ " (أنت)": {
+  "en": " (you)",
+  "fr": " (vous)"
+ },
+ " (الحالية)": {
+  "en": " (current)",
+  "fr": " (actuel)"
+ },
+ " بين {0} لاعبين، كل واحد لنفسه": {
+  "en": " between {0} players, each for themselves",
+  "fr": " entre {0} joueurs, chacun pour soi"
+ },
+ " حجر": {
+  "en": " marble",
+  "fr": " bille"
+ },
+ " زائد {0} هدية": {
+  "en": " plus {0} bonus",
+  "fr": " plus {0} en cadeau"
+ },
+ " للمقعد {0}": {
+  "en": " to seat {0}",
+  "fr": " à la place {0}"
+ },
+ " مقابل ": {
+  "en": " vs ",
+  "fr": " contre "
+ },
+ " من الموزع اللي بعده": {
+  "en": " from the next dealer",
+  "fr": " par le donneur suivant"
+ },
+ " — المالك {0}": {
+  "en": " — owner {0}",
+  "fr": " — propriétaire {0}"
+ },
+ " — في البنك {0}": {
+  "en": " — {0} in the boneyard",
+  "fr": " — {0} dans la pioche"
+ },
+ "/توزيع": {
+  "en": "/deal",
+  "fr": "/donne"
+ },
+ "{0} رمى": {
+  "en": "{0} rolled",
+  "fr": "{0} a lancé"
+ },
+ "{0} وصل {1} من 4": {
+  "en": "{0} got {1} of 4 home",
+  "fr": "{0} a {1} sur 4 arrivées"
+ },
+ "، آخر رمية {0}": {
+  "en": ", last roll {0}",
+  "fr": ", dernier lancer {0}"
+ },
+ "، اختر ورقة لحرقها": {
+  "en": ", choose a card to burn",
+  "fr": ", choisissez une carte à brûler"
+ },
+ "، توزيع": {
+  "en": ", deal",
+  "fr": ", donne"
+ },
+ "، رمياته ": {
+  "en": ", their rolls ",
+  "fr": ", ses lancers "
+ },
+ "، رمياته {0}": {
+  "en": ", their rolls {0}",
+  "fr": ", ses lancers {0}"
+ },
+ "، شريكك": {
+  "en": ", your partner",
+  "fr": ", votre partenaire"
+ },
+ "، عليه الدور": {
+  "en": ", their turn",
+  "fr": ", à son tour"
+ },
+ "، فردي": {
+  "en": ", solo",
+  "fr": ", solo"
+ },
+ "، فرق": {
+  "en": ", teams",
+  "fr": ", équipes"
+ },
+ "، كبوت": {
+  "en": ", Kaboot",
+  "fr": ", Kaboot"
+ },
+ "، محدد": {
+  "en": ", selected",
+  "fr": ", sélectionné"
+ },
+ "، محددة": {
+  "en": ", selected",
+  "fr": ", sélectionnée"
+ },
+ "، مقعده محجوز ثلاث دقائق": {
+  "en": ", their seat is held for three minutes",
+  "fr": ", sa place est réservée trois minutes"
+ },
+ "، منطقة أمان": {
+  "en": ", safe zone",
+  "fr": ", zone sûre"
+ },
+ "، ويرمي مرة ثانية": {
+  "en": ", and rolls again",
+  "fr": ", et rejoue"
+ },
+ "، يختار الحجر": {
+  "en": ", choosing the piece",
+  "fr": ", choisit le pion"
+ },
+ "أنهيت أحجارك، تلعب بأحجار {0}": {
+  "en": "Your marbles are done; you play with {0}'s marbles",
+  "fr": "Vos billes sont arrivées ; vous jouez avec les billes de {0}"
+ },
+ "استفسارك": {
+  "en": "your question",
+  "fr": "votre question"
+ },
+ "الأولى": {
+  "en": "first",
+  "fr": "première"
+ },
+ "الثانية": {
+  "en": "second",
+  "fr": "deuxième"
+ },
+ "الدور عند {0}": {
+  "en": "{0}'s turn",
+  "fr": "Au tour de {0}"
+ },
+ "المقعد الفارغ": {
+  "en": "the empty seat",
+  "fr": "la place libre"
+ },
+ "بالـ{0}: ": {
+  "en": "with {0}: ",
+  "fr": "avec {0} : "
+ },
+ "تحرك": {
+  "en": "moved",
+  "fr": "a bougé"
+ },
+ "تحركت": {
+  "en": "you moved",
+  "fr": "vous avez bougé"
+ },
+ "تسجيلة صحيحة": {
+  "en": "correct call",
+  "fr": "faute confirmée"
+ },
+ "تسجيلة غلط": {
+  "en": "wrong call",
+  "fr": "signalement erroné"
+ },
+ "تلقائي": {
+  "en": "Automatic",
+  "fr": "Automatique"
+ },
+ "ثابتة بكلمة مرور، ": {
+  "en": "pinned with a password, ",
+  "fr": "fixe avec mot de passe, "
+ },
+ "حرق": {
+  "en": "burned",
+  "fr": "a brûlé"
+ },
+ "حرّك{0}": {
+  "en": "moved{0}",
+  "fr": "a bougé{0}"
+ },
+ "حرّكت{0}": {
+  "en": "you moved{0}",
+  "fr": "vous avez bougé{0}"
+ },
+ "رميت": {
+  "en": "you rolled",
+  "fr": "vous avez lancé"
+ },
+ "شكواك": {
+  "en": "your complaint",
+  "fr": "votre réclamation"
+ },
+ "صديقك، ": {
+  "en": "your friend, ",
+  "fr": "votre ami, "
+ },
+ "متصل": {
+  "en": "online",
+  "fr": "en ligne"
+ },
+ "مشروعه": {
+  "en": "their project",
+  "fr": "son annonce"
+ },
+ "مقعد{0}": {
+  "en": "Seat{0}",
+  "fr": "Place{0}"
+ },
+ "مقفلة، ": {
+  "en": "locked, ",
+  "fr": "fermée, "
+ },
+ "ممر المنزل": {
+  "en": "home column",
+  "fr": "colonne d'arrivée"
+ },
+ "ممر منزله": {
+  "en": "its home column",
+  "fr": "sa colonne d'arrivée"
+ },
+ "مو مفعّل": {
+  "en": "off",
+  "fr": "désactivé"
+ },
+ "ولا شي": {
+  "en": "nothing",
+  "fr": "rien"
+ },
+ "يختار": {
+  "en": "choosing",
+  "fr": "choisit"
+ },
+ "يختارون": {
+  "en": "choosing",
+  "fr": "choisissent"
+ },
+ "إعلان: {0}": {
+  "en": "Announcement: {0}",
+  "fr": "Annonce : {0}"
+ },
+ "(انقطع الاتصال)": {
+  "en": "(disconnected)",
+  "fr": "(déconnecté)"
+ },
+ "(روبوت)": {
+  "en": "(bot)",
+  "fr": "(robot)"
+ },
+ "(شريكك)": {
+  "en": "(your partner)",
+  "fr": "(votre partenaire)"
+ },
+ "(مفتوح)": {
+  "en": "(open)",
+  "fr": "(ouvert)"
+ },
+ "(مقفل)": {
+  "en": "(locked)",
+  "fr": "(fermé)"
+ },
+ "/ شهر": {
+  "en": "/ month",
+  "fr": "/ mois"
+ },
+ "إلى ⟦sq|{0}|0⟧": {
+  "en": "to ⟦sq|{0}|0⟧",
+  "fr": "vers ⟦sq|{0}|0⟧"
+ },
+ "على اليسار": {
+  "en": "on the left",
+  "fr": "à gauche"
+ },
+ "على اليمين": {
+  "en": "on the right",
+  "fr": "à droite"
+ },
+ "من {0}": {
+  "en": "from {0}",
+  "fr": "de {0}"
+ },
+ "منك": {
+  "en": "from you",
+  "fr": "de vous"
+ },
+ "يحل روبوت مكانه في اللعب.": {
+  "en": "A bot takes over their play.",
+  "fr": "Un robot prend sa place dans le jeu."
+ },
+ "⟦tok|{0}|{1}⟧، ورجع للبيت": {
+  "en": "⟦tok|{0}|{1}⟧, and it went back home",
+  "fr": "⟦tok|{0}|{1}⟧, et il est rentré à la maison"
+ },
+ "انقطع اتصاله": {
+  "en": "disconnected",
+  "fr": "déconnecté"
+ },
+ "خارج المحادثة الصوتية": {
+  "en": "out of voice chat",
+  "fr": "hors du chat vocal"
+ },
+ "في المحادثة الصوتية": {
+  "en": "in voice chat",
+  "fr": "dans le chat vocal"
+ },
+ "مكتوم": {
+  "en": "muted",
+  "fr": "muet"
+ },
+ "وترمي مرة أخرى": {
+  "en": "and you roll again",
+  "fr": "et vous rejouez"
+ },
+ "ورقة الأرض {0}": {
+  "en": "table card {0}",
+  "fr": "carte retournée {0}"
+ },
+ "ويرمي مرة أخرى": {
+  "en": "and rolls again",
+  "fr": "et rejoue"
+ },
+ "(أنت)": {
+  "en": "(you)",
+  "fr": "(vous)"
+ },
+ "(الحالية)": {
+  "en": "(current)",
+  "fr": "(actuel)"
+ },
+ "بين {0} لاعبين، كل واحد لنفسه": {
+  "en": "between {0} players, each for themselves",
+  "fr": "entre {0} joueurs, chacun pour soi"
+ },
+ "حجر": {
+  "en": "marble",
+  "fr": "bille"
+ },
+ "زائد {0} هدية": {
+  "en": "plus {0} bonus",
+  "fr": "plus {0} en cadeau"
+ },
+ "للمقعد {0}": {
+  "en": "to seat {0}",
+  "fr": "à la place {0}"
+ },
+ "مقابل ": {
+  "en": "vs ",
+  "fr": "contre "
+ },
+ "من الموزع اللي بعده": {
+  "en": "from the next dealer",
+  "fr": "par le donneur suivant"
+ },
+ "المالك {0}": {
+  "en": "owner {0}",
+  "fr": "propriétaire {0}"
+ },
+ "في البنك {0}": {
+  "en": "{0} in the boneyard",
+  "fr": "{0} dans la pioche"
+ },
+ "آخر رمية {0}": {
+  "en": "last roll {0}",
+  "fr": "dernier lancer {0}"
+ },
+ "اختر ورقة لحرقها": {
+  "en": "choose a card to burn",
+  "fr": "choisissez une carte à brûler"
+ },
+ "توزيع": {
+  "en": "deal",
+  "fr": "donne"
+ },
+ "رمياته ": {
+  "en": "their rolls ",
+  "fr": "ses lancers "
+ },
+ "رمياته {0}": {
+  "en": "their rolls {0}",
+  "fr": "ses lancers {0}"
+ },
+ "شريكك": {
+  "en": "your partner",
+  "fr": "votre partenaire"
+ },
+ "عليه الدور": {
+  "en": "their turn",
+  "fr": "à son tour"
+ },
+ "محدد": {
+  "en": "selected",
+  "fr": "sélectionné"
+ },
+ "محددة": {
+  "en": "selected",
+  "fr": "sélectionnée"
+ },
+ "مقعده محجوز ثلاث دقائق": {
+  "en": "their seat is held for three minutes",
+  "fr": "sa place est réservée trois minutes"
+ },
+ "ويرمي مرة ثانية": {
+  "en": "and rolls again",
+  "fr": "et rejoue"
+ },
+ "يختار الحجر": {
+  "en": "choosing the piece",
+  "fr": "choisit le pion"
+ }
+}

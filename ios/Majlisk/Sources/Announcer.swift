@@ -54,8 +54,9 @@ enum Announcer {
     }
 
     /// يُقرأ بعد ما يخلص اللي قبله (ما يقطعه)
-    static func announce(_ text: String) {
-        guard !text.isEmpty else { return }
+    static func announce(_ text0: String) {
+        guard !text0.isEmpty else { return }
+        let text = tr(text0)
         DispatchQueue.main.async {
             queue.append(text)
             pump()
@@ -77,8 +78,9 @@ enum Announcer {
     }
 
     /// يُقرأ الآن (ردّ إيماءة أو زر قراءة سريعة): يقطع القديم، واللي ينتظر في الطابور قديم فينمسح
-    static func announceNow(_ text: String) {
-        guard !text.isEmpty else { return }
+    static func announceNow(_ text0: String) {
+        guard !text0.isEmpty else { return }
+        let text = tr(text0)
         DispatchQueue.main.async {
             listen()
             queue.removeAll()

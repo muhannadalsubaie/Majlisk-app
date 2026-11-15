@@ -98,17 +98,17 @@ struct TableScreen: View {
                 SmallButton("القائمة") { menuSheet = .main }
                     // قارئ الشاشة: الإجراءات (سحب لفوق أو تحت) تفتح الصفحة المطلوبة على طول
                     .accessibilityActions {
-                        Button("اللاعبون") { menuSheet = .players }
-                        Button("الأصدقاء") { menuSheet = .friends }
-                        if v.ownerUid == uid { Button("دعوة صديق") { menuSheet = .invite } }
-                        Button("مغادرة الطاولة") { confirmLeave = true }
+                        Button(tr("اللاعبون")) { menuSheet = .players }
+                        Button(tr("الأصدقاء")) { menuSheet = .friends }
+                        if v.ownerUid == uid { Button(tr("دعوة صديق")) { menuSheet = .invite } }
+                        Button(tr("مغادرة الطاولة")) { confirmLeave = true }
                     }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
                 // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
                 if v.ownerUid == uid && v.playing && v.allPro && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
-                Text("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")").foregroundColor(Palette.textDim)
+                Text(tr("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
             if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }
@@ -166,9 +166,9 @@ struct TableScreen: View {
         .alert(conn.joinRequest.map { "\($0.name) طلب الانضمام" } ?? "",
                isPresented: Binding(get: { conn.joinRequest != nil }, set: { if !$0 { conn.joinRequest = nil } }),
                presenting: conn.joinRequest) { r in
-            Button("قبول") { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "accept", "accept": true]) }
-            Button("تجاهل", role: .cancel) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "ignore", "accept": false]) }
-            Button("رفض", role: .destructive) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "reject", "accept": false]) }
+            Button(tr("قبول")) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "accept", "accept": true]) }
+            Button(tr("تجاهل"), role: .cancel) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "ignore", "accept": false]) }
+            Button(tr("رفض"), role: .destructive) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "reject", "accept": false]) }
         }
         .sheet(item: $menuSheet) { start in
             TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuSheet = nil }, start: start)
@@ -240,16 +240,16 @@ struct BalootBoard: View {
             let themLabel = mySeat == nil ? "\(text.name(1)) و\(text.name(3))" : "لهم"
             HStack(spacing: 10) {
                 ScoreBox(label: usLabel, value: us, mine: mySeat != nil)
-                Text("152").font(.system(size: 13)).foregroundColor(Palette.textDim)
+                Text(tr("152")).font(.system(size: 13)).foregroundColor(Palette.textDim)
                     .padding(.horizontal, 10).padding(.vertical, 4)
                     .overlay(Capsule().stroke(Palette.green700, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
                 ScoreBox(label: themLabel, value: them, mine: false)
             }
             .fixedSize(horizontal: false, vertical: true)
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel("النقاط: \(usLabel) \(us)، \(themLabel) \(them). الفوز عند 152")
+            .accessibilityLabel(tr("النقاط: \(usLabel) \(us)، \(themLabel) \(them). الفوز عند 152"))
 
-            if let line = text.statusLine() { Text(line).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+            if let line = text.statusLine() { Text(tr(line)).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
 
             // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
             GeometryReader { geo in
@@ -275,7 +275,7 @@ struct BalootBoard: View {
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
                 // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
                 let w = g.outcomeWinner ?? 0
-                Text(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر").font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
+                Text(tr(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
             }
 
             if g.phase == "matchOver" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
@@ -333,11 +333,11 @@ struct BalootBoard: View {
                 }
                 // يد اللاعب
                 if let mine = mySeat {
-                    if let note = seatNote(g, mine) { Text("أنت: \(note)").font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+                    if let note = seatNote(g, mine) { Text(tr("أنت: \(note)")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
                     let myFaces = text.faces(mine)
                     if !myFaces.isEmpty {
                         HStack(spacing: 8) {
-                            Text("مشروعك").font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
+                            Text(tr("مشروعك")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
                             ProjectFaces(faces: myFaces, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
                         }
                         .frame(maxWidth: .infinity)
@@ -477,7 +477,7 @@ struct BalootBoard: View {
             shape.stroke(Palette.gold.opacity(0.33), lineWidth: 1).padding(10)
             if (g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq"), let q = g.qaba {
                 VStack(spacing: 4) {
-                    Text("ورقة الأرض").font(.system(size: 14)).foregroundColor(Palette.textDim)
+                    Text(tr("ورقة الأرض")).font(.system(size: 14)).foregroundColor(Palette.textDim)
                     TableCard(card: q)
                 }
                 .offset(y: -4)
@@ -499,7 +499,7 @@ struct BalootBoard: View {
         .rotation3DEffect(.degrees(40), axis: (x: 1, y: 0, z: 0), perspective: 0.65)
         .contentShape(Circle())
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel("وسط الطاولة: \(text.trick())")
+        .accessibilityLabel(tr("وسط الطاولة: \(text.trick())"))
         .accessibilityAddTraits(.isButton)
         .onTapGesture { _ = read(.left) }
         // النقر مرتين يعيد قراءة أوراق الطاولة؛ باقي القراءات بالإيماءات (الإجراءات للشراء والمايك والقائمة بس)
@@ -610,8 +610,8 @@ private struct ScoreBox: View {
     let mine: Bool
     var body: some View {
         VStack(spacing: 2) {
-            Text(label).font(.system(size: 14, weight: .semibold)).foregroundColor(Palette.textDim)
-            Text("\(value)").font(.system(size: 30, weight: .bold)).foregroundColor(Palette.gold)
+            Text(tr(label)).font(.system(size: 14, weight: .semibold)).foregroundColor(Palette.textDim)
+            Text(tr("\(value)")).font(.system(size: 30, weight: .bold)).foregroundColor(Palette.gold)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 8)
@@ -660,13 +660,13 @@ private struct PlayerTag: View {
         let who = VStack(spacing: 4) {
             Avatar(uid: v.seatUid(seat), name: s?.username ?? "", size: 34)
             HStack(spacing: 4) {
-                Text(label)
+                Text(tr(label))
                     .font(.system(size: 14, weight: .bold))
                     .multilineTextAlignment(.center)
                     .minimumScaleFactor(0.7)
                 TurnClock(v: v, seat: seat, turn: turn)
             }
-            if let note { Text(note).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
+            if let note { Text(tr(note)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
         }
         let fan = ProjectFaces(faces: faces, maxWidth: across ? 170 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) })
         Group {
@@ -774,7 +774,7 @@ private struct SpotPanel: View {
         let rows = stride(from: 0, to: spot.cards.count, by: 5).map { Array(spot.cards[$0..<min($0 + 5, spot.cards.count)]) }
         let shape = RoundedRectangle(cornerRadius: 20)
         VStack(spacing: 10) {
-            Text(spot.title).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
+            Text(tr(spot.title)).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
             ForEach(0..<rows.count, id: \.self) { r in
                 HStack(spacing: 6) {
                     ForEach(0..<rows[r].count, id: \.self) { i in
@@ -849,7 +849,7 @@ private struct HandCard: View {
             .contentShape(Rectangle())
             .onTapGesture { tap() }
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(card.label)
+            .accessibilityLabel(tr(card.label))
             .accessibilityAddTraits(.isButton)
             .accessibilityAction { tap() }
             .accessibilityActions {
@@ -994,7 +994,7 @@ private struct ShowProjectPanel: View {
         // الزر نفسه صار فوق مع أزرار القيد؛ هنا لوحة الاختيار بس
         if hub.choosing {
             VStack(alignment: .leading, spacing: 8) {
-                Text("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع").bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+                Text(tr("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع")).bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
                 FlowLayout(spacing: 6) {
                     ForEach(cards, id: \.self) { c in
                         let on = picked.contains(c)

@@ -53,8 +53,9 @@ class MainActivity : ComponentActivity() {
         // فتحت التطبيق من إشعار دعوة: ندخلك الطاولة
         com.majlisk.app.push.Push.fromIntent(intent?.extras)
         setContent {
-            // التطبيق عربي بالكامل: من اليمين لليسار دائماً، مهما كانت لغة الجهاز
-            CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+            // اتجاه الشاشة من لغة التطبيق (مو لغة الجهاز): العربي من اليمين، والإنجليزي والفرنسي من اليسار
+            com.majlisk.app.i18n.I18n.init()
+            CompositionLocalProvider(LocalLayoutDirection provides if (com.majlisk.app.i18n.I18n.rtl) LayoutDirection.Rtl else LayoutDirection.Ltr) {
                 MajliskTheme { AppRoot() }
             }
         }

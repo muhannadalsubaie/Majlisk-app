@@ -33,6 +33,9 @@ targets:
       # صوت الإشعارات وأنت برا التطبيق: لازم يكون في جذر التطبيق وبصيغة CAF
       - path: Majlisk/notify.caf
         buildPhase: resources
+      # قاموس الترجمة (إنجليزي وفرنسي)
+      - path: Majlisk/i18n.json
+        buildPhase: resources
     dependencies:
       - package: Firebase
         product: FirebaseAuth
