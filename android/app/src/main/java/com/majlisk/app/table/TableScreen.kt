@@ -727,10 +727,11 @@ private fun TrickArea(v: TableView, g: GameView, shownTrick: List<PlayedCard>, m
     }
     Box(
         Modifier
-            // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٢٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
+            // الطاولة مائلة فشكلها أقصر من مربعها، لكن طرفها القريب يكبر مع الميلان: نحجز لها ٨٠٪ من الطول
+            // (أقل من كذا كان طرفها ينزل فوق الأزرار والأوراق)
             .layout { m, c ->
                 val p = m.measure(c)
-                val h = (p.height * 0.72f).toInt()
+                val h = (p.height * 0.80f).toInt()
                 layout(p.width, h) { p.place(0, (h - p.height) / 2) }
             }
             .widthIn(max = 360.dp).fillMaxWidth().aspectRatio(1f)

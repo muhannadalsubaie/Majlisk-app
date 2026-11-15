@@ -252,21 +252,24 @@ struct BalootBoard: View {
             if let line = text.statusLine() { Text(tr(line)).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
 
             // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
-            GeometryReader { geo in
-                let unit = geo.size.width / 4.5
+            // كل شي ياخذ مكانه الحقيقي ويترتب تحت بعض (الاسم، ثم الطاولة، ثم الأزرار، ثم أوراقك): ما يطلع شي فوق شي
+            let boardW = min(UIScreen.main.bounds.width - 32, 520)
+            let unit = boardW / 4.5
+            Group {
                 VStack(spacing: 6) {
                     PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil, wide: true).frame(width: unit * 3)
                     HStack(spacing: 6) {
                         PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.7)
-                        // الطاولة مائلة فشكلها أقصر من مربعها: نحجز لها ٧٢٪ من الطول بس (كانت الشاشة تطول وتنسحب كأنها صفحتين)
+                        // الطاولة مائلة فشكلها أقصر من مربعها، لكن طرفها القريب يكبر مع الميلان: نحجز لها ٨٤٪ من الطول
+                        // (أقل من كذا كان طرفها ينزل فوق الأزرار والأوراق)
                         trickArea.frame(width: min(unit * 3.1, 360), height: min(unit * 3.1, 360))
-                            .frame(height: min(unit * 3.1, 360) * 0.72)
+                            .frame(height: min(unit * 3.1, 360) * 0.84)
                         PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.7)
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
-            .frame(height: min(min(UIScreen.main.bounds.width - 32, 520) / 4.5 * 3.1, 360) * 0.72 + 70)
+            .padding(.bottom, 6)
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
             // كشف المشروع: أوراقه كبيرة وسط الطاولة
             .overlay(ProjectSpotlight(g: g, text: text, faces: (0..<4).map { text.faces($0) }))
