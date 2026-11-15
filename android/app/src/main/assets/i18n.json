@@ -4826,5 +4826,17 @@
  "حذف الطاولة": {
   "en": "Delete the table",
   "fr": "Supprimer la table"
+ },
+ "تأكيد حذف الطاولة": {
+  "en": "Confirm deleting the table",
+  "fr": "Confirmer la suppression de la table"
+ },
+ "أُلغي الرقم السري: الطاولة صارت عامة عادية": {
+  "en": "Password removed: the table is now a normal public table",
+  "fr": "Mot de passe supprimé : la table est maintenant une table publique normale"
+ },
+ "حذف المالك الطاولة": {
+  "en": "The owner deleted the table",
+  "fr": "Le propriétaire a supprimé la table"
  }
 }

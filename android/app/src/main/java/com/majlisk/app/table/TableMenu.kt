@@ -93,7 +93,14 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             )
             SecondaryButton("الإعدادات", { page = Page.Settings }, fill = true)
             // الطاولة الثابتة: المالك يغيّر كلمة المرور
-            if (isOwner && v.pinned) SecondaryButton("🔒 تغيير كلمة المرور", { page = Page.Password }, fill = true)
+            if (isOwner && v.pinned) {
+                SecondaryButton("🔒 تغيير كلمة المرور", { page = Page.Password }, fill = true)
+                // إلغاء الرقم السري: ترجع طاولة عامة عادية، ولو غادرها الكل تنحذف تلقائي
+                SecondaryButton("إلغاء الرقم السري", { conn.send("removePassword"); onClose() }, fill = true)
+                // حذف الطاولة: ضغطتين (الثانية تأكيد)
+                var sure by remember { mutableStateOf(false) }
+                DangerButton(if (sure) "تأكيد حذف الطاولة" else "حذف الطاولة", { if (sure) { conn.send("deleteTable"); onClose() } else sure = true })
+            }
             if (isOwner) SecondaryButton("تغيير اللعبة", { page = Page.ChangeGame }, fill = true)
             if (isOwner && (v.hasGame || v.seats.any { it != null })) DangerButton("إيقاف اللعبة", { page = Page.Stop })
             DangerButton("مغادرة الطاولة", onLeave)

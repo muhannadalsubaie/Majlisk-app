@@ -20,6 +20,7 @@ struct TableMenu: View {
     @ObservedObject private var hub = Hub.shared
     @State private var page: Page = .main
     @State private var newPass = ""
+    @State private var sureDelete = false
     @State private var friendState: [String: String] = [:]
 
     private var view: TableView { conn.view ?? v }
@@ -70,7 +71,13 @@ struct TableMenu: View {
                 }
                 MButton("الإعدادات") { page = .settings }
                 // الطاولة الثابتة: المالك يغيّر كلمة المرور
-                if isOwner && view.pinned { MButton("🔒 تغيير كلمة المرور") { page = .password } }
+                if isOwner && view.pinned {
+                    MButton("🔒 تغيير كلمة المرور") { page = .password }
+                    // إلغاء الرقم السري: ترجع طاولة عامة عادية، ولو غادرها الكل تنحذف تلقائي
+                    MButton("إلغاء الرقم السري") { conn.send("removePassword"); onClose() }
+                    // حذف الطاولة: ضغطتين (الثانية تأكيد)
+                    MButton(sureDelete ? "تأكيد حذف الطاولة" : "حذف الطاولة", .danger) { if sureDelete { conn.send("deleteTable"); onClose() } else { sureDelete = true } }
+                }
                 if isOwner { MButton("تغيير اللعبة") { page = .changeGame } }
                 if isOwner && (view.hasGame || view.seats.contains { $0 != nil }) { MButton("إيقاف اللعبة", .danger) { page = .stop } }
                 MButton("مغادرة الطاولة", .danger, action: onLeave)
