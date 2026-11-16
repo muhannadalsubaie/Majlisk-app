@@ -120,6 +120,7 @@ data class JackarooView(
     val burning: Boolean,
     val hand: List<JackarooHandCard>,
     val boardText: String,
+    val oppText: String = "",
     val mineText: String,
     val prompt: String,
     /** الأوراق الملعوبة في هذا التوزيع بالترتيب */
@@ -183,6 +184,7 @@ data class JackarooView(
                     )
                 },
                 boardText = ui.optString("boardText"),
+                oppText = ui.optString("oppText"),
                 mineText = ui.optString("mineText"),
                 prompt = ui.optString("prompt"),
                 pile = s.optJSONArray("pile").objects().map { JackarooCard(it.optString("rank"), it.optString("suit")) },

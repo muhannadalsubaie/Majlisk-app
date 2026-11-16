@@ -98,7 +98,7 @@ struct JackarooView {
     var enteredSafe = 0
     let myTurn: Bool, burning: Bool
     let hand: [JackarooHandCard]
-    let boardText: String, mineText: String, prompt: String
+    let boardText: String, oppText: String, mineText: String, prompt: String
     /// الأوراق الملعوبة في هذا التوزيع بالترتيب
     let pile: [JackarooCard]
     /// المقاعد اللي تلعب (لاعبين أو ثلاثة أو أربعة)، وفريقين أو كل واحد لنفسه، والفائز في الفردي
@@ -147,7 +147,7 @@ struct JackarooView {
                 id: i, card: JackarooCard(rank: c.str("rank"), suit: c.str("suit")), label: h.str("label"), usable: h.bool("usable"),
                 moves: h.objs("moves").enumerated().map { k, m in JackarooMove(id: k, move: m.obj("move") ?? [:], text: m.str("text")) })
         }
-        boardText = ui.str("boardText"); mineText = ui.str("mineText"); prompt = ui.str("prompt")
+        boardText = ui.str("boardText"); oppText = ui.str("oppText"); mineText = ui.str("mineText"); prompt = ui.str("prompt")
         pile = s.objs("pile").map { JackarooCard(rank: $0.str("rank"), suit: $0.str("suit")) }
     }
 }

@@ -502,11 +502,11 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
     val themLabel = if (mySeat == null) "فريق ${names[1]}" else "الخصم"
 
     Column(
-        // سحب بإصبعين: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = أحجارك،
+        // سحب بإصبعين: من اليمين لليسار = أحجار الخصم، من اليسار لليمين = أحجارك،
         // من تحت لفوق = الدور عند مين، من فوق لتحت = قائمة أماكن الأحجار
         modifier.fillMaxWidth().twoFingerSwipes {
             when (it) {
-                SwipeDir.Left -> Announcer.announceNow(j.boardText)
+                SwipeDir.Left -> Announcer.announceNow(j.oppText.ifEmpty { j.boardText })
                 SwipeDir.Right -> Announcer.announceNow(j.mineText)
                 SwipeDir.Up -> Announcer.announceNow(jackarooTurnText(v, j))
                 SwipeDir.Down -> posOpen = true

@@ -675,13 +675,13 @@ struct JackarooBoard: View {
         }
     }
 
-    /// سحب بثلاث أصابع: من اليمين لليسار = اللوحة كاملة، من اليسار لليمين = أحجارك،
+    /// سحب بثلاث أصابع: من اليمين لليسار = أحجار الخصم، من اليسار لليمين = أحجارك،
     /// من تحت لفوق = الدور عند مين، من فوق لتحت = قائمة أماكن الأحجار (أحجارك أولاً ثم كل لاعب)
     private func read(_ raw: SwipeDir) -> Bool {
         let dir = flipVertical(raw)
         let cur = conn.view?.jackaroo ?? j
         switch dir {
-        case .left: Announcer.announceNow(cur.boardText)
+        case .left: Announcer.announceNow(cur.oppText.isEmpty ? cur.boardText : cur.oppText)
         case .right: Announcer.announceNow(cur.mineText)
         case .up: Announcer.announceNow(jackarooTurnText(conn.view ?? v, cur))
         case .down: posOpen = true
