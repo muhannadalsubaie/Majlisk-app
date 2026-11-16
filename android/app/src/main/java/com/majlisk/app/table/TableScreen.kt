@@ -470,7 +470,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
             // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)
-            if (com.majlisk.app.data.Prefs.handStyle.value == "row") androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
+            // الإنجليزي والفرنسي: اليد معكوسة (هاص الأكبر يسار، والقراءة تبدأ من اليسار)
+            val mirror = !com.majlisk.app.i18n.I18n.rtl
+            if (com.majlisk.app.data.Prefs.handStyle.value == "row") androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides if (mirror) androidx.compose.ui.unit.LayoutDirection.Rtl else androidx.compose.ui.unit.LayoutDirection.Ltr) {
                 FlowRow(
                     Modifier.fillMaxWidth().padding(top = 4.dp).semantics { isTraversalGroup = true },
                     horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -503,9 +505,10 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                             onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
                         }
                         HandCard(
-                            c, legal = g.actions.legal.contains(c), fanAngle = k * 7.5f, actions = cardActions,
-                            // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً
-                            modifier = Modifier.align(Alignment.BottomCenter).padding(bottom = 4.dp).size(80.dp, 116.dp).focusRequester(fr)
+                            c, legal = g.actions.legal.contains(c), fanAngle = if (mirror) -k * 7.5f else k * 7.5f, actions = cardActions,
+                            // قارئ الشاشة يقرأ من اليمين لليسار: هاص الأكبر أولاً (بالإنجليزي من اليسار)
+                            // المعكوسة: الورقة اليمين فوق اللي يسارها فيبقى رمز كل ورقة (زاويتها اليسرى) ظاهر
+                            modifier = Modifier.align(Alignment.BottomCenter).zIndex(if (mirror) -i.toFloat() else i.toFloat()).padding(bottom = 4.dp).size(80.dp, 116.dp).focusRequester(fr)
                                 .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
                             if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i }
@@ -608,7 +611,9 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ProjectFaces(faces: List<Card>, maxWidth: Float = 200f, onTap: (() -> Unit)? = null) {
+private fun ProjectFaces(sorted: List<Card>, maxWidth: Float = 200f, onTap: (() -> Unit)? = null) {
+    // الإنجليزي والفرنسي: نفس اتجاه اليد (هاص يسار)
+    val faces = if (com.majlisk.app.i18n.I18n.rtl) sorted else sorted.reversed()
     // تحت اسم صاحبه: أوراق واضحة جنب بعض بدون تراكب، وتنزل لسطر ثاني لو ما كفّاها المكان
     val w = if (maxWidth < 100f) 34f else 38f; val h = w * 1.45f
     androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {

@@ -340,7 +340,7 @@ struct BalootBoard: View {
                     if !myFaces.isEmpty {
                         HStack(spacing: 8) {
                             Text(tr("مشروعك")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
-                            ProjectFaces(faces: myFaces, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
+                            ProjectFaces(sorted: myFaces, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
                         }
                         .frame(maxWidth: .infinity)
                         .accessibilityHidden(true)
@@ -348,6 +348,8 @@ struct BalootBoard: View {
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)
+                    // الإنجليزي والفرنسي: اليد معكوسة (هاص الأكبر يسار، والقراءة تبدأ من اليسار)
+                    let mirror = !I18n.shared.rtl
                     // كل ورقة عنصر لحالها (تتنقل بينها يمين ويسار)، بس العنصر مربوط بمكانه في اليد مو بالورقة:
                     // لما تلعب ورقة يبقى مكانها (ويصير فيه الورقة اللي جنبها) فالمؤشر ما يقفز
                     // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)
@@ -365,7 +367,7 @@ struct BalootBoard: View {
                         }
                         .frame(maxWidth: .infinity)
                         .padding(.bottom, 6)
-                        .environment(\.layoutDirection, .leftToRight)
+                        .environment(\.layoutDirection, mirror ? .rightToLeft : .leftToRight)
                         .accessibilityElement(children: .contain)
                     } else {
                     ZStack(alignment: .bottom) {
@@ -379,7 +381,9 @@ struct BalootBoard: View {
                                 act(["type": "play", "card": c.json])
                             }
                                 .accessibilityFocused($slotFocus, equals: i)
-                                .rotationEffect(.degrees(Double(k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
+                                .rotationEffect(.degrees(Double(mirror ? -k : k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
+                                // المعكوسة: الورقة اليمين فوق اللي يسارها فيبقى رمز كل ورقة ظاهر
+                                .zIndex(mirror ? -Double(i) : Double(i))
                                 // VoiceOver يقرأ من اليمين لليسار: هاص الأكبر أولاً
                                 .accessibilitySortPriority(Double(i))
                         }
@@ -675,7 +679,7 @@ private struct PlayerTag: View {
         .background(turn ? Palette.gold.opacity(0.08) : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
-        let fan = ProjectFaces(faces: faces, maxWidth: across ? 170 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) })
+        let fan = ProjectFaces(sorted: faces, maxWidth: across ? 170 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) })
         Group {
             // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
             if across { HStack(spacing: 14) { who; fan } }
@@ -689,7 +693,9 @@ private struct PlayerTag: View {
 
 /// أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان)
 private struct ProjectFaces: View {
-    let faces: [Card]
+    let sorted: [Card]
+    /// الإنجليزي والفرنسي: نفس اتجاه اليد (هاص يسار)
+    var faces: [Card] { I18n.shared.rtl ? sorted : sorted.reversed() }
     /// أقصى عرض متاح (أسماء اللاعبين على الجنب ضيقة)
     var maxWidth: CGFloat = 200
     /// لمسة على الأوراق الصغيرة تكبّرها وسط الطاولة
