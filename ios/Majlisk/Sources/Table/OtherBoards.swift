@@ -1273,7 +1273,8 @@ private let HOME_CELLS: [[Cell]] = [
     [13, 12, 11, 10, 9].map { (CGFloat($0), 7) },
 ]
 private let YARDS: [Cell] = [(0, 0), (0, 9), (9, 9), (9, 0)]
-private let YARD_SPOTS: [Cell] = [(1.5, 1.5), (1.5, 3.5), (3.5, 1.5), (3.5, 3.5)]
+// أحجار البيت الأربعة متقاربة في وسط البيت
+private let YARD_SPOTS: [Cell] = [(2.5, 2.5), (2.5, 3.5), (3.5, 2.5), (3.5, 3.5)]
 private let CENTER_SPOT: [Cell] = [(7, 6.25), (6.25, 7), (7, 7.75), (7.75, 7)]
 
 /// خانة الحجر (قبل تدوير اللوحة) حسب تقدّمه: البيت، المسار، ممر المنزل، المنزل
@@ -1400,7 +1401,11 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
             if p != -1 && p != LudoView.FINISH { seen[key] = n + 1 }
             let q = CGPoint(x: pt.x + CGFloat(n) * U * 0.18, y: pt.y - CGFloat(n) * U * 0.18)
             if movable.contains(where: { $0.0 == o && $0.1 == i }) { ctx.stroke(circle(q, U * 0.5), with: .color(Palette.gold), lineWidth: U * 0.14) }
-            if LUDO_3D { drawPawn(ctx, LUDO_COLORS[o], q, p == LudoView.FINISH ? U * 0.25 : U * 0.36, 0, U) } else {
+            if LUDO_3D {
+                drawPawn(ctx, LUDO_COLORS[o], q, p == LudoView.FINISH ? U * 0.25 : U * 0.36, 0, U)
+                // الحجر داخل البيت: دائرة بيضاء صغيرة في وسطه للتمييز
+                if p == -1 { ctx.fill(circle(CGPoint(x: q.x, y: q.y - U * 0.36 * 0.30), U * 0.11), with: .color(.white)) }
+            } else {
                 // الشكل القديم: دائرة مسطحة بإطار ونقطة بيضاء
                 let r = p == LudoView.FINISH ? U * 0.23 : U * 0.36
                 ctx.fill(circle(q, r), with: .color(LUDO_COLORS[o]))

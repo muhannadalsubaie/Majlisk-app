@@ -1149,7 +1149,8 @@ private val HOME_CELLS: List<List<Pair<Float, Float>>> = listOf(
     listOf(13, 12, 11, 10, 9).map { it.toFloat() to 7f },
 )
 private val YARDS = listOf(0f to 0f, 0f to 9f, 9f to 9f, 9f to 0f)
-private val YARD_SPOTS = listOf(1.5f to 1.5f, 1.5f to 3.5f, 3.5f to 1.5f, 3.5f to 3.5f)
+// أحجار البيت الأربعة متقاربة في وسط البيت
+private val YARD_SPOTS = listOf(2.5f to 2.5f, 2.5f to 3.5f, 3.5f to 2.5f, 3.5f to 3.5f)
 private val CENTER_SPOT = listOf(7f to 6.25f, 6.25f to 7f, 7f to 7.75f, 7.75f to 7f)
 
 /** خانة الحجر (قبل تدوير اللوحة) حسب تقدّمه: البيت، المسار، ممر المنزل، المنزل */
@@ -1284,7 +1285,11 @@ private fun DrawScope.drawLudo(l: LudoView, bottom: Int, movable: List<Pair<Int,
             if (!fixed) seen[key] = n + 1
             val q = Offset(pt.x + n * U * 0.18f, pt.y - n * U * 0.18f)
             if (movable.any { it.first == o && it.second == i }) drawCircle(Color(0xFFD4AF37), U * 0.5f, q, style = Stroke(U * 0.14f))
-            if (LUDO_3D) drawPawn(LUDO_COLORS[o], q, if (p == LudoView.FINISH) U * 0.25f else U * 0.36f, 0f, U)
+            if (LUDO_3D) {
+                drawPawn(LUDO_COLORS[o], q, if (p == LudoView.FINISH) U * 0.25f else U * 0.36f, 0f, U)
+                // الحجر داخل البيت: دائرة بيضاء صغيرة في وسطه للتمييز
+                if (p == -1) drawCircle(Color.White, U * 0.11f, Offset(q.x, q.y - U * 0.36f * 0.30f))
+            }
             else {
                 // الشكل القديم: دائرة مسطحة بإطار ونقطة بيضاء
                 val r = if (p == LudoView.FINISH) U * 0.23f else U * 0.36f
