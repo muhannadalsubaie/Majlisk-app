@@ -200,6 +200,8 @@ struct BalootBoard: View {
     @AccessibilityFocusState private var slotFocus: Int?
     /// مكان الورقة اللي لعبتها: لو كانت آخر ورقة في اليد (مكانها يختفي) ننقل المؤشر للي قبلها
     @State private var playedPos: Int?
+    /// البلوت مع إعلان المشاريع يدوي: الورقة الثانية من الشايب والبنت تنتظر جوابك (تعلن بلوت أو لا)
+    @State private var balootAsk: Card?
     @State private var prevGame: GameView?
     @State private var lastTurn: String?
 
@@ -257,14 +259,14 @@ struct BalootBoard: View {
             let unit = boardW / 4.5
             Group {
                 VStack(spacing: 6) {
-                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil, wide: true).frame(width: unit * 3)
+                    PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil, wide: true, conn: conn, me: uid).frame(width: unit * 3)
                     HStack(spacing: 6) {
-                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4)).frame(width: unit * 0.7)
+                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4), conn: conn, me: uid).frame(width: unit * 0.7)
                         // الطاولة مائلة فشكلها أقصر من مربعها، لكن طرفها القريب يكبر مع الميلان: نحجز لها ٨٤٪ من الطول
                         // (أقل من كذا كان طرفها ينزل فوق الأزرار والأوراق)
                         trickArea.frame(width: min(unit * 3.1, 360), height: min(unit * 3.1, 360))
                             .frame(height: min(unit * 3.1, 360) * 0.84)
-                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4)).frame(width: unit * 0.7)
+                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4), conn: conn, me: uid).frame(width: unit * 0.7)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -309,7 +311,7 @@ struct BalootBoard: View {
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-                if (v.qaid || v.manualProjects) && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject || g.actions.canBaloot) {
+                if (v.qaid || v.manualProjects) && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
                     QaidButtons(v: v, g: g, act: act)
                 } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
@@ -359,7 +361,7 @@ struct BalootBoard: View {
                                 let c = hand[i]
                                 HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions, small: true) {
                                     if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents(); playedPos = i }
-                                    act(["type": "play", "card": c.json])
+                                    playCard(c)
                                 }
                                     .accessibilityFocused($slotFocus, equals: i)
                                     .accessibilitySortPriority(Double(i))
@@ -378,7 +380,7 @@ struct BalootBoard: View {
                             HandCard(card: c, legal: g.actions.legal.contains(c), actions: cardActions) {
                                 // إعلان لعبك (واللي بعده) يقطع قراءة الورقة
                                 if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents(); playedPos = i }
-                                act(["type": "play", "card": c.json])
+                                playCard(c)
                             }
                                 .accessibilityFocused($slotFocus, equals: i)
                                 .rotationEffect(.degrees(Double(mirror ? -k : k) * 7.5), anchor: UnitPoint(x: 0.5, y: 2.6))
@@ -396,11 +398,15 @@ struct BalootBoard: View {
                     }
                 } else {
                     // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
-                    PlayerTag(v: v, g: g, seat: 0, faces: shownFaces(0), note: seatNote(g, 0), wide: true)
+                    PlayerTag(v: v, g: g, seat: 0, faces: shownFaces(0), note: seatNote(g, 0), wide: true, conn: conn, me: uid)
                 }
             }
         }
         .onAppear { Gestures.shared.set("baloot") { read($0) }; prevGame = g; lastTurn = turnKey(g); releasedTrick = g.trickNo }
+        .alert(tr("إعلان مشروع بلوت؟"), isPresented: Binding(get: { balootAsk != nil }, set: { if !$0 { balootAsk = nil } }), presenting: balootAsk) { c in
+            Button(tr("نعم")) { balootAsk = nil; act(["type": "declareBaloot"]); act(["type": "play", "card": c.json]) }
+            Button(tr("لا"), role: .cancel) { balootAsk = nil; act(["type": "play", "card": c.json]) }
+        }
         .onDisappear { Gestures.shared.clear("baloot") }
         .onChange(of: conn.version) { _ in
             Gestures.shared.set("baloot") { read($0) }
@@ -431,7 +437,6 @@ struct BalootBoard: View {
         // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)، وفرشه، والتسجيلة من الأزرار
         for k in g.actions.declareKinds { out.append(("مشروع \(PROJECT_KIND_NAMES[k] ?? k)", { act(["type": "declareKind", "kind": k]) })) }
         if g.actions.canShowProject { out.append(("فرش المشروع", { act(["type": "showProject"]) })) }
-        if g.actions.canBaloot { out.append(("إعلان بلوت", { act(["type": "declareBaloot"]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
         if g.actions.chooseLock {
@@ -442,6 +447,12 @@ struct BalootBoard: View {
     }
 
     /// أزرار الشراء والدبل تختفي بعد الضغط: المؤشر ينتقل لأوراقك (لا فوق ولا تحت)
+    /// تلعب ورقة: لو هي الثانية من الشايب والبنت (الحكم) مع الإعلان اليدوي، يسألك تعلن بلوت قبل
+    private func playCard(_ c: Card) {
+        if g.actions.canBaloot, let ct = g.contract, ct.mode == "hokm", c.suit == ct.trump, c.rank == "K" || c.rank == "Q" { balootAsk = c; return }
+        act(["type": "play", "card": c.json])
+    }
+
     private func toHand() { if let t = sortHand(g.myHand).last { pendingFocus = t } }
 
     /// وصلت الحالة الجديدة
@@ -661,6 +672,8 @@ private struct PlayerTag: View {
     var partner = false
     /// مكان عريض (فوق أو تحت): أوراق المشروع جنب بعض بدون ما تتراكب
     var wide = false
+    var conn: TableConnection? = nil
+    var me = ""
     var body: some View {
         let s = v.seat(seat)
         let turn = g.turn == seat && g.phase != "matchOver"
@@ -680,6 +693,13 @@ private struct PlayerTag: View {
         .background(turn ? Palette.gold.opacity(0.08) : .clear)
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+        // إجراءات VoiceOver على اللاعب (سحب لفوق أو لتحت): أوراقه المكشوفة، صداقة، وللمالك كتم الصوت والطرد
+        .accessibilityElement(children: .combine)
+        .accessibilityAction(named: Text(trSpoken("أوراقه المكشوفة"))) {
+            if !faces.isEmpty { Announcer.announceNow("أوراق \(s?.username ?? "اللاعب"): \(faces.map { $0.label }.joined(separator: "، "))") }
+            else { Announcer.announceNow("ما عنده أوراق مكشوفة") }
+        }
+        .modifier(PlayerPeopleActions(v: v, seat: seat, conn: conn, me: me))
         let fan = ProjectFaces(sorted: faces, maxWidth: across ? 170 : 62, onTap: { ProjectSpot.shared.spot = Spot(title: "أوراق \(s?.username ?? "اللاعب")", cards: faces) })
         Group {
             // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
@@ -689,6 +709,39 @@ private struct PlayerTag: View {
         }
             .padding(.horizontal, 4).padding(.vertical, 4)
             .frame(maxWidth: .infinity)
+    }
+}
+
+/// إجراءات VoiceOver على لاعب حقيقي غيرك: صداقة، وللمالك كتم صوته وطرده
+private struct PlayerPeopleActions: ViewModifier {
+    let v: TableView
+    let seat: Int
+    let conn: TableConnection?
+    let me: String
+    func body(content: Content) -> some View {
+        let s = v.seat(seat)
+        let target = v.seatUid(seat)
+        let human = s != nil && s?.isBot != true && !target.isEmpty && target != me
+        let owner = conn != nil && v.ownerUid == me
+        let blocked = v.voiceBlocked.contains(target)
+        if human && owner {
+            friend(content, s?.username ?? "")
+                .accessibilityAction(named: Text(trSpoken(blocked ? "إلغاء كتم صوته" : "كتم صوته"))) { conn?.send("voiceBlock", ["uid": target, "blocked": !blocked]) }
+                .accessibilityAction(named: Text(trSpoken("طرد"))) { conn?.send("kick", ["uid": target]) }
+        } else if human {
+            friend(content, s?.username ?? "")
+        } else {
+            content
+        }
+    }
+
+    private func friend(_ content: Content, _ name: String) -> some View {
+        content.accessibilityAction(named: Text(trSpoken("إضافة صديق"))) {
+            Task {
+                do { let f = try await Social.requestFriend(name); Announcer.announceNow(f ? "صرتوا أصدقاء" : "انرسل طلب الصداقة") }
+                catch { Announcer.announceNow(Social.error(error)) }
+            }
+        }
     }
 }
 
@@ -946,8 +999,6 @@ private struct QaidButtons: View {
             // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
             // فرش المشروع (اللفة الثانية): ضغطة وحدة وينفرش لحاله. ما تضغطه = تلعب عادي ويروح المشروع
             if g.actions.canShowProject { SmallButton("فرش المشروع", primary: true) { act(["type": "showProject"]) } }
-            // البلوت مع الإعلان اليدوي: قبل ما تلعب الورقة الثانية (ما تضغطه = ما ينحسب)
-            if g.actions.canBaloot { SmallButton("إعلان بلوت", primary: true) { act(["type": "declareBaloot"]) } }
             if g.actions.canSawa { SmallButton("سوا", primary: true) { act(["type": "sawa"]) } }
         }
         .frame(maxWidth: .infinity)

@@ -5090,5 +5090,41 @@
  "محاولات كثيرة غلط، جرّب بعد ربع ساعة": {
   "en": "Too many wrong attempts, try again in 15 minutes",
   "fr": "Trop de tentatives incorrectes, réessayez dans 15 minutes"
+ },
+ "إعلان مشروع بلوت؟": {
+  "en": "Declare Baloot?",
+  "fr": "Annoncer Baloot ?"
+ },
+ "نعم": {
+  "en": "Yes",
+  "fr": "Oui"
+ },
+ "لا": {
+  "en": "No",
+  "fr": "Non"
+ },
+ "أوراقه المكشوفة": {
+  "en": "Shown cards",
+  "fr": "Cartes montrées"
+ },
+ "كتم صوته": {
+  "en": "Mute voice",
+  "fr": "Couper le micro"
+ },
+ "إلغاء كتم صوته": {
+  "en": "Unmute voice",
+  "fr": "Réactiver le micro"
+ },
+ "صرتوا أصدقاء": {
+  "en": "You are now friends",
+  "fr": "Vous êtes maintenant amis"
+ },
+ "انرسل طلب الصداقة": {
+  "en": "Friend request sent",
+  "fr": "Demande d'ami envoyée"
+ },
+ "ما عنده أوراق مكشوفة": {
+  "en": "No shown cards",
+  "fr": "Aucune carte montrée"
  }
 }

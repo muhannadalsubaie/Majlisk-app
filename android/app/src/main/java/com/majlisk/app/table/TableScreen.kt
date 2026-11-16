@@ -99,6 +99,7 @@ import com.majlisk.app.ui.Title
 import com.majlisk.app.voice.Voice
 import com.majlisk.app.voice.VoiceButton
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** كم تبقى الأكلة المكتملة ظاهرة قبل أن تذهب لصاحبها */
 private const val TRICK_HOLD_MS = 1500L
@@ -348,13 +349,13 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.weight(0.8f))
-                PlayerTag(v, g, seatOf(2), faces = g.sawaHands?.getOrNull(seatOf(2)) ?: text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f), wide = true)
+                PlayerTag(v, g, seatOf(2), faces = g.sawaHands?.getOrNull(seatOf(2)) ?: text.faces(seatOf(2)), note = seatNote(g, seatOf(2)), partner = mySeat != null, modifier = Modifier.weight(3f), wide = true, conn = conn, me = uid)
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.7f))
+                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.7f), conn = conn, me = uid)
                 Box(Modifier.weight(3.4f).zIndex(1f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads); ProjectSpotlight(v, g, text) }
-                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.7f))
+                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.7f), conn = conn, me = uid)
             }
         }
 
@@ -368,6 +369,28 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
 
         // مؤشر قارئ الشاشة: بعد ما تلعب ورقة ينتقل لكلمة «أوراقك»، وأزرار الشراء لما تختفي ينتقل لأوراقك
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
+        // البلوت مع إعلان المشاريع يدوي: لما تلعب الورقة الثانية من الشايب والبنت (الحكم) يسألك تعلن بلوت أو لا
+        var balootAsk by remember { mutableStateOf<Card?>(null) }
+        val playCard = { c: Card ->
+            val ct = g.contract
+            if (g.actions.canBaloot && ct?.mode == "hokm" && c.suit == ct.trump && (c.rank == "K" || c.rank == "Q")) balootAsk = c
+            else act(jsonOf("type" to "play", "card" to c.toJson()))
+        }
+        balootAsk?.let { c ->
+            com.majlisk.app.ui.MajliskDialog("إعلان مشروع بلوت؟", { balootAsk = null }) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    PrimaryButton("نعم", {
+                        balootAsk = null
+                        act(jsonOf("type" to "declareBaloot"))
+                        act(jsonOf("type" to "play", "card" to c.toJson()))
+                    }, modifier = Modifier.weight(1f))
+                    SecondaryButton("لا", {
+                        balootAsk = null
+                        act(jsonOf("type" to "play", "card" to c.toJson()))
+                    }, modifier = Modifier.weight(1f), fill = true)
+                }
+            }
+        }
         // كل ورقة عنصر لحالها (تتنقل بينها يمين ويسار)، بس العنصر مربوط بمكانه في اليد مو بالورقة:
         // لما تلعب ورقة يبقى مكانها (ويصير فيه الورقة اللي جنبها) فالمؤشر ما يقفز
         val slotFocus = remember { mutableMapOf<Int, FocusRequester>() }
@@ -404,7 +427,6 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)
             g.actions.declareKinds.forEach { k -> add("مشروع ${PROJECT_KIND_NAMES[k] ?: k}" to { act(jsonOf("type" to "declareKind", "kind" to k)) }) }
             if (g.actions.canShowProject) add("فرش المشروع" to { act(jsonOf("type" to "showProject")) })
-            if (g.actions.canBaloot) add("إعلان بلوت" to { act(jsonOf("type" to "declareBaloot")) })
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
@@ -441,7 +463,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-            if ((v.qaid || v.manualProjects) && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject || g.actions.canBaloot)) {
+            if ((v.qaid || v.manualProjects) && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject)) {
                 QaidButtons(v, g, act)
             } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
@@ -490,7 +512,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                                 modifier = Modifier.size(58.dp, 84.dp).focusRequester(fr).semantics { traversalIndex = (hand.size - i).toFloat() },
                             ) {
                                 if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i }
-                                act(jsonOf("type" to "play", "card" to c.toJson()))
+                                playCard(c)
                             }
                         }
                     }
@@ -513,14 +535,14 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                                 .semantics { traversalIndex = (hand.size - i).toFloat() },
                         ) {
                             if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i }
-                            act(jsonOf("type" to "play", "card" to c.toJson()))
+                            playCard(c)
                         }
                     }
                 }
             }
         }
         // المشاهد: اللاعب الرابع تحت (الأربعة متقابلين حول الطاولة)
-        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = g.sawaHands?.getOrNull(seatOf(0)) ?: text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth(), wide = true)
+        if (mySeat == null) PlayerTag(v, g, seatOf(0), faces = g.sawaHands?.getOrNull(seatOf(0)) ?: text.faces(seatOf(0)), note = seatNote(g, seatOf(0)), modifier = Modifier.fillMaxWidth(), wide = true, conn = conn, me = uid)
         }
     }
 }
@@ -572,8 +594,29 @@ private fun seatNote(g: GameView, seat: Int): String? {
 }
 
 @Composable
-private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, note: String? = null, modifier: Modifier = Modifier, wide: Boolean = partner) {
+private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = emptyList(), partner: Boolean = false, note: String? = null, modifier: Modifier = Modifier, wide: Boolean = partner, conn: TableConnection? = null, me: String = "") {
     val s = v.seats.getOrNull(seat)
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    val target = v.seatUids.getOrNull(seat)
+    // إجراءات قارئ الشاشة على اللاعب (سحب لفوق أو لتحت وهو محدد): أوراقه المكشوفة، صداقة، وللمالك كتم الصوت والطرد
+    val playerActions = buildList {
+        if (faces.isNotEmpty()) add(com.majlisk.app.i18n.A11yAction("أوراقه المكشوفة") { Announcer.announceNow("أوراق ${s?.username ?: "اللاعب"}: ${faces.joinToString("، ") { it.label }}"); true })
+        if (s != null && s.isBot != true && target != null && target != me) {
+            add(com.majlisk.app.i18n.A11yAction("إضافة صديق") {
+                scope.launch {
+                    runCatching { com.majlisk.app.data.Social.requestFriend(s.username) }
+                        .onSuccess { Announcer.announceNow(if (it) "صرتوا أصدقاء" else "انرسل طلب الصداقة") }
+                        .onFailure { Announcer.announceNow(com.majlisk.app.data.Social.error(it)) }
+                }
+                true
+            })
+            if (conn != null && v.ownerUid == me) {
+                val blocked = target in v.voiceBlocked
+                add(com.majlisk.app.i18n.A11yAction(if (blocked) "إلغاء كتم صوته" else "كتم صوته") { conn.send("voiceBlock", "uid" to target, "blocked" to !blocked); true })
+                add(com.majlisk.app.i18n.A11yAction("طرد") { conn.send("kick", "uid" to target); true })
+            }
+        }
+    }
     val turn = g.turn == seat && g.phase != "matchOver"
     val label = buildString {
         append(s?.username ?: "مقعد ${seat + 1}")
@@ -587,6 +630,7 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
     val who: @Composable () -> Unit = {
         Column(
             Modifier
+                .then(if (playerActions.isNotEmpty()) Modifier.semantics(mergeDescendants = true) { customActions = playerActions } else Modifier)
                 .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
                 .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
                 .padding(horizontal = 8.dp, vertical = 6.dp),
@@ -946,8 +990,6 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
         // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
         // فرش المشروع (اللفة الثانية): ضغطة وحدة وينفرش لحاله. ما تضغطه = تلعب عادي ويروح المشروع
         if (g.actions.canShowProject) com.majlisk.app.ui.SmallButton("فرش المشروع", { act(jsonOf("type" to "showProject")) }, primary = true)
-        // البلوت مع الإعلان اليدوي: قبل ما تلعب الورقة الثانية (ما تضغطه = ما ينحسب)
-        if (g.actions.canBaloot) com.majlisk.app.ui.SmallButton("إعلان بلوت", { act(jsonOf("type" to "declareBaloot")) }, primary = true)
         if (g.actions.canSawa) com.majlisk.app.ui.SmallButton("سوا", { act(jsonOf("type" to "sawa")) }, primary = true)
     }
     if (qaidOpen) {
