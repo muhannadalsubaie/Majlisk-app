@@ -7,14 +7,14 @@ import FirebaseMessaging
 
 /// tableId: الطاولة اللي فيها الصديق المتصل الآن (إن وُجدت)
 struct Friend: Identifiable, Equatable { let uid: String; let username: String; var online = false; var tableId: String? = nil; var tablePrivate = false; var tableGame = ""; var id: String { uid } }
-struct TableInvite: Equatable { let tableId: String; let code: String; let fromUid: String; let fromName: String }
+struct TableInvite: Equatable { let tableId: String; let code: String; let fromUid: String; let fromName: String; var game = "" }
 struct HubState: Equatable { var friends: [Friend] = []; var requests: [Friend] = []; var invites: [TableInvite] = [] }
 
 private func friends(_ o: JSON, _ key: String) -> [Friend] { o.objs(key).map { Friend(uid: $0.str("uid"), username: $0.str("username"), online: $0.bool("online"),
                                                                                    tableId: $0.str("tableId").isEmpty ? nil : $0.str("tableId"), tablePrivate: $0.bool("tablePrivate"),
                                                                                    tableGame: $0.str("tableKind").isEmpty ? "" : gameTitle($0.str("tableKind"), $0.str("tableVariant"))) } }
 private func invites(_ o: JSON) -> [TableInvite] {
-    o.objs("invites").map { TableInvite(tableId: $0.str("tableId"), code: $0.str("code"), fromUid: $0.str("fromUid"), fromName: $0.str("fromName")) }
+    o.objs("invites").map { TableInvite(tableId: $0.str("tableId"), code: $0.str("code"), fromUid: $0.str("fromUid"), fromName: $0.str("fromName"), game: $0.str("game")) }
 }
 
 enum Social {
@@ -141,7 +141,10 @@ final class Hub: ObservableObject {
                 self.lock()
             }
         case "notice": Sounds.shared.notify(); Announcer.announce(msg.str("text"))
-        case "invite": Sounds.shared.inviteIn(); Announcer.announce("\(msg.obj("invite")?.str("fromName") ?? "") يدعوك لطاولته")
+        case "invite":
+            Sounds.shared.inviteIn()
+            let inv = msg.obj("invite"), g = inv?.str("game") ?? ""
+            Announcer.announce(g.isEmpty ? "\(inv?.str("fromName") ?? "") يدعوك لطاولته" : "\(inv?.str("fromName") ?? "") دعاك لطاولة \(g)")
         default: break
         }
     }

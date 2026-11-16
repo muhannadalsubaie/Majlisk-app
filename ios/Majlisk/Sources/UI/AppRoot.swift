@@ -68,7 +68,8 @@ struct AppRoot: View {
             .sheet(isPresented: Binding(get: { pendingInvite != nil && !needsUsername && !session.needsVerify && session.uid != nil }, set: { if !$0, let i = pendingInvite { answer(i, accept: false) } })) {
                 if let invite = pendingInvite {
                     Sheet(title: "دعوة لطاولة") {
-                        BodyText("\(invite.fromName) يدعوك للعب معه في طاولته.")
+                        // نوع اللعبة: «فلان دعاك لطاولة بلوت»
+                        BodyText(invite.game.isEmpty ? "\(invite.fromName) يدعوك للعب معه في طاولته." : "\(invite.fromName) دعاك لطاولة \(invite.game)")
                         MButton("قبول", .primary, enabled: !busyInvite) { answer(invite, accept: true) }
                         MButton("رفض", enabled: !busyInvite) { answer(invite, accept: false) }
                     }

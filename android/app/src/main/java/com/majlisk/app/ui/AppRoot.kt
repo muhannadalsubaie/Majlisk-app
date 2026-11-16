@@ -176,7 +176,8 @@ fun AppRoot() {
             }
         }
         MajliskDialog("دعوة لطاولة", onDismiss = { answer(false) }) {
-            Body("${invite.fromName} يدعوك للعب معه في طاولته.")
+            // نوع اللعبة: «فلان دعاك لطاولة بلوت»
+            Body(if (invite.game.isNotEmpty()) "${invite.fromName} دعاك لطاولة ${invite.game}" else "${invite.fromName} يدعوك للعب معه في طاولته.")
             PrimaryButton("قبول", { answer(true) }, enabled = !busy)
             SecondaryButton("رفض", { answer(false) }, enabled = !busy, fill = true)
         }

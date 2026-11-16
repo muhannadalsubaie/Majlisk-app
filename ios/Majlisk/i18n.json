@@ -5178,5 +5178,17 @@
  "اكتب رسالة": {
   "en": "Type a message",
   "fr": "Écrire un message"
+ },
+ "{0} دعاك لطاولة {1}": {
+  "en": "{0} invited you to a {1} table",
+  "fr": "{0} vous invite à une table de {1}"
+ },
+ "جاكارو كمبلكس": {
+  "en": "Jackaroo Complex",
+  "fr": "Jackaroo Complex"
+ },
+ "لودو فرق": {
+  "en": "Ludo Teams",
+  "fr": "Ludo Équipes"
  }
 }
