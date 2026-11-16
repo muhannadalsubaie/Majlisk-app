@@ -1,19 +1,18 @@
-// بعد ما تنرفع نسخة جديدة للمتجر: نحدّث version.json (التطبيق يقراه ويطلع للاعب «تحديث جديد»)
-// node .github/scripts/bump-version.mjs android 10234
-import { readFileSync, writeFileSync } from 'node:fs';
-import { execSync } from 'node:child_process';
+// بعد ما تنرفع نسخة جديدة للمتجر: نبلّغ الخادم برقمها (التطبيق يسأل الخادم ويطلع للاعب «تحديث جديد»)
+// SA=<مفتاح حساب خدمة Google Play> node .github/scripts/bump-version.mjs android 10234
+import { createPrivateKey, createSign } from 'node:crypto';
+import { fixKey } from './play-key.mjs';
 const [platform, buildRaw] = process.argv.slice(2);
 const build = Number(buildRaw);
 if (!['android', 'ios'].includes(platform) || !Number.isInteger(build) || build <= 0) { console.log('usage: bump-version.mjs android|ios <build>'); process.exit(1); }
-const sh = (c) => execSync(c, { stdio: 'inherit' });
-sh('git config user.name "github-actions[bot]" && git config user.email "41898282+github-actions[bot]@users.noreply.github.com"');
-for (let attempt = 1; attempt <= 5; attempt++) {
-  sh('git fetch -q origin main && git reset -q --hard origin/main');
-  const v = JSON.parse(readFileSync('version.json', 'utf8'));
-  if ((v[platform]?.build ?? 0) >= build) { console.log(`version.json ${platform} already ${v[platform].build}`); process.exit(0); }
-  v[platform] = { ...(v[platform] ?? {}), build };
-  writeFileSync('version.json', JSON.stringify(v, null, 1) + '\n');
-  sh(`git add version.json && git commit -q -m "${platform} ${build}: نسخة جديدة في المتجر [skip ci]"`);
-  try { sh('git push -q origin HEAD:main'); console.log(`version.json ${platform} = ${build}`); process.exit(0); } catch { console.log(`push retry ${attempt}`); }
-}
-process.exit(1);
+const sa = fixKey(process.env.SA || '{}');
+const b64u = (x) => Buffer.from(x).toString('base64url');
+const now = Math.floor(Date.now() / 1000);
+const unsigned = `${b64u(JSON.stringify({ alg: 'RS256', typ: 'JWT' }))}.${b64u(JSON.stringify({ iss: sa.client_email, scope: 'https://www.googleapis.com/auth/userinfo.email', aud: 'https://oauth2.googleapis.com/token', iat: now, exp: now + 600 }))}`;
+const sig = createSign('RSA-SHA256').update(unsigned).sign(createPrivateKey(sa.private_key), 'base64url');
+const tok = (await (await fetch('https://oauth2.googleapis.com/token', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${unsigned}.${sig}` })).json()).access_token;
+const res = await fetch('https://majlisk-api.majlisk.workers.dev/api/admin/app-version', {
+  method: 'POST', headers: { Authorization: `Bearer ${tok}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ platform, build }),
+});
+console.log(`app-version ${platform} ${build}: ${res.status}`);
+if (!res.ok) process.exit(1);

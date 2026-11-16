@@ -111,8 +111,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.upload && inputs.public_link
     runs-on: ubuntu-latest
     timeout-minutes: 75
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: External testers (public link)
@@ -127,4 +125,7 @@ jobs:
             node .github/scripts/asc-external.mjs | tee -a $GITHUB_STEP_SUMMARY
       # النسخة صارت للمختبرين بالرابط العام: التطبيق يطلع للاعبين «تحديث جديد»
       - name: Mark new version for in-app update prompt
+        continue-on-error: true
+        env:
+          SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: node .github/scripts/bump-version.mjs ios $((1000 + ${{ github.run_number }}))

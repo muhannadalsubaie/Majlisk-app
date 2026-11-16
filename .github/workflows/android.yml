@@ -103,4 +103,7 @@ jobs:
       # نزلت النسخة لمختبرين قوقل بلاي: التطبيق يطلع للاعبين «تحديث جديد»
       - name: Mark new version for in-app update prompt
         if: steps.play.outcome == 'success'
+        continue-on-error: true
+        env:
+          SA: ${{ secrets.PLAY_SERVICE_ACCOUNT_JSON }}
         run: node .github/scripts/bump-version.mjs android $((10000 + ${{ github.run_number }}))

@@ -20,9 +20,9 @@ struct AppRoot: View {
 
     @State private var updateURL: URL?
 
-    /// نسخة أحدث في المتجر؟ (الرقم يتحدث تلقائي في version.json بعد كل رفع)
+    /// نسخة أحدث في المتجر؟ (الخادم يعرف آخر نسخة: أدوات الرفع تبلّغه تلقائي بعد كل رفع)
     private func checkUpdate() async {
-        guard let src = URL(string: "https://raw.githubusercontent.com/muhannadalsubaie/Majlisk-app/main/version.json?t=\(Int(Date().timeIntervalSince1970 / 300))"),
+        guard let src = URL(string: "https://majlisk-api.majlisk.workers.dev/api/app/version"),
               let (data, _) = try? await URLSession.shared.data(from: src),
               let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
               let ios = j["ios"] as? [String: Any] else { return }

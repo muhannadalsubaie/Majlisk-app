@@ -145,7 +145,7 @@ fun AppRoot() {
     LaunchedEffect(Unit) {
         runCatching {
             val txt = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
-                java.net.URL("https://raw.githubusercontent.com/muhannadalsubaie/Majlisk-app/main/version.json?t=${System.currentTimeMillis() / 300_000}").readText()
+                java.net.URL("https://majlisk-api.majlisk.workers.dev/api/app/version").readText()
             }
             val a = org.json.JSONObject(txt).getJSONObject("android")
             if (a.optInt("build") > com.majlisk.app.BuildConfig.VERSION_CODE) updateUrl = a.optString("url").ifEmpty { "https://play.google.com/store/apps/details?id=com.majlisk.app" }

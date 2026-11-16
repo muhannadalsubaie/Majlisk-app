@@ -22,4 +22,5 @@ export function fixKey(raw) {
   sa.private_key = sa.private_key.replace(/-----BEGIN PRIVATE KEY-----\s*/, '-----BEGIN PRIVATE KEY-----\n').replace(/\s*-----END PRIVATE KEY-----\s*/, '\n-----END PRIVATE KEY-----\n');
   return sa;
 }
-if (process.argv[2]) writeFileSync(process.argv[2], JSON.stringify(fixKey(process.env.SA || '{}')), { mode: 0o600 });
+// (بس لما يتشغّل هو نفسه، مو لما سكربت ثاني يستورد fixKey)
+if (process.argv[1]?.endsWith('play-key.mjs') && process.argv[2]) writeFileSync(process.argv[2], JSON.stringify(fixKey(process.env.SA || '{}')), { mode: 0o600 });
