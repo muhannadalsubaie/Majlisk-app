@@ -55,6 +55,9 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         // اختيارك أنت فقط ويتحفظ على جوالك
         SwitchRow("مروحة (الأوراق فوق بعض)", Prefs.handStyle.value == "fan", { if (it) Prefs.setHandStyle("fan") })
         SwitchRow("كروت جنب بعض (مفصولة)", Prefs.handStyle.value == "row", { if (it) Prefs.setHandStyle("row") })
+        SectionTitle("شكل الدردشة")
+        SwitchRow("فقاعة", Prefs.chatStyle.value == "bubble", { if (it) Prefs.setChatStyle("bubble") })
+        SwitchRow("على الشاشة مباشرة", Prefs.chatStyle.value != "bubble", { if (it) Prefs.setChatStyle("inline") })
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
         val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()

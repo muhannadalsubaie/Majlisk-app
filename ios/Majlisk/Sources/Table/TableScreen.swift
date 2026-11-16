@@ -22,6 +22,8 @@ struct TableScreen: View {
     @State private var lastKind: String?
     @State private var chatOpen = false
     @ObservedObject private var chatSettings = ChatSettings.shared
+    /// شكل الدردشة (من الإعدادات): inline على الشاشة مباشرة، bubble فقاعة
+    @AppStorage("chatStyle") private var chatStyle = "inline"
     @State private var historyOpen = false
     @State private var timerOpen = false
     @State private var dominoLogOpen = false
@@ -136,13 +138,22 @@ struct TableScreen: View {
         .safeAreaInset(edge: .bottom, spacing: 0) {
             // الدردشة الكتابية: مربع الرسائل فوق، وخانة الكتابة وزر الإرسال جنب الميكروفون (تختفي إن أطفأتها من الإعدادات)
             Group {
-                if chatSettings.mode != .off {
+                if chatSettings.mode != .off && chatStyle != "bubble" {
                     ChatBar(conn: conn) { VoiceButton(tableId: v.id, uid: uid) }
                 } else {
-                    HStack(spacing: 10) { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
+                    HStack(spacing: 10) {
+                        Spacer()
+                        // الفقاعة: زر الدردشة يفتح نافذتها
+                        if chatSettings.mode != .off { ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
+                        VoiceButton(tableId: v.id, uid: uid)
+                    }
                 }
             }
             .padding(.horizontal, 16).padding(.bottom, 8)
+        }
+        // الفقاعة: آخر رسالة لحظات في الزاوية تحت، بعيداً عن الطاولة والأوراق
+        .overlay(alignment: .bottomLeading) {
+            if chatSettings.mode != .off && chatStyle == "bubble" && !chatOpen { ChatToast(conn: conn) }
         }
         .sheet(isPresented: $chatOpen, onDismiss: { conn.chatOpen = false }) { ChatSheet(conn: conn) { chatOpen = false } }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }

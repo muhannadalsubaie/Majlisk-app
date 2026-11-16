@@ -102,7 +102,17 @@ fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
                 }
             }
         }
-        Field("اكتب رسالة…", text, { text = it.take(200) })
+        // زر الإرسال في الكيبورد يرسل على طول
+        androidx.compose.material3.OutlinedTextField(
+            value = text, onValueChange = { text = it.take(200) },
+            placeholder = { Text("اكتب رسالة…", color = Palette.textDim, fontSize = 14.sp) },
+            singleLine = true,
+            textStyle = androidx.compose.ui.text.TextStyle(fontSize = 15.sp, color = Palette.text),
+            keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
+            keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = { if (text.isNotBlank()) { conn.sendChat(text); text = "" } }),
+            colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, cursorColor = Palette.gold),
+            modifier = Modifier.fillMaxWidth().semantics { contentDescription = com.majlisk.app.i18n.tr("اكتب رسالة") },
+        )
         PrimaryButton("إرسال", { conn.sendChat(text); text = "" }, enabled = text.isNotBlank())
         SecondaryButton("إغلاق", onClose, fill = true)
     }

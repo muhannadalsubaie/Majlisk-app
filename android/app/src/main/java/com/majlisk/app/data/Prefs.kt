@@ -12,6 +12,9 @@ object Prefs {
     /** شكل أوراقك في البلوت: مروحة (fan) أو كروت جنب بعض (row) — يتحدث على الطاولة على طول */
     val handStyle: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("handStyle", "fan") ?: "fan") }
     fun setHandStyle(v: String) { handStyle.value = v; sp.edit().putString("handStyle", v).apply() }
+    /** شكل الدردشة الكتابية: inline على الشاشة مباشرة، bubble فقاعة (زر الدردشة ونافذتها) */
+    val chatStyle: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("chatStyle", "inline") ?: "inline") }
+    fun setChatStyle(v: String) { chatStyle.value = v; sp.edit().putString("chatStyle", v).apply() }
 
     var muted: Boolean
         get() = sp.getBoolean("muted", false)

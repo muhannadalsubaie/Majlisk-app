@@ -69,8 +69,17 @@ struct ChatSheet: View {
                     if !m.mine { Spacer(minLength: 40) }
                 }
             }
-            Field(label: "اكتب رسالة…", text: $text)
+            // زر الإرسال في الكيبورد يرسل على طول
+            TextField(tr("اكتب رسالة…"), text: $text)
+                .submitLabel(.send)
+                .onSubmit { if !text.trimmingCharacters(in: .whitespaces).isEmpty { conn.sendChat(text); text = "" } }
                 .onChange(of: text) { t in if t.count > 200 { text = String(t.prefix(200)) } }
+                .font(.system(size: 15)).foregroundColor(Palette.text)
+                .padding(.horizontal, 14).frame(minHeight: 46)
+                .background(Palette.green800)
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+                .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.green700, lineWidth: 1))
+                .accessibilityLabel(spokenText("اكتب رسالة"))
             MButton("إرسال", .primary, enabled: !text.trimmingCharacters(in: .whitespaces).isEmpty) {
                 conn.sendChat(text); text = ""
             }

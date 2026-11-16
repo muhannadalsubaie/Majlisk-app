@@ -5190,5 +5190,17 @@
  "لودو فرق": {
   "en": "Ludo Teams",
   "fr": "Ludo Équipes"
+ },
+ "شكل الدردشة": {
+  "en": "Chat style",
+  "fr": "Style du chat"
+ },
+ "فقاعة": {
+  "en": "Bubble",
+  "fr": "Bulle"
+ },
+ "على الشاشة مباشرة": {
+  "en": "On screen",
+  "fr": "À l'écran"
  }
 }
