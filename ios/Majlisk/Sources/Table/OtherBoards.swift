@@ -608,7 +608,7 @@ struct JackarooBoard: View {
                     Button {
                         if !j.myTurn { Announcer.announceNow("ليس دورك") }
                         else if j.burning { act(["type": "burn", "card": h.card.json]) }
-                        else if h.moves.isEmpty { Sounds.shared.illegal(); Announcer.announceNow("\(short(h.label)) لا تصلح الآن") }
+                        else if h.moves.isEmpty { Sounds.shared.illegal() } // صوت «ما تنلعب» بس، بدون كلام (مثل البلوت)
                         else if h.moves.count == 1 { act(["type": "play", "card": h.card.json, "move": h.moves[0].move]) }
                         else { picked = h }
                     } label: {

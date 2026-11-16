@@ -5082,5 +5082,9 @@
  "صاحب الطاولة مفعّل خصوصية اللاعب: طاولته للأصدقاء فقط": {
   "en": "The table owner has player privacy on: friends only",
   "fr": "Le propriétaire a activé la confidentialité : amis uniquement"
+ },
+ "احرق ورقة": {
+  "en": "burn a card",
+  "fr": "brûlez une carte"
  }
 }

@@ -576,7 +576,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                                 when {
                                     !j.myTurn -> Announcer.announceNow("ليس دورك")
                                     j.burning -> act(conn, "jackaroo", jsonOf("type" to "burn", "card" to h.card.json()))
-                                    h.moves.isEmpty() -> { Sounds.illegal(); Announcer.announceNow("${h.label.substringBefore("،")} لا تصلح الآن") }
+                                    h.moves.isEmpty() -> Sounds.illegal() // صوت «ما تنلعب» بس، بدون كلام (مثل البلوت)
                                     h.moves.size == 1 -> act(conn, "jackaroo", jsonOf("type" to "play", "card" to h.card.json(), "move" to h.moves[0].move))
                                     else -> picked = h
                                 }
