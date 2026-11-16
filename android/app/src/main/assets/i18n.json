@@ -5066,5 +5066,9 @@
  "{0} ر.س": {
   "en": "{0} SAR",
   "fr": "{0} SAR"
+ },
+ "إعلان بلوت": {
+  "en": "Declare Baloot",
+  "fr": "Annoncer Baloot"
  }
 }

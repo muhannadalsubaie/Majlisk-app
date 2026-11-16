@@ -100,6 +100,8 @@ struct GameActions {
     /// القيد والقطع: أنواع المشروع اللي تقدر تعلنها، وفرش أوراق مشروعك، واللي تقدر تسجّل عليهم
     var declareKinds: [String] = []
     var canShowProject = false
+    /// إعلان بلوت يدوي (مع إعلان المشاريع يدوي): قبل ما تلعب الورقة الثانية
+    var canBaloot = false
     var qaidTargets: [Int] = []
 }
 
@@ -295,6 +297,7 @@ struct TableView {
                 canProject: a.bool("canProject"),
                 declareKinds: a.arr("declareKinds").compactMap { $0 as? String },
                 canShowProject: a.bool("canShowProject"),
+                canBaloot: a.bool("canBaloot"),
                 qaidTargets: a.arr("qaidTargets").compactMap { ($0 as? NSNumber)?.intValue }
             ),
             hokmBidKey: hokmBid.map { "\($0.int("seat"))\($0.str("suit"))" },

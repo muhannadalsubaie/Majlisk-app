@@ -49,6 +49,8 @@ data class GameActions(
     /** القيد والقطع: أنواع المشروع اللي تقدر تعلنها، وفرش أوراق مشروعك، واللي تقدر تسجّل عليهم */
     val declareKinds: List<String> = emptyList(),
     val canShowProject: Boolean = false,
+    /** إعلان بلوت يدوي (مع إعلان المشاريع يدوي): قبل ما تلعب الورقة الثانية */
+    val canBaloot: Boolean = false,
     val qaidTargets: List<Int> = emptyList(),
 )
 
@@ -247,6 +249,7 @@ data class TableView(
                     canProject = a.optBoolean("canProject"),
                     declareKinds = a.optJSONArray("declareKinds")?.let { arr -> (0 until arr.length()).map { arr.optString(it) } } ?: emptyList(),
                     canShowProject = a.optBoolean("canShowProject"),
+                    canBaloot = a.optBoolean("canBaloot"),
                     qaidTargets = a.optJSONArray("qaidTargets")?.let { arr -> (0 until arr.length()).map { arr.optInt(it) } } ?: emptyList(),
                 ),
                 hokmBidKey = hokmBid?.let { "${it.optInt("seat")}${it.optString("suit")}" },

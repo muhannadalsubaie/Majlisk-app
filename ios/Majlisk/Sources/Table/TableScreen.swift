@@ -309,7 +309,7 @@ struct BalootBoard: View {
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-                if (v.qaid || v.manualProjects) && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
+                if (v.qaid || v.manualProjects) && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject || g.actions.canBaloot) {
                     QaidButtons(v: v, g: g, act: act)
                 } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
@@ -431,6 +431,7 @@ struct BalootBoard: View {
         // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)، وفرشه، والتسجيلة من الأزرار
         for k in g.actions.declareKinds { out.append(("مشروع \(PROJECT_KIND_NAMES[k] ?? k)", { act(["type": "declareKind", "kind": k]) })) }
         if g.actions.canShowProject { out.append(("فرش المشروع", { act(["type": "showProject"]) })) }
+        if g.actions.canBaloot { out.append(("إعلان بلوت", { act(["type": "declareBaloot"]) })) }
         if g.actions.waraqDecision { out.append(("بس", { act(["type": "waraq", "call": false]) })) }
         if g.actions.canWaraq { out.append(("ورق", { act(["type": "waraq", "call": true]) })) }
         if g.actions.chooseLock {
@@ -945,6 +946,8 @@ private struct QaidButtons: View {
             // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
             // فرش المشروع (اللفة الثانية): ضغطة وحدة وينفرش لحاله. ما تضغطه = تلعب عادي ويروح المشروع
             if g.actions.canShowProject { SmallButton("فرش المشروع", primary: true) { act(["type": "showProject"]) } }
+            // البلوت مع الإعلان اليدوي: قبل ما تلعب الورقة الثانية (ما تضغطه = ما ينحسب)
+            if g.actions.canBaloot { SmallButton("إعلان بلوت", primary: true) { act(["type": "declareBaloot"]) } }
             if g.actions.canSawa { SmallButton("سوا", primary: true) { act(["type": "sawa"]) } }
         }
         .frame(maxWidth: .infinity)

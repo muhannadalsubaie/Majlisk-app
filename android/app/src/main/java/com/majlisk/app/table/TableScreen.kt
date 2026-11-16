@@ -404,6 +404,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)
             g.actions.declareKinds.forEach { k -> add("مشروع ${PROJECT_KIND_NAMES[k] ?: k}" to { act(jsonOf("type" to "declareKind", "kind" to k)) }) }
             if (g.actions.canShowProject) add("فرش المشروع" to { act(jsonOf("type" to "showProject")) })
+            if (g.actions.canBaloot) add("إعلان بلوت" to { act(jsonOf("type" to "declareBaloot")) })
             if (g.actions.waraqDecision) add("بس" to { act(jsonOf("type" to "waraq", "call" to false)) })
             if (g.actions.canWaraq) add("ورق" to { act(jsonOf("type" to "waraq", "call" to true)) })
             if (g.actions.chooseLock) {
@@ -440,7 +441,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-            if ((v.qaid || v.manualProjects) && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject)) {
+            if ((v.qaid || v.manualProjects) && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject || g.actions.canBaloot)) {
                 QaidButtons(v, g, act)
             } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك
@@ -945,6 +946,8 @@ private fun QaidButtons(v: TableView, g: GameView, act: (org.json.JSONObject) ->
         // فرش المشروع: زر صغير فوق مكان «إعلان مشروع» (يفتح اختيار الأوراق تحت)
         // فرش المشروع (اللفة الثانية): ضغطة وحدة وينفرش لحاله. ما تضغطه = تلعب عادي ويروح المشروع
         if (g.actions.canShowProject) com.majlisk.app.ui.SmallButton("فرش المشروع", { act(jsonOf("type" to "showProject")) }, primary = true)
+        // البلوت مع الإعلان اليدوي: قبل ما تلعب الورقة الثانية (ما تضغطه = ما ينحسب)
+        if (g.actions.canBaloot) com.majlisk.app.ui.SmallButton("إعلان بلوت", { act(jsonOf("type" to "declareBaloot")) }, primary = true)
         if (g.actions.canSawa) com.majlisk.app.ui.SmallButton("سوا", { act(jsonOf("type" to "sawa")) }, primary = true)
     }
     if (qaidOpen) {
