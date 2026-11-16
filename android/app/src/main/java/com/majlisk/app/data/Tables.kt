@@ -76,6 +76,7 @@ object Tables {
         "private" to "هذه طاولة خاصة — تحتاج دعوة من مالكها",
         "not-owner" to "هذا الإجراء لمالك الطاولة فقط",
         "wrong-password" to "كلمة المرور غير صحيحة",
+        "too-many-attempts" to "محاولات كثيرة غلط، جرّب بعد ربع ساعة",
         "password-required" to "هذه الطاولة بكلمة مرور",
         "bad-password" to "كلمة المرور من 4 إلى 20 حرف",
         "pro-only" to "هذي الميزة للمشتركين في الباقة الاحترافية",
