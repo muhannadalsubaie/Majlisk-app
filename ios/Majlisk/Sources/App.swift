@@ -10,7 +10,8 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         FirebaseApp.configure()
         Push.shared.configure()
         Sounds.shared.preload()
-        Sounds.shared.appOpen()
+        // نغمة الفتح ما تنعزف هنا: الآيفون يشغّل التطبيق أحياناً في الخلفية (وقت الشحن، إشعار، تحميل مسبق)
+        // بدون ما يفتحه أحد، فكانت تطلع والتطبيق مقفل. تنعزف أول مرة تظهر الشاشة فعلاً (sceneDidBecomeActive)
         return true
     }
 
@@ -68,6 +69,14 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
     func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
         for ctx in URLContexts { _ = GIDSignIn.sharedInstance.handle(ctx.url) }
+    }
+
+    /// أول ظهور فعلي للتطبيق قدام المستخدم: نغمة الفتح مرة وحدة
+    private static var openPlayed = false
+    func sceneDidBecomeActive(_ scene: UIScene) {
+        guard !Self.openPlayed, UIApplication.shared.applicationState == .active else { return }
+        Self.openPlayed = true
+        Sounds.shared.appOpen()
     }
 
     func sceneWillEnterForeground(_ scene: UIScene) {
