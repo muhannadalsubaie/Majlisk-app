@@ -5142,5 +5142,17 @@
  "ما عندك أصدقاء حالياً.": {
   "en": "You don't have any friends yet.",
   "fr": "Vous n'avez pas encore d'amis."
+ },
+ "عندك رسائل كثيرة مفتوحة، انتظر الرد عليها أو سكّرها": {
+  "en": "You have too many open messages. Wait for a reply or close some.",
+  "fr": "Vous avez trop de messages ouverts. Attendez une réponse ou fermez-en."
+ },
+ "ما تقدر ترسل له طلب صداقة الحين، جرّب بكرة": {
+  "en": "You can't send them a friend request right now, try tomorrow.",
+  "fr": "Vous ne pouvez pas lui envoyer de demande d'ami pour l'instant, réessayez demain."
+ },
+ "لحظة، جرّب مرة ثانية": {
+  "en": "One moment, please try again",
+  "fr": "Un instant, réessayez"
  }
 }

@@ -54,6 +54,8 @@ object Social {
         "table-full" to "الطاولة ممتلئة",
         "not-found" to "الطاولة لم تعد موجودة",
         "no-username" to "اختر اسم مستخدم أولاً",
+        "request-blocked" to "ما تقدر ترسل له طلب صداقة الحين، جرّب بكرة",
+        "busy" to "لحظة، جرّب مرة ثانية",
     )
 
     fun error(e: Throwable): String = ERRORS[(e as? ApiError)?.code] ?: "حدث خطأ، حاول مرة أخرى"

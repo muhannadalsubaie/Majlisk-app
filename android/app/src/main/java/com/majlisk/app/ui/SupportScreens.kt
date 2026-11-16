@@ -167,7 +167,7 @@ private fun NewTicket(kind: String, onDone: () -> Unit) {
             scope.launch {
                 runCatching { Api.post("/support/create", jsonOf("kind" to kind, "text" to text.trim(), "images" to JSONArray(images))) }
                     .onSuccess { Announcer.announce("وصلت رسالتك، وراح يوصلك الرد هنا وبإشعار"); onDone() }
-                    .onFailure { error = "تعذّر الإرسال، حاول مرة ثانية"; Announcer.announce(error) }
+                    .onFailure { error = if ((it as? com.majlisk.app.net.ApiError)?.code == "too-many-tickets") "عندك رسائل كثيرة مفتوحة، انتظر الرد عليها أو سكّرها" else "تعذّر الإرسال، حاول مرة ثانية"; Announcer.announce(error) }
                 busy = false
             }
         }, enabled = text.isNotBlank() && !busy)

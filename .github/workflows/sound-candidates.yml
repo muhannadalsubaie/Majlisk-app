@@ -23,10 +23,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg > /dev/null
-      - run: python3 .github/scripts/oga_sounds.py ${{ inputs.pages }}
+      # المدخلات تمر عبر متغيرات بيئة (مو داخل الأمر مباشرة) عشان ما تنفّذ كأوامر
+      - run: python3 .github/scripts/oga_sounds.py $PAGES
         if: inputs.pages != ''
-      - run: python3 .github/scripts/mixkit_sounds.py ${{ inputs.mixkit }}
+        env:
+          PAGES: ${{ inputs.pages }}
+      - run: python3 .github/scripts/mixkit_sounds.py $MIXKIT
         if: inputs.mixkit != ''
+        env:
+          MIXKIT: ${{ inputs.mixkit }}
       - name: Save to branch
         run: |
           ls candidates | wc -l; du -sh candidates

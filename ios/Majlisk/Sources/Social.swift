@@ -48,6 +48,8 @@ enum Social {
         "table-full": "الطاولة ممتلئة",
         "not-found": "الطاولة لم تعد موجودة",
         "no-username": "اختر اسم مستخدم أولاً",
+        "request-blocked": "ما تقدر ترسل له طلب صداقة الحين، جرّب بكرة",
+        "busy": "لحظة، جرّب مرة ثانية",
     ]
     static func error(_ e: Error) -> String { errors[(e as? ApiError)?.code ?? ""] ?? "حدث خطأ، حاول مرة أخرى" }
 }

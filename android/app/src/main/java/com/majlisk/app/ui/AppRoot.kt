@@ -128,19 +128,15 @@ fun AppRoot() {
         com.majlisk.app.push.Push.switchTable.value = null
         tableId = id; screen = Route.Table
     }
-    // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
+    // ضغطت على إشعار دعوة: يفتح التطبيق ويطلع لك مربع الدعوة (قبول أو رفض) — ما ننقبلها تلقائي،
+    // لأن أي تطبيق ثاني في الجوال يقدر يفتح التطبيق بنفس بيانات الإشعار. لو أنت أصلاً في الطاولة ندخلك
     val pushTable by com.majlisk.app.push.Push.pendingTable.collectAsState()
     LaunchedEffect(pushTable, user?.uid, verified, needsUsername) {
         val id = pushTable ?: return@LaunchedEffect
         if (user == null || !verified || needsUsername) return@LaunchedEffect
         com.majlisk.app.push.Push.pendingTable.value = null
-        runCatching { Social.respondInvite(id, true) }
-            .onSuccess { Hub.dropInvite(id); openTable(id) }
-            .onFailure {
-                // انتهت الدعوة (أكثر من ١٠ دقائق): لو أنت أصلاً في الطاولة ندخلك، وإلا يفتح التطبيق بس بدون أي رسالة
-                val member = runCatching { Api.get("/tables/$id/member").optBoolean("member") }.getOrDefault(false)
-                if (member) openTable(id) else if ((it as? com.majlisk.app.net.ApiError)?.code != "no-invite") Announcer.announce(Social.error(it))
-            }
+        val member = runCatching { Api.get("/tables/$id/member").optBoolean("member") }.getOrDefault(false)
+        if (member) openTable(id)
     }
 
     // دعوة واردة لطاولة: تظهر فوق أي شاشة (إلا إن كنت في نفس الطاولة)

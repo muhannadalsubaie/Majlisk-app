@@ -125,7 +125,7 @@ private struct NewTicketView: View {
                         try await Api.post("/support/create", ["kind": kind, "text": text.trimmingCharacters(in: .whitespacesAndNewlines), "images": images])
                         Announcer.announce("وصلت رسالتك، وراح يوصلك الرد هنا وبإشعار")
                         onDone()
-                    } catch { self.error = "تعذّر الإرسال، حاول مرة ثانية"; Announcer.announce(self.error) }
+                    } catch { self.error = (error as? ApiError)?.code == "too-many-tickets" ? "عندك رسائل كثيرة مفتوحة، انتظر الرد عليها أو سكّرها" : "تعذّر الإرسال، حاول مرة ثانية"; Announcer.announce(self.error) }
                     busy = false
                 }
             }
