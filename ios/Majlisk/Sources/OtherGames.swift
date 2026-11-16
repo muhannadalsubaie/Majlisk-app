@@ -27,17 +27,17 @@ struct DominoView {
     let phase: String, turn: Int, players: Int, target: Int
     let scores: [Int]
     let line: [PlacedTile]
-    let handCounts: [Int]
+    var handCounts: [Int]
     let boneyard: Int
     let moveSig: String
     let lastKind: String?
-    let myTurn: Bool, canDraw: Bool, canPass: Bool
-    let hand: [DominoHandTile]
+    var myTurn: Bool, canDraw: Bool, canPass: Bool
+    var hand: [DominoHandTile]
     let ends: (left: Int, right: Int)?
     let endsText: String, lineText: String, scoreText: String
     let sideNames: [String]
     let mySide: Int
-    let prompt: String
+    var prompt: String
     /// سجل كل جولة (صكة): رقمها وحركاتها بالترتيب
     let log: [(hand: Int, lines: [String])]
     /// من يختار البادئ (بعد فوز فريقه بالصكة)، وخياراتك لو الاختيار لك
@@ -71,7 +71,7 @@ struct DominoView {
 
 struct Marble { let zone: String; let pos: Int }
 
-struct JackarooCard {
+struct JackarooCard: Equatable {
     let rank: String, suit: String
     var json: JSON { ["rank": rank, "suit": suit] }
     var red: Bool { suit == "H" || suit == "D" }
@@ -86,7 +86,7 @@ struct JackarooView {
     let winnerTeam: Int?
     let dealNo: Int, segment: Int
     let marbles: [[Marble]]
-    let handCounts: [Int]
+    var handCounts: [Int]
     let moveSig: String
     let hasMove: Bool
     /// كم خطوة مشت آخر حركة (لصوت النقرات)
@@ -96,9 +96,10 @@ struct JackarooView {
     /// نوع آخر حركة (back = رجوع ٤، swap = تبديل)، وكم حجر دخل منطقة الأمان (للأصوات)
     var lastKind = ""
     var enteredSafe = 0
-    let myTurn: Bool, burning: Bool
-    let hand: [JackarooHandCard]
-    let boardText: String, oppText: String, mineText: String, prompt: String
+    var myTurn: Bool, burning: Bool
+    var hand: [JackarooHandCard]
+    let boardText: String, oppText: String, mineText: String
+    var prompt: String
     /// الأوراق الملعوبة في هذا التوزيع بالترتيب
     let pile: [JackarooCard]
     /// المقاعد اللي تلعب (لاعبين أو ثلاثة أو أربعة)، وفريقين أو كل واحد لنفسه، والفائز في الفردي

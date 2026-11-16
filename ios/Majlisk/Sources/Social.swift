@@ -432,17 +432,21 @@ final class TableConnection: ObservableObject {
                     self.ws = ws
                     ws.resume()
                     ws.send(.string(self.chatPrefMessage())) { _ in }
-                    ws.send(.string("{\"type\":\"caps\",\"voice\":true}")) { _ in }
-                    // حركة انرسلت والاتصال ميت (ضاعت): نعيد إرسالها مع الاتصال الجديد
-                    if let p = self.pending {
-                        if Date().timeIntervalSince(p.at) < 20 { self.resent = true; ws.send(.string(p.text)) { _ in } } else { self.pending = nil }
+                    // z: حالة الطاولة توصل مضغوطة (أصغر بثلاث لأربع مرات، أسرع على النت الضعيف)
+                    ws.send(.string("{\"type\":\"caps\",\"voice\":true,\"z\":true}")) { _ in }
+                    // حركات انرسلت والاتصال ميت (ضاعت): نعيد إرسالها بالترتيب مع الاتصال الجديد.
+                    // كل حركة لها رقم (mid): لو كانت وصلت الخادم قبل، يتجاهلها ويرد بالحالة بس (ما تنحسب مرتين)
+                    await MainActor.run {
+                        self.outbox.removeAll { Date().timeIntervalSince($0.at) > 20 }
+                        for o in self.outbox { self.resent = true; ws.send(.string(o.text)) { _ in } }
                     }
                     // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
                     self.lastHeard = Date()
                     let ping = Task { [weak self] in
                         while !Task.isCancelled {
                             try? await Task.sleep(nanoseconds: 3_000_000_000)
-                            if let self, Date().timeIntervalSince(self.lastHeard) > 8 { ws.cancel(with: .goingAway, reason: nil); break }
+                            // ١٢ ثانية بلا أي رد = الاتصال ميت (كانت ٨: على النت الضعيف كانت تقطع وتعيد بلا داعي)
+                            if let self, Date().timeIntervalSince(self.lastHeard) > 12 { ws.cancel(with: .goingAway, reason: nil); break }
                             try? await ws.send(.string("ping"))
                         }
                     }
@@ -452,7 +456,12 @@ final class TableConnection: ObservableObject {
                         self.lastHeard = Date()
                         if !self.connected { await MainActor.run { self.connected = true } }
                         retry = 0
-                        if case .string(let text) = msg, text != "pong" { self.handle(text) }
+                        switch msg {
+                        case .string(let text): if text != "pong" { self.handle(text) }
+                        // حالة مضغوطة (deflate-raw)
+                        case .data(let d): if let text = inflateRaw(d) { self.handle(text) }
+                        @unknown default: break
+                        }
                     }
                     await MainActor.run { self.connected = false }
                 }
@@ -464,7 +473,8 @@ final class TableConnection: ObservableObject {
                     await MainActor.run { self.closed = true }
                     break
                 }
-                await self.sleep(seconds: retry)
+                // أول محاولة على طول، وبعدها تتباعد شوي (ثانية، ثنتين، ...)
+                await self.sleep(seconds: retry - 1)
             }
         }
     }
@@ -499,9 +509,14 @@ final class TableConnection: ObservableObject {
         guard let data = text.data(using: .utf8), let msg = (try? JSONSerialization.jsonObject(with: data)) as? JSON else { return }
         switch msg.str("type") {
         case "state":
-            pending = nil
             if let v = msg.obj("view") { let parsed = TableView(v); DispatchQueue.main.async {
-                self.view = parsed; self.version += 1; self.onState?(parsed)
+                // خادم قديم (ما يرد بـ ack): أي حالة تعتبر رد على الحركات
+                if !self.serverAcks { self.outbox.removeAll() }
+                self.serverView = parsed
+                // حركتك الفورية لسا ما وصلت الخادم: تبقى ظاهرة على الحالة الجديدة (ما ترجع الورقة ليدك وتطلع ثاني)
+                var shown = parsed
+                if let f = self.optimistic { if let p = f(parsed) { shown = p } else { self.optimistic = nil; self.optimisticMid = nil } }
+                self.view = shown; self.version += 1; self.onState?(shown)
                 // المحادثة الصوتية تتابع المنضمين هنا (مو من الشاشة): والتطبيق في الخلفية الشاشة ما تتحدث، فما كنت تسمع من دخل جديد
                 Voice.shared.sync(parsed.voice, table: self.tableId)
             } }
@@ -509,6 +524,7 @@ final class TableConnection: ObservableObject {
             // المحادثة الصوتية من غرفتها المستقلة: نحدّث القائمة بس (بدون الطاولة كاملة)
             let list = VoiceMember.list(msg.objs("voice"))
             DispatchQueue.main.async {
+                self.serverView?.voice = list
                 guard var v = self.view else { return }
                 v.voice = list
                 self.view = v; self.version += 1; self.onState?(v)
@@ -554,9 +570,24 @@ final class TableConnection: ObservableObject {
                 }
             }
             if !m.mine && mode == .read { Announcer.announce("\(m.name): \(m.text)") }
+        case "ack":
+            // الخادم استلم الحركة ونفّذها (أو كانت منفّذة قبل)
+            let mid = msg.str("mid")
+            DispatchQueue.main.async {
+                self.serverAcks = true
+                self.outbox.removeAll { $0.mid == mid }
+                // وصل التأكيد والحركة الفورية لسا معروضة = الخادم تجاهلها (مثلاً وقت مهلة الأكلة): نرجع لحالته
+                if self.optimisticMid == mid, self.optimistic != nil { self.revertOptimistic() }
+            }
         case "error":
-            pending = nil
-            if resent { resent = false } else { Announcer.announce(msg.str("message")) }
+            let mid = msg.str("mid")
+            let text = msg.str("message")
+            DispatchQueue.main.async {
+                if !mid.isEmpty { self.outbox.removeAll { $0.mid == mid } } else if !self.serverAcks { self.outbox.removeAll() }
+                // الحركة الفورية رُفضت: ترجع الورقة ليدك
+                if self.optimistic != nil && (mid.isEmpty || mid == self.optimisticMid) { self.revertOptimistic() }
+                if self.resent { self.resent = false } else { Announcer.announce(text) }
+            }
         case "kicked":
             stopped = true
             let banned = msg.bool("banned")
@@ -570,25 +601,53 @@ final class TableConnection: ObservableObject {
         }
     }
 
-    /// آخر حركة لعب انرسلت ولسا ما جا رد الخادم عليها. لو الاتصال ميت وهو يبان شغال (النت انقطع ثواني)
-    /// كانت الحركة تضيع: الحين لو ما وصل شي من الخادم خلال ثانيتين ونص نعيد الاتصال على طول،
-    /// ونعيد إرسال الحركة مع الاتصال الجديد
-    private var pending: (text: String, at: Date)?
+    /// الحركات اللي انرسلت ولسا ما أكدها الخادم (ack): تنعاد بالترتيب لو انقطع الاتصال (على الخيط الرئيسي)
+    private var outbox: [(mid: String, text: String, at: Date)] = []
+    /// الخادم الجديد يرد بـ ack على كل حركة (القديم ما يرد)
+    private var serverAcks = false
     /// أعدنا إرسال حركة: لو كانت انلعبت قبل، خطأ الخادم («ليس دورك») ما ينقرأ
     private var resent = false
+    /// آخر حالة من الخادم (بدون اللعب الفوري): نرجع لها لو رُفضت الحركة
+    private var serverView: TableView?
+    /// اللعب الفوري: الحركة اللي تنعرض قبل رد الخادم، ورقمها
+    private var optimistic: Optimistic.Patch?
+    private var optimisticMid: String?
+    private var seq = 0
+
+    private func revertOptimistic() {
+        optimistic = nil; optimisticMid = nil
+        Sounds.shared.clearLocal()
+        if let v = serverView { view = v; version += 1; onState?(v) }
+    }
 
     func send(_ msg: JSON) {
-        guard let data = try? JSONSerialization.data(withJSONObject: msg), let s = String(data: data, encoding: .utf8) else { return }
-        let isMove = msg["action"] != nil
+        guard msg["action"] != nil else {
+            guard let data = try? JSONSerialization.data(withJSONObject: msg), let s = String(data: data, encoding: .utf8) else { return }
+            guard connected, let ws else { Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return }
+            ws.send(.string(s)) { _ in }
+            return
+        }
         let at = Date()
-        if isMove { pending = (s, at); resent = false }
+        seq += 1
+        let mid = "\(Int(at.timeIntervalSince1970 * 1000))-\(seq)"
+        var m = msg
+        m["mid"] = mid
+        guard let data = try? JSONSerialization.data(withJSONObject: m), let s = String(data: data, encoding: .utf8) else { return }
+        outbox.append((mid, s, at))
+        resent = false
+        // اللعب الفوري: الورقة تطلع من يدك على طول، والخادم يأكدها بعدين
+        // (على المعروض الحين: فضغطتين ورا بعض على نفس الورقة ما تنلعب مرتين)
+        if let base = view, let f = Optimistic.patch(base, m), let shown = f(base) {
+            optimistic = f; optimisticMid = mid
+            view = shown; version += 1; onState?(shown)
+        }
+        // ما فيه اتصال الحين: الحركة محفوظة وتنرسل أول ما يرجع
         guard connected, let ws else { Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return }
         ws.send(.string(s)) { _ in }
-        if isMove {
-            DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
-                guard let self, let p = self.pending, p.at == at, self.lastHeard < at else { return }
-                self.ws?.cancel(with: .goingAway, reason: nil)
-            }
+        // ما وصل أي شي من الخادم خلال ٥ ثوانٍ: الاتصال ميت، نعيده (والحركة تنعاد معه)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 5) { [weak self] in
+            guard let self, self.outbox.contains(where: { $0.mid == mid }), self.lastHeard < at else { return }
+            self.ws?.cancel(with: .goingAway, reason: nil)
         }
     }
 
@@ -608,4 +667,10 @@ final class TableConnection: ObservableObject {
 func isBidLine(_ e: String) -> Bool {
     let patterns = [".* اشترى .*", ".* (بس|ولا)$", ".*أكد الحكم.*", ".* قال قبلك$", ".* دبّل$", "^(مقفل|مفتوح)$", ".*: (مقفل|مفتوح)$"]
     return patterns.contains { e.range(of: $0, options: .regularExpression) != nil }
+}
+
+/// فك حالة الطاولة المضغوطة من الخادم (deflate-raw = zlib في نظام آبل)
+func inflateRaw(_ data: Data) -> String? {
+    guard let out = try? (data as NSData).decompressed(using: .zlib) else { return nil }
+    return String(data: out as Data, encoding: .utf8)
 }

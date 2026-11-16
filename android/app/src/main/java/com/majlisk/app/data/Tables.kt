@@ -225,11 +225,21 @@ class TableConnection(val tableId: String) {
                         override fun onOpen(webSocket: WebSocket, response: Response) {
                             _connected.value = true; retry = 0
                             webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString())
-                            webSocket.send("{\"type\":\"caps\",\"voice\":true}")
-                            // حركة انرسلت والاتصال ميت (ضاعت): نعيد إرسالها مع الاتصال الجديد
-                            pending?.let { (text, at) -> if (System.currentTimeMillis() - at < 20_000) { resent = true; webSocket.send(text) } else pending = null }
+                            // z: حالة الطاولة توصل مضغوطة (أصغر بثلاث لأربع مرات، أسرع على النت الضعيف)
+                            webSocket.send("{\"type\":\"caps\",\"voice\":true,\"z\":true}")
+                            // حركات انرسلت والاتصال ميت (ضاعت): نعيد إرسالها بالترتيب مع الاتصال الجديد.
+                            // كل حركة لها رقم (mid): لو كانت وصلت الخادم قبل، يتجاهلها ويرد بالحالة بس (ما تنحسب مرتين)
+                            val now = System.currentTimeMillis()
+                            synchronized(outbox) {
+                                outbox.removeAll { now - it.at > 20_000 }
+                                outbox.forEach { resent = true; webSocket.send(it.text) }
+                            }
                         }
                         override fun onMessage(webSocket: WebSocket, text: String) { lastHeard = System.currentTimeMillis(); if (text != "pong") handle(text) }
+                        override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) {
+                            lastHeard = System.currentTimeMillis()
+                            inflate(bytes.toByteArray())?.let { handle(it) }
+                        }
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
                     })
@@ -238,7 +248,8 @@ class TableConnection(val tableId: String) {
                     val beat = scope.launch {
                         while (true) {
                             delay(3_000)
-                            if (System.currentTimeMillis() - lastHeard > 8_000) { ws?.cancel(); break }
+                            // ١٢ ثانية بلا أي رد = الاتصال ميت (كانت ٨: على النت الضعيف كانت تقطع وتعيد بلا داعي)
+                            if (System.currentTimeMillis() - lastHeard > 12_000) { ws?.cancel(); break }
                             ws?.send("ping")
                         }
                     }
@@ -255,7 +266,8 @@ class TableConnection(val tableId: String) {
                 }
                 wake = CompletableDeferred()
                 // يرجع النت: نعيد الاتصال على طول بدل انتظار المحاولة التالية
-                kotlinx.coroutines.withTimeoutOrNull(1000L * retry) { wake.await() }
+                // أول محاولة على طول، وبعدها تتباعد شوي (ثانية، ثنتين، ...)
+                kotlinx.coroutines.withTimeoutOrNull(1000L * (retry - 1)) { wake.await() }
             }
         }
     }
@@ -282,10 +294,30 @@ class TableConnection(val tableId: String) {
             // المحادثة الصوتية من غرفتها المستقلة: نحدّث القائمة بس (بدون الطاولة كاملة)
             "voice" -> {
                 val list = com.majlisk.app.model.parseVoice(msg.optJSONArray("voice"))
+                serverView = serverView?.copy(voice = list)
                 _view.value?.let { v -> val next = v.copy(voice = list); _view.value = next; onState?.invoke(next) }
                 scope.launch { com.majlisk.app.voice.Voice.sync(list, tableId) }
             }
-            "state" -> runCatching { pending = null; TableView.parse(msg.getJSONObject("view")) }.onSuccess { _view.value = it; onState?.invoke(it); scope.launch { com.majlisk.app.voice.Voice.sync(it.voice, tableId) } }
+            "state" -> runCatching { TableView.parse(msg.getJSONObject("view")) }.onSuccess { server ->
+                // خادم قديم (ما يرد بـ ack): أي حالة تعتبر رد على الحركات
+                if (!serverAcks) synchronized(outbox) { outbox.clear() }
+                serverView = server
+                // حركتك الفورية لسا ما وصلت الخادم: تبقى ظاهرة على الحالة الجديدة (ما ترجع الورقة ليدك وتطلع ثاني)
+                val shown = optimistic?.let { f -> f(server) ?: run { optimistic = null; null } } ?: server
+                _view.value = shown; onState?.invoke(shown); scope.launch { com.majlisk.app.voice.Voice.sync(server.voice, tableId) }
+            }
+            // الخادم استلم الحركة ونفّذها (أو كانت منفّذة قبل)
+            "ack" -> {
+                serverAcks = true
+                val mid = msg.optString("mid")
+                synchronized(outbox) { outbox.removeAll { it.mid == mid } }
+                // وصل التأكيد والحركة الفورية لسا معروضة = الخادم تجاهلها (مثلاً وقت مهلة الأكلة): نرجع لحالته
+                if (optimisticMid == mid && optimistic != null) {
+                    optimistic = null; optimisticMid = null
+                    Sounds.clearLocal()
+                    serverView?.let { _view.value = it; onState?.invoke(it) }
+                }
+            }
             // كل حدث إعلان مستقل حتى يقرأها قارئ الشاشة بالترتيب
             // أحداث الحركة الواحدة تُقرأ جملة واحدة، وتنتظر ما قبلها حتى يكتمل (لا تقطع بعضها)
             "events" -> msg.optJSONArray("events")?.let { a ->
@@ -321,7 +353,17 @@ class TableConnection(val tableId: String) {
                     if (mode == ChatMode.READ) Announcer.announce("${m.name}: ${m.text}")
                 }
             }
-            "error" -> { pending = null; if (resent) resent = false else Announcer.announce(msg.optString("message")) }
+            "error" -> {
+                val mid = msg.optString("mid").takeIf { it.isNotEmpty() }
+                synchronized(outbox) { if (mid != null) outbox.removeAll { it.mid == mid } else if (!serverAcks) outbox.clear() }
+                // الحركة الفورية رُفضت: ترجع الورقة ليدك
+                if (optimistic != null && (mid == null || mid == optimisticMid)) {
+                    optimistic = null; optimisticMid = null
+                    Sounds.clearLocal()
+                    serverView?.let { _view.value = it; onState?.invoke(it) }
+                }
+                if (resent) resent = false else Announcer.announce(msg.optString("message"))
+            }
             "kicked" -> {
                 stopped = true
                 val banned = msg.optBoolean("banned")
@@ -341,22 +383,66 @@ class TableConnection(val tableId: String) {
      * كانت الحركة تضيع: الحين لو ما وصل شي من الخادم خلال ثانيتين ونص نعيد الاتصال على طول،
      * ونعيد إرسال الحركة مع الاتصال الجديد
      */
-    @Volatile private var pending: Pair<String, Long>? = null
+    private data class Outgoing(val mid: String, val text: String, val at: Long)
+    /** الحركات اللي انرسلت ولسا ما أكدها الخادم (ack): تنعاد بالترتيب لو انقطع الاتصال */
+    private val outbox = ArrayList<Outgoing>()
+    /** الخادم الجديد يرد بـ ack على كل حركة (القديم ما يرد) */
+    @Volatile private var serverAcks = false
     /** أعدنا إرسال حركة: لو كانت انلعبت قبل، خطأ الخادم («ليس دورك») ما ينقرأ */
     @Volatile private var resent = false
+    /** آخر حالة من الخادم (بدون اللعب الفوري): نرجع لها لو رُفضت الحركة */
+    @Volatile private var serverView: TableView? = null
+    /** اللعب الفوري: الحركة اللي تنعرض قبل رد الخادم، ورقمها */
+    @Volatile private var optimistic: ((TableView) -> TableView?)? = null
+    @Volatile private var optimisticMid: String? = null
+    private var seq = 0
     private val watchdog = android.os.Handler(android.os.Looper.getMainLooper())
 
     fun send(msg: JSONObject) {
-        val text = msg.toString()
         val isMove = msg.has("action")
         val at = System.currentTimeMillis()
-        if (isMove) { pending = text to at; resent = false }
-        val ok = ws?.takeIf { _connected.value }?.send(text) ?: false
-        if (!ok) { Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return }
-        if (isMove) watchdog.postDelayed({
-            if (pending?.second == at && lastHeard < at) ws?.cancel()
-        }, 2_500)
+        if (isMove) {
+            val mid = "${at.toString(36)}-${++seq}"
+            msg.put("mid", mid)
+            val text = msg.toString()
+            synchronized(outbox) { outbox.add(Outgoing(mid, text, at)) }
+            resent = false
+            // اللعب الفوري: الورقة تطلع من يدك على طول، والخادم يأكدها بعدين
+            // على المعروض الحين (فضغطتين ورا بعض على نفس الورقة ما تنلعب مرتين)
+            _view.value?.let { base ->
+                Optimistic.patch(base, msg)?.let { f -> f(base)?.let { shown ->
+                    optimistic = f; optimisticMid = mid
+                    _view.value = shown; onState?.invoke(shown)
+                } }
+            }
+            val ok = ws?.takeIf { _connected.value }?.send(text) ?: false
+            // ما فيه اتصال الحين: الحركة محفوظة وتنرسل أول ما يرجع
+            if (!ok) { Announcer.announce("جارٍ إعادة الاتصال بالطاولة…"); return }
+            // ما وصل أي شي من الخادم خلال ٥ ثوانٍ: الاتصال ميت، نعيده (والحركة تنعاد معه)
+            watchdog.postDelayed({
+                val waiting = synchronized(outbox) { outbox.any { it.mid == mid } }
+                if (waiting && lastHeard < at) ws?.cancel()
+            }, 5_000)
+            return
+        }
+        val ok = ws?.takeIf { _connected.value }?.send(msg.toString()) ?: false
+        if (!ok) Announcer.announce("جارٍ إعادة الاتصال بالطاولة…")
     }
+
+    /** حالة مضغوطة من الخادم (deflate-raw) */
+    private fun inflate(data: ByteArray): String? = runCatching {
+        val inf = java.util.zip.Inflater(true)
+        inf.setInput(data)
+        val out = java.io.ByteArrayOutputStream(data.size * 4)
+        val buf = ByteArray(8192)
+        while (!inf.finished()) {
+            val n = inf.inflate(buf)
+            if (n == 0 && (inf.needsInput() || inf.needsDictionary())) break
+            out.write(buf, 0, n)
+        }
+        inf.end()
+        out.toString("UTF-8")
+    }.getOrNull()
 
     fun send(type: String, vararg pairs: Pair<String, Any?>) = send(jsonOf("type" to type, *pairs))
 

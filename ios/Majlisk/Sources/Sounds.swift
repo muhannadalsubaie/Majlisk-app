@@ -89,6 +89,17 @@ final class Sounds {
     /// أحد انضم للمحادثة الصوتية / غادرها
     /// الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة
     func dominoShuffle() { play("domino-shuffle", gain: 1, vary: false) }
+    /// لعب فوري: صوت حركتك اشتغل وقت الضغط، فما يتكرر لما توصل حالة الخادم (خلال ٤ ثوانٍ)
+    private var local: [String: Date] = [:]
+    private let localLock = NSLock()
+    func markLocal(_ kind: String) { localLock.lock(); local[kind] = Date(); localLock.unlock() }
+    func clearLocal() { localLock.lock(); local.removeAll(); localLock.unlock() }
+    func consumeLocal(_ kind: String) -> Bool {
+        localLock.lock(); defer { localLock.unlock() }
+        guard let at = local.removeValue(forKey: kind) else { return false }
+        return Date().timeIntervalSince(at) < 4
+    }
+
     func dominoTile() { play("domino-tile", gain: 1) }
     /// الدومينو: لاعب جلا (ما عنده قطعة تصلح)
     func dominoPass() { play("domino-pass", gain: 0.9, vary: false) }

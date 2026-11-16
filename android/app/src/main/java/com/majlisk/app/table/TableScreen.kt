@@ -942,7 +942,8 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
     // الورقة الجديدة: آخر ورقة في الأكلة الحالية، أو الرابعة إن اكتملت الأكلة للتو
     val played: Pair<Card, Card>? = when {
         g.trickNo == prev.trickNo && g.trick.size > prev.trick.size -> g.trick.last().card to g.trick.first().card
-        g.trickNo == prev.trickNo + 1 && g.lastTrick != null && g.lastTrick.size == 4 -> g.lastTrick[3].card to g.lastTrick[0].card
+        // (لو الرابعة كانت ظاهرة قبل — لعبتها أنت لعب فوري — صوتها طلع خلاص)
+        g.trickNo == prev.trickNo + 1 && g.lastTrick != null && g.lastTrick.size == 4 && prev.trick.size < 4 -> g.lastTrick[3].card to g.lastTrick[0].card
         else -> null
     }
     if (played != null) {

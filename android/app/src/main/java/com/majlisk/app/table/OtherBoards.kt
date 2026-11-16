@@ -1355,7 +1355,8 @@ class OtherGameSounds {
                 d != null -> {
                     when {
                         (first && d.line.isEmpty() && d.phase == "playing") || (phase != null && phase != "playing" && d.phase == "playing") -> Sounds.dominoShuffle()
-                        !first && (d.lastKind == "play" || d.lastKind == "draw") -> Sounds.dominoTile()
+                        // لعبت قطعتك (لعب فوري): صوتها طلع وقت الضغط
+                        !first && (d.lastKind == "play" || d.lastKind == "draw") -> { if (!(d.lastKind == "play" && Sounds.consumeLocal("domino"))) Sounds.dominoTile() }
                         !first && d.lastKind == "pass" -> Sounds.dominoPass()
                     }
                     // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
@@ -1365,7 +1366,8 @@ class OtherGameSounds {
                 j != null -> {
                     if ((first && !j.hasMove) || (!first && deal != null && deal != j.dealNo)) Sounds.deal(true)
                     if (!first && j.hasMove) {
-                        Sounds.jackarooCard()
+                        // ورقتك (لعب فوري): صوتها طلع وقت الضغط
+                        if (!Sounds.consumeLocal("jackaroo")) Sounds.jackarooCard()
                         // رجوع ٤ وتبديل حجرين: صوتهم الخاص بدل نقرات الخطوات
                         when (j.lastKind) {
                             "back" -> Sounds.jackarooBack(at = 0.25)

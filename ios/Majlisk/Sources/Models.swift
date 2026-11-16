@@ -89,7 +89,7 @@ struct GameActions {
     let doubleLabel: String?
     let canPassDouble: Bool
     let chooseLock: Bool
-    let legal: [Card]
+    var legal: [Card]
     /// سوا: دورك تبدأ الأكلة وكل أوراقك مضمونة تاكل
     var canSawa = false
     /// «ورق»: الزر يطلع، وwaraqDecision = دورك تختار بس أو ورق (بعد الشراء)
@@ -115,7 +115,7 @@ struct GameView {
     let bidRound: Int
     let contract: Contract?
     let doubling: Doubling
-    let trick: [PlayedCard]
+    var trick: [PlayedCard]
     let lastTrick: [PlayedCard]?
     let trickNo: Int
     /// كم أكلة لكل فريق في الصكة الحالية
@@ -123,8 +123,8 @@ struct GameView {
     let lastHand: LastHand?
     let outcomeStatus: String
     let outcomeWinner: Int?
-    let handCounts: [Int]
-    let myHand: [Card]
+    var handCounts: [Int]
+    var myHand: [Card]
     /// أوراقك الثمان كاملة (حتى اللي لعبتها) — تجي بس لما تقدر تفرش مشروعك
     var myInitial: [Card] = []
     let balootSeat: Int?
@@ -132,7 +132,7 @@ struct GameView {
     var balootTrick: Int? = nil
     let projectsWinningTeam: Int?
     let declared: [Declared]
-    let actions: GameActions
+    var actions: GameActions
     let hokmBidKey: String?
     /// من اشترى الحكم الثاني (قبل وبعد ما يحدد اللون)
     let secondHokmSeat: Int?
@@ -178,14 +178,14 @@ struct TableView {
     let spectators: [Person]
     var voice: [VoiceMember]
     let voiceBlocked: [String]
-    let game: GameView?
+    var game: GameView?
     let kind: String
     let variant: String
     /// لعبة غير البلوت بدأت (الدومينو أو الجاكارو أو اللودو)
     let otherGame: Bool
     let history: [HandRecord]
-    let domino: DominoView?
-    let jackaroo: JackarooView?
+    var domino: DominoView?
+    var jackaroo: JackarooView?
     let ludo: LudoView?
     /// كم لاعب يقدر يبدأ اللعبة
     let startCounts: [Int]

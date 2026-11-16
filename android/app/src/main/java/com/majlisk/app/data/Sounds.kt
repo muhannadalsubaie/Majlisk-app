@@ -108,6 +108,15 @@ object Sounds {
 
     /** الدومينو: خلط القطع عند التوزيع، وطقة القطعة على الطاولة */
     fun dominoShuffle() = play("domino-shuffle", gain = 1f, vary = false)
+    /** لعب فوري: صوت حركتك اشتغل وقت الضغط، فما يتكرر لما توصل حالة الخادم (خلال ٤ ثوانٍ) */
+    private val local = HashMap<String, Long>()
+    fun markLocal(kind: String) { local[kind] = System.currentTimeMillis() }
+    fun clearLocal() { local.clear() }
+    fun consumeLocal(kind: String): Boolean {
+        val at = local.remove(kind) ?: return false
+        return System.currentTimeMillis() - at < 4_000
+    }
+
     fun dominoTile() = play("domino-tile", gain = 1f)
     /** الدومينو: لاعب جلا (ما عنده قطعة تصلح) */
     fun dominoPass() = play("domino-pass", gain = 0.9f, vary = false)

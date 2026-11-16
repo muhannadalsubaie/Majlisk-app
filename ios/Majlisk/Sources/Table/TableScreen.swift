@@ -599,7 +599,8 @@ final class GameSoundTracker {
         // الورقة الجديدة: آخر ورقة في الأكلة الحالية، أو الرابعة إن اكتملت الأكلة للتو
         var played: (Card, Card)?
         if g.trickNo == prev.trickNo && g.trick.count > prev.trick.count { played = (g.trick.last!.card, g.trick.first!.card) }
-        else if g.trickNo == prev.trickNo + 1, let lt = g.lastTrick, lt.count == 4 { played = (lt[3].card, lt[0].card) }
+        // (لو الرابعة كانت ظاهرة قبل — لعبتها أنت لعب فوري — صوتها طلع خلاص)
+        else if g.trickNo == prev.trickNo + 1, let lt = g.lastTrick, lt.count == 4, prev.trick.count < 4 { played = (lt[3].card, lt[0].card) }
         if let p = played {
             let (card, lead) = p
             let trump = g.contract?.mode == "hokm" ? g.contract?.trump : nil
