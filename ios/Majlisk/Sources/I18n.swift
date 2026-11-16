@@ -27,8 +27,12 @@ final class I18n: ObservableObject {
             guard literal.range(of: "[\u{0621}-\u{064A}]", options: .regularExpression) != nil else { continue }
             var pattern = "^"
             var rest = Substring(k)
+            var first = true
             while let r = rest.range(of: "\\{\\d\\}", options: .regularExpression) {
-                pattern += NSRegularExpression.escapedPattern(for: String(rest[..<r.lowerBound])) + "(.*?)"
+                let lit = String(rest[..<r.lowerBound])
+                // مكانين ورا بعض بمسافة ({0} {1}): الثاني كلمة وحدة (رقم أو نقاط)
+                pattern += NSRegularExpression.escapedPattern(for: lit) + (!first && lit == " " ? "(\\S+)" : "(.*?)")
+                first = false
                 rest = rest[r.upperBound...]
             }
             pattern += NSRegularExpression.escapedPattern(for: String(rest)) + "$"
@@ -66,16 +70,17 @@ final class I18n: ObservableObject {
         return r
     }
 
-    private static let separators: [(String, String)] = [("\n", "\n"), ("، ", ", "), ("،", ","), (" — ", " — "), (". ", ". "), (": ", ": "), (" · ", " · "), (" و", " & ")]
+    private static let separators: [(String, String)] = [("\n", "\n"), (". ", ". "), (" — ", " — "), ("، ", ", "), ("،", ","), (": ", ": "), (" · ", " · "), (" و", " & ")]
 
     private func translate(_ s: String, _ i: Int, _ depth: Int) -> String {
-        if s.isEmpty || depth > 6 || !I18n.hasArabic(s) { return s }
+        if s.isEmpty || depth > 8 || !I18n.hasArabic(s) { return s }
         if let e = exact[s] { return e[i] }
         let t = s.trimmingCharacters(in: .whitespaces)
         if t.count != s.count, !t.isEmpty, let r = s.range(of: t) {
             return String(s[..<r.lowerBound]) + translate(t, i, depth + 1) + String(s[r.upperBound...])
         }
         let ns = s as NSString
+        var best: String? = nil
         for tp in templates {
             guard let m = tp.re.firstMatch(in: s, range: NSRange(location: 0, length: ns.length)) else { continue }
             var out = tp.out[i]
@@ -83,13 +88,21 @@ final class I18n: ObservableObject {
                 let g = ns.substring(with: m.range(at: n))
                 out = out.replacingOccurrences(of: "{\(n - 1)}", with: translate(g, i, depth + 1))
             }
-            return out
+            best = out
+            break
         }
+        if let b = best, I18n.leftover(b) == 0 { return b }
+        // نقسم على الفواصل ونترجم كل جزء (لو القالب بلع نص طويل فيه أكثر من جملة، نختار الأنظف)
         for (sep, rep) in I18n.separators where s.contains(sep) {
-            return s.components(separatedBy: sep).map { translate($0, i, depth + 1) }.joined(separator: rep)
+            let alt = s.components(separatedBy: sep).map { translate($0, i, depth + 1) }.joined(separator: rep)
+            if let b = best, I18n.leftover(alt) >= I18n.leftover(b) { return b }
+            return alt
         }
-        return s
+        return best ?? s
     }
+
+    /// كم حرف عربي باقي بعد الترجمة
+    static func leftover(_ s: String) -> Int { s.unicodeScalars.filter { $0.value >= 0x0621 && $0.value <= 0x064A }.count }
 }
 
 /// ترجمة نص للغة التطبيق

@@ -430,7 +430,7 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                         .clickable(role = Role.Button) {
                             when {
                                 !d.myTurn -> Announcer.announceNow("ليس دورك")
-                                !h.legal -> Announcer.announceNow(h.label)
+                                !h.legal -> Sounds.illegal() // نفس صوت البلوت للورقة اللي ما تنلعب، بدون كلام
                                 h.askSide -> chooseSide = h
                                 else -> act(conn, "domino", jsonOf("type" to "play", "tile" to h.tile.json()))
                             }

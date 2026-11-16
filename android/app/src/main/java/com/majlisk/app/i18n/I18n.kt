@@ -55,7 +55,12 @@ object I18n {
                 // القالب: الأجزاء الثابتة لازم فيها حرف عربي (وإلا يطابق أي شي)
                 val literal = k.replace(Regex("\\{\\d\\}"), "")
                 if (!letters.containsMatchIn(literal)) continue
-                val pattern = k.split(Regex("\\{\\d\\}")).joinToString("(.*?)") { Regex.escape(it) }
+                // مكانين ورا بعض بمسافة ({0} {1}): الثاني كلمة وحدة (رقم أو نقاط)
+                val parts = k.split(Regex("\\{\\d\\}"))
+                val pattern = buildString {
+                    append(Regex.escape(parts[0]))
+                    for (j in 1 until parts.size) { append(if (j > 1 && parts[j - 1] == " ") "(\\S+)" else "(.*?)"); append(Regex.escape(parts[j])) }
+                }
                 templates += Tpl(Regex(pattern, RegexOption.DOT_MATCHES_ALL), out, literal.length)
             }
             templates.sortByDescending { it.weight }
@@ -89,26 +94,33 @@ object I18n {
     }
 
     private fun translate(s: String, i: Int, depth: Int): String {
-        if (s.isEmpty() || !arabic.containsMatchIn(s) || depth > 6) return s
+        if (s.isEmpty() || !arabic.containsMatchIn(s) || depth > 8) return s
         exact[s]?.let { return it[i] }
         // مسافات في الأطراف
         val t = s.trim()
         if (t.length != s.length && t.isNotEmpty()) return s.substring(0, s.indexOf(t[0])) + translate(t, i, depth + 1) + s.substring(s.lastIndexOf(t.last()) + 1)
+        var best: String? = null
         for (tp in templates) {
             val m = tp.re.matchEntire(s) ?: continue
             var out = tp.out[i]
             m.groupValues.drop(1).forEachIndexed { n, g -> out = out.replace("{$n}", translate(g, i, depth + 1)) }
-            return out
+            best = out
+            break
         }
-        // نقسم على الفواصل ونترجم كل جزء
+        if (best != null && leftover(best) == 0) return best
+        // نقسم على الفواصل ونترجم كل جزء (لو القالب بلع نص طويل فيه أكثر من جملة، نختار الأنظف)
         for ((sep, rep) in SEPARATORS) {
             if (!s.contains(sep)) continue
-            return s.split(sep).joinToString(rep) { translate(it, i, depth + 1) }
+            val alt = s.split(sep).joinToString(rep) { translate(it, i, depth + 1) }
+            return if (best == null || leftover(alt) < leftover(best)) alt else best
         }
-        return s
+        return best ?: s
     }
 
-    private val SEPARATORS = listOf("\n" to "\n", "، " to ", ", "،" to ",", " — " to " — ", ". " to ". ", ": " to ": ", " · " to " · ", " و" to " & ")
+    /** كم حرف عربي باقي بعد الترجمة */
+    private fun leftover(s: String) = letters.findAll(s).count()
+
+    private val SEPARATORS = listOf("\n" to "\n", ". " to ". ", " — " to " — ", "، " to ", ", "،" to ",", ": " to ": ", " · " to " · ", " و" to " & ")
 }
 
 /** ترجمة نص للغة التطبيق */

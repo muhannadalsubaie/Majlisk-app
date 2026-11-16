@@ -470,7 +470,7 @@ struct DominoHand: View {
                 Wrap(items: d.hand, spacing: 8) { h in
                     Button {
                         if !d.myTurn { Announcer.announceNow("ليس دورك") }
-                        else if !h.legal { Announcer.announceNow(h.label) }
+                        else if !h.legal { Sounds.shared.illegal() } // نفس صوت البلوت للورقة اللي ما تنلعب، بدون كلام
                         else if h.askSide { chooseSide = h }
                         else { act(["type": "play", "tile": h.tile.json]) }
                     } label: {

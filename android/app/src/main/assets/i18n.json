@@ -496,12 +496,12 @@
   "fr": "Je commence"
  },
  "أحجار {0}": {
-  "en": "{0}'s marbles",
-  "fr": "Billes de {0}"
+  "en": "{0}'s pieces",
+  "fr": "Pions de {0}"
  },
  "أحجارك": {
-  "en": "Your marbles",
-  "fr": "Vos billes"
+  "en": "Your pieces",
+  "fr": "Vos pions"
  },
  "أحد الحاضرين": {
   "en": "Someone present",
@@ -1604,8 +1604,8 @@
   "fr": "Profil"
  },
  "المنزل": {
-  "en": "Home",
-  "fr": "Arrivée"
+  "en": "home",
+  "fr": "l'arrivée"
  },
  "الموجودين في طاولة {0}": {
   "en": "Present at {0}'s table",
@@ -1925,7 +1925,7 @@
  },
  "ترمي مرة أخرى": {
   "en": "You roll again",
-  "fr": "Vous rejouez"
+  "fr": "Vous relancez"
  },
  "تسجيل الخروج": {
   "en": "Sign out",
@@ -2264,12 +2264,12 @@
   "fr": "Bord de la table"
  },
  "حجر {0}": {
-  "en": "Marble {0}",
-  "fr": "Bille {0}"
+  "en": "Piece {0}",
+  "fr": "Pion {0}"
  },
  "حجر {0} {1}": {
-  "en": "Marble {0} {1}",
-  "fr": "Bille {0} {1}"
+  "en": "{0}'s piece {1}",
+  "fr": "pion {1} de {0}"
  },
  "حجر {0}: {1}": {
   "en": "Marble {0}: {1}",
@@ -2284,8 +2284,8 @@
   "fr": "Votre bille"
  },
  "حجرك {0}": {
-  "en": "Your marble {0}",
-  "fr": "Votre bille {0}"
+  "en": "your piece {0}",
+  "fr": "votre pion {0}"
  },
  "حجم الأحجار": {
   "en": "Piece size",
@@ -3132,12 +3132,12 @@
   "fr": "En attente"
  },
  "في البيت": {
-  "en": "At home",
-  "fr": "À la maison"
+  "en": "in the yard",
+  "fr": "à l'écurie"
  },
  "في الخانة {0}": {
-  "en": "On square {0}",
-  "fr": "Sur la case {0}"
+  "en": "on square {0}",
+  "fr": "sur la case {0}"
  },
  "في الخانة {0}{1}": {
   "en": "On square {0}{1}",
@@ -3796,8 +3796,8 @@
   "fr": "Fermée"
  },
  "ممر المنزل {0}": {
-  "en": "Home column {0}",
-  "fr": "Colonne d'arrivée {0}"
+  "en": "home column {0}",
+  "fr": "couloir d'arrivée {0}"
  },
  "من الطاولة": {
   "en": "From the table",
@@ -3980,8 +3980,8 @@
   "fr": "Arrivées {0}/4"
  },
  "وصل المنزل": {
-  "en": "Reached home",
-  "fr": "Arrivé"
+  "en": "reached home",
+  "fr": "arrivé"
  },
  "وصلت رسالتك، وراح يوصلك الرد هنا وبإشعار": {
   "en": "We got your message; the reply will come here and as a notification",
@@ -4016,8 +4016,8 @@
   "fr": "Temps par tour, {0}, menu"
  },
  "ولا": {
-  "en": "or",
-  "fr": "ou"
+  "en": "Pass",
+  "fr": "Passe"
  },
  "ولد": {
   "en": "Jack",
@@ -4713,7 +4713,7 @@
  },
  "وترمي مرة أخرى": {
   "en": "and you roll again",
-  "fr": "et vous rejouez"
+  "fr": "et vous relancez"
  },
  "ورقة الأرض {0}": {
   "en": "table card {0}",
@@ -4721,7 +4721,7 @@
  },
  "ويرمي مرة أخرى": {
   "en": "and rolls again",
-  "fr": "et rejoue"
+  "fr": "et relance"
  },
  "(أنت)": {
   "en": "(you)",
@@ -4805,7 +4805,7 @@
  },
  "ويرمي مرة ثانية": {
   "en": "and rolls again",
-  "fr": "et rejoue"
+  "fr": "et relance"
  },
  "يختار الحجر": {
   "en": "choosing the piece",
@@ -4854,5 +4854,217 @@
  "اختر أربعة لاعبين أو أكثر": {
   "en": "Pick four or more players",
   "fr": "Choisissez quatre joueurs ou plus"
+ },
+ "رميت {0}": {
+  "en": "You rolled {0}",
+  "fr": "Vous avez fait {0}"
+ },
+ "{0} رمى {1}": {
+  "en": "{0} rolled {1}",
+  "fr": "{0} a fait {1}"
+ },
+ "ستة ثالثة": {
+  "en": "a third six",
+  "fr": "un troisième six"
+ },
+ "ضاع الدور": {
+  "en": "turn lost",
+  "fr": "tour perdu"
+ },
+ "ضاع دورك": {
+  "en": "you lose your turn",
+  "fr": "vous perdez votre tour"
+ },
+ "لا حركة": {
+  "en": "no move",
+  "fr": "aucun coup"
+ },
+ "ما عندك حركة": {
+  "en": "you have no move",
+  "fr": "vous n'avez aucun coup"
+ },
+ "{0} يرمي مرة أخرى": {
+  "en": "{0} rolls again",
+  "fr": "{0} relance"
+ },
+ "ارمِ مرة ثانية": {
+  "en": "roll again",
+  "fr": "relancez"
+ },
+ "{0} تحرك من {1} إلى {2}": {
+  "en": "{0} moved from {1} to {2}",
+  "fr": "{0} a avancé de {1} à {2}"
+ },
+ "أنت تحركت من {0} إلى {1}": {
+  "en": "You moved from {0} to {1}",
+  "fr": "Vous avez avancé de {0} à {1}"
+ },
+ "وتحركت من {0} إلى {1}": {
+  "en": "and moved from {0} to {1}",
+  "fr": "et avancé de {0} à {1}"
+ },
+ "وتحرك من {0} إلى {1}": {
+  "en": "and moved from {0} to {1}",
+  "fr": "et a avancé de {0} à {1}"
+ },
+ "{0} حرّك {1} من {2} إلى {3}": {
+  "en": "{0} moved {1} from {2} to {3}",
+  "fr": "{0} a déplacé {1} de {2} à {3}"
+ },
+ "أنت حرّكت {0} من {1} إلى {2}": {
+  "en": "You moved {0} from {1} to {2}",
+  "fr": "Vous avez déplacé {0} de {1} à {2}"
+ },
+ "وحرّكت {0} من {1} إلى {2}": {
+  "en": "and moved {0} from {1} to {2}",
+  "fr": "et déplacé {0} de {1} à {2}"
+ },
+ "وحرّك {0} من {1} إلى {2}": {
+  "en": "and moved {0} from {1} to {2}",
+  "fr": "et a déplacé {0} de {1} à {2}"
+ },
+ "{0} طلّع حجر إلى {1}": {
+  "en": "{0} brought a piece out to {1}",
+  "fr": "{0} a sorti un pion sur {1}"
+ },
+ "أنت طلّعت حجر إلى {0}": {
+  "en": "You brought a piece out to {0}",
+  "fr": "Vous avez sorti un pion sur {0}"
+ },
+ "وطلّعت حجر إلى {0}": {
+  "en": "and brought a piece out to {0}",
+  "fr": "et sorti un pion sur {0}"
+ },
+ "وطلّع حجر إلى {0}": {
+  "en": "and brought a piece out to {0}",
+  "fr": "et a sorti un pion sur {0}"
+ },
+ "{0} طلّع {1} إلى {2}": {
+  "en": "{0} brought {1} out to {2}",
+  "fr": "{0} a sorti {1} sur {2}"
+ },
+ "أنت طلّعت {0} إلى {1}": {
+  "en": "You brought {0} out to {1}",
+  "fr": "Vous avez sorti {0} sur {1}"
+ },
+ "وطلّعت {0} إلى {1}": {
+  "en": "and brought {0} out to {1}",
+  "fr": "et sorti {0} sur {1}"
+ },
+ "وطلّع {0} إلى {1}": {
+  "en": "and brought {0} out to {1}",
+  "fr": "et a sorti {0} sur {1}"
+ },
+ "{0} أكل {1}": {
+  "en": "{0} captured {1}",
+  "fr": "{0} a capturé {1}"
+ },
+ "أكلت {0}": {
+  "en": "You captured {0}",
+  "fr": "Vous avez capturé {0}"
+ },
+ "ورجع للبيت": {
+  "en": "sent back to the yard",
+  "fr": "renvoyé à l'écurie"
+ },
+ "رجع للبيت": {
+  "en": "sent back to the yard",
+  "fr": "renvoyé à l'écurie"
+ },
+ "وحجر {0} {1}": {
+  "en": "and {0}'s piece {1}",
+  "fr": "et pion {1} de {0}"
+ },
+ "أحجار {0}: {1}": {
+  "en": "{0}'s pieces: {1}",
+  "fr": "Pions de {0} : {1}"
+ },
+ "أحجارك: {0}": {
+  "en": "Your pieces: {0}",
+  "fr": "Vos pions : {0}"
+ },
+ "{0} في البيت": {
+  "en": "{0} in the yard",
+  "fr": "{0} à l'écurie"
+ },
+ "{0} في الخانة {1}": {
+  "en": "{0} on square {1}",
+  "fr": "{0} sur la case {1}"
+ },
+ "على قاعدته": {
+  "en": "on its base",
+  "fr": "sur sa base"
+ },
+ "في منطقة الأمان": {
+  "en": "in the safe zone",
+  "fr": "dans la zone sûre"
+ },
+ "{0} في منطقة الأمان": {
+  "en": "{0} in the safe zone",
+  "fr": "{0} dans la zone sûre"
+ },
+ "الخانة {0} من {1}": {
+  "en": "square {0} of {1}",
+  "fr": "case {0} sur {1}"
+ },
+ "في ممر منزله": {
+  "en": "in its home column",
+  "fr": "dans son couloir d'arrivée"
+ },
+ "{0} في ممر منزله": {
+  "en": "{0} in its home column",
+  "fr": "{0} dans son couloir d'arrivée"
+ },
+ "{0} وصل المنزل": {
+  "en": "{0} reached home",
+  "fr": "{0} arrivé"
+ },
+ "{0} الأحمر": {
+  "en": "{0}: Red",
+  "fr": "{0} : Rouge"
+ },
+ "{0} الأزرق": {
+  "en": "{0}: Blue",
+  "fr": "{0} : Bleu"
+ },
+ "{0} الأصفر": {
+  "en": "{0}: Yellow",
+  "fr": "{0} : Jaune"
+ },
+ "{0} الأخضر": {
+  "en": "{0}: Green",
+  "fr": "{0} : Vert"
+ },
+ "{0} على اليمين": {
+  "en": "{0} on the right",
+  "fr": "{0} à droite"
+ },
+ "{0} على اليسار": {
+  "en": "{0} on the left",
+  "fr": "{0} à gauche"
+ },
+ "{0} لعب {1}": {
+  "en": "{0} played {1}",
+  "fr": "{0} a joué {1}"
+ },
+ "{0} بس": {
+  "en": "{0}: Pass",
+  "fr": "{0} : Passe"
+ },
+ "{0} ولا": {
+  "en": "{0}: Pass",
+  "fr": "{0} : Passe"
+ },
+ "عاد اتصال {0}": {
+  "en": "{0} reconnected",
+  "fr": "{0} s'est reconnecté"
+ },
+ "عاد اتصال": {
+  "en": "Reconnected",
+  "fr": "Reconnecté"
+ },
+ "{0} ر.س": {
+  "en": "{0} SAR",
+  "fr": "{0} SAR"
  }
 }
