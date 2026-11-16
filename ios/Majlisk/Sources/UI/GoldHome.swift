@@ -37,9 +37,9 @@ private struct GameCard: View {
     var body: some View {
         Button(action: action) {
             VStack(alignment: .leading) {
-                Text(tr(icon)).font(.system(size: 28))
+                Text(spoken(icon)).font(.system(size: 28))
                 Spacer()
-                Text(tr(name)).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream)
+                Text(spoken(name)).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream)
             }
             .frame(maxWidth: .infinity, minHeight: 104, alignment: .leading).padding(14)
             .background(LinearGradient(colors: featured ? [Color(red: 0.12, green: 0.48, blue: 0.35), Color(red: 0.07, green: 0.28, blue: 0.21)] : [Color(red: 0.17, green: 0.23, blue: 0.29), Color(red: 0.09, green: 0.13, blue: 0.17)], startPoint: .topLeading, endPoint: .bottomTrailing))
@@ -48,7 +48,7 @@ private struct GameCard: View {
             .shadow(color: .black.opacity(0.5), radius: 10, y: 8)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(tr("طاولة \(name)"))
+        .accessibilityLabel(spokenText("طاولة \(name)"))
     }
 }
 
@@ -60,13 +60,13 @@ private struct NavItem: View {
     var body: some View {
         Button(action: action) {
             VStack(spacing: 3) {
-                Text(tr(icon)).font(.system(size: 20))
-                Text(tr(label)).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8).foregroundColor(active ? Pro.goldLight : Pro.dim)
+                Text(spoken(icon)).font(.system(size: 20))
+                Text(spoken(label)).font(.system(size: 10, weight: .bold)).lineLimit(1).minimumScaleFactor(0.8).foregroundColor(active ? Pro.goldLight : Pro.dim)
             }
             .frame(maxWidth: .infinity, minHeight: 56)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(tr(label))
+        .accessibilityLabel(spokenText(label))
         .accessibilityAddTraits(active ? [.isSelected] : [])
     }
 }
@@ -92,21 +92,21 @@ struct GoldMenuScreen: View {
                                 .padding(3)
                                 .overlay(Circle().stroke(AngularGradient(colors: [Pro.goldLight, Pro.goldDark, Pro.goldLight, Pro.gold, Pro.goldLight], center: .center), lineWidth: 3))
                         }
-                        .buttonStyle(.plain).accessibilityLabel(tr("الملف الشخصي"))
+                        .buttonStyle(.plain).accessibilityLabel(spokenText("الملف الشخصي"))
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(tr(profile?.username ?? "")).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
-                            Text(tr("👑 عضو ذهبي")).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.goldLight)
+                            Text(spoken(profile?.username ?? "")).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.cream).lineLimit(1).accessibilityAddTraits(.isHeader)
+                            Text(spoken("👑 عضو ذهبي")).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.goldLight)
                         }
                         Spacer()
                         Button { getCoins = true } label: {
-                            Text(tr(profile?.unlimited == true ? "🪙 ∞" : "🪙 \(profile?.coins.map(String.init) ?? "…")"))
+                            Text(spoken(profile?.unlimited == true ? "🪙 ∞" : "🪙 \(profile?.coins.map(String.init) ?? "…")"))
                                 .font(.system(size: 15, weight: .heavy)).foregroundColor(Pro.cream)
                                 .padding(.horizontal, 14).padding(.vertical, 8)
                                 .background(LinearGradient(colors: [Color(red: 0.137, green: 0.176, blue: 0.22), Color(red: 0.078, green: 0.106, blue: 0.133)], startPoint: .top, endPoint: .bottom))
                                 .clipShape(Capsule())
                         }
                         .buttonStyle(.plain)
-                        .accessibilityLabel(tr("رصيدك \(profile?.coins.map(String.init) ?? "") عملة، الحصول على عملات"))
+                        .accessibilityLabel(spokenText("رصيدك \(profile?.coins.map(String.init) ?? "") عملة، الحصول على عملات"))
                     }
                     // المتصلون
                     OnlineLine(openTable: openTable)
@@ -115,7 +115,7 @@ struct GoldMenuScreen: View {
                         .overlay(RoundedRectangle(cornerRadius: 16).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
                     // الألعاب
                     HStack {
-                        Text(tr("الألعاب")).font(.system(size: 17, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)
+                        Text(spoken("الألعاب")).font(.system(size: 17, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)
                         Spacer()
                         Button(tr("انضمام إلى طاولة")) { navigate(.joinTable) }.font(.system(size: 14, weight: .bold)).foregroundColor(Pro.goldLight)
                     }

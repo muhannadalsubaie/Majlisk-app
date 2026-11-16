@@ -37,7 +37,7 @@ enum Announcer {
     private static func post(_ text: String, queued: Bool) {
         current = text
         busyUntil = Date().addingTimeInterval(readTime(text))
-        let s = NSAttributedString(string: text, attributes: [.accessibilitySpeechQueueAnnouncement: queued])
+        let s = spokenNS(text, queued: queued) // كل جزء بلغته
         UIAccessibility.post(notification: .announcement, argument: s)
         // احتياط: لو ما وصل بلاغ الانتهاء نكمل بعد الوقت التقريبي
         let mine = text

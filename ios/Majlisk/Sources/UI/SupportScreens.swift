@@ -84,14 +84,14 @@ private struct NewTicketView: View {
     var body: some View {
         Screen {
             TopBar(kind == "complaint" ? "شكوى جديدة" : "استفسار جديد", onBack: onDone)
-            Text(tr(kind == "complaint" ? "اكتب شكواك" : "اكتب استفسارك")).foregroundColor(Palette.textDim).accessibilityHidden(true)
+            Text(spoken(kind == "complaint" ? "اكتب شكواك" : "اكتب استفسارك")).foregroundColor(Palette.textDim).accessibilityHidden(true)
             TextEditor(text: $text)
                 .frame(minHeight: 180).padding(8)
                 .scrollContentBackground(.hidden)
                 .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
                 .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.green700, lineWidth: 1))
                 .foregroundColor(Palette.text)
-                .accessibilityLabel(tr(kind == "complaint" ? "اكتب شكواك" : "اكتب استفسارك"))
+                .accessibilityLabel(spokenText(kind == "complaint" ? "اكتب شكواك" : "اكتب استفسارك"))
             HStack(spacing: 8) {
                 ForEach(Array(images.enumerated()), id: \.offset) { i, b64 in
                     Button {
@@ -101,12 +101,12 @@ private struct NewTicketView: View {
                             Image(uiImage: img).resizable().scaledToFill().frame(width: 72, height: 72).clipShape(RoundedRectangle(cornerRadius: 12))
                         }
                     }
-                    .accessibilityLabel(tr("الصورة \(i + 1)، اضغط لحذفها"))
+                    .accessibilityLabel(spokenText("الصورة \(i + 1)، اضغط لحذفها"))
                 }
             }
             if images.count < 4 {
                 PhotosPicker(selection: $picks, maxSelectionCount: 4 - images.count, matching: .images) {
-                    Text(tr("📎 إرفاق صور (\(images.count) من 4)")).font(.system(size: 18, weight: .bold)).frame(maxWidth: .infinity, minHeight: 50)
+                    Text(spoken("📎 إرفاق صور (\(images.count) من 4)")).font(.system(size: 18, weight: .bold)).frame(maxWidth: .infinity, minHeight: 50)
                 }
                 .buttonStyle(RaisedStyle(base: Palette.green700, fg: Palette.text, border: Palette.gold))
                 .onChange(of: picks) { items in
@@ -117,7 +117,7 @@ private struct NewTicketView: View {
                     }
                 }
             }
-            if !error.isEmpty { Text(tr(error)).foregroundColor(Palette.goldSoft) }
+            if !error.isEmpty { Text(spoken(error)).foregroundColor(Palette.goldSoft) }
             MButton(busy ? "جارٍ الإرسال…" : "إرسال", .primary, enabled: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !busy) {
                 busy = true
                 Task { @MainActor in
@@ -142,7 +142,7 @@ private struct TicketImage: View {
             if let img { Image(uiImage: img).resizable().scaledToFit() } else { Note("جارٍ تحميل الصورة…").padding(12) }
         }
         .frame(maxWidth: .infinity).background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
-        .accessibilityLabel(tr("صورة مرفقة \(index + 1)"))
+        .accessibilityLabel(spokenText("صورة مرفقة \(index + 1)"))
         .task { if let d = await Api.bytes("/support/image/\(id)/\(index)") { img = UIImage(data: d) } }
     }
 }
@@ -160,9 +160,9 @@ private struct TicketView: View {
             Note("\(t.statusLabel) · \(timeText(t.at))")
             ForEach(Array(t.messages.enumerated()), id: \.offset) { i, m in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(tr(m.from == "dev" ? "الدعم" : asDev ? t.username : "أنت")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
-                    Text(tr(m.text)).font(.system(size: 16)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true)
-                    Text(tr(timeText(m.at))).font(.system(size: 11)).foregroundColor(Palette.textDim)
+                    Text(spoken(m.from == "dev" ? "الدعم" : asDev ? t.username : "أنت")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
+                    Text(spoken(m.text)).font(.system(size: 16)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true)
+                    Text(spoken(timeText(m.at))).font(.system(size: 11)).foregroundColor(Palette.textDim)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                 .background(m.from == "dev" ? Palette.green700 : Palette.green800).clipShape(RoundedRectangle(cornerRadius: 16))

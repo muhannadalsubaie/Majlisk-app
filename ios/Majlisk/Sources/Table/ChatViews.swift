@@ -6,7 +6,7 @@ struct ChatButton: View {
     let open: () -> Void
     var body: some View {
         Button(action: open) {
-            Text(tr(conn.unread > 0 ? "💬 الدردشة (\(conn.unread))" : "💬 الدردشة"))
+            Text(spoken(conn.unread > 0 ? "💬 الدردشة (\(conn.unread))" : "💬 الدردشة"))
                 .font(.system(size: 13, weight: .bold))
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .frame(maxWidth: 200, minHeight: 40)
@@ -14,7 +14,7 @@ struct ChatButton: View {
                 .background(Palette.gold)
                 .clipShape(RoundedRectangle(cornerRadius: 20))
         }
-        .accessibilityLabel(tr(conn.unread > 0 ? "الدردشة، \(conn.unread) رسائل جديدة" : "الدردشة"))
+        .accessibilityLabel(spokenText(conn.unread > 0 ? "الدردشة، \(conn.unread) رسائل جديدة" : "الدردشة"))
     }
 }
 
@@ -25,7 +25,7 @@ struct ChatToast: View {
     var body: some View {
         Group {
             if let m = shown {
-                Text(tr("\(m.name): \(m.text)"))
+                Text(spoken("\(m.name): \(m.text)"))
                     .font(.system(size: 13))
                     .lineLimit(3)
                     .foregroundColor(Palette.text)
@@ -58,14 +58,14 @@ struct ChatSheet: View {
                 HStack {
                     if m.mine { Spacer(minLength: 40) }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(tr(m.mine ? "أنت" : m.name)).font(.system(size: 12)).foregroundColor(Palette.goldSoft)
-                        Text(tr(m.text)).font(.system(size: 15)).foregroundColor(Palette.text)
+                        Text(spoken(m.mine ? "أنت" : m.name)).font(.system(size: 12)).foregroundColor(Palette.goldSoft)
+                        Text(spoken(m.text)).font(.system(size: 15)).foregroundColor(Palette.text)
                     }
                     .padding(.horizontal, 10).padding(.vertical, 6)
                     .background(m.mine ? Color(red: 0.23, green: 0.37, blue: 0.18) : Palette.green700)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(tr("\(m.mine ? "أنت" : m.name): \(m.text)"))
+                    .accessibilityLabel(spokenText("\(m.mine ? "أنت" : m.name): \(m.text)"))
                     if !m.mine { Spacer(minLength: 40) }
                 }
             }

@@ -22,7 +22,7 @@ struct CardFace: View {
         } else if let img = CardImages.get(card) {
             Image(uiImage: img).resizable().scaledToFit().accessibilityHidden(true)
         } else {
-            Text(tr("\(RANK_NAMES[card.rank] ?? "") \(SUIT_SYMBOLS[card.suit] ?? "")")).accessibilityHidden(true)
+            Text(spoken("\(RANK_NAMES[card.rank] ?? "") \(SUIT_SYMBOLS[card.suit] ?? "")")).accessibilityHidden(true)
         }
     }
 }
@@ -46,19 +46,19 @@ private struct DrawnFace: View {
                 if style == 1 {
                     // خط كبير: الرقم والرمز كبار في النص (أوضح للنظر)
                     VStack(spacing: 0) {
-                        Text(tr(card.rank)).font(.system(size: w * 0.42, weight: .heavy))
-                        Text(tr(sym)).font(.system(size: w * 0.46))
+                        Text(spoken(card.rank)).font(.system(size: w * 0.42, weight: .heavy))
+                        Text(spoken(sym)).font(.system(size: w * 0.46))
                     }
                     .foregroundColor(ink)
                 } else {
                     VStack(spacing: 0) {
-                        Text(tr(card.rank)).font(.system(size: w * 0.26, weight: .heavy))
-                        Text(tr(sym)).font(.system(size: w * 0.22))
+                        Text(spoken(card.rank)).font(.system(size: w * 0.26, weight: .heavy))
+                        Text(spoken(sym)).font(.system(size: w * 0.22))
                     }
                     .foregroundColor(ink)
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
                     .padding(.leading, w * 0.1).padding(.top, w * 0.08)
-                    Text(tr(sym)).font(.system(size: w * 0.52)).foregroundColor(ink).offset(y: w * 0.12)
+                    Text(spoken(sym)).font(.system(size: w * 0.52)).foregroundColor(ink).offset(y: w * 0.12)
                 }
             }
             .environment(\.layoutDirection, .leftToRight)

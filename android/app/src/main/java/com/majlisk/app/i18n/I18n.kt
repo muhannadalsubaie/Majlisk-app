@@ -148,10 +148,54 @@ fun Text(
     style: TextStyle = androidx.compose.material3.LocalTextStyle.current,
 ) {
     I18n.lang.value // يعيد الرسم لما تتغير اللغة
+    // كل جزء معلّم بلغته: قارئ الشاشة يقرأ العربي بالناطق العربي والإنجليزي بالإنجليزي
     androidx.compose.material3.Text(
-        tr(text), modifier, color, fontSize, fontStyle, fontWeight, fontFamily, letterSpacing, textDecoration, textAlign,
-        lineHeight, overflow, softWrap, maxLines, minLines, onTextLayout, style,
+        spokenAnnotated(tr(text)), modifier = modifier, color = color, fontSize = fontSize, fontStyle = fontStyle,
+        fontWeight = fontWeight, fontFamily = fontFamily, letterSpacing = letterSpacing, textDecoration = textDecoration,
+        textAlign = textAlign, lineHeight = lineHeight, overflow = overflow, softWrap = softWrap, maxLines = maxLines,
+        minLines = minLines, onTextLayout = onTextLayout ?: {}, style = style,
     )
+}
+
+/**
+ * القراءة ثنائية اللغة: نقسم النص لأجزاء حسب الحروف (عربي / لاتيني)، وكل جزء ياخذ لغته.
+ * المسافات والأرقام والرموز تمشي مع الجزء اللي قبلها (وأولها مع أول جزء).
+ * لاتيني = إنجليزي، إلا لو التطبيق بالفرنسي فيصير فرنسي.
+ */
+fun langRuns(s: String): List<Triple<Int, Int, String>> {
+    val latin = if (I18n.lang.value == "fr") "fr" else "en"
+    fun cls(c: Char): String? = when {
+        c in '\u0600'..'\u06FF' || c in '\u0750'..'\u077F' || c in '\uFB50'..'\uFDFF' || c in '\uFE70'..'\uFEFF' -> "ar"
+        c in 'A'..'Z' || c in 'a'..'z' || (c in '\u00C0'..'\u024F' && c.isLetter()) -> latin
+        else -> null
+    }
+    val out = ArrayList<Triple<Int, Int, String>>()
+    var start = 0
+    var cur: String? = null
+    for (i in s.indices) {
+        val k = cls(s[i]) ?: continue
+        if (cur == null) cur = k
+        else if (k != cur) { out += Triple(start, i, cur); start = i; cur = k }
+    }
+    out += Triple(start, s.length, cur ?: if (I18n.rtl) "ar" else latin)
+    return out
+}
+
+/** نص معلّم بلغاته لقارئ الشاشة (Compose) */
+fun spokenAnnotated(s: String): androidx.compose.ui.text.AnnotatedString =
+    androidx.compose.ui.text.buildAnnotatedString {
+        append(s)
+        if (s.isNotEmpty()) for ((a, b, l) in langRuns(s)) if (b > a)
+            addStyle(androidx.compose.ui.text.SpanStyle(localeList = androidx.compose.ui.text.intl.LocaleList(l)), a, b)
+    }
+
+/** نص معلّم بلغاته لقارئ الشاشة (الإعلانات) */
+fun spoken(s: String): CharSequence {
+    if (s.isEmpty()) return s
+    val sp = android.text.SpannableString(s)
+    for ((a, b, l) in langRuns(s)) if (b > a)
+        sp.setSpan(android.text.style.LocaleSpan(java.util.Locale.forLanguageTag(l)), a, b, android.text.Spanned.SPAN_EXCLUSIVE_EXCLUSIVE)
+    return sp
 }
 
 /** إجراء قارئ الشاشة بعنوان مترجم */

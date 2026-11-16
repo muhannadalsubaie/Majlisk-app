@@ -43,7 +43,7 @@ object Announcer {
         val next = queue.removeFirstOrNull() ?: return
         busyUntil = now + readTime(next)
         @Suppress("DEPRECATION")
-        view.get()?.announceForAccessibility(next)
+        view.get()?.announceForAccessibility(com.majlisk.app.i18n.spoken(next))
         if (queue.isNotEmpty()) { scheduled = true; main.postDelayed(::pump, busyUntil - now) }
     }
 
@@ -84,7 +84,7 @@ object Announcer {
             runCatching { manager?.takeIf { it.isEnabled }?.interrupt() }
             busyUntil = System.currentTimeMillis() + readTime(text)
             @Suppress("DEPRECATION")
-            view.get()?.announceForAccessibility(text)
+            view.get()?.announceForAccessibility(com.majlisk.app.i18n.spoken(text))
         }
     }
 

@@ -50,8 +50,8 @@ private struct ScoreTile: View {
     let label: String, value: String, mine: Bool
     var body: some View {
         VStack(spacing: 2) {
-            Text(tr(label)).font(.system(size: 14)).foregroundColor(Palette.textDim).multilineTextAlignment(.center)
-            Text(tr(value)).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold)
+            Text(spoken(label)).font(.system(size: 14)).foregroundColor(Palette.textDim).multilineTextAlignment(.center)
+            Text(spoken(value)).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 8)
         .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
@@ -72,7 +72,7 @@ private struct PlayerLine: View {
         HStack(spacing: 8) {
             if let color { Circle().fill(color).frame(width: 12, height: 12) }
             if let avatar { Avatar(uid: avatar.0, name: avatar.1, size: 30) }
-            Text(tr(text)).font(.system(size: 15, weight: turn ? .bold : .regular)).foregroundColor(Palette.text)
+            Text(spoken(text)).font(.system(size: 15, weight: turn ? .bold : .regular)).foregroundColor(Palette.text)
             Spacer(minLength: 0)
             if let roll { DiceView(value: roll, color: color ?? Palette.gold, size: 26) }
         }
@@ -80,7 +80,7 @@ private struct PlayerLine: View {
         .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 12))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr(spoken ?? text))
+        .accessibilityLabel(spokenText(spoken ?? text))
     }
 }
 
@@ -195,14 +195,14 @@ private struct DominoSeatTag: View {
     var body: some View {
         VStack(spacing: 2) {
             Avatar(uid: uid, name: name, size: 32)
-            Text(tr(name)).font(.system(size: 12, weight: turn ? .bold : .regular)).lineLimit(1).minimumScaleFactor(0.7)
-            Text(tr("\(count) قطع")).font(.system(size: 11)).foregroundColor(Palette.textDim)
+            Text(spoken(name)).font(.system(size: 12, weight: turn ? .bold : .regular)).lineLimit(1).minimumScaleFactor(0.7)
+            Text(spoken("\(count) قطع")).font(.system(size: 11)).foregroundColor(Palette.textDim)
         }
         .padding(4)
         .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 10))
         .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr("\(name)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")"))
+        .accessibilityLabel(spokenText("\(name)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")"))
     }
 }
 
@@ -340,7 +340,7 @@ struct DominoBoard: View {
             HStack {
                 ForEach(Array(d.scores.enumerated()), id: \.offset) { side, n in
                     let mine = side == d.mySide
-                    Text(tr("\(mine && d.players == 4 ? "فريقك" : (side < d.sideNames.count ? d.sideNames[side] : "")) \(n)"))
+                    Text(spoken("\(mine && d.players == 4 ? "فريقك" : (side < d.sideNames.count ? d.sideNames[side] : "")) \(n)"))
                         .font(.system(size: 15, weight: .bold)).foregroundColor(mine ? Palette.gold : Palette.text).lineLimit(1)
                         .frame(maxWidth: .infinity)
                 }
@@ -348,7 +348,7 @@ struct DominoBoard: View {
             .frame(height: 36)
             .background(Color(red: 0.09, green: 0.24, blue: 0.17)).clipShape(Capsule())
             .overlay(Capsule().stroke(Color(red: 0.17, green: 0.35, blue: 0.27), lineWidth: 1))
-            .accessibilityElement(children: .ignore).accessibilityLabel(tr(d.scoreText))
+            .accessibilityElement(children: .ignore).accessibilityLabel(spokenText(d.scoreText))
             // الطاولة تملأ باقي الشاشة، واللاعبين على حوافها: اللي قدامك فوق، والباقين يمين ويسار، وأنت تحت
             let me = mySeat ?? 0
             let others = (1..<max(d.players, 2)).map { (me + $0) % d.players }
@@ -367,7 +367,7 @@ struct DominoBoard: View {
                 DominoSnake(line: d.line)
                     .padding(.vertical, 70).padding(.horizontal, 44)
                     .accessibilityHidden(true)
-                if d.line.isEmpty { Text(tr("الطاولة فارغة")).foregroundColor(Palette.textDim) }
+                if d.line.isEmpty { Text(spoken("الطاولة فارغة")).foregroundColor(Palette.textDim) }
                 VStack {
                     if let top { seatChip(top, names: names, mySeat: mySeat) }
                     Spacer(minLength: 0)
@@ -382,11 +382,11 @@ struct DominoBoard: View {
             .environment(\.layoutDirection, .leftToRight)
             .frame(height: dominoBoardHeight())
             if let e = d.ends {
-                Text(tr("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")"))
+                Text(spoken("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")"))
                     .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
             }
             if d.phase != "playing" {
-                Text(tr(dominoTurnText(v, d)))
+                Text(spoken(dominoTurnText(v, d)))
                     .font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
             }
             if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
@@ -408,14 +408,14 @@ struct DominoBoard: View {
                 .background(Circle().fill(Color(red: 0.09, green: 0.24, blue: 0.17)))
                 .overlay(Circle().stroke(Palette.gold.opacity(turn ? 1 : 0.7), lineWidth: turn ? 3 : 2))
             HStack(spacing: 3) {
-                Text(tr("\(n) · \(count)")).font(.system(size: 11, weight: .bold)).foregroundColor(turn ? Palette.gold : Palette.text).lineLimit(1)
+                Text(spoken("\(n) · \(count)")).font(.system(size: 11, weight: .bold)).foregroundColor(turn ? Palette.gold : Palette.text).lineLimit(1)
                     .padding(.horizontal, 6).padding(.vertical, 1)
                     .background(Color(red: 0.06, green: 0.16, blue: 0.12).opacity(0.8)).clipShape(RoundedRectangle(cornerRadius: 8))
                 TurnClock(v: v, seat: seat, turn: turn)
             }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr("\(n)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")"))
+        .accessibilityLabel(spokenText("\(n)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")"))
     }
 
     /// طول الطاولة: باقي الشاشة بعد الأزرار والنتيجة وقطعك والميكروفون (صفحة وحدة بدون تمرير)
@@ -466,7 +466,7 @@ struct DominoHand: View {
                         if d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
                     }
                 }
-                Text(tr("قطعك")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                Text(spoken("قطعك")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 Wrap(items: d.hand, spacing: 8) { h in
                     Button {
                         if !d.myTurn { Announcer.announceNow("ليس دورك") }
@@ -479,7 +479,7 @@ struct DominoHand: View {
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(h.legal ? Palette.gold : .clear, lineWidth: 2))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(tr(h.label))
+                    .accessibilityLabel(spokenText(h.label))
                 }
             }
             .sheet(item: $chooseSide) { h in
@@ -514,7 +514,7 @@ struct DominoLogView: View {
             let lines = entry?.lines ?? []
             if lines.isEmpty { Note(entry == nil ? "ما فيه حركات بعد." : "ما انلعبت حجار في هذه الجولة بعد.") }
             ForEach(Array(lines.enumerated()), id: \.offset) { _, line in
-                Text(tr(line)).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+                Text(spoken(line)).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
             }
             HStack(spacing: 8) {
                 if page > 0 { MButton("الجولة السابقة") { page -= 1 } }
@@ -557,17 +557,17 @@ struct JackarooBoard: View {
                     let color = JK_COLOR_NAMES[o].hasPrefix("ال") ? String(JK_COLOR_NAMES[o].dropFirst(2)) : JK_COLOR_NAMES[o]
                     VStack(spacing: 0) {
                         HStack(spacing: 3) {
-                            Text(tr(who)).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
+                            Text(spoken(who)).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
                             TurnClock(v: v, seat: o, turn: turn)
                         }
-                        Text(tr("\(j.safeOf(o))/4")).font(.system(size: 22, weight: .bold)).foregroundColor(Palette.goldSoft)
+                        Text(spoken("\(j.safeOf(o))/4")).font(.system(size: 22, weight: .bold)).foregroundColor(Palette.goldSoft)
                     }
                     .padding(.vertical, 6).padding(.horizontal, 4)
                     .frame(width: 84)
                     .background((turn ? Palette.gold : JK_COLORS[o]).opacity(0.18)).clipShape(RoundedRectangle(cornerRadius: 10))
                     .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : JK_COLORS[o], lineWidth: turn ? 3 : 2))
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(tr("\(who)، \(color)، \(j.safeOf(o)) من 4\(turn ? "، عليه الدور" : "")"))
+                    .accessibilityLabel(spokenText("\(who)، \(color)، \(j.safeOf(o)) من 4\(turn ? "، عليه الدور" : "")"))
                 }
             }
             .frame(maxWidth: .infinity)
@@ -578,7 +578,7 @@ struct JackarooBoard: View {
                     // أوراق اللفة الحالية في وسط الطاولة (تنمسح مع كل لفة جديدة)
                     HStack(spacing: -10) {
                         ForEach(Array(j.centerCards.enumerated()), id: \.offset) { i, c in
-                            Text(tr("\(c.rank)\(c.symbol)"))
+                            Text(spoken("\(c.rank)\(c.symbol)"))
                                 .font(.system(size: 15, weight: .bold))
                                 .foregroundColor(c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
                                 .frame(width: 40, height: 58)
@@ -597,13 +597,13 @@ struct JackarooBoard: View {
                 let w = j.winnerTeam ?? 0
                 let wonText = !j.teams ? (j.winner != nil && j.winner == mySeat ? "🎉 فزت!" : "فاز \(names[j.winner ?? 0])")
                     : mySeat == nil ? "فاز فريق \(names[w]) و\(names[w + 2])" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر"
-                Text(tr(wonText))
+                Text(spoken(wonText))
                     .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
                 if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
             }
             if mySeat != nil {
-                Text(tr("أوراقك\(j.burning ? "، اختر ورقة لحرقها" : "")")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
-                if j.burning { Text(tr("لا لعب صالح: اختر ورقة لحرقها")).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true) }
+                Text(spoken("أوراقك\(j.burning ? "، اختر ورقة لحرقها" : "")")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                if j.burning { Text(spoken("لا لعب صالح: اختر ورقة لحرقها")).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true) }
                 Wrap(items: j.hand, spacing: 8) { h in
                     Button {
                         if !j.myTurn { Announcer.announceNow("ليس دورك") }
@@ -612,7 +612,7 @@ struct JackarooBoard: View {
                         else if h.moves.count == 1 { act(["type": "play", "card": h.card.json, "move": h.moves[0].move]) }
                         else { picked = h }
                     } label: {
-                        Text(tr("\(h.card.rank)\(h.card.symbol)"))
+                        Text(spoken("\(h.card.rank)\(h.card.symbol)"))
                             .font(.system(size: 22, weight: .bold))
                             .foregroundColor(h.card.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
                             .frame(width: 58, height: 84)
@@ -621,7 +621,7 @@ struct JackarooBoard: View {
                             .overlay(RoundedRectangle(cornerRadius: 8).stroke(h.usable ? Palette.gold : Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 2))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel(tr(h.label))
+                    .accessibilityLabel(spokenText(h.label))
                 }
             }
         }
@@ -634,11 +634,11 @@ struct JackarooBoard: View {
                 ForEach(Array(jackarooPositions(cur, mySeat: me).enumerated()), id: \.offset) { _, p in
                     HStack(spacing: 8) {
                         Circle().fill(p.color < JK_COLORS.count ? JK_COLORS[p.color] : Palette.gold).frame(width: 12, height: 12)
-                        Text(tr("\(p.title)، \(p.color < JK_COLOR_NAMES.count ? JK_COLOR_NAMES[p.color] : "")")).bold().foregroundColor(Palette.goldSoft)
+                        Text(spoken("\(p.title)، \(p.color < JK_COLOR_NAMES.count ? JK_COLOR_NAMES[p.color] : "")")).bold().foregroundColor(Palette.goldSoft)
                     }
                     .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
                     ForEach(Array(p.lines.enumerated()), id: \.offset) { _, line in
-                        Text(tr(line)).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(spoken(line)).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 MButton("إغلاق", .primary) { posOpen = false }
@@ -664,14 +664,14 @@ struct JackarooBoard: View {
             VStack(spacing: 2) {
                 Avatar(uid: v.seatUid(seat), name: n, size: 32)
                     .padding(2).overlay(Circle().stroke(JK_COLORS[seat], lineWidth: 2))
-                Text(tr(n)).font(.system(size: 12, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
-                Text(tr("\(cards) أوراق")).font(.system(size: 11)).foregroundColor(Palette.textDim)
+                Text(spoken(n)).font(.system(size: 12, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
+                Text(spoken("\(cards) أوراق")).font(.system(size: 11)).foregroundColor(Palette.textDim)
             }
             .padding(4)
             .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 10))
             .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
             .accessibilityElement(children: .ignore)
-            .accessibilityLabel(tr("\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق\(turn ? "، عليه الدور" : "")"))
+            .accessibilityLabel(spokenText("\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق\(turn ? "، عليه الدور" : "")"))
         }
     }
 
@@ -847,9 +847,9 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
         let col = card.2 ? Color(red: 0.75, green: 0.22, blue: 0.17) : Color(red: 0.07, green: 0.07, blue: 0.07)
         c2.fill(Path(roundedRect: rect, cornerRadius: W * 0.007), with: .color(Color(red: 0.98, green: 0.98, blue: 0.96)))
         c2.stroke(Path(roundedRect: rect, cornerRadius: W * 0.007), with: .color(Color(white: 0.73)), lineWidth: W * 0.0012)
-        c2.draw(Text(tr(card.0)).font(.system(size: W * 0.02, weight: .bold)).foregroundColor(col), at: CGPoint(x: rect.minX + W * 0.016, y: rect.minY + W * 0.017))
-        c2.draw(Text(tr(card.1)).font(.system(size: W * 0.018)).foregroundColor(col), at: CGPoint(x: rect.minX + W * 0.016, y: rect.minY + W * 0.038))
-        if i == cards.count - 1 { c2.draw(Text(tr(card.1)).font(.system(size: W * 0.044)).foregroundColor(col), at: CGPoint(x: rect.midX, y: rect.minY + W * 0.066)) }
+        c2.draw(Text(spoken(card.0)).font(.system(size: W * 0.02, weight: .bold)).foregroundColor(col), at: CGPoint(x: rect.minX + W * 0.016, y: rect.minY + W * 0.017))
+        c2.draw(Text(spoken(card.1)).font(.system(size: W * 0.018)).foregroundColor(col), at: CGPoint(x: rect.minX + W * 0.016, y: rect.minY + W * 0.038))
+        if i == cards.count - 1 { c2.draw(Text(spoken(card.1)).font(.system(size: W * 0.044)).foregroundColor(col), at: CGPoint(x: rect.midX, y: rect.minY + W * 0.066)) }
     }
     // جهة كل لاعب: الخانات وأرقامها (رقم ثابت للجميع، نفس الرقم في الإعلانات)، ورمز ورق، والبيت ومنطقة الأمان
     for seat in 0...3 {
@@ -860,11 +860,11 @@ private func drawJackaroo(_ ctx: GraphicsContext, _ size: CGSize, _ j: JackarooV
             if i == 0 && active { ctx.stroke(dot(p, holeR * 1.4), with: .color(JK_COLORS[seat]), lineWidth: W * 0.004) }
             drawHole(p)
             let (nx, ny) = jkRot(h[2], h[3], k)
-            ctx.draw(Text(tr("\(seat * j.segment + i)")).font(.system(size: W * 0.021, weight: .semibold)).foregroundColor(cream),
+            ctx.draw(Text(spoken("\(seat * j.segment + i)")).font(.system(size: W * 0.021, weight: .semibold)).foregroundColor(cream),
                      at: CGPoint(x: p.x + nx * half * 0.062, y: p.y + ny * halfY * 0.062))
         }
         let (sx, sy) = jkRot(-0.24, 0.84, k)
-        ctx.draw(Text(tr(JK_SUITS[seat])).font(.system(size: W * 0.064)).foregroundColor(cream), at: at(sx, sy))
+        ctx.draw(Text(spoken(JK_SUITS[seat])).font(.system(size: W * 0.064)).foregroundColor(cream), at: at(sx, sy))
         if !active { continue }
         for s2 in 0..<4 { drawHole(safe(seat, s2), ring: JK_COLORS[seat], ringW: W * 0.003) }
         let (yx, yy) = yard(seat)
@@ -911,7 +911,7 @@ private func drawJackarooRound(_ ctx: GraphicsContext, _ size: CGSize, _ j: Jack
         let owner = (0...3).first { start($0) == p && j.active.contains($0) }
         ctx.fill(dot(at(CGFloat(p)), (owner != nil ? 6 : 3.5) * k), with: .color(owner.map { JK_COLORS[$0] } ?? Color.white.opacity(0.2)))
         // رقم الخانة (ثابت للجميع، نفس الرقم اللي ينقال في الإعلان) داخل الدائرة جنب كل نقطة
-        ctx.draw(Text(tr("\(p)")).font(.system(size: 6.5 * k, weight: .semibold)).foregroundColor(Color.white.opacity(0.75)), at: at(CGFloat(p), R - 12))
+        ctx.draw(Text(spoken("\(p)")).font(.system(size: 6.5 * k, weight: .semibold)).foregroundColor(Color.white.opacity(0.75)), at: at(CGFloat(p), R - 12))
     }
     for o in j.active {
         for s in 0..<4 { ctx.stroke(dot(at(CGFloat(start(o) - 1), R - 16 - CGFloat(s) * 14), 5 * k), with: .color(JK_COLORS[o]), lineWidth: 1.5 * k) }
@@ -1035,18 +1035,18 @@ struct LudoBoard: View {
                     .padding(3)
                     .overlay(Circle().stroke(turn ? Palette.gold : LUDO_COLORS[o], lineWidth: 3))
                 HStack(spacing: 3) {
-                    Text(tr("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")"))
+                    Text(spoken("\(n)\(o == mySeat ? " (أنت)" : l.teams && o == partner ? " (شريكك)" : "")"))
                         .font(.system(size: 13, weight: turn ? .bold : .regular)).foregroundColor(Palette.text).lineLimit(1)
                         .padding(.horizontal, 6).padding(.vertical, 1)
                         .background(Color.black.opacity(0.4)).clipShape(RoundedRectangle(cornerRadius: 8))
                     TurnClock(v: v, seat: o, turn: turn)
                 }
-                Text(tr("وصل \(l.home(o))/4")).font(.system(size: 11)).foregroundColor(Palette.textDim)
+                Text(spoken("وصل \(l.home(o))/4")).font(.system(size: 11)).foregroundColor(Palette.textDim)
             }
             dice
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turnPool(o).count > 1 ? "، رمياته " + turnPool(o).map(String.init).joined(separator: " و") : "")\(turn ? "، عليه الدور" : "")"))
+        .accessibilityLabel(spokenText("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turnPool(o).count > 1 ? "، رمياته " + turnPool(o).map(String.init).joined(separator: " و") : "")\(turn ? "، عليه الدور" : "")"))
         // النرد نفسه زر الرمي: مع VoiceOver الضغط مرتين على اسمك يرمي النرد
         .accessibilityAddTraits(o == mySeat && l.canRoll ? .isButton : [])
         .accessibilityHint(tr(o == mySeat && l.canRoll ? "اضغط مرتين لرمي النرد" : ""))
@@ -1158,7 +1158,7 @@ struct LudoBoard: View {
             if l.phase == "over" {
                 let w = l.winner ?? 0
                 let won = l.winner != nil && mySeat != nil && (l.teams ? l.winner == mySeat! % 2 : l.winner == mySeat)
-                Text(tr(won ? "🎉 فزت!" : l.teams ? "فاز فريق \(names[w]) و\(names[(w + 2) % 4])" : "فاز \(w < names.count ? names[w] : "")"))
+                Text(spoken(won ? "🎉 فزت!" : l.teams ? "فاز فريق \(names[w]) و\(names[(w + 2) % 4])" : "فاز \(w < names.count ? names[w] : "")"))
                     .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
                 if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
             } else {
@@ -1167,7 +1167,7 @@ struct LudoBoard: View {
             }
             // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
             if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
-                Text(tr(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                Text(spoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
                 // أزرار صغيرة جنب بعض: فوق الأرقام (لو عندك أكثر من رقم)، وتحتها الأحجار
                 let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
@@ -1196,11 +1196,11 @@ struct LudoBoard: View {
                 ForEach(Array(cur.positions.enumerated()), id: \.offset) { _, p in
                     HStack(spacing: 8) {
                         Circle().fill(p.color < LUDO_COLORS.count ? LUDO_COLORS[p.color] : Palette.gold).frame(width: 12, height: 12)
-                        Text(tr("\(p.name)، \(p.color < LUDO_COLOR_NAMES.count ? LUDO_COLOR_NAMES[p.color] : "")")).bold().foregroundColor(Palette.goldSoft)
+                        Text(spoken("\(p.name)، \(p.color < LUDO_COLOR_NAMES.count ? LUDO_COLOR_NAMES[p.color] : "")")).bold().foregroundColor(Palette.goldSoft)
                     }
                     .accessibilityElement(children: .combine).accessibilityAddTraits(.isHeader)
                     ForEach(Array(p.tokens.enumerated()), id: \.offset) { _, line in
-                        Text(tr(line)).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(spoken(line)).font(.system(size: 16)).foregroundColor(Palette.text).frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
                 MButton("إغلاق", .primary) { logOpen = false }
@@ -1358,7 +1358,7 @@ private func drawLudo(_ ctx: GraphicsContext, _ size: CGSize, _ l: LudoView, _ b
         if LudoView.SAFE.contains(i) && start == nil { ctx.fill(starPath(p, U * 0.32), with: .color(Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.6))) }
         // رقم الخانة ثابت للجميع من 1 إلى 52 (نفس الأرقام اللي ينطقها الإعلان لكل اللاعبين)
         let num = i + 1
-        ctx.draw(Text(tr("\(num)")).font(.system(size: U * 0.42, weight: .semibold))
+        ctx.draw(Text(spoken("\(num)")).font(.system(size: U * 0.42, weight: .semibold))
             .foregroundColor(start != nil ? .white : Color(red: 0.05, green: 0.17, blue: 0.13).opacity(0.8)), at: p)
     }
     for (o, cells) in HOME_CELLS.enumerated() {

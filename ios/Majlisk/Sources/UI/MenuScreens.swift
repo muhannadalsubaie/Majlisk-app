@@ -6,9 +6,9 @@ struct CoinsBadge: View {
     var body: some View {
         let unlimited = profile?.unlimited == true
         let coins = profile?.coins
-        Text(tr(unlimited ? "🪙 ∞" : "🪙 \(coins.map(String.init) ?? "…")"))
+        Text(spoken(unlimited ? "🪙 ∞" : "🪙 \(coins.map(String.init) ?? "…")"))
             .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.gold)
-            .accessibilityLabel(tr(unlimited ? "رصيدك عملات لا محدودة، حساب المطوّر" : coins == nil ? "الرصيد غير متاح بعد" : "رصيدك \(coins!) عملة"))
+            .accessibilityLabel(spokenText(unlimited ? "رصيدك عملات لا محدودة، حساب المطوّر" : coins == nil ? "الرصيد غير متاح بعد" : "رصيدك \(coins!) عملة"))
     }
 }
 
@@ -22,7 +22,7 @@ struct MainMenuScreen: View {
             HStack(spacing: 10) {
                 // صورتك الدائرية: تفتح الملف الشخصي
                 Button { navigate(.profile) } label: { Avatar(uid: Session.shared.uid, name: profile?.username ?? "", size: 48) }
-                    .buttonStyle(.plain).accessibilityLabel(tr("الملف الشخصي"))
+                    .buttonStyle(.plain).accessibilityLabel(spokenText("الملف الشخصي"))
                 VStack(alignment: .leading) {
                     Title("مجلسك")
                     if let name = profile?.username, !name.isEmpty { Note("أهلاً \(name)") }
@@ -79,7 +79,7 @@ struct CreateTableScreen: View {
                 // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
                 let variants: [(String, String)] = game == "jackaroo" ? [("classic", "عادي"), ("complex", "كمبلكس")] : game == "ludo" ? [("classic", "فردي"), ("teams", "فرق")] : game == "domino" ? [("classic", "100"), ("t150", "150"), ("t200", "200")] : []
                 if !variants.isEmpty {
-                    Text(tr(game == "domino" ? "هدف المباراة (نقاط)" : "النسخة")).foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader)
+                    Text(spoken(game == "domino" ? "هدف المباراة (نقاط)" : "النسخة")).foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader)
                     HStack(spacing: 10) {
                         ForEach(variants, id: \.0) { opt in
                             if variant == opt.0 { MButton("✓ \(opt.1)", .primary, label: "\(opt.1)، محددة") {} }
@@ -93,7 +93,7 @@ struct CreateTableScreen: View {
                     SwitchRow(label: "👑 طاولة ثابتة بكلمة مرور", isOn: pinned, onChange: { pinned = $0 })
                     if pinned { Field(label: "كلمة المرور (٦ أرقام)", text: $password, digits: 6) }
                 }
-                if !error.isEmpty { Text(tr(error)).foregroundColor(Palette.goldSoft) }
+                if !error.isEmpty { Text(spoken(error)).foregroundColor(Palette.goldSoft) }
                 MButton("إنشاء الطاولة (2 🪙)", .primary, enabled: !busy && (!pinned || password.count == 6)) {
                     busy = true; error = ""
                     Task { @MainActor in
@@ -170,7 +170,7 @@ struct JoinTableScreen: View {
         .sheet(item: $asking) { r in
             Sheet(title: "كلمة مرور طاولة \(r.ownerName)") {
                 Field(label: "كلمة المرور (٦ أرقام)", text: $pass, digits: 6)
-                if !passError.isEmpty { Text(tr(passError)).foregroundColor(Palette.goldSoft) }
+                if !passError.isEmpty { Text(spoken(passError)).foregroundColor(Palette.goldSoft) }
                 MButton("دخول", .primary, enabled: !pass.trimmingCharacters(in: .whitespaces).isEmpty && busy.isEmpty) {
                     busy = r.id
                     Task { @MainActor in
@@ -183,7 +183,7 @@ struct JoinTableScreen: View {
             }
         }
         .alert(item: $showing) { r in
-            Alert(title: Text(tr("الموجودين في طاولة \(r.ownerName)")), message: Text(tr(r.membersText)), dismissButton: .default(Text(tr("تم"))))
+            Alert(title: Text(spoken("الموجودين في طاولة \(r.ownerName)")), message: Text(spoken(r.membersText)), dismissButton: .default(Text(spoken("تم"))))
         }
         // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
         .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list.filter { !$0.isPrivate }) } } }
@@ -207,7 +207,7 @@ struct GameTile: View {
     var body: some View {
         Button(action: action) {
             HStack {
-                Text(tr(name)).font(.system(size: 30, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
+                Text(spoken(name)).font(.system(size: 30, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
                 if let path = Bundle.main.path(forResource: image, ofType: "png", inDirectory: "Media"), let img = UIImage(contentsOfFile: path) {
                     Image(uiImage: img).resizable().scaledToFit().frame(height: 128)
                 }
@@ -217,7 +217,7 @@ struct GameTile: View {
         }
         .buttonStyle(RaisedStyle(base: Palette.gold, fg: Palette.green900))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr(name))
+        .accessibilityLabel(spokenText(name))
         .accessibilityAddTraits(.isButton)
     }
 }

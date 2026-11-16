@@ -76,7 +76,7 @@ struct SeatsLobby: View {
                     TextField(tr("نهاية المباراة"), text: $targetText)
                         .keyboardType(.numberPad)
                         .padding(10).background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 10))
-                        .accessibilityLabel(tr("نهاية المباراة، الحالية \(v.optTarget)"))
+                        .accessibilityLabel(spokenText("نهاية المباراة، الحالية \(v.optTarget)"))
                     SmallButton("حفظ", primary: true, label: "حفظ نهاية المباراة") {
                         if let n = Int(targetText.filter(\.isNumber)) { conn.send("setOptions", ["target": n]) }
                     }
@@ -98,11 +98,11 @@ struct SeatsLobby: View {
                 HStack { SmallButton("دق ولد", primary: true) { daqPicked = Set(daqPeople.map(\.uid)); daq = true }; Spacer() }
             }
             ForEach([Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
-                Text(tr(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+                Text(spoken(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
                     ItemRow {
                         if let m = v.seat(i) { Avatar(uid: v.seatUid(i), name: m.username, size: 32) }
-                        Text(tr("المقعد \(i + 1): \(occupantLabel(v, i))")).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(spoken("المقعد \(i + 1): \(occupantLabel(v, i))")).frame(maxWidth: .infinity, alignment: .leading)
                         if isOwner {
                             if v.seat(i) == nil {
                                 SmallButton("دعوة صديق", label: "دعوة صديق للمقعد \(i + 1)") { panel = .invite(i) }
@@ -138,13 +138,13 @@ struct SeatsLobby: View {
                         Button(s == turnLimit ? "✓ \(turnLimitLabel(s))" : turnLimitLabel(s)) { turnLimit = s }
                     }
                 } label: {
-                    Text(tr("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾"))
+                    Text(spoken("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾"))
                         .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.text)
                         .frame(maxWidth: .infinity, minHeight: 50)
                         .background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 14))
                         .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.gold.opacity(0.6), lineWidth: 1))
                 }
-                .accessibilityLabel(tr("وقت كل دور، \(turnLimitLabel(turnLimit))"))
+                .accessibilityLabel(spokenText("وقت كل دور، \(turnLimitLabel(turnLimit))"))
                 Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
                 if v.kind == "baloot" {
                     if pro {
@@ -210,7 +210,7 @@ struct InviteFriendsSheet: View {
             else if outside.isEmpty { BodyText("كل أصدقائك موجودين في الطاولة.") }
             ForEach(outside.sorted { $0.online && !$1.online }) { f in
                 ItemRow {
-                    Text(tr("\(f.username)، \(f.online ? "متصل" : "غير متصل")")).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(spoken("\(f.username)، \(f.online ? "متصل" : "غير متصل")")).frame(maxWidth: .infinity, alignment: .leading)
                     // غير المتصل تصله الدعوة إشعار على جواله
                     Group {
                         SmallButton("دعوة", enabled: busy != f.uid, label: "دعوة \(f.username)") {
@@ -271,10 +271,10 @@ struct HistoryView: View {
                 let hands = m.hands
                 let t0 = hands.reduce(0) { $0 + ($1.points[safe: 0] ?? 0) }
                 let t1 = hands.reduce(0) { $0 + ($1.points[safe: 1] ?? 0) }
-                Text(tr("المباراة \(match): \(hands[0].teams[safe: 0] ?? "") \(t0)، \(hands[0].teams[safe: 1] ?? "") \(t1)"))
+                Text(spoken("المباراة \(match): \(hands[0].teams[safe: 0] ?? "") \(t0)، \(hands[0].teams[safe: 1] ?? "") \(t1)"))
                     .foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(hands.enumerated().map { Numbered(id: $0.offset, record: $0.element) }) { n in
-                    Text(tr(lines(n.record, n.id + 1)))
+                    Text(spoken(lines(n.record, n.id + 1)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10).background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 10))
                 }
@@ -317,7 +317,7 @@ struct VoiceButton: View {
         let status = voice.busy && !voice.reconnecting ? "جارٍ الاتصال بالمحادثة الصوتية" : !joined ? "المحادثة الصوتية: اضغط مطولاً للانضمام" : muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
         // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
         let on = joined && !muted
-        Text(tr("🎤 \(status)"))
+        Text(spoken("🎤 \(status)"))
             .font(.system(size: 13, weight: .bold))
             .lineLimit(2)
             .padding(.horizontal, 12).padding(.vertical, 6)
@@ -330,12 +330,12 @@ struct VoiceButton: View {
             .onLongPressGesture(perform: toggleJoin)
             .accessibilityElement(children: .ignore)
             // صامت بعد لعب ورقة: بلا أي نص
-            .accessibilityLabel(tr(micFocus.silent ? "" : status))
+            .accessibilityLabel(spokenText(micFocus.silent ? "" : status))
             // صامت بعد لعب ورقة: ما ينطق شي أبداً (ولا «زر»)، عشان تسمع لعب اللي بعدك
             .accessibilityAddTraits(micFocus.silent ? [] : .isButton)
             .accessibilityRemoveTraits(micFocus.silent ? [.isButton, .isStaticText] : [])
             .accessibilityAction { toggleMute() }
-            .accessibilityAction(named: Text(tr(voice.joined ? "الخروج من المحادثة الصوتية" : "الانضمام للمحادثة الصوتية"))) { toggleJoin() }
+            .accessibilityAction(named: Text(spoken(voice.joined ? "الخروج من المحادثة الصوتية" : "الانضمام للمحادثة الصوتية"))) { toggleJoin() }
             .accessibilityFocused($focused)
             .onChange(of: micFocus.request) { _ in focused = true }
     }

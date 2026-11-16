@@ -7,11 +7,11 @@ struct OnlineLine: View {
     @State private var open = false
     var body: some View {
         Button { open = true } label: {
-            Text(tr(online.count.map { "المتصلون: \($0)" } ?? "المتصلون: …"))
+            Text(spoken(online.count.map { "المتصلون: \($0)" } ?? "المتصلون: …"))
                 .font(.system(size: 14, weight: .bold)).foregroundColor(Palette.goldSoft)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(tr(online.count.map { "المتصلون الآن \($0)" } ?? "المتصلون، جارٍ التحميل"))
+        .accessibilityLabel(spokenText(online.count.map { "المتصلون الآن \($0)" } ?? "المتصلون، جارٍ التحميل"))
         .accessibilityHint(tr("يعرض أسماء المتصلين"))
         .sheet(isPresented: $open) { OnlineSheet(close: { open = false }, openTable: { id in open = false; openTable(id) }) }
     }
@@ -103,21 +103,21 @@ private struct OnlineSheet: View {
         ItemRow {
             Avatar(uid: p.uid, name: p.username, size: 38)
             VStack(alignment: .leading, spacing: 2) {
-                Text(tr(p.me ? "\(p.username) (أنت)" : p.username)).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.text)
-                Text(tr(placeText(p))).font(.system(size: 13)).foregroundColor(Palette.textDim)
+                Text(spoken(p.me ? "\(p.username) (أنت)" : p.username)).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.text)
+                Text(spoken(placeText(p))).font(.system(size: 13)).foregroundColor(Palette.textDim)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .contentShape(Rectangle())
             .onTapGesture { player = p }
             .onLongPressGesture { enter(p) }
             if p.me { EmptyView() }
-            else if friend { Text(tr("صديقك")).font(.system(size: 13)).foregroundColor(Palette.goldSoft) }
-            else if sent.contains(p.uid) { Text(tr("أُرسل")).font(.system(size: 13)).foregroundColor(Palette.textDim) }
+            else if friend { Text(spoken("صديقك")).font(.system(size: 13)).foregroundColor(Palette.goldSoft) }
+            else if sent.contains(p.uid) { Text(spoken("أُرسل")).font(.system(size: 13)).foregroundColor(Palette.textDim) }
             else if req { MButton("قبول", .primary, fill: false) { acceptFriend(p) } }
             else { MButton("إضافة صديق", fill: false) { addFriend(p) } }
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(tr([p.username, placeText(p), relation].compactMap { $0 }.joined(separator: "، ")))
+        .accessibilityLabel(spokenText([p.username, placeText(p), relation].compactMap { $0 }.joined(separator: "، ")))
         .accessibilityAddTraits(.isButton)
         .accessibilityAction { player = p }
         .accessibilityActions {

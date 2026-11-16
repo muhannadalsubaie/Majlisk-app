@@ -40,7 +40,7 @@ struct SettingsScreen: View {
                 MButton("حذف الحساب", .danger) { confirmDelete = true }
                 MButton("سياسة الخصوصية") { UIApplication.shared.open(URL(string: Api.site + "/privacy.html")!) }
                 // في آخر الإعدادات العامة فقط، بخط صغير جداً: رخصة صور الكروت (LGPL) تشترط ذكرها مع رابط المصدر والرخصة
-                Text(tr("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0."))
+                Text(spoken("صور الكروت: Vectorized Playing Cards لكريس أغيلار (Chris Aguilar)، رخصة LGPL-3.0. المؤثرات الصوتية: Kenney، رخصة CC0."))
                     .font(.system(size: 10)).foregroundColor(Palette.textDim)
                 Link(tr("مصدر صور الكروت"), destination: URL(string: "https://github.com/richardschneider/cardsJS/tree/master/cards")!)
                     .font(.system(size: 10)).foregroundColor(Palette.textDim)
@@ -77,8 +77,8 @@ struct ShopScreen: View {
                 let spoken = "\(base) عملة\(p.bonus > 0 ? " زائد \(p.bonus) هدية" : "")، بسعر \(p.price)"
                 ItemRow {
                     VStack(alignment: .leading) {
-                        Text(tr("\(base) عملة")).bold()
-                        if p.bonus > 0 { Text(tr("+ \(p.bonus) هدية")).foregroundColor(Palette.goldSoft) }
+                        Text(spoken("\(base) عملة")).bold()
+                        if p.bonus > 0 { Text(spoken("+ \(p.bonus) هدية")).foregroundColor(Palette.goldSoft) }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .accessibilityHidden(true)
