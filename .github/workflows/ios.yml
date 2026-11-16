@@ -111,6 +111,8 @@ jobs:
     if: github.event_name == 'workflow_dispatch' && inputs.upload && inputs.public_link
     runs-on: ubuntu-latest
     timeout-minutes: 75
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - name: External testers (public link)
@@ -123,3 +125,6 @@ jobs:
           # بلا "وش الجديد": المختبر يفتح التطبيق على طول بدون قائمة تعديلات
           KEY=$KEY BUILD=$((1000 + ${{ github.run_number }})) \
             node .github/scripts/asc-external.mjs | tee -a $GITHUB_STEP_SUMMARY
+      # النسخة صارت للمختبرين بالرابط العام: التطبيق يطلع للاعبين «تحديث جديد»
+      - name: Mark new version for in-app update prompt
+        run: node .github/scripts/bump-version.mjs ios $((1000 + ${{ github.run_number }}))

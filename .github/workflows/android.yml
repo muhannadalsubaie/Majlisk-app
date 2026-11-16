@@ -100,3 +100,7 @@ jobs:
           releaseFiles: majlisk.aab
           track: alpha
           status: draft
+      # نزلت النسخة لمختبرين قوقل بلاي: التطبيق يطلع للاعبين «تحديث جديد»
+      - name: Mark new version for in-app update prompt
+        if: steps.play.outcome == 'success'
+        run: node .github/scripts/bump-version.mjs android $((10000 + ${{ github.run_number }}))

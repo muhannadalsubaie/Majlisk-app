@@ -18,6 +18,19 @@ struct AppRoot: View {
     private var needsUsername: Bool { session.uid != nil && session.profile?.loaded == true && (session.profile?.username ?? "").isEmpty && route != .splash }
     private var pendingInvite: TableInvite? { hub.state.invites.first { !(route == .table && tableId == $0.tableId) } }
 
+    @State private var updateURL: URL?
+
+    /// نسخة أحدث في المتجر؟ (الرقم يتحدث تلقائي في version.json بعد كل رفع)
+    private func checkUpdate() async {
+        guard let src = URL(string: "https://raw.githubusercontent.com/muhannadalsubaie/Majlisk-app/main/version.json?t=\(Int(Date().timeIntervalSince1970 / 300))"),
+              let (data, _) = try? await URLSession.shared.data(from: src),
+              let j = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+              let ios = j["ios"] as? [String: Any] else { return }
+        let latest = (ios["build"] as? NSNumber)?.intValue ?? 0
+        let mine = Int(Bundle.main.infoDictionary?["CFBundleVersion"] as? String ?? "0") ?? 0
+        if latest > mine { updateURL = URL(string: ios["url"] as? String ?? "itms-beta://") }
+    }
+
     var body: some View {
         // المشترك: كل صفحات التطبيق بالشكل الذهبي (تتلون من جديد لما يتغير اشتراكه)
         content.id(session.profile?.isPro == true)
@@ -35,6 +48,14 @@ struct AppRoot: View {
             }
             // ضغطت على إشعار دعوة: نقبلها وندخلك الطاولة مباشرة
             .onChange(of: push.pendingTable) { _ in openPushTable() }
+            // تحديث جديد في المتجر: يطلع مرة كل فتح للتطبيق (حدّث الآن يفتح TestFlight/المتجر، أو ليس الآن)
+            .task { await checkUpdate() }
+            .alert(tr("تحديث جديد"), isPresented: Binding(get: { updateURL != nil }, set: { if !$0 { updateURL = nil } })) {
+                Button(tr("حدّث الآن")) { if let u = updateURL { UIApplication.shared.open(u) }; updateURL = nil }
+                Button(tr("ليس الآن"), role: .cancel) { updateURL = nil }
+            } message: {
+                Text(trSpoken("فيه نسخة جديدة من مجلسك. حدّث التطبيق عشان تحصل على آخر الإضافات والإصلاحات."))
+            }
             // نافذة عرض الباقة: أول ما يفتح التطبيق على القائمة، لغير المشتركين، ومرة كل يومين بالكثير
             .onChange(of: route) { _ in maybeOffer() }
             .onChange(of: session.profile?.loaded) { l in maybeOffer(); if l == true { I18n.shared.sync() } }

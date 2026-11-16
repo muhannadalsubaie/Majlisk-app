@@ -5158,5 +5158,17 @@
  "الشراء غير متاح حالياً في النسخة التجريبية (TestFlight)، ويتوفر من نسخة App Store": {
   "en": "Purchases are not available in the test version (TestFlight). They are available in the App Store version.",
   "fr": "Les achats ne sont pas disponibles dans la version de test (TestFlight). Ils sont disponibles dans la version App Store."
+ },
+ "تحديث جديد": {
+  "en": "New update",
+  "fr": "Nouvelle mise à jour"
+ },
+ "حدّث الآن": {
+  "en": "Update now",
+  "fr": "Mettre à jour"
+ },
+ "فيه نسخة جديدة من مجلسك. حدّث التطبيق عشان تحصل على آخر الإضافات والإصلاحات.": {
+  "en": "A new version of Majlisk is available. Update to get the latest features and fixes.",
+  "fr": "Une nouvelle version de Majlisk est disponible. Mettez à jour pour profiter des dernières nouveautés et corrections."
  }
 }

@@ -139,6 +139,29 @@ fun AppRoot() {
         if (member) openTable(id)
     }
 
+    // تحديث جديد في المتجر: يطلع مرة كل فتح للتطبيق (حدّث الآن يفتح المتجر، أو ليس الآن)
+    var updateUrl by remember { mutableStateOf<String?>(null) }
+    val ctx = androidx.compose.ui.platform.LocalContext.current
+    LaunchedEffect(Unit) {
+        runCatching {
+            val txt = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                java.net.URL("https://raw.githubusercontent.com/muhannadalsubaie/Majlisk-app/main/version.json?t=${System.currentTimeMillis() / 300_000}").readText()
+            }
+            val a = org.json.JSONObject(txt).getJSONObject("android")
+            if (a.optInt("build") > com.majlisk.app.BuildConfig.VERSION_CODE) updateUrl = a.optString("url").ifEmpty { "https://play.google.com/store/apps/details?id=com.majlisk.app" }
+        }
+    }
+    updateUrl?.let { url ->
+        MajliskDialog("تحديث جديد", { updateUrl = null }) {
+            Body("فيه نسخة جديدة من مجلسك. حدّث التطبيق عشان تحصل على آخر الإضافات والإصلاحات.")
+            PrimaryButton("حدّث الآن", {
+                updateUrl = null
+                runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url)).addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)) }
+            })
+            SecondaryButton("ليس الآن", { updateUrl = null }, fill = true)
+        }
+    }
+
     // دعوة واردة لطاولة: تظهر فوق أي شاشة (إلا إن كنت في نفس الطاولة)
     val invite = hub.invites.firstOrNull { !(screen == Route.Table && tableId == it.tableId) }
     if (invite != null && !needsUsername && verified && user != null) {
