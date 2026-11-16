@@ -466,7 +466,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
             // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-            if ((v.qaid || v.manualProjects) && g.phase == "playing" && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject)) {
+            // (نهاية المباراة: زر التسجيلة يبقى عشر ثواني بعد آخر أكلة)
+            if ((v.qaid || v.manualProjects) && (g.phase == "playing" || (g.phase == "matchOver" && g.actions.qaidTargets.isNotEmpty())) && (g.actions.qaidTargets.isNotEmpty() || g.actions.declareKinds.isNotEmpty() || g.actions.canSawa || g.actions.canShowProject)) {
                 QaidButtons(v, g, act)
             } else if (g.actions.canSawa) PrimaryButton("سوا", { act(jsonOf("type" to "sawa")) })
             // إعلان المشاريع يدوي (خيار الباقة الاحترافية): أعلن مشروعك قبل ما تلعب ورقتك، وإلا يروح عليك

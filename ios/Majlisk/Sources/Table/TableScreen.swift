@@ -320,7 +320,8 @@ struct BalootBoard: View {
                 }
                 // سوا (اختياري): كل أوراقك مضمونة تاكل، تنحسب الأكلات الباقية لفريقك وتنتهي الصكة
                 // القيد والقطع: تسجيلة، وإعلان مشروع، وسوا (بعد الشراء، مكان أزرار الصن والحكم)
-                if (v.qaid || v.manualProjects) && g.phase == "playing" && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
+                // (نهاية المباراة: زر التسجيلة يبقى عشر ثواني بعد آخر أكلة)
+                if (v.qaid || v.manualProjects) && (g.phase == "playing" || (g.phase == "matchOver" && !g.actions.qaidTargets.isEmpty)) && (!g.actions.qaidTargets.isEmpty || !g.actions.declareKinds.isEmpty || g.actions.canSawa || g.actions.canShowProject) {
                     QaidButtons(v: v, g: g, act: act)
                 } else if g.actions.canSawa {
                     MButton("سوا", .primary) { act(["type": "sawa"]) }
