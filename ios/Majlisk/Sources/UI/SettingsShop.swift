@@ -10,6 +10,7 @@ struct SettingsScreen: View {
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
+    @State private var privacy = false
     @ObservedObject private var session = Session.shared
 
     var body: some View {
@@ -33,6 +34,15 @@ struct SettingsScreen: View {
                 SwitchRow(label: m.label, isOn: chatSettings.mode == m, onChange: { if $0 { chatSettings.set(m) } })
             }
             if !embedded {
+                // خصوصية اللاعب: طاولتك العامة للأصدقاء فقط (الخاصة تبقى بدعوة أو طلب انضمام). محفوظة على حسابك
+                SectionTitle("الخصوصية")
+                SwitchRow(label: "خصوصية اللاعب", isOn: privacy, onChange: { on in
+                    privacy = on
+                    Task { do { privacy = (try await Api.post("/profile/privacy", ["on": on]))["on"] as? Bool ?? on } catch { privacy = !on } }
+                })
+                .task { if let r = try? await Api.post("/profile/privacy"), let on = r["on"] as? Bool { privacy = on } }
+                Text(spoken("إذا شغلته: طاولتك العامة ما يدخلها إلا أصدقاؤك. الطاولة الخاصة تبقى بدعوة أو طلب انضمام."))
+                    .font(.system(size: 13)).foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .leading)
                 SectionTitle("المساعدة")
                 MButton("💬 المساعدة والدعم") { support = true }
                 SectionTitle("الحساب")

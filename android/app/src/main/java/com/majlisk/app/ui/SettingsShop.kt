@@ -62,6 +62,18 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
             SwitchRow(m.label, chatMode == m, { if (it) com.majlisk.app.data.ChatSettings.set(m) })
         }
         if (!embedded) {
+            // خصوصية اللاعب: طاولتك العامة للأصدقاء فقط (الخاصة تبقى بدعوة أو طلب انضمام). محفوظة على حسابك
+            SectionTitle("الخصوصية")
+            var privacy by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { runCatching { privacy = Api.post("/profile/privacy").optBoolean("on") } }
+            SwitchRow("خصوصية اللاعب", privacy, { on ->
+                privacy = on
+                scope.launch { runCatching { privacy = Api.post("/profile/privacy", org.json.JSONObject().put("on", on)).optBoolean("on") }.onFailure { privacy = !on } }
+            })
+            Text(
+                "إذا شغلته: طاولتك العامة ما يدخلها إلا أصدقاؤك. الطاولة الخاصة تبقى بدعوة أو طلب انضمام.",
+                color = Palette.textDim, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(),
+            )
             SectionTitle("المساعدة")
             SecondaryButton("💬 المساعدة والدعم", { support = true }, fill = true)
             SectionTitle("الحساب")

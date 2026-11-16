@@ -5070,5 +5070,17 @@
  "إعلان بلوت": {
   "en": "Declare Baloot",
   "fr": "Annoncer Baloot"
+ },
+ "خصوصية اللاعب": {
+  "en": "Player privacy",
+  "fr": "Confidentialité du joueur"
+ },
+ "إذا شغلته: طاولتك العامة ما يدخلها إلا أصدقاؤك. الطاولة الخاصة تبقى بدعوة أو طلب انضمام.": {
+  "en": "When on, only your friends can join your public table. A private table still needs an invite or a join request.",
+  "fr": "Activé : seuls vos amis peuvent rejoindre votre table publique. Une table privée nécessite toujours une invitation ou une demande."
+ },
+ "صاحب الطاولة مفعّل خصوصية اللاعب: طاولته للأصدقاء فقط": {
+  "en": "The table owner has player privacy on: friends only",
+  "fr": "Le propriétaire a activé la confidentialité : amis uniquement"
  }
 }
