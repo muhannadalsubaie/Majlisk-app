@@ -107,3 +107,68 @@ fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
         SecondaryButton("إغلاق", onClose, fill = true)
     }
 }
+
+/**
+ * الدردشة تحت الطاولة: فوق مربع صغير بآخر الرسائل (ارتفاعه محدود، ما يوصل للأوراق، ويتمرر)،
+ * وتحته خانة الكتابة وزر الإرسال جنب الميكروفون. تكتب وتضغط إرسال وتنرسل على طول
+ */
+@Composable
+fun ChatBar(conn: TableConnection, mic: @Composable () -> Unit) {
+    val messages by conn.chat.collectAsState()
+    var text by remember { mutableStateOf("") }
+    // الرسائل ظاهرة دائماً: ما فيه «غير مقروءة»
+    androidx.compose.runtime.DisposableEffect(Unit) {
+        conn.chatOpen = true
+        onDispose { conn.chatOpen = false }
+    }
+    val send = { if (text.isNotBlank()) { conn.sendChat(text); text = "" } }
+    Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        if (messages.isNotEmpty()) {
+            val list = androidx.compose.foundation.lazy.rememberLazyListState()
+            LaunchedEffect(messages.size) { list.animateScrollToItem(messages.size - 1) }
+            androidx.compose.foundation.lazy.LazyColumn(
+                state = list,
+                modifier = Modifier.fillMaxWidth().heightIn(max = 96.dp)
+                    .background(androidx.compose.ui.graphics.Color(0x99000000), RoundedCornerShape(12.dp))
+                    .border(1.dp, Palette.green700, RoundedCornerShape(12.dp))
+                    .padding(horizontal = 10.dp, vertical = 6.dp),
+                verticalArrangement = Arrangement.spacedBy(3.dp),
+            ) {
+                items(messages.size) { i ->
+                    val m = messages[i]
+                    Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("${if (m.mine) "أنت" else m.name}: ${m.text}") }) {
+                        Text("${if (m.mine) "أنت" else m.name}: ", color = Palette.goldSoft, fontSize = 13.sp)
+                        Text(m.text, color = Palette.text, fontSize = 13.sp)
+                    }
+                }
+            }
+        }
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            androidx.compose.material3.OutlinedTextField(
+                value = text, onValueChange = { text = it.take(200) },
+                placeholder = { Text("اكتب رسالة…", color = Palette.textDim, fontSize = 14.sp) },
+                singleLine = true,
+                textStyle = androidx.compose.ui.text.TextStyle(fontSize = 14.sp, color = Palette.text),
+                keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
+                keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = { send() }),
+                shape = RoundedCornerShape(22.dp),
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700,
+                    focusedContainerColor = Palette.green800, unfocusedContainerColor = Palette.green800, cursorColor = Palette.gold,
+                ),
+                modifier = Modifier.weight(1f).heightIn(min = 48.dp)
+                    .semantics { contentDescription = com.majlisk.app.i18n.tr("اكتب رسالة") },
+            )
+            // زر الإرسال (مكان زر الدردشة)
+            Text(
+                "إرسال ➤", color = Palette.green900, fontSize = 13.sp,
+                modifier = Modifier.heightIn(min = 44.dp)
+                    .background(if (text.isNotBlank()) Palette.gold else Palette.goldSoft.copy(alpha = 0.5f), RoundedCornerShape(20.dp))
+                    .clickable { send() }
+                    .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("إرسال"); role = Role.Button; onClick { send(); true } }
+                    .padding(horizontal = 14.dp, vertical = 12.dp),
+            )
+            mic()
+        }
+    }
+}

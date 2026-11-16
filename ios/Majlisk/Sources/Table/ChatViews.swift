@@ -78,3 +78,66 @@ struct ChatSheet: View {
         }
     }
 }
+
+/// الدردشة تحت الطاولة: فوق مربع صغير بآخر الرسائل (ارتفاعه محدود، ما يوصل للأوراق، ويتمرر)،
+/// وتحته خانة الكتابة وزر الإرسال جنب الميكروفون. تكتب وتضغط إرسال وتنرسل على طول
+struct ChatBar<Mic: View>: View {
+    @ObservedObject var conn: TableConnection
+    @ViewBuilder let mic: () -> Mic
+    @State private var text = ""
+    private var canSend: Bool { !text.trimmingCharacters(in: .whitespaces).isEmpty }
+    private func send() { guard canSend else { return }; conn.sendChat(text); text = "" }
+    var body: some View {
+        VStack(spacing: 6) {
+            if !conn.chat.isEmpty {
+                ScrollViewReader { proxy in
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 3) {
+                            ForEach(conn.chat) { m in
+                                (Text(trSpoken("\(m.mine ? "أنت" : m.name): ")).foregroundColor(Palette.goldSoft) + Text(trSpoken(m.text)).foregroundColor(Palette.text))
+                                    .font(.system(size: 13))
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .id(m.id)
+                            }
+                        }
+                        .padding(.horizontal, 10).padding(.vertical, 6)
+                    }
+                    // على قد الرسائل، وبحد أقصى ٩٦ (ما يوصل للأوراق، والباقي يتمرر)
+                    .frame(height: min(96, CGFloat(conn.chat.count) * 20 + 12))
+                    .background(Color.black.opacity(0.6))
+                    .clipShape(RoundedRectangle(cornerRadius: 12))
+                    .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.green700, lineWidth: 1))
+                    .onAppear { if let l = conn.chat.last { proxy.scrollTo(l.id, anchor: .bottom) } }
+                    .onChange(of: conn.chat.count) { _ in if let l = conn.chat.last { withAnimation { proxy.scrollTo(l.id, anchor: .bottom) } } }
+                }
+            }
+            HStack(spacing: 8) {
+                TextField(tr("اكتب رسالة…"), text: $text)
+                    .submitLabel(.send)
+                    .onSubmit(send)
+                    .onChange(of: text) { t in if t.count > 200 { text = String(t.prefix(200)) } }
+                    .font(.system(size: 14))
+                    .foregroundColor(Palette.text)
+                    .padding(.horizontal, 14).frame(minHeight: 44)
+                    .background(Palette.green800)
+                    .clipShape(RoundedRectangle(cornerRadius: 22))
+                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(Palette.green700, lineWidth: 1))
+                    .accessibilityLabel(spokenText("اكتب رسالة"))
+                // زر الإرسال (مكان زر الدردشة)
+                Button(action: send) {
+                    Text(trSpoken("إرسال ➤"))
+                        .font(.system(size: 13, weight: .bold))
+                        .padding(.horizontal, 14).frame(minHeight: 44)
+                        .foregroundColor(Palette.green900)
+                        .background(canSend ? Palette.gold : Palette.goldSoft.opacity(0.5))
+                        .clipShape(RoundedRectangle(cornerRadius: 20))
+                }
+                .accessibilityLabel(spokenText("إرسال"))
+                mic()
+            }
+        }
+        // الرسائل ظاهرة دائماً: ما فيه «غير مقروءة»
+        .onAppear { conn.chatOpen = true }
+        .onDisappear { conn.chatOpen = false }
+    }
+}

@@ -134,17 +134,15 @@ struct TableScreen: View {
         // زر الميكروفون أسفل يسار الشاشة، ثابت دائماً حتى لو طالت الطاولة،
         // وبعد الأوراق مباشرة في ترتيب VoiceOver (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
         .safeAreaInset(edge: .bottom, spacing: 0) {
-            // زر الدردشة الكتابية جنب الميكروفون في نفس الصف (يختفي إن أطفأتها من الإعدادات)
-            HStack(spacing: 10) {
-                Spacer()
-                if chatSettings.mode != .off { ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
-                VoiceButton(tableId: v.id, uid: uid)
+            // الدردشة الكتابية: مربع الرسائل فوق، وخانة الكتابة وزر الإرسال جنب الميكروفون (تختفي إن أطفأتها من الإعدادات)
+            Group {
+                if chatSettings.mode != .off {
+                    ChatBar(conn: conn) { VoiceButton(tableId: v.id, uid: uid) }
+                } else {
+                    HStack(spacing: 10) { Spacer(); VoiceButton(tableId: v.id, uid: uid) }
+                }
             }
             .padding(.horizontal, 16).padding(.bottom, 8)
-        }
-        // آخر رسالة: لحظات في الزاوية اليمين تحت، بعيداً عن الطاولة والأوراق
-        .overlay(alignment: .bottomLeading) {
-            if chatSettings.mode != .off && !chatOpen { ChatToast(conn: conn) }
         }
         .sheet(isPresented: $chatOpen, onDismiss: { conn.chatOpen = false }) { ChatSheet(conn: conn) { chatOpen = false } }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
