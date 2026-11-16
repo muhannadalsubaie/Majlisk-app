@@ -313,8 +313,9 @@ class TableConnection(val tableId: String) {
                 _chat.value = (_chat.value + m).takeLast(100)
                 // سطر من الطاولة نفسها (مثل الدعوات): ينكتب في الدردشة بس، لأن قارئ الشاشة قرأه من الإعلان
                 if (m.uid == "system") return
+                // صوت الدردشة حتى للمرسل: رجعت رسالتك من الخادم = انرسلت فعلاً
+                Sounds.chat()
                 if (!m.mine) {
-                    Sounds.chat()
                     if (!chatOpen) _unread.value += 1
                     _toast.value = m
                     if (mode == ChatMode.READ) Announcer.announce("${m.name}: ${m.text}")

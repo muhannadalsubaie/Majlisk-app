@@ -546,8 +546,9 @@ final class TableConnection: ObservableObject {
             if m.uid == "system" { DispatchQueue.main.async { self.chat = Array((self.chat + [m]).suffix(100)) }; return }
             DispatchQueue.main.async {
                 self.chat = Array((self.chat + [m]).suffix(100))
+                // صوت الدردشة حتى للمرسل: رجعت رسالتك من الخادم = انرسلت فعلاً
+                Sounds.shared.chat()
                 if !m.mine {
-                    Sounds.shared.chat()
                     if !self.chatOpen { self.unread += 1 }
                     self.toast = m
                 }
