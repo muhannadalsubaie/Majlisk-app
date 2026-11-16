@@ -155,6 +155,9 @@ data class TableView(
     val allPro: Boolean = false,
     /** طاولة ثابتة بكلمة مرور (المالك يغيّرها من القائمة) */
     val pinned: Boolean = false,
+    /** أنت صاحب الطاولة الثابتة الأصلي، ومين من أصدقائك يقدر يشوفها */
+    val pinnedOwner: Boolean = false,
+    val pinnedViewers: List<String> = emptyList(),
 ) {
     val hasGame: Boolean get() = game != null || otherGame
     val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
@@ -194,6 +197,8 @@ data class TableView(
             sawaOn = o.optBoolean("sawaOn", true),
             allPro = o.optBoolean("allPro"),
             pinned = o.optBoolean("pinned"),
+            pinnedOwner = o.optBoolean("pinnedOwner"),
+            pinnedViewers = o.optJSONArray("pinnedViewers")?.let { a -> (0 until a.length()).map { a.optString(it) } } ?: emptyList(),
             ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
         )
 

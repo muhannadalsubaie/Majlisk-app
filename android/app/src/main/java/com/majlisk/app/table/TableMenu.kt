@@ -36,6 +36,7 @@ import kotlinx.coroutines.launch
 private sealed interface Page {
     data object Main : Page
     data object Password : Page
+    data object Viewers : Page
     data object Players : Page
     data object Invite : Page
     data object Friends : Page
@@ -93,7 +94,10 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             )
             SecondaryButton("الإعدادات", { page = Page.Settings }, fill = true)
             // الطاولة الثابتة: المالك يغيّر كلمة المرور
-            if (isOwner && v.pinned) {
+            // (لصاحبها الأصلي بس، مو اللي ورث الملكية وهو غايب)
+            if (v.pinnedOwner) {
+                // الطاولة الثابتة مخفية عن القائمة: تختار من أصدقائك مين يشوفها
+                SecondaryButton("👁 من يمكنه رؤية الطاولة", { page = Page.Viewers }, fill = true)
                 SecondaryButton("🔒 تغيير كلمة المرور", { page = Page.Password }, fill = true)
                 // إلغاء الرقم السري: ترجع طاولة عامة عادية، ولو غادرها الكل تنحذف تلقائي
                 SecondaryButton("إلغاء الرقم السري", { conn.send("removePassword"); onClose() }, fill = true)
@@ -135,6 +139,17 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 }
                 onClose()
             })
+        }
+        Page.Viewers -> MajliskDialog("من يمكنه رؤية الطاولة", { page = Page.Main }) {
+            val hub by com.majlisk.app.data.Hub.state.collectAsState()
+            var picked by remember { mutableStateOf(v.pinnedViewers.toSet()) }
+            Note("الطاولة مخفية عن قائمة الطاولات. تطلع بس لك وللأصدقاء اللي تختارهم هنا، ويدخلونها بالرقم السري.")
+            if (hub.friends.isEmpty()) Note("ما عندك أصدقاء حالياً.")
+            hub.friends.forEach { f ->
+                com.majlisk.app.ui.SwitchRow(f.username, f.uid in picked, { on -> picked = if (on) picked + f.uid else picked - f.uid })
+            }
+            PrimaryButton("حفظ", { conn.send("setViewers", "uids" to org.json.JSONArray(picked.toList())); page = Page.Main })
+            SecondaryButton("رجوع", { page = Page.Main }, fill = true)
         }
         Page.Password -> MajliskDialog("كلمة مرور الطاولة", { page = Page.Main }) {
             var pw by remember { mutableStateOf("") }

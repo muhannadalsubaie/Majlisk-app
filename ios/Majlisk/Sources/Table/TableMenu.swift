@@ -1,7 +1,7 @@
 import SwiftUI
 
 private enum Page: Equatable {
-    case main, players, invite, friends, settings, stop, changeGame, password
+    case main, players, invite, friends, settings, stop, changeGame, password, viewers
     case replace(Int), member(String), confirm(ban: Bool, uid: String)
 }
 
@@ -21,6 +21,7 @@ struct TableMenu: View {
     @State private var page: Page = .main
     @State private var newPass = ""
     @State private var sureDelete = false
+    @State private var picked: Set<String> = []
     @State private var friendState: [String: String] = [:]
 
     private var view: TableView { conn.view ?? v }
@@ -71,7 +72,10 @@ struct TableMenu: View {
                 }
                 MButton("الإعدادات") { page = .settings }
                 // الطاولة الثابتة: المالك يغيّر كلمة المرور
-                if isOwner && view.pinned {
+                // (لصاحبها الأصلي بس، مو اللي ورث الملكية وهو غايب)
+                if view.pinnedOwner {
+                    // الطاولة الثابتة مخفية عن القائمة: تختار من أصدقائك مين يشوفها
+                    MButton("👁 من يمكنه رؤية الطاولة") { picked = Set(view.pinnedViewers); page = .viewers }
                     MButton("🔒 تغيير كلمة المرور") { page = .password }
                     // إلغاء الرقم السري: ترجع طاولة عامة عادية، ولو غادرها الكل تنحذف تلقائي
                     MButton("إلغاء الرقم السري") { conn.send("removePassword"); onClose() }
@@ -89,6 +93,16 @@ struct TableMenu: View {
                 Field(label: "كلمة المرور الجديدة (٦ أرقام)", text: $newPass, digits: 6)
                 Note("اللي داخل الطاولة الحين يبقى، والجديد يدخل بكلمة المرور الجديدة.")
                 MButton("حفظ", .primary, enabled: newPass.count == 6) { conn.send("setPassword", ["password": newPass]); newPass = ""; page = .main }
+                MButton("رجوع") { page = .main }
+            }
+        case .viewers:
+            Sheet(title: "من يمكنه رؤية الطاولة") {
+                Note("الطاولة مخفية عن قائمة الطاولات. تطلع بس لك وللأصدقاء اللي تختارهم هنا، ويدخلونها بالرقم السري.")
+                if hub.state.friends.isEmpty { Note("ما عندك أصدقاء حالياً.") }
+                ForEach(hub.state.friends) { f in
+                    SwitchRow(label: f.username, isOn: picked.contains(f.uid), onChange: { on in if on { picked.insert(f.uid) } else { picked.remove(f.uid) } })
+                }
+                MButton("حفظ", .primary) { conn.send("setViewers", ["uids": Array(picked)]); page = .main }
                 MButton("رجوع") { page = .main }
             }
         case .stop:

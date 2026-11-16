@@ -96,31 +96,49 @@ object Tables {
 
     suspend fun deleteAccount() { Api.post("/me/delete") }
 
-    /** الطاولات النشطة (أحدث 50) — تتحدث مباشرة */
-    fun listen(onRows: (List<TableRow>) -> Unit): ListenerRegistration =
-        FirebaseFirestore.getInstance().collection("tables")
+    private fun rowOf(id: String, g: (String) -> Any?): TableRow = TableRow(
+        id = id,
+        ownerName = (g("ownerName") as? String).orEmpty(),
+        isPrivate = g("isPrivate") == true,
+        players = (g("players") as? Number)?.toInt() ?: 0,
+        people = (g("people") as? Number)?.toInt() ?: 0,
+        status = (g("status") as? String).orEmpty(),
+        kind = g("kind") as? String ?: "baloot",
+        variant = g("variant") as? String ?: "classic",
+        members = runCatching {
+            val a = org.json.JSONArray(g("members") as? String ?: "[]")
+            (0 until a.length()).map { a.getJSONObject(it).let { o -> o.optString("name") to o.optString("role") } }
+        }.getOrDefault(emptyList()),
+        score = (g("score") as? String).orEmpty(),
+        locked = g("locked") == true,
+    )
+
+    /**
+     * الطاولات النشطة (أحدث 50) — تتحدث مباشرة. والطاولات الثابتة (برقم سري) مخفية عن القائمة العامة:
+     * تطلع بس لصاحبها ولأصدقائه اللي اختارهم (من الخادم، تتحدث كل ٢٠ ثانية)
+     */
+    fun listen(onRows: (List<TableRow>) -> Unit): ListenerRegistration {
+        var fire = emptyList<TableRow>()
+        var hidden = emptyList<TableRow>()
+        val emit = { onRows(fire.filterNot { it.locked } + hidden) }
+        val job = Session.scope.launch {
+            while (true) {
+                runCatching {
+                    val a = Api.post("/tables/visible").optJSONArray("tables") ?: org.json.JSONArray()
+                    hidden = (0 until a.length()).map { i -> a.getJSONObject(i).let { o -> rowOf(o.optString("id")) { k -> if (o.has(k)) o.get(k) else null } } }
+                    kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { emit() }
+                }
+                kotlinx.coroutines.delay(20_000)
+            }
+        }
+        val reg = FirebaseFirestore.getInstance().collection("tables")
             .orderBy("updatedAt", Query.Direction.DESCENDING).limit(50)
             .addSnapshotListener { snap, err ->
-                if (err != null || snap == null) { onRows(emptyList()); return@addSnapshotListener }
-                onRows(snap.documents.map { d ->
-                    TableRow(
-                        id = d.id,
-                        ownerName = d.getString("ownerName").orEmpty(),
-                        isPrivate = d.getBoolean("isPrivate") == true,
-                        players = (d.getLong("players") ?: 0).toInt(),
-                        people = (d.getLong("people") ?: 0).toInt(),
-                        status = d.getString("status").orEmpty(),
-                        kind = d.getString("kind") ?: "baloot",
-                        variant = d.getString("variant") ?: "classic",
-                        members = runCatching {
-                            val a = org.json.JSONArray(d.getString("members") ?: "[]")
-                            (0 until a.length()).map { a.getJSONObject(it).let { o -> o.optString("name") to o.optString("role") } }
-                        }.getOrDefault(emptyList()),
-                        score = d.getString("score").orEmpty(),
-                        locked = d.getBoolean("locked") == true,
-                    )
-                })
+                fire = if (err != null || snap == null) emptyList() else snap.documents.map { d -> rowOf(d.id) { k -> d.get(k) } }
+                emit()
             }
+        return ListenerRegistration { reg.remove(); job.cancel() }
+    }
 }
 
 /** اتصال حي بالطاولة: يستقبل الحالة والإعلانات، ويعيد الاتصال تلقائياً عند الانقطاع */

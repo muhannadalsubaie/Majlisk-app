@@ -295,30 +295,53 @@ enum Tables {
     static func joinRequestStatus(_ id: String) async throws -> (String, Int) { let r = try await Api.post("/tables/\(id)/join-request/status"); return (r.str("status"), r.int("minutes")) }
     static func deleteAccount() async throws { try await Api.post("/me/delete") }
 
-    /// الطاولات النشطة (أحدث 50) — تتحدث مباشرة
-    static func listen(_ onRows: @escaping ([TableRow]) -> Void) -> ListenerRegistration {
-        Firestore.firestore().collection("tables").order(by: "updatedAt", descending: true).limit(to: 50).addSnapshotListener { snap, _ in
-            guard let snap else { onRows([]); return }
-            onRows(snap.documents.map { d in
-                let x = d.data()
-                return TableRow(
-                    id: d.documentID,
-                    ownerName: x["ownerName"] as? String ?? "",
-                    isPrivate: x["isPrivate"] as? Bool == true,
-                    players: (x["players"] as? NSNumber)?.intValue ?? 0,
-                    people: (x["people"] as? NSNumber)?.intValue ?? 0,
-                    status: x["status"] as? String ?? "",
-                    kind: x["kind"] as? String ?? "baloot",
-                    variant: x["variant"] as? String ?? "classic",
-                    members: ((x["members"] as? String).flatMap { $0.data(using: .utf8) }
-                        .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] } ?? [])
-                        .map { (name: $0["name"] as? String ?? "", role: $0["role"] as? String ?? "") },
-                    score: x["score"] as? String ?? "",
-                    locked: x["locked"] as? Bool == true
-                )
-            })
-        }
+    private static func row(_ id: String, _ x: [String: Any]) -> TableRow {
+        TableRow(
+            id: id,
+            ownerName: x["ownerName"] as? String ?? "",
+            isPrivate: x["isPrivate"] as? Bool == true,
+            players: (x["players"] as? NSNumber)?.intValue ?? 0,
+            people: (x["people"] as? NSNumber)?.intValue ?? 0,
+            status: x["status"] as? String ?? "",
+            kind: x["kind"] as? String ?? "baloot",
+            variant: x["variant"] as? String ?? "classic",
+            members: ((x["members"] as? String).flatMap { $0.data(using: .utf8) }
+                .flatMap { try? JSONSerialization.jsonObject(with: $0) as? [[String: Any]] } ?? [])
+                .map { (name: $0["name"] as? String ?? "", role: $0["role"] as? String ?? "") },
+            score: x["score"] as? String ?? "",
+            locked: x["locked"] as? Bool == true
+        )
     }
+
+    /// الطاولات النشطة (أحدث 50) — تتحدث مباشرة. والطاولات الثابتة (برقم سري) مخفية عن القائمة العامة:
+    /// تطلع بس لصاحبها ولأصدقائه اللي اختارهم (من الخادم، تتحدث كل ٢٠ ثانية)
+    static func listen(_ onRows: @escaping ([TableRow]) -> Void) -> ListenerRegistration {
+        let box = TablesListener()
+        let emit = { DispatchQueue.main.async { onRows(box.fire.filter { !$0.locked } + box.hidden) } }
+        box.task = Task {
+            while !Task.isCancelled {
+                if let r = try? await Api.post("/tables/visible") {
+                    box.hidden = r.objs("tables").map { row($0.str("id"), $0) }
+                    emit()
+                }
+                try? await Task.sleep(nanoseconds: 20_000_000_000)
+            }
+        }
+        box.reg = Firestore.firestore().collection("tables").order(by: "updatedAt", descending: true).limit(to: 50).addSnapshotListener { snap, _ in
+            box.fire = snap?.documents.map { row($0.documentID, $0.data()) } ?? []
+            emit()
+        }
+        return box
+    }
+}
+
+/// مستمع قائمة الطاولات: Firestore للعامة + طلب دوري للطاولات الثابتة المخفية، وإيقافهم سوا
+final class TablesListener: NSObject, ListenerRegistration {
+    var reg: ListenerRegistration?
+    var task: Task<Void, Never>?
+    var fire: [TableRow] = []
+    var hidden: [TableRow] = []
+    func remove() { reg?.remove(); task?.cancel() }
 }
 
 /// اتصال حي بالطاولة: يستقبل الحالة والإعلانات، ويعيد الاتصال تلقائياً عند الانقطاع

@@ -5126,5 +5126,21 @@
  "ما عنده أوراق مكشوفة": {
   "en": "No shown cards",
   "fr": "Aucune carte montrée"
+ },
+ "👁 من يمكنه رؤية الطاولة": {
+  "en": "👁 Who can see the table",
+  "fr": "👁 Qui peut voir la table"
+ },
+ "من يمكنه رؤية الطاولة": {
+  "en": "Who can see the table",
+  "fr": "Qui peut voir la table"
+ },
+ "الطاولة مخفية عن قائمة الطاولات. تطلع بس لك وللأصدقاء اللي تختارهم هنا، ويدخلونها بالرقم السري.": {
+  "en": "The table is hidden from the table list. Only you and the friends you choose here can see it, and they join with the password.",
+  "fr": "La table est masquée de la liste. Seuls vous et les amis choisis ici la voient, et ils la rejoignent avec le mot de passe."
+ },
+ "ما عندك أصدقاء حالياً.": {
+  "en": "You don't have any friends yet.",
+  "fr": "Vous n'avez pas encore d'amis."
  }
 }
