@@ -419,8 +419,9 @@ struct BalootBoard: View {
         for b in g.actions.bids {
             out.append((b.type == "pass" && g.bidRound == 2 ? "ولا" : b.label, { act(["type": "bid", "bid": b.raw]) }))
         }
-        if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
+        // الدبل: «بس» أول خيار و«دبل» الثاني
         if g.actions.canPassDouble { out.append(("بس", { act(["type": "doublePass"]) })) }
+        if let label = g.actions.doubleLabel { out.append((label, { act(["type": "double"]) })) }
         if g.actions.canSawa { out.append(("سوا", { act(["type": "sawa"]) })) }
         if g.actions.canProject && v.manualProjects { out.append(("مشروع", { act(["type": "declareProject"]) })) }
         // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)، وفرشه، والتسجيلة من الأزرار

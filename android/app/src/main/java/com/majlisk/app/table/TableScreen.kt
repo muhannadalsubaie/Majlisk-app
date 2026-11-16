@@ -396,8 +396,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         // إجراءات قارئ الشاشة على أوراقك (والمؤشر على أي ورقة): نفس أزرار الشراء والدبل الظاهرة الحين
         val cardActions = buildList {
             g.actions.bids.forEach { b -> add((if (b.type == "pass" && g.bidRound == 2) "ولا" else b.label) to { act(jsonOf("type" to "bid", "bid" to b.raw)) }) }
-            g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
+            // الدبل: «بس» أول خيار و«دبل» الثاني
             if (g.actions.canPassDouble) add("بس" to { act(jsonOf("type" to "doublePass")) })
+            g.actions.doubleLabel?.let { add(it to { act(jsonOf("type" to "double")) }) }
             if (g.actions.canSawa) add("سوا" to { act(jsonOf("type" to "sawa")) })
             if (g.actions.canProject && v.manualProjects) add("مشروع" to { act(jsonOf("type" to "declareProject")) })
             // القيد: إعلان المشروع بالإيماءة (سحب لفوق أو تحت على أوراقك)
