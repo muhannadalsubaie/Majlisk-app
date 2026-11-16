@@ -34,8 +34,18 @@ enum Store {
         return r.bool("duplicate") ? 0 : r.int("coins")
     }
 
+    /// نسخة TestFlight: الشراء فيها تجريبي ومجاني، فمقفل إلا لو الخادم سمح (وقت مراجعة أبل أو حساب المطوّر)
+    static var isTestFlight: Bool { Bundle.main.appStoreReceiptURL?.lastPathComponent == "sandboxReceipt" }
+    static func purchasesBlocked() async -> Bool {
+        guard isTestFlight else { return false }
+        let allowed = (try? await Api.post("/purchases/config"))?.bool("sandbox") ?? false
+        if !allowed { Announcer.announce("الشراء غير متاح حالياً في النسخة التجريبية (TestFlight)، ويتوفر من نسخة App Store") }
+        return !allowed
+    }
+
     static func buy(_ id: String) async {
         guard let pack = packs.first(where: { $0.id == id }) else { return }
+        if await purchasesBlocked() { return }
         do {
             guard let product = try await Product.products(for: [id]).first else { Announcer.announce("الشراء غير متاح الآن، حاول لاحقاً"); return }
             let token = try await Api.post("/purchases/account-token").str("token")
@@ -92,6 +102,7 @@ enum Store {
 
     /// الاشتراك الشهري في الباقة الاحترافية. يرجع true لو تفعّل
     static func buyPro() async -> Bool {
+        if await purchasesBlocked() { return false }
         do {
             guard let product = try await Product.products(for: [proSub]).first else { Announcer.announce("الاشتراك غير متاح الآن، حاول لاحقاً"); return false }
             switch try await product.purchase(options: try await purchaseOptions()) {
@@ -113,6 +124,7 @@ enum Store {
 
     /// إهداء شهر من الباقة لاعب ثاني (اسم المستخدم متأكد منه قبل). يرجع true لو وصلت الهدية
     static func buyGift(to username: String) async -> Bool {
+        if await purchasesBlocked() { return false }
         do {
             guard let product = try await Product.products(for: [proGift]).first else { Announcer.announce("الإهداء غير متاح الآن، حاول لاحقاً"); return false }
             Prefs.pendingGiftTo = username

@@ -5154,5 +5154,9 @@
  "لحظة، جرّب مرة ثانية": {
   "en": "One moment, please try again",
   "fr": "Un instant, réessayez"
+ },
+ "الشراء غير متاح حالياً في النسخة التجريبية (TestFlight)، ويتوفر من نسخة App Store": {
+  "en": "Purchases are not available in the test version (TestFlight). They are available in the App Store version.",
+  "fr": "Les achats ne sont pas disponibles dans la version de test (TestFlight). Ils sont disponibles dans la version App Store."
  }
 }

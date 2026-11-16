@@ -76,11 +76,15 @@ struct ShopScreen: View {
     let navigate: (Route) -> Void
     @State private var packs: [StorePack]?
     @State private var busy = ""
+    /// نسخة TestFlight والشراء التجريبي مقفل: نوضح ليش ما يشتغل الشراء
+    @State private var sandboxBlocked = false
 
     var body: some View {
         Screen {
             TopBar("شراء عملات", onBack: { navigate(.menu) })
+                .task { if Store.isTestFlight { sandboxBlocked = !(((try? await Api.post("/purchases/config"))?.bool("sandbox")) ?? false) } }
             BodyText("رصيدك الحالي: \(profile?.unlimited == true ? "لا محدود" : profile?.coins.map(String.init) ?? "…") 🪙")
+            if sandboxBlocked { BodyText("الشراء غير متاح حالياً في النسخة التجريبية (TestFlight)، ويتوفر من نسخة App Store") }
             if packs == nil { BodyText("جارٍ تحميل الباقات…") }
             ForEach(packs ?? []) { p in
                 let base = p.coins - p.bonus
