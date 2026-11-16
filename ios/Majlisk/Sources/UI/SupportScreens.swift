@@ -84,7 +84,7 @@ private struct NewTicketView: View {
     var body: some View {
         Screen {
             TopBar(kind == "complaint" ? "شكوى جديدة" : "استفسار جديد", onBack: onDone)
-            Text(spoken(kind == "complaint" ? "اكتب شكواك" : "اكتب استفسارك")).foregroundColor(Palette.textDim).accessibilityHidden(true)
+            Text(trSpoken(kind == "complaint" ? "اكتب شكواك" : "اكتب استفسارك")).foregroundColor(Palette.textDim).accessibilityHidden(true)
             TextEditor(text: $text)
                 .frame(minHeight: 180).padding(8)
                 .scrollContentBackground(.hidden)
@@ -106,7 +106,7 @@ private struct NewTicketView: View {
             }
             if images.count < 4 {
                 PhotosPicker(selection: $picks, maxSelectionCount: 4 - images.count, matching: .images) {
-                    Text(spoken("📎 إرفاق صور (\(images.count) من 4)")).font(.system(size: 18, weight: .bold)).frame(maxWidth: .infinity, minHeight: 50)
+                    Text(trSpoken("📎 إرفاق صور (\(images.count) من 4)")).font(.system(size: 18, weight: .bold)).frame(maxWidth: .infinity, minHeight: 50)
                 }
                 .buttonStyle(RaisedStyle(base: Palette.green700, fg: Palette.text, border: Palette.gold))
                 .onChange(of: picks) { items in
@@ -117,7 +117,7 @@ private struct NewTicketView: View {
                     }
                 }
             }
-            if !error.isEmpty { Text(spoken(error)).foregroundColor(Palette.goldSoft) }
+            if !error.isEmpty { Text(trSpoken(error)).foregroundColor(Palette.goldSoft) }
             MButton(busy ? "جارٍ الإرسال…" : "إرسال", .primary, enabled: !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty && !busy) {
                 busy = true
                 Task { @MainActor in
@@ -160,9 +160,9 @@ private struct TicketView: View {
             Note("\(t.statusLabel) · \(timeText(t.at))")
             ForEach(Array(t.messages.enumerated()), id: \.offset) { i, m in
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(spoken(m.from == "dev" ? "الدعم" : asDev ? t.username : "أنت")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
-                    Text(spoken(m.text)).font(.system(size: 16)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true)
-                    Text(spoken(timeText(m.at))).font(.system(size: 11)).foregroundColor(Palette.textDim)
+                    Text(trSpoken(m.from == "dev" ? "الدعم" : asDev ? t.username : "أنت")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
+                    Text(trSpoken(m.text)).font(.system(size: 16)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true)
+                    Text(trSpoken(timeText(m.at))).font(.system(size: 11)).foregroundColor(Palette.textDim)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading).padding(12)
                 .background(m.from == "dev" ? Palette.green700 : Palette.green800).clipShape(RoundedRectangle(cornerRadius: 16))

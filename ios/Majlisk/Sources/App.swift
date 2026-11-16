@@ -114,7 +114,7 @@ struct DemoTable: View {
             Screen(fill: true) {
                 HStack(spacing: 8) {
                     SmallButton("القائمة") {}
-                    Text(spoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
+                    Text(trSpoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim).frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 if let d = v.domino { DominoBoard(v: v, d: d, conn: conn, isOwner: true) {} }
                 else if let j = v.jackaroo {
@@ -131,7 +131,7 @@ struct DemoTable: View {
                 HStack { Spacer(); VoiceButton(tableId: v.id, uid: "u1") }
             }
         } else {
-            Text(spoken("demo not found: \(name)"))
+            Text(trSpoken("demo not found: \(name)"))
         }
     }
 }

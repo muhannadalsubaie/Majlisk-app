@@ -135,20 +135,18 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
 }
 
 /// نص مترجم ومعلّم بلغاته (للعرض ولـ VoiceOver)
-func spoken(_ s0: String) -> AttributedString {
+func trSpoken(_ s0: String) -> AttributedString {
     let s = tr(s0)
-    var a = AttributedString(s)
-    guard !s.isEmpty else { return a }
-    for (r, l) in langRuns(s) where !r.isEmpty {
-        guard let lo = AttributedString.Index(r.lowerBound, within: a), let hi = AttributedString.Index(r.upperBound, within: a) else { continue }
-        a[lo..<hi].accessibilitySpeechLanguage = l
-    }
-    return a
+    guard !s.isEmpty else { return AttributedString(s) }
+    // نعلّم اللغات على NSAttributedString (مفتاح VoiceOver المعروف) ونحوّله مع خصائص UIKit (فيها خصائص قارئ الشاشة)
+    let m = NSMutableAttributedString(string: s)
+    for (r, l) in langRuns(s) where !r.isEmpty { m.addAttribute(.accessibilitySpeechLanguage, value: l, range: NSRange(r, in: s)) }
+    return (try? AttributedString(m, including: \.uiKit)) ?? AttributedString(s)
 }
-func spoken(_ s: Substring) -> AttributedString { spoken(String(s)) }
+func trSpoken(_ s: Substring) -> AttributedString { trSpoken(String(s)) }
 
 /// وصف قارئ الشاشة مترجم ومعلّم بلغاته
-func spokenText(_ s: String) -> Text { Text(spoken(s)) }
+func spokenText(_ s: String) -> Text { Text(trSpoken(s)) }
 
 /// إعلان قارئ الشاشة معلّم بلغاته
 func spokenNS(_ s: String, queued: Bool) -> NSAttributedString {

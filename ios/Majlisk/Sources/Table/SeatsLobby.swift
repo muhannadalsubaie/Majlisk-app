@@ -98,11 +98,11 @@ struct SeatsLobby: View {
                 HStack { SmallButton("دق ولد", primary: true) { daqPicked = Set(daqPeople.map(\.uid)); daq = true }; Spacer() }
             }
             ForEach([Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
-                Text(spoken(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+                Text(trSpoken(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
                     ItemRow {
                         if let m = v.seat(i) { Avatar(uid: v.seatUid(i), name: m.username, size: 32) }
-                        Text(spoken("المقعد \(i + 1): \(occupantLabel(v, i))")).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(trSpoken("المقعد \(i + 1): \(occupantLabel(v, i))")).frame(maxWidth: .infinity, alignment: .leading)
                         if isOwner {
                             if v.seat(i) == nil {
                                 SmallButton("دعوة صديق", label: "دعوة صديق للمقعد \(i + 1)") { panel = .invite(i) }
@@ -138,7 +138,7 @@ struct SeatsLobby: View {
                         Button(s == turnLimit ? "✓ \(turnLimitLabel(s))" : turnLimitLabel(s)) { turnLimit = s }
                     }
                 } label: {
-                    Text(spoken("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾"))
+                    Text(trSpoken("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾"))
                         .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.text)
                         .frame(maxWidth: .infinity, minHeight: 50)
                         .background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 14))
@@ -210,7 +210,7 @@ struct InviteFriendsSheet: View {
             else if outside.isEmpty { BodyText("كل أصدقائك موجودين في الطاولة.") }
             ForEach(outside.sorted { $0.online && !$1.online }) { f in
                 ItemRow {
-                    Text(spoken("\(f.username)، \(f.online ? "متصل" : "غير متصل")")).frame(maxWidth: .infinity, alignment: .leading)
+                    Text(trSpoken("\(f.username)، \(f.online ? "متصل" : "غير متصل")")).frame(maxWidth: .infinity, alignment: .leading)
                     // غير المتصل تصله الدعوة إشعار على جواله
                     Group {
                         SmallButton("دعوة", enabled: busy != f.uid, label: "دعوة \(f.username)") {
@@ -271,10 +271,10 @@ struct HistoryView: View {
                 let hands = m.hands
                 let t0 = hands.reduce(0) { $0 + ($1.points[safe: 0] ?? 0) }
                 let t1 = hands.reduce(0) { $0 + ($1.points[safe: 1] ?? 0) }
-                Text(spoken("المباراة \(match): \(hands[0].teams[safe: 0] ?? "") \(t0)، \(hands[0].teams[safe: 1] ?? "") \(t1)"))
+                Text(trSpoken("المباراة \(match): \(hands[0].teams[safe: 0] ?? "") \(t0)، \(hands[0].teams[safe: 1] ?? "") \(t1)"))
                     .foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(hands.enumerated().map { Numbered(id: $0.offset, record: $0.element) }) { n in
-                    Text(spoken(lines(n.record, n.id + 1)))
+                    Text(trSpoken(lines(n.record, n.id + 1)))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(10).background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 10))
                 }
@@ -317,7 +317,7 @@ struct VoiceButton: View {
         let status = voice.busy && !voice.reconnecting ? "جارٍ الاتصال بالمحادثة الصوتية" : !joined ? "المحادثة الصوتية: اضغط مطولاً للانضمام" : muted ? "الميكروفون مغلق" : "الميكروفون مفتوح"
         // نفس ألوان زر الميكروفون في التطبيق الحالي: ذهبي مفتوح، وأخضر بإطار ذهبي مغلق، وباهت خارج المحادثة
         let on = joined && !muted
-        Text(spoken("🎤 \(status)"))
+        Text(trSpoken("🎤 \(status)"))
             .font(.system(size: 13, weight: .bold))
             .lineLimit(2)
             .padding(.horizontal, 12).padding(.vertical, 6)
@@ -335,7 +335,7 @@ struct VoiceButton: View {
             .accessibilityAddTraits(micFocus.silent ? [] : .isButton)
             .accessibilityRemoveTraits(micFocus.silent ? [.isButton, .isStaticText] : [])
             .accessibilityAction { toggleMute() }
-            .accessibilityAction(named: Text(spoken(voice.joined ? "الخروج من المحادثة الصوتية" : "الانضمام للمحادثة الصوتية"))) { toggleJoin() }
+            .accessibilityAction(named: Text(trSpoken(voice.joined ? "الخروج من المحادثة الصوتية" : "الانضمام للمحادثة الصوتية"))) { toggleJoin() }
             .accessibilityFocused($focused)
             .onChange(of: micFocus.request) { _ in focused = true }
     }

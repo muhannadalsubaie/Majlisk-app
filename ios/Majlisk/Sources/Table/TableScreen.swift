@@ -108,7 +108,7 @@ struct TableScreen: View {
                 if v.ownerUid == uid && v.playing && v.allPro && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
-                Text(spoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim)
+                Text(trSpoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
             if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }
@@ -240,7 +240,7 @@ struct BalootBoard: View {
             let themLabel = mySeat == nil ? "\(text.name(1)) و\(text.name(3))" : "لهم"
             HStack(spacing: 10) {
                 ScoreBox(label: usLabel, value: us, mine: mySeat != nil)
-                Text(spoken("152")).font(.system(size: 13)).foregroundColor(Palette.textDim)
+                Text(trSpoken("152")).font(.system(size: 13)).foregroundColor(Palette.textDim)
                     .padding(.horizontal, 10).padding(.vertical, 4)
                     .overlay(Capsule().stroke(Palette.green700, style: StrokeStyle(lineWidth: 1, dash: [4, 3])))
                 ScoreBox(label: themLabel, value: them, mine: false)
@@ -249,7 +249,7 @@ struct BalootBoard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenText("النقاط: \(usLabel) \(us)، \(themLabel) \(them). الفوز عند 152"))
 
-            if let line = text.statusLine() { Text(spoken(line)).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+            if let line = text.statusLine() { Text(trSpoken(line)).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
 
             // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
             // كل شي ياخذ مكانه الحقيقي ويترتب تحت بعض (الاسم، ثم الطاولة، ثم الأزرار، ثم أوراقك): ما يطلع شي فوق شي
@@ -278,7 +278,7 @@ struct BalootBoard: View {
             if g.phase == "matchOver" && g.outcomeStatus == "won" {
                 // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
                 let w = g.outcomeWinner ?? 0
-                Text(spoken(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
+                Text(trSpoken(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
             }
 
             if g.phase == "matchOver" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
@@ -335,11 +335,11 @@ struct BalootBoard: View {
                 }
                 // يد اللاعب
                 if let mine = mySeat {
-                    if let note = seatNote(g, mine) { Text(spoken("أنت: \(note)")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+                    if let note = seatNote(g, mine) { Text(trSpoken("أنت: \(note)")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
                     let myFaces = text.faces(mine)
                     if !myFaces.isEmpty {
                         HStack(spacing: 8) {
-                            Text(spoken("مشروعك")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
+                            Text(trSpoken("مشروعك")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
                             ProjectFaces(sorted: myFaces, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
                         }
                         .frame(maxWidth: .infinity)
@@ -486,7 +486,7 @@ struct BalootBoard: View {
             shape.stroke(Palette.gold.opacity(0.33), lineWidth: 1).padding(10)
             if (g.phase == "bidding" || g.phase == "doubling" || g.phase == "waraq"), let q = g.qaba {
                 VStack(spacing: 4) {
-                    Text(spoken("ورقة الأرض")).font(.system(size: 14)).foregroundColor(Palette.textDim)
+                    Text(trSpoken("ورقة الأرض")).font(.system(size: 14)).foregroundColor(Palette.textDim)
                     TableCard(card: q)
                 }
                 .offset(y: -4)
@@ -619,8 +619,8 @@ private struct ScoreBox: View {
     let mine: Bool
     var body: some View {
         VStack(spacing: 2) {
-            Text(spoken(label)).font(.system(size: 14, weight: .semibold)).foregroundColor(Palette.textDim)
-            Text(spoken("\(value)")).font(.system(size: 30, weight: .bold)).foregroundColor(Palette.gold)
+            Text(trSpoken(label)).font(.system(size: 14, weight: .semibold)).foregroundColor(Palette.textDim)
+            Text(trSpoken("\(value)")).font(.system(size: 30, weight: .bold)).foregroundColor(Palette.gold)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(.vertical, 8)
@@ -670,11 +670,11 @@ private struct PlayerTag: View {
         // والمؤقت فوق صورته (بحجمها) ويروح للي بعده أول ما يلعب
         let who = VStack(spacing: 4) {
             TurnAvatar(v: v, seat: seat, turn: turn, uid: v.seatUid(seat), name: s?.username ?? "", size: 40)
-            Text(spoken(label))
+            Text(trSpoken(label))
                 .font(.system(size: 14, weight: .bold))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
-            if let note { Text(spoken(note)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
+            if let note { Text(trSpoken(note)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .background(turn ? Palette.gold.opacity(0.08) : .clear)
@@ -785,7 +785,7 @@ private struct SpotPanel: View {
         let rows = stride(from: 0, to: spot.cards.count, by: 5).map { Array(spot.cards[$0..<min($0 + 5, spot.cards.count)]) }
         let shape = RoundedRectangle(cornerRadius: 20)
         VStack(spacing: 10) {
-            Text(spoken(spot.title)).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
+            Text(trSpoken(spot.title)).font(.system(size: 16, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
             ForEach(0..<rows.count, id: \.self) { r in
                 HStack(spacing: 6) {
                     ForEach(0..<rows[r].count, id: \.self) { i in
@@ -1008,7 +1008,7 @@ private struct ShowProjectPanel: View {
         // الزر نفسه صار فوق مع أزرار القيد؛ هنا لوحة الاختيار بس
         if hub.choosing {
             VStack(alignment: .leading, spacing: 8) {
-                Text(spoken("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع")).bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+                Text(trSpoken("حدد أوراق مشروعك، وبعدها اضغط فرش المشروع")).bold().foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
                 FlowLayout(spacing: 6) {
                     ForEach(cards, id: \.self) { c in
                         let on = picked.contains(c)

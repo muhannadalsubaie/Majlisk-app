@@ -50,7 +50,7 @@ struct Avatar: View {
         ZStack {
             Circle().fill(Palette.green700)
             if let img { Image(uiImage: img).resizable().scaledToFill() }
-            else { Text(spoken(bot ? "🤖" : String(name.trimmingCharacters(in: .whitespaces).prefix(1)))).font(.system(size: size * 0.42, weight: .bold)).foregroundColor(Palette.gold) }
+            else { Text(trSpoken(bot ? "🤖" : String(name.trimmingCharacters(in: .whitespaces).prefix(1)))).font(.system(size: size * 0.42, weight: .bold)).foregroundColor(Palette.gold) }
         }
         .frame(width: size, height: size)
         .clipShape(Circle())
@@ -84,7 +84,7 @@ struct ProfileScreen: View {
             }
             .frame(maxWidth: .infinity)
             PhotosPicker(selection: $pick, matching: .images) {
-                Text(spoken("تغيير الصورة")).font(.system(size: 18, weight: .bold)).frame(maxWidth: .infinity, minHeight: 50)
+                Text(trSpoken("تغيير الصورة")).font(.system(size: 18, weight: .bold)).frame(maxWidth: .infinity, minHeight: 50)
             }
             .buttonStyle(RaisedStyle(base: Palette.gold, fg: Palette.green900, border: nil))
             .disabled(busy)
@@ -100,10 +100,10 @@ struct ProfileScreen: View {
         }
         .sheet(isPresented: $renaming) {
             Sheet(title: "تغيير اسم المستخدم") {
-                Text(spoken("اسمك الحالي: \(profile?.username ?? ""). بعد التغيير ما تقدر تغيّره مرة ثانية إلا بعد ستة أشهر، واسمك القديم يقدر ياخذه أي أحد."))
+                Text(trSpoken("اسمك الحالي: \(profile?.username ?? ""). بعد التغيير ما تقدر تغيّره مرة ثانية إلا بعد ستة أشهر، واسمك القديم يقدر ياخذه أي أحد."))
                     .foregroundColor(Palette.text)
                 UsernameField(name: $newName)
-                if !renameError.isEmpty { Text(spoken(renameError)).foregroundColor(Palette.goldSoft) }
+                if !renameError.isEmpty { Text(trSpoken(renameError)).foregroundColor(Palette.goldSoft) }
                 MButton("تأكيد التغيير", .primary, enabled: !busy) { Task { @MainActor in await rename() } }
                 MButton("إلغاء", enabled: !busy) { renaming = false }
             }

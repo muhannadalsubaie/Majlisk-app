@@ -34,7 +34,7 @@ struct GoldButton: View {
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Text(spoken(title)).font(.system(size: 19, weight: .heavy)).frame(maxWidth: .infinity, minHeight: 56)
+            Text(trSpoken(title)).font(.system(size: 19, weight: .heavy)).frame(maxWidth: .infinity, minHeight: 56)
         }
         .buttonStyle(RaisedStyle(base: emerald ? Pro.emerald : Pro.gold, fg: emerald ? .white : Pro.ink))
         .opacity(enabled ? 1 : 0.5).disabled(!enabled)
@@ -44,7 +44,7 @@ struct GoldButton: View {
 private struct Crown: View {
     let size: CGFloat
     var body: some View {
-        Text(spoken("👑")).font(.system(size: size * 0.5))
+        Text(trSpoken("👑")).font(.system(size: size * 0.5))
             .frame(width: size, height: size)
             .background(LinearGradient(colors: [Pro.goldLight, Pro.gold, Pro.goldDark], startPoint: .top, endPoint: .bottom))
             .clipShape(RoundedRectangle(cornerRadius: size * 0.3))
@@ -59,8 +59,8 @@ private struct FeatureTile: View {
     let label: String
     var body: some View {
         VStack(spacing: 6) {
-            Text(spoken(icon)).font(.system(size: 28)).accessibilityHidden(true)
-            Text(spoken(label)).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.cream).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
+            Text(trSpoken(icon)).font(.system(size: 28)).accessibilityHidden(true)
+            Text(trSpoken(label)).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.cream).multilineTextAlignment(.center).fixedSize(horizontal: false, vertical: true)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 10).padding(.horizontal, 4)
         .background(Pro.deep).clipShape(RoundedRectangle(cornerRadius: 18))
@@ -73,10 +73,10 @@ private struct PriceCard: View {
     let price: String
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 4) {
-            Text(spoken(price)).font(.system(size: 30, weight: .heavy)).foregroundColor(Pro.goldLight)
-            Text(spoken("/ شهر")).font(.system(size: 14, weight: .bold)).foregroundColor(Pro.cream)
+            Text(trSpoken(price)).font(.system(size: 30, weight: .heavy)).foregroundColor(Pro.goldLight)
+            Text(trSpoken("/ شهر")).font(.system(size: 14, weight: .bold)).foregroundColor(Pro.cream)
             Spacer()
-            Text(spoken("عرض لمدة\n6 أشهر فقط")).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.dim).multilineTextAlignment(.trailing)
+            Text(trSpoken("عرض لمدة\n6 أشهر فقط")).font(.system(size: 12, weight: .bold)).foregroundColor(Pro.dim).multilineTextAlignment(.trailing)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
         .background(LinearGradient(colors: [Color(red: 0.165, green: 0.14, blue: 0.075), Color(red: 0.1, green: 0.086, blue: 0.043)], startPoint: .top, endPoint: .bottom))
@@ -99,7 +99,7 @@ struct ProOfferView: View {
             Color.black.opacity(0.72).ignoresSafeArea().onTapGesture(perform: onDismiss).accessibilityHidden(true)
             ScrollView {
                 VStack(spacing: 12) {
-                    Text(spoken("عرض لفترة محدودة")).font(.system(size: 13, weight: .heavy)).foregroundColor(Pro.ink)
+                    Text(trSpoken("عرض لفترة محدودة")).font(.system(size: 13, weight: .heavy)).foregroundColor(Pro.ink)
                         .padding(.horizontal, 18).padding(.vertical, 6)
                         .background(LinearGradient(colors: [Pro.goldLight, Pro.gold], startPoint: .top, endPoint: .bottom))
                         .clipShape(RoundedRectangle(cornerRadius: 14)).padding(.top, -6)
@@ -109,15 +109,15 @@ struct ProOfferView: View {
                         Crown(size: 38)
                     }
                     .accessibilityLabel(spokenText("شعار مجلسك"))
-                    Text(spoken("الباقة الاحترافية")).font(.system(size: 28, weight: .heavy)).foregroundColor(Pro.goldLight).accessibilityAddTraits(.isHeader)
-                    Text(spoken("ارفع مستوى مجلسك")).font(.system(size: 14)).foregroundColor(Pro.dim)
+                    Text(trSpoken("الباقة الاحترافية")).font(.system(size: 28, weight: .heavy)).foregroundColor(Pro.goldLight).accessibilityAddTraits(.isHeader)
+                    Text(trSpoken("ارفع مستوى مجلسك")).font(.system(size: 14)).foregroundColor(Pro.dim)
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 3), spacing: 10) {
                         ForEach(tiles, id: \.1) { FeatureTile(icon: $0.0, label: $0.1) }
                     }
                     PriceCard(price: price)
                     GoldButton(title: "اشترك الآن", emerald: true, action: onSubscribe)
                     Button(action: onDismiss) {
-                        Text(spoken("ليس الآن")).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.dim).frame(maxWidth: .infinity, minHeight: 44)
+                        Text(trSpoken("ليس الآن")).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.dim).frame(maxWidth: .infinity, minHeight: 44)
                     }
                 }
                 .padding(.horizontal, 18).padding(.bottom, 16)
@@ -148,12 +148,12 @@ struct ProScreen: View {
             HStack(spacing: 14) {
                 Crown(size: 60)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(spoken("الباقة الاحترافية")).font(.system(size: 26, weight: .heavy)).foregroundColor(Pro.goldLight)
-                    Text(spoken("كل مزايا مجلسك في اشتراك واحد")).font(.system(size: 13)).foregroundColor(Pro.dim)
+                    Text(trSpoken("الباقة الاحترافية")).font(.system(size: 26, weight: .heavy)).foregroundColor(Pro.goldLight)
+                    Text(trSpoken("كل مزايا مجلسك في اشتراك واحد")).font(.system(size: 13)).foregroundColor(Pro.dim)
                 }
             }
             if let p = profile, p.isPro {
-                Text(spoken("✓ مشترك في الباقة حتى \(Date(timeIntervalSince1970: p.proUntil / 1000).formatted(.dateTime.day().month().year()))"))
+                Text(trSpoken("✓ مشترك في الباقة حتى \(Date(timeIntervalSince1970: p.proUntil / 1000).formatted(.dateTime.day().month().year()))"))
                     .font(.system(size: 16, weight: .bold)).foregroundColor(Pro.goldLight)
                     .frame(maxWidth: .infinity, alignment: .leading).padding(14)
                     .background(Pro.deep).clipShape(RoundedRectangle(cornerRadius: 16))
@@ -162,8 +162,8 @@ struct ProScreen: View {
             VStack(alignment: .leading, spacing: 9) {
                 ForEach(Pro.features, id: \.self) { f in
                     HStack(spacing: 9) {
-                        Text(spoken("✓")).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.gold).accessibilityHidden(true)
-                        Text(spoken(f)).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.cream)
+                        Text(trSpoken("✓")).font(.system(size: 18, weight: .heavy)).foregroundColor(Pro.gold).accessibilityHidden(true)
+                        Text(trSpoken(f)).font(.system(size: 15, weight: .bold)).foregroundColor(Pro.cream)
                     }
                 }
             }
@@ -206,7 +206,7 @@ struct GiftScreen: View {
             TopBar("إهداء الباقة", onBack: onBack)
             HStack {
                 Spacer()
-                Text(spoken("🎁")).font(.system(size: 50)).frame(width: 96, height: 96)
+                Text(trSpoken("🎁")).font(.system(size: 50)).frame(width: 96, height: 96)
                     .background(LinearGradient(colors: [Pro.goldLight, Pro.gold, Pro.goldDark], startPoint: .top, endPoint: .bottom))
                     .clipShape(RoundedRectangle(cornerRadius: 28)).shadow(color: .black.opacity(0.5), radius: 12, y: 6)
                     .rotationEffect(.degrees(4)).accessibilityHidden(true)
@@ -229,17 +229,17 @@ struct GiftScreen: View {
                     }
                 }
             }
-            if !error.isEmpty { Text(spoken(error)).foregroundColor(Pro.goldLight) }
+            if !error.isEmpty { Text(trSpoken(error)).foregroundColor(Pro.goldLight) }
             if let who = found {
                 HStack(spacing: 12) {
-                    Text(spoken(String(who.prefix(1)))).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
+                    Text(trSpoken(String(who.prefix(1)))).font(.system(size: 20, weight: .bold)).foregroundColor(.white)
                         .frame(width: 46, height: 46).background(Pro.emerald).clipShape(Circle())
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(spoken(who)).font(.system(size: 17, weight: .bold)).foregroundColor(Pro.cream)
-                        Text(spoken("الباقة الاحترافية · شهر واحد · \(Store.proPriceFallback)")).font(.system(size: 13)).foregroundColor(Pro.dim)
+                        Text(trSpoken(who)).font(.system(size: 17, weight: .bold)).foregroundColor(Pro.cream)
+                        Text(trSpoken("الباقة الاحترافية · شهر واحد · \(Store.proPriceFallback)")).font(.system(size: 13)).foregroundColor(Pro.dim)
                     }
                     Spacer()
-                    Text(spoken("✓")).font(.system(size: 22, weight: .heavy)).foregroundColor(Palette.online)
+                    Text(trSpoken("✓")).font(.system(size: 22, weight: .heavy)).foregroundColor(Palette.online)
                 }
                 .padding(12).background(Pro.night2).clipShape(RoundedRectangle(cornerRadius: 18))
                 .accessibilityElement(children: .combine)

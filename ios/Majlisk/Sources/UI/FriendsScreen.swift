@@ -72,9 +72,9 @@ struct FriendsScreen: View {
                 SmallButton("إضافة صديق") { adding = true }
             }
             Picker(tr("القائمة"), selection: $tab) {
-                Text(spoken("الأصدقاء\(friends.map { " (\($0.count))" } ?? "")")).tag(0)
-                Text(spoken("طلبات الصداقة\(hub.requests.isEmpty ? "" : " \(hub.requests.count)")")).tag(1)
-                Text(spoken("المحظورون")).tag(2)
+                Text(trSpoken("الأصدقاء\(friends.map { " (\($0.count))" } ?? "")")).tag(0)
+                Text(trSpoken("طلبات الصداقة\(hub.requests.isEmpty ? "" : " \(hub.requests.count)")")).tag(1)
+                Text(trSpoken("المحظورون")).tag(2)
             }
             .pickerStyle(.segmented)
             switch tab {
@@ -85,7 +85,7 @@ struct FriendsScreen: View {
                     // الضغط يفتح ملفه، والضغط المطوّل يدخلك طاولته إن كان فيها
                     ItemRow {
                         Avatar(uid: f.uid, name: f.username, size: 40)
-                        Text(spoken("\(f.online ? "🟢" : "⚪") \(f.username)، \(status(f))")).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(trSpoken("\(f.online ? "🟢" : "⚪") \(f.username)، \(status(f))")).frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .contentShape(Rectangle())
                     .onTapGesture { profileOf = f }
@@ -100,7 +100,7 @@ struct FriendsScreen: View {
                 if hub.requests.isEmpty { Note("لا توجد طلبات صداقة.") }
                 ForEach(hub.requests) { r in
                     ItemRow {
-                        Text(spoken(r.username)).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(trSpoken(r.username)).frame(maxWidth: .infinity, alignment: .leading)
                         SmallButton("قبول", label: "قبول طلب \(r.username)") {
                             Task { @MainActor in
                                 do { try await Social.respondFriend(r.uid, accept: true); say("أصبحت أنت و\(r.username) أصدقاء"); refresh() } catch { say(Social.error(error)) }
@@ -118,7 +118,7 @@ struct FriendsScreen: View {
                 else if bans!.isEmpty { Note("لا يوجد محظورون.") }
                 ForEach(bans ?? []) { b in
                     ItemRow {
-                        Text(spoken(b.username)).frame(maxWidth: .infinity, alignment: .leading)
+                        Text(trSpoken(b.username)).frame(maxWidth: .infinity, alignment: .leading)
                         SmallButton("رفع الحظر", label: "رفع الحظر عن \(b.username)") {
                             Task { @MainActor in
                                 do { try await Social.unban(b.uid); bans?.removeAll { $0.uid == b.uid }; Announcer.announce("رُفع الحظر عن \(b.username)") }

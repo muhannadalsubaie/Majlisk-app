@@ -183,7 +183,7 @@ struct UsernameField: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Field(label: "اسم المستخدم", text: $name)
-            if !hint.isEmpty { Text(spoken(hint)).font(.system(size: 15)).foregroundColor(ok ? Palette.online : Palette.textDim) }
+            if !hint.isEmpty { Text(trSpoken(hint)).font(.system(size: 15)).foregroundColor(ok ? Palette.online : Palette.textDim) }
         }
         .task(id: name) {
             ok = false
@@ -227,7 +227,7 @@ struct AuthScreen: View {
             if signup { UsernameField(name: $name) }
             Field(label: "البريد الإلكتروني", text: $email, email: true, ltr: true)
             Field(label: "كلمة المرور", text: $password, secure: true, ltr: true)
-            if !error.isEmpty { Text(spoken(error)).foregroundColor(Palette.goldSoft) }
+            if !error.isEmpty { Text(trSpoken(error)).foregroundColor(Palette.goldSoft) }
             MButton(signup ? "إنشاء الحساب (+30 🪙)" : "دخول", .primary, enabled: !busy) {
                 run {
                     let mail = email.trimmingCharacters(in: .whitespaces)
@@ -273,7 +273,7 @@ struct VerifyEmailScreen: View {
             HStack { Spacer(); Logo(size: 100); Spacer() }
             Title("تحقق من بريدك")
             BodyText("أرسلنا رابط تحقق إلى \(email). افتح الإيميل واضغط الرابط، ثم ارجع للتطبيق. إذا ما لقيته شوف مجلد الرسائل غير المرغوب فيها.")
-            if !error.isEmpty { Text(spoken(error)).foregroundColor(Palette.goldSoft) }
+            if !error.isEmpty { Text(trSpoken(error)).foregroundColor(Palette.goldSoft) }
             MButton("تحققت", .primary, enabled: !busy) {
                 busy = true; error = ""
                 Task { @MainActor in
@@ -318,7 +318,7 @@ struct ChooseUsernameScreen: View {
             HStack { Spacer(); Logo(size: 100); Spacer() }
             Title("اختر اسم المستخدم")
             UsernameField(name: $name)
-            if !error.isEmpty { Text(spoken(error)).foregroundColor(Palette.goldSoft) }
+            if !error.isEmpty { Text(trSpoken(error)).foregroundColor(Palette.goldSoft) }
             MButton("تأكيد", .primary, enabled: !busy) {
                 if let invalid = Usernames.validate(name) { error = Usernames.errors[invalid] ?? ""; Announcer.announce(error); return }
                 busy = true; error = ""

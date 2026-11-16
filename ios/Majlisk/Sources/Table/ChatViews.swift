@@ -6,7 +6,7 @@ struct ChatButton: View {
     let open: () -> Void
     var body: some View {
         Button(action: open) {
-            Text(spoken(conn.unread > 0 ? "💬 الدردشة (\(conn.unread))" : "💬 الدردشة"))
+            Text(trSpoken(conn.unread > 0 ? "💬 الدردشة (\(conn.unread))" : "💬 الدردشة"))
                 .font(.system(size: 13, weight: .bold))
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .frame(maxWidth: 200, minHeight: 40)
@@ -25,7 +25,7 @@ struct ChatToast: View {
     var body: some View {
         Group {
             if let m = shown {
-                Text(spoken("\(m.name): \(m.text)"))
+                Text(trSpoken("\(m.name): \(m.text)"))
                     .font(.system(size: 13))
                     .lineLimit(3)
                     .foregroundColor(Palette.text)
@@ -58,8 +58,8 @@ struct ChatSheet: View {
                 HStack {
                     if m.mine { Spacer(minLength: 40) }
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(spoken(m.mine ? "أنت" : m.name)).font(.system(size: 12)).foregroundColor(Palette.goldSoft)
-                        Text(spoken(m.text)).font(.system(size: 15)).foregroundColor(Palette.text)
+                        Text(trSpoken(m.mine ? "أنت" : m.name)).font(.system(size: 12)).foregroundColor(Palette.goldSoft)
+                        Text(trSpoken(m.text)).font(.system(size: 15)).foregroundColor(Palette.text)
                     }
                     .padding(.horizontal, 10).padding(.vertical, 6)
                     .background(m.mine ? Color(red: 0.23, green: 0.37, blue: 0.18) : Palette.green700)

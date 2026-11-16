@@ -55,7 +55,7 @@ struct MButton: View {
 
     var body: some View {
         Button(action: action) {
-            Text(spoken(title))
+            Text(trSpoken(title))
                 .font(.system(size: 18, weight: .bold))
                 .multilineTextAlignment(.center)
                 .frame(maxWidth: fill ? .infinity : nil, minHeight: 50)
@@ -83,7 +83,7 @@ struct SmallButton: View {
     }
     var body: some View {
         Button(action: action) {
-            Text(spoken(title))
+            Text(trSpoken(title))
                 .font(.system(size: 15, weight: .bold))
                 .frame(minWidth: 64, minHeight: 42)
                 .padding(.horizontal, 12)
@@ -132,7 +132,7 @@ struct Title: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(spoken(text)).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+        Text(trSpoken(text)).font(.system(size: 26, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
     }
 }
 
@@ -140,20 +140,20 @@ struct SectionTitle: View {
     let text: String
     init(_ text: String) { self.text = text }
     var body: some View {
-        Text(spoken(text)).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+        Text(trSpoken(text)).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
     }
 }
 
 struct Note: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View { Text(spoken(text)).font(.system(size: 14)).foregroundColor(Palette.textDim).fixedSize(horizontal: false, vertical: true) }
+    var body: some View { Text(trSpoken(text)).font(.system(size: 14)).foregroundColor(Palette.textDim).fixedSize(horizontal: false, vertical: true) }
 }
 
 struct BodyText: View {
     let text: String
     init(_ text: String) { self.text = text }
-    var body: some View { Text(spoken(text)).font(.system(size: 18)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true) }
+    var body: some View { Text(trSpoken(text)).font(.system(size: 18)).foregroundColor(Palette.text).fixedSize(horizontal: false, vertical: true) }
 }
 
 /// شريط أعلى الشاشة: العنوان، وزر الرجوع
@@ -183,7 +183,7 @@ struct SwitchRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Toggle(isOn: Binding(get: { isOn }, set: onChange)) {
-                Text(spoken(label)).font(.system(size: 18)).foregroundColor(Palette.text)
+                Text(trSpoken(label)).font(.system(size: 18)).foregroundColor(Palette.text)
             }
             .tint(Palette.gold)
         }
@@ -217,7 +217,7 @@ struct Sheet<Content: View>: View {
             Palette.green800.ignoresSafeArea()
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text(spoken(title)).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
+                    Text(trSpoken(title)).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.gold).accessibilityAddTraits(.isHeader)
                     content()
                 }.padding(16)
             }
@@ -239,7 +239,7 @@ struct Field: View {
     var digits: Int? = nil
     var body: some View {
         VStack(alignment: .leading, spacing: 6) {
-            Text(spoken(label)).foregroundColor(Palette.textDim).accessibilityHidden(true)
+            Text(trSpoken(label)).foregroundColor(Palette.textDim).accessibilityHidden(true)
             Group {
                 if secure { SecureField("", text: $text) } else { TextField("", text: $text) }
             }
@@ -283,7 +283,7 @@ extension View {
         alert(title, isPresented: isPresented) {
             Button(confirm, role: destructive ? .destructive : nil, action: action)
             Button(tr("إلغاء"), role: .cancel) {}
-        } message: { Text(spoken(message)) }
+        } message: { Text(trSpoken(message)) }
     }
 }
 

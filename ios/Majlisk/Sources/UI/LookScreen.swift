@@ -12,7 +12,7 @@ private struct Choice<Swatch: View>: View {
         } label: {
             VStack(spacing: 8) {
                 swatch().frame(height: 44)
-                Text(spoken(name)).font(.system(size: 12, weight: .bold)).foregroundColor(selected ? Pro.goldLight : Pro.cream).multilineTextAlignment(.center)
+                Text(trSpoken(name)).font(.system(size: 12, weight: .bold)).foregroundColor(selected ? Pro.goldLight : Pro.cream).multilineTextAlignment(.center)
             }
             .frame(width: 86).padding(.vertical, 10).padding(.horizontal, 4)
             .background(Pro.deep).clipShape(RoundedRectangle(cornerRadius: 16))
@@ -81,7 +81,7 @@ struct LookScreen: View {
                         let bg: Color = i == 2 ? Color(red: 1, green: 0.97, blue: 0.88) : i == 3 ? Color(red: 0.12, green: 0.16, blue: 0.21) : .white
                         let ink: Color = i == 2 ? Color(red: 0.16, green: 0.12, blue: 0.02) : i == 3 ? Color(red: 0.95, green: 0.87, blue: 0.63) : Color(white: 0.07)
                         Choice(name: Look.faces[i], selected: look.cardFace == i, pick: { look.cardFace = i }) {
-                            Text(spoken(i == 1 ? "A" : "♠")).font(.system(size: i == 1 ? 20 : 18, weight: .heavy)).foregroundColor(ink)
+                            Text(trSpoken(i == 1 ? "A" : "♠")).font(.system(size: i == 1 ? 20 : 18, weight: .heavy)).foregroundColor(ink)
                                 .frame(width: 30, height: 42).background(bg).clipShape(RoundedRectangle(cornerRadius: 5))
                                 .overlay(RoundedRectangle(cornerRadius: 5).stroke(i >= 2 ? Color(red: 0.85, green: 0.71, blue: 0.35) : Color(white: 0.8), lineWidth: 1))
                         }
