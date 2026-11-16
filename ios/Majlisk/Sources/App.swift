@@ -74,7 +74,8 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     /// أول ظهور فعلي للتطبيق قدام المستخدم: نغمة الفتح مرة وحدة
     private static var openPlayed = false
     func sceneDidBecomeActive(_ scene: UIScene) {
-        guard !Self.openPlayed, UIApplication.shared.applicationState == .active else { return }
+        // (ما نشيك applicationState: وقت هالنداء أول مرة يكون لسا inactive فكانت النغمة ما تنعزف أبداً)
+        guard !Self.openPlayed else { return }
         Self.openPlayed = true
         Sounds.shared.appOpen()
     }
