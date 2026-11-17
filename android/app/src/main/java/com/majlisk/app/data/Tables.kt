@@ -24,7 +24,7 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 
-val GAME_NAMES = mapOf("baloot" to "بلوت", "domino" to "دومينو", "jackaroo" to "جاكارو", "ludo" to "لودو")
+val GAME_NAMES = mapOf("baloot" to "بلوت", "domino" to "دومينو", "jackaroo" to "جاكارو", "ludo" to "لودو", "mallak" to "ملّاك")
 
 /** اسم اللعبة كما في الخادم (shared/games.ts → gameTitle) */
 fun gameTitle(kind: String, variant: String?): String {

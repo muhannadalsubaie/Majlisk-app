@@ -101,7 +101,10 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             }
         }
     }
-    listOf("الفريق الأول" to listOf(0, 2), "الفريق الثاني" to listOf(1, 3)).forEach { (title, seats) ->
+    // ملّاك: 6 مقاعد بلا فرق (كل واحد لنفسه)
+    val groups = if (v.kind == "mallak") listOf("اللاعبون (من 2 إلى 6)" to (0 until v.seats.size).toList())
+        else listOf("الفريق الأول" to listOf(0, 2), "الفريق الثاني" to listOf(1, 3))
+    groups.forEach { (title, seats) ->
         Text(title, color = Palette.goldSoft)
         seats.forEach { i ->
             ItemRow {
