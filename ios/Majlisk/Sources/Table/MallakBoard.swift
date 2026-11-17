@@ -26,8 +26,8 @@ private struct Cam {
         f = (V3(x: 0, y: 0, z: 0) - eye).norm
         r = f.cross(V3(x: 0, y: 1, z: 0)).norm
         u = r.cross(f)
-        focal = min(size.width, size.height) * 1.32
-        c = CGPoint(x: size.width / 2, y: size.height / 2 + size.height * 0.03)
+        focal = min(size.width, size.height) * 0.98
+        c = CGPoint(x: size.width / 2, y: size.height * 0.4)
     }
     func depth(_ p: V3) -> CGFloat { (p - eye).dot(f) }
     func scale(_ p: V3) -> CGFloat { focal / max(0.5, depth(p)) }
@@ -76,11 +76,19 @@ private func ownerStrip(_ c: Cell) -> Cell {
 /// مكان الحجر في الخانة (بعيد عن شريط اللون)، وكل لاعب له مكان صغير
 private func pawnSpot(_ i: Int, _ slot: Int) -> (CGFloat, CGFloat) {
     let c = cell(i)
-    let (bu, bv): (CGFloat, CGFloat) = c.side == 0 ? (0, 0.25) : c.side == 1 ? (-0.25, 0) : c.side == 2 ? (0, -0.25) : c.side == 3 ? (0.25, 0) : (0, 0)
+    let (bu, bv): (CGFloat, CGFloat) = c.side == 0 ? (0, 0.25) : c.side == 1 ? (-0.25, 0) : c.side == 2 ? (0, -0.25) : c.side == 3 ? (0.25, 0) : (0, 0.4)
     let span: CGFloat = c.side < 0 ? 0.42 : 0.22
     let du = CGFloat(slot % 3 - 1) * span
     let dv = (CGFloat(slot / 3) - 0.5) * span * 1.4
     return c.side == 1 || c.side == 3 ? (c.cu + bu + dv, c.cv + bv + du) : (c.cu + bu + du, c.cv + bv + dv)
+}
+
+/// مكان اسم الخانة (k=0) وسعرها (k=1): بعيد عن شريط اللون، والسعر تحت الاسم
+private func textSpot(_ i: Int, _ k: Int) -> (CGFloat, CGFloat) {
+    let c = cell(i)
+    let (ou, ov): (CGFloat, CGFloat) = c.side == 0 ? (0, 0.22) : c.side == 1 ? (-0.22, 0) : c.side == 2 ? (0, -0.22) : (0.22, 0)
+    let u = c.cu + ou, v = c.cv + ov
+    return c.side == 1 || c.side == 3 ? (u, v + (k == 1 ? 0.24 : -0.14)) : (u, v + (k == 1 ? 0.38 : -0.2))
 }
 
 private func polygon(_ cam: Cam, _ pts: [V3]) -> Path {
@@ -201,11 +209,22 @@ private func drawLabel(_ ctx: GraphicsContext, _ cam: Cam, u: CGFloat, v: CGFloa
     let p = bp(u, v, 0.02)
     var px = cam.scale(p) * worldSize
     guard px >= 7 else { return }
-    // تقدير عرض النص (عربي): نصغّره لو أعرض من الخانة
-    let est = CGFloat(text.count) * px * 0.52
-    if est > maxWidth { px *= maxWidth / est; if px < 6 { return } }
-    let t = ctx.resolve(Text(text).font(.system(size: px, weight: bold ? .bold : .medium)).foregroundColor(color))
-    ctx.draw(t, at: cam.project(p))
+    // تقدير عرض النص (عربي): أعرض من الخانة = سطرين (عند المسافة اللي تعطي أقصر سطر)، وإلا نصغّره
+    let est = { (s: String) in CGFloat(s.count) * px * 0.52 }
+    var lines = [text]
+    var w = est(text)
+    if w > maxWidth && text.contains(" ") {
+        let words = text.split(separator: " ").map(String.init)
+        let best = (1..<words.count).map { k in [words[..<k].joined(separator: " "), words[k...].joined(separator: " ")] }
+            .min { max(est($0[0]), est($0[1])) < max(est($1[0]), est($1[1])) }!
+        lines = best; w = max(est(best[0]), est(best[1]))
+    }
+    if w > maxWidth { px *= maxWidth / w; if px < 6 { return } }
+    let s = cam.project(p)
+    for (k, line) in lines.enumerated() {
+        let t = ctx.resolve(Text(line).font(.system(size: px, weight: bold ? .bold : .medium)).foregroundColor(color))
+        ctx.draw(t, at: CGPoint(x: s.x, y: s.y + (CGFloat(k) - CGFloat(lines.count - 1) / 2) * px * 1.05))
+    }
 }
 
 private func drawMallak(_ ctx: GraphicsContext, size: CGSize, m: MallakView, yaw: CGFloat, pitch: CGFloat, hops: [Int: MallakHop], now: Double, spin: CGFloat) {
@@ -225,7 +244,7 @@ private func drawMallak(_ ctx: GraphicsContext, size: CGSize, m: MallakView, yaw
     ctx.fill(quadPath(cam, Cell(u0: -6.7, u1: 6.7, v0: -6.7, v1: 6.7, side: -1), 0), with: .color(Color(red: 0.42, green: 0.29, blue: 0.17)))
     ctx.fill(quadPath(cam, Cell(u0: -6.5, u1: 6.5, v0: -6.5, v1: 6.5, side: -1), 0.001), with: .color(Color(red: 0.91, green: 0.95, blue: 0.89)))
     ctx.fill(quadPath(cam, Cell(u0: -4.5, u1: 4.5, v0: -4.5, v1: 4.5, side: -1), 0.002), with: .color(Color(red: 0.12, green: 0.37, blue: 0.26)))
-    drawLabel(ctx, cam, u: 0, v: -1.6, text: "ملّاك", worldSize: 1.1, color: Color(red: 0.96, green: 0.84, blue: 0.48), bold: true)
+    drawLabel(ctx, cam, u: 0, v: -1.6, text: tr("ملّاك"), worldSize: 1.1, color: Color(red: 0.96, green: 0.84, blue: 0.48), bold: true)
     for i in 0..<40 {
         let c = cell(i)
         let sq = MALLAK_BOARD[i]
@@ -235,12 +254,12 @@ private func drawMallak(_ ctx: GraphicsContext, size: CGSize, m: MallakView, yaw
         if let o { ctx.fill(quadPath(cam, ownerStrip(c), 0.004), with: .color(MALLAK_PLAYER_COLORS[o % 6])) }
         if i < m.mortgaged.count && m.mortgaged[i] { ctx.fill(quadPath(cam, c, 0.005), with: .color(Color.gray.opacity(0.55))) }
         ctx.stroke(quadPath(cam, c, 0.006), with: .color(Color(red: 0.12, green: 0.19, blue: 0.12).opacity(0.33)), lineWidth: 1)
-        let (lu, lv): (CGFloat, CGFloat) = c.side < 0 ? (c.cu, c.cv - 0.35) : pawnSpot(i, 4)
-        let width = cam.scale(bp(c.cu, c.cv)) * (c.side < 0 ? 1.9 : 0.95)
+        let (lu, lv): (CGFloat, CGFloat) = c.side < 0 ? (c.cu, c.cv - 0.45) : textSpot(i, 0)
+        let width = cam.scale(bp(c.cu, c.cv)) * (c.side < 0 ? 1.9 : c.side == 1 || c.side == 3 ? 1.45 : 0.92)
         let icon: String = ["chance": "؟ ", "chest": "📦 ", "station": "✈ ", "utility": "⚡ ", "tax": "💰 ", "jail": "🔒 ", "goToJail": "👮 ", "rest": "☕ ", "go": "➜ "][sq.kind] ?? ""
-        drawLabel(ctx, cam, u: lu, v: lv, text: icon + sq.name, worldSize: c.side < 0 ? 0.3 : 0.2, color: Color(red: 0.11, green: 0.17, blue: 0.13), bold: c.side < 0, maxWidth: width)
+        drawLabel(ctx, cam, u: lu, v: lv, text: icon + tr(sq.name), worldSize: c.side < 0 ? 0.3 : 0.2, color: Color(red: 0.11, green: 0.17, blue: 0.13), bold: c.side < 0, maxWidth: width)
         if sq.price > 0 && o == nil {
-            let (pu, pv): (CGFloat, CGFloat) = c.side < 0 ? (c.cu, c.cv + 0.3) : pawnSpot(i, 1)
+            let (pu, pv): (CGFloat, CGFloat) = c.side < 0 ? (c.cu, c.cv + 0.3) : textSpot(i, 1)
             drawLabel(ctx, cam, u: pu, v: pv, text: "\(sq.price)", worldSize: 0.17, color: Color(red: 0.33, green: 0.38, blue: 0.35), maxWidth: width)
         }
     }

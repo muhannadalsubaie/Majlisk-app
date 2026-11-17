@@ -5202,5 +5202,989 @@
  "على الشاشة مباشرة": {
   "en": "On screen",
   "fr": "À l'écran"
+ },
+ "ملّاك": {
+  "en": "Mallak",
+  "fr": "Mallak"
+ },
+ "الانطلاق": {
+  "en": "Go",
+  "fr": "Départ"
+ },
+ "الهفوف": {
+  "en": "Al-Hofuf",
+  "fr": "Al-Hofuf"
+ },
+ "صندوق المجلس": {
+  "en": "Majlis Chest",
+  "fr": "Caisse du Majlis"
+ },
+ "المبرز": {
+  "en": "Al-Mubarraz",
+  "fr": "Al-Mubarraz"
+ },
+ "الزكاة": {
+  "en": "Zakat",
+  "fr": "Zakat"
+ },
+ "مطار الرياض": {
+  "en": "Riyadh Airport",
+  "fr": "Aéroport de Riyad"
+ },
+ "بريدة": {
+  "en": "Buraydah",
+  "fr": "Buraydah"
+ },
+ "فرصة": {
+  "en": "Chance",
+  "fr": "Chance"
+ },
+ "عنيزة": {
+  "en": "Unaizah",
+  "fr": "Unaizah"
+ },
+ "الرس": {
+  "en": "Ar Rass",
+  "fr": "Ar Rass"
+ },
+ "السجن": {
+  "en": "Jail",
+  "fr": "Prison"
+ },
+ "أبها": {
+  "en": "Abha",
+  "fr": "Abha"
+ },
+ "الكهرباء": {
+  "en": "Electricity",
+  "fr": "Électricité"
+ },
+ "خميس مشيط": {
+  "en": "Khamis Mushait",
+  "fr": "Khamis Mushait"
+ },
+ "النماص": {
+  "en": "Al-Namas",
+  "fr": "Al-Namas"
+ },
+ "قطار الشمال": {
+  "en": "North Train",
+  "fr": "Train du Nord"
+ },
+ "الشفا": {
+  "en": "Al-Shafa",
+  "fr": "Al-Shafa"
+ },
+ "الهدا": {
+  "en": "Al-Hada",
+  "fr": "Al-Hada"
+ },
+ "الحوية": {
+  "en": "Al-Hawiyah",
+  "fr": "Al-Hawiyah"
+ },
+ "الاستراحة": {
+  "en": "Rest Area",
+  "fr": "Aire de repos"
+ },
+ "الدمام": {
+  "en": "Dammam",
+  "fr": "Dammam"
+ },
+ "الخبر": {
+  "en": "Khobar",
+  "fr": "Khobar"
+ },
+ "الظهران": {
+  "en": "Dhahran",
+  "fr": "Dhahran"
+ },
+ "مطار الدمام": {
+  "en": "Dammam Airport",
+  "fr": "Aéroport de Dammam"
+ },
+ "البلد": {
+  "en": "Al-Balad",
+  "fr": "Al-Balad"
+ },
+ "الحمراء": {
+  "en": "Al-Hamra",
+  "fr": "Al-Hamra"
+ },
+ "المياه": {
+  "en": "Water",
+  "fr": "Eau"
+ },
+ "أبحر": {
+  "en": "Obhur",
+  "fr": "Obhur"
+ },
+ "روح للسجن": {
+  "en": "Go to Jail",
+  "fr": "Allez en prison"
+ },
+ "تبوك": {
+  "en": "Tabuk",
+  "fr": "Tabuk"
+ },
+ "العلا": {
+  "en": "AlUla",
+  "fr": "AlUla"
+ },
+ "أملج": {
+  "en": "Umluj",
+  "fr": "Umluj"
+ },
+ "مطار جدة": {
+  "en": "Jeddah Airport",
+  "fr": "Aéroport de Djeddah"
+ },
+ "الدرعية": {
+  "en": "Diriyah",
+  "fr": "Diriyah"
+ },
+ "رسوم البلدية": {
+  "en": "Municipality Fees",
+  "fr": "Taxe municipale"
+ },
+ "طريق الملك فهد": {
+  "en": "King Fahd Road",
+  "fr": "Route du Roi Fahd"
+ },
+ "الأحساء": {
+  "en": "Al-Ahsa",
+  "fr": "Al-Ahsa"
+ },
+ "القصيم": {
+  "en": "Qassim",
+  "fr": "Qassim"
+ },
+ "عسير": {
+  "en": "Asir",
+  "fr": "Asir"
+ },
+ "الطائف": {
+  "en": "Taif",
+  "fr": "Taëf"
+ },
+ "الشرقية": {
+  "en": "Eastern Province",
+  "fr": "Province de l'Est"
+ },
+ "جدة": {
+  "en": "Jeddah",
+  "fr": "Djeddah"
+ },
+ "الشمال": {
+  "en": "The North",
+  "fr": "Le Nord"
+ },
+ "الرياض": {
+  "en": "Riyadh",
+  "fr": "Riyad"
+ },
+ "البنفسجي": {
+  "en": "purple",
+  "fr": "violet"
+ },
+ "البرتقالي": {
+  "en": "orange",
+  "fr": "orange"
+ },
+ "عقاراتي": {
+  "en": "My properties",
+  "fr": "Mes propriétés"
+ },
+ "تفاوض": {
+  "en": "Trade",
+  "fr": "Négocier"
+ },
+ "اللوحة": {
+  "en": "Board",
+  "fr": "Plateau"
+ },
+ "قائمة خانات اللوحة": {
+  "en": "Board squares list",
+  "fr": "Liste des cases"
+ },
+ "خانات اللوحة": {
+  "en": "Board squares",
+  "fr": "Cases du plateau"
+ },
+ "سجل اللعبة": {
+  "en": "Game log",
+  "fr": "Historique"
+ },
+ "ما تملك عقارات": {
+  "en": "You own no properties",
+  "fr": "Vous n'avez aucune propriété"
+ },
+ "ابنِ برج": {
+  "en": "Build a tower",
+  "fr": "Construire une tour"
+ },
+ "ابنِ بيت": {
+  "en": "Build a house",
+  "fr": "Construire une maison"
+ },
+ "بِع بيت": {
+  "en": "Sell a house",
+  "fr": "Vendre une maison"
+ },
+ "ارهن": {
+  "en": "Mortgage",
+  "fr": "Hypothéquer"
+ },
+ "فك الرهن": {
+  "en": "Pay off mortgage",
+  "fr": "Lever l'hypothèque"
+ },
+ "مع مين؟": {
+  "en": "With whom?",
+  "fr": "Avec qui ?"
+ },
+ "تعطيه": {
+  "en": "You give",
+  "fr": "Vous donnez"
+ },
+ "تبي منه": {
+  "en": "You want",
+  "fr": "Vous voulez"
+ },
+ "فلوس تعطيه": {
+  "en": "Money you give",
+  "fr": "Argent donné"
+ },
+ "فلوس تبيها منه": {
+  "en": "Money you want",
+  "fr": "Argent demandé"
+ },
+ "أرسل العرض": {
+  "en": "Send offer",
+  "fr": "Envoyer l'offre"
+ },
+ "مفلس": {
+  "en": "bankrupt",
+  "fr": "en faillite"
+ },
+ "اللاعبون (من 2 إلى 6)": {
+  "en": "Players (2 to 6)",
+  "fr": "Joueurs (2 à 6)"
+ },
+ "(مرهون)": {
+  "en": "(mortgaged)",
+  "fr": "(hypothéqué)"
+ },
+ "مرهون": {
+  "en": "mortgaged",
+  "fr": "hypothéqué"
+ },
+ "اتركه للمزاد": {
+  "en": "Leave it to auction",
+  "fr": "Mettre aux enchères"
+ },
+ "انسحب": {
+  "en": "Pass",
+  "fr": "Passer"
+ },
+ "اقبل العرض": {
+  "en": "Accept offer",
+  "fr": "Accepter l'offre"
+ },
+ "ارفض": {
+  "en": "Reject",
+  "fr": "Refuser"
+ },
+ "بِع وارهن تلقائياً وادفع": {
+  "en": "Sell and mortgage automatically, then pay",
+  "fr": "Vendre et hypothéquer automatiquement, puis payer"
+ },
+ "أعلن الإفلاس": {
+  "en": "Declare bankruptcy",
+  "fr": "Déclarer faillite"
+ },
+ "أنهِ الدور": {
+  "en": "End turn",
+  "fr": "Finir le tour"
+ },
+ "استخدم بطاقة الخروج": {
+  "en": "Use the get-out card",
+  "fr": "Utiliser la carte de sortie"
+ },
+ "تقبل العرض؟": {
+  "en": "Accept the offer?",
+  "fr": "Accepter l'offre ?"
+ },
+ "ما فيه شي بعد": {
+  "en": "Nothing yet",
+  "fr": "Rien pour l'instant"
+ },
+ "اسحب بطاقة": {
+  "en": "draw a card",
+  "fr": "tirez une carte"
+ },
+ "تاخذ 200 كل ما تمر": {
+  "en": "collect 200 every time you pass",
+  "fr": "recevez 200 à chaque passage"
+ },
+ "ملكك": {
+  "en": "yours",
+  "fr": "à vous"
+ },
+ "بيت": {
+  "en": "a house",
+  "fr": "une maison"
+ },
+ "بيتين": {
+  "en": "two houses",
+  "fr": "deux maisons"
+ },
+ "برج": {
+  "en": "a tower",
+  "fr": "une tour"
+ },
+ "ما يملك شي": {
+  "en": "owns nothing",
+  "fr": "ne possède rien"
+ },
+ "الإيجار مجموع النرد ضرب 4": {
+  "en": "rent is the dice total times 4",
+  "fr": "loyer = total des dés × 4"
+ },
+ "أو 10 لو يملك الاثنتين": {
+  "en": "or 10 if they own both",
+  "fr": "ou × 10 s'il possède les deux"
+ },
+ "ثلاث دبلات": {
+  "en": "three doubles",
+  "fr": "trois doubles"
+ },
+ "دبل: ارمِ مرة ثانية": {
+  "en": "Doubles: roll again",
+  "fr": "Double : relancez"
+ },
+ "رحت السجن": {
+  "en": "You went to jail",
+  "fr": "Vous allez en prison"
+ },
+ "طلعت من السجن": {
+  "en": "You got out of jail",
+  "fr": "Vous sortez de prison"
+ },
+ "طلعت من السجن بالدبل": {
+  "en": "You got out of jail with doubles",
+  "fr": "Vous sortez de prison grâce au double"
+ },
+ "طلعت من السجن بدفع 50": {
+  "en": "You paid 50 to get out of jail",
+  "fr": "Vous payez 50 pour sortir de prison"
+ },
+ "طلعت من السجن ببطاقة الخروج": {
+  "en": "You used the card to get out of jail",
+  "fr": "Vous sortez de prison avec la carte"
+ },
+ "انسحبت من المزاد": {
+  "en": "You left the auction",
+  "fr": "Vous quittez l'enchère"
+ },
+ "قبلت العرض": {
+  "en": "You accepted the offer",
+  "fr": "Vous acceptez l'offre"
+ },
+ "رفضت العرض": {
+  "en": "You rejected the offer",
+  "fr": "Vous refusez l'offre"
+ },
+ "أفلست": {
+  "en": "You went bankrupt",
+  "fr": "Vous faites faillite"
+ },
+ "وأملاكه صارت لك": {
+  "en": "and their properties are now yours",
+  "fr": "et ses propriétés sont à vous"
+ },
+ "فزت! أنت آخر واحد بقى": {
+  "en": "You won! You're the last one standing",
+  "fr": "Vous avez gagné ! Vous êtes le dernier en jeu"
+ },
+ "لا شي": {
+  "en": "nothing",
+  "fr": "rien"
+ },
+ "بطاقة خروج": {
+  "en": "a get-out card",
+  "fr": "une carte de sortie"
+ },
+ "أنت في السجن": {
+  "en": "You're in jail",
+  "fr": "Vous êtes en prison"
+ },
+ "أو استخدم بطاقة الخروج": {
+  "en": "or use the get-out card",
+  "fr": "ou utilisez la carte de sortie"
+ },
+ "فلوسك ما تكفي (ارهن أو اتركه للمزاد)": {
+  "en": "not enough money (mortgage or leave it to auction)",
+  "fr": "pas assez d'argent (hypothéquez ou mettez aux enchères)"
+ },
+ "ما أحد زايد": {
+  "en": "no bids yet",
+  "fr": "aucune enchère"
+ },
+ "ما أحد زايد بعد": {
+  "en": "no bids yet",
+  "fr": "aucune enchère"
+ },
+ "تقدّم إلى الانطلاق وخذ 200": {
+  "en": "Advance to Go and collect 200",
+  "fr": "Avancez jusqu'au Départ et recevez 200"
+ },
+ "روح الدرعية": {
+  "en": "Go to Diriyah",
+  "fr": "Allez à Diriyah"
+ },
+ "روح أبها": {
+  "en": "Go to Abha",
+  "fr": "Allez à Abha"
+ },
+ "روح الدمام": {
+  "en": "Go to Dammam",
+  "fr": "Allez à Dammam"
+ },
+ "روح قطار الشمال": {
+  "en": "Go to the North Train",
+  "fr": "Allez au Train du Nord"
+ },
+ "روح أقرب محطة سفر": {
+  "en": "Go to the nearest travel station",
+  "fr": "Allez à la gare la plus proche"
+ },
+ "ارجع 3 خانات": {
+  "en": "Go back 3 squares",
+  "fr": "Reculez de 3 cases"
+ },
+ "روح السجن مباشرة": {
+  "en": "Go directly to jail",
+  "fr": "Allez directement en prison"
+ },
+ "بطاقة خروج من السجن، احتفظ فيها": {
+  "en": "Get out of jail card, keep it",
+  "fr": "Carte de sortie de prison, gardez-la"
+ },
+ "مخالفة سرعة: ادفع 15": {
+  "en": "Speeding ticket: pay 15",
+  "fr": "Excès de vitesse : payez 15"
+ },
+ "عيدية من الأهل: خذ 50": {
+  "en": "Eid gift from family: collect 50",
+  "fr": "Cadeau de l'Aïd : recevez 50"
+ },
+ "عائد استثمار: خذ 150": {
+  "en": "Investment return: collect 150",
+  "fr": "Retour sur investissement : recevez 150"
+ },
+ "تبرعت لجمعية خيرية: ادفع 50": {
+  "en": "You donated to charity: pay 50",
+  "fr": "Don à une association : payez 50"
+ },
+ "صيانة عقاراتك: ادفع 25 عن كل بيت و100 عن كل برج": {
+  "en": "Property repairs: pay 25 per house and 100 per tower",
+  "fr": "Entretien : payez 25 par maison et 100 par tour"
+ },
+ "اخترت شيخ الحارة: ادفع لكل لاعب 50": {
+  "en": "You were chosen neighborhood chief: pay each player 50",
+  "fr": "Élu chef du quartier : payez 50 à chaque joueur"
+ },
+ "ربحت مسابقة أفضل كبسة: خذ 100": {
+  "en": "You won the best kabsa contest: collect 100",
+  "fr": "Vous gagnez le concours de kabsa : recevez 100"
+ },
+ "خطأ في البنك لصالحك: خذ 200": {
+  "en": "Bank error in your favor: collect 200",
+  "fr": "Erreur de la banque en votre faveur : recevez 200"
+ },
+ "فاتورة مستشفى: ادفع 100": {
+  "en": "Hospital bill: pay 100",
+  "fr": "Facture d'hôpital : payez 100"
+ },
+ "بعت سيارتك القديمة: خذ 50": {
+  "en": "You sold your old car: collect 50",
+  "fr": "Vous vendez votre vieille voiture : recevez 50"
+ },
+ "عزيمة في استراحتك: كل لاعب يعطيك 20": {
+  "en": "Dinner at your rest house: each player gives you 20",
+  "fr": "Dîner chez vous : chaque joueur vous donne 20"
+ },
+ "مكافأة نهاية خدمة: خذ 100": {
+  "en": "End-of-service bonus: collect 100",
+  "fr": "Prime de fin de service : recevez 100"
+ },
+ "رسوم مدارس: ادفع 50": {
+  "en": "School fees: pay 50",
+  "fr": "Frais de scolarité : payez 50"
+ },
+ "تأمين السيارة: ادفع 50": {
+  "en": "Car insurance: pay 50",
+  "fr": "Assurance auto : payez 50"
+ },
+ "ورث من قريب: خذ 100": {
+  "en": "Inheritance from a relative: collect 100",
+  "fr": "Héritage d'un proche : recevez 100"
+ },
+ "إصلاح شارع بيتك: ادفع 40 عن كل بيت و115 عن كل برج": {
+  "en": "Street repairs: pay 40 per house and 115 per tower",
+  "fr": "Réparation de la rue : payez 40 par maison et 115 par tour"
+ },
+ "عمولة سمسرة: خذ 25": {
+  "en": "Brokerage fee: collect 25",
+  "fr": "Commission : recevez 25"
+ },
+ "المركز الثاني في سباق الهجن: خذ 10": {
+  "en": "Second place in the camel race: collect 10",
+  "fr": "Deuxième à la course de chameaux : recevez 10"
+ },
+ "أرباح أسهم: خذ 50": {
+  "en": "Stock dividends: collect 50",
+  "fr": "Dividendes : recevez 50"
+ },
+ "هدية تخرّج: خذ 100": {
+  "en": "Graduation gift: collect 100",
+  "fr": "Cadeau de diplôme : recevez 100"
+ },
+ "{0} ريال": {
+  "en": "{0} SAR",
+  "fr": "{0} SAR"
+ },
+ "{0} ريال 🔒": {
+  "en": "{0} SAR 🔒",
+  "fr": "{0} SAR 🔒"
+ },
+ "معك {0} ريال": {
+  "en": "You have {0} SAR",
+  "fr": "Vous avez {0} SAR"
+ },
+ "ادفع {0} واطلع": {
+  "en": "Pay {0} and get out",
+  "fr": "Payez {0} et sortez"
+ },
+ "اشترِ بـ {0}": {
+  "en": "Buy for {0}",
+  "fr": "Acheter pour {0}"
+ },
+ "زايد {0}": {
+  "en": "Bid {0}",
+  "fr": "Enchérir {0}"
+ },
+ "ابنِ في {0}": {
+  "en": "Build on {0}",
+  "fr": "Construire sur {0}"
+ },
+ "بِع بيت في {0}": {
+  "en": "Sell a house on {0}",
+  "fr": "Vendre une maison sur {0}"
+ },
+ "ارهن {0}": {
+  "en": "Mortgage {0}",
+  "fr": "Hypothéquer {0}"
+ },
+ "فك رهن {0}": {
+  "en": "Pay off mortgage on {0}",
+  "fr": "Lever l'hypothèque sur {0}"
+ },
+ "مزاد، دور {0}": {
+  "en": "Auction, {0}'s turn",
+  "fr": "Enchère, au tour de {0}"
+ },
+ "{0} يفكر في العرض": {
+  "en": "{0} is considering the offer",
+  "fr": "{0} étudie l'offre"
+ },
+ "بدأت ملّاك بين {0} لاعبين، كل واحد معه 1500 ريال": {
+  "en": "Mallak started with {0} players, each with 1500 SAR",
+  "fr": "Mallak commence avec {0} joueurs, chacun avec 1500 SAR"
+ },
+ "{0}. {1}": {
+  "en": "{0}. {1}",
+  "fr": "{0}. {1}"
+ },
+ "ادفع {0}": {
+  "en": "pay {0}",
+  "fr": "payez {0}"
+ },
+ "للبيع بـ {0}": {
+  "en": "for sale at {0}",
+  "fr": "à vendre pour {0}"
+ },
+ "ملك {0}": {
+  "en": "owned by {0}",
+  "fr": "appartient à {0}"
+ },
+ "{0} بيوت": {
+  "en": "{0} houses",
+  "fr": "{0} maisons"
+ },
+ "الإيجار {0}": {
+  "en": "rent {0}",
+  "fr": "loyer {0}"
+ },
+ "وبالبيوت لين {0}": {
+  "en": "up to {0} with houses",
+  "fr": "jusqu'à {0} avec maisons"
+ },
+ "البيت بـ {0}": {
+  "en": "house costs {0}",
+  "fr": "maison à {0}"
+ },
+ "رهنه بـ {0}": {
+  "en": "mortgage value {0}",
+  "fr": "hypothèque {0}"
+ },
+ "هنا: {0}": {
+  "en": "here: {0}",
+  "fr": "ici : {0}"
+ },
+ "{0}: معه {1} ريال": {
+  "en": "{0}: has {1} SAR",
+  "fr": "{0} : a {1} SAR"
+ },
+ "أنت: معه {0} ريال": {
+  "en": "You: have {0} SAR",
+  "fr": "Vous : avez {0} SAR"
+ },
+ "على {0}": {
+  "en": "on {0}",
+  "fr": "sur {0}"
+ },
+ "في السجن": {
+  "en": "in jail",
+  "fr": "en prison"
+ },
+ "يملك {0}": {
+  "en": "owns {0}",
+  "fr": "possède {0}"
+ },
+ "بطاقة خروج من السجن {0}": {
+  "en": "get-out-of-jail cards {0}",
+  "fr": "cartes de sortie {0}"
+ },
+ "ثروته {0}": {
+  "en": "worth {0}",
+  "fr": "fortune {0}"
+ },
+ "{0}: مفلس": {
+  "en": "{0}: bankrupt",
+  "fr": "{0} : en faillite"
+ },
+ "رميت {0} و{1}": {
+  "en": "You rolled {0} and {1}",
+  "fr": "Vous faites {0} et {1}"
+ },
+ "{0} رمى {1} و{2}": {
+  "en": "{0} rolled {1} and {2}",
+  "fr": "{0} fait {1} et {2}"
+ },
+ "وصلت {0}": {
+  "en": "You reached {0}",
+  "fr": "Vous arrivez à {0}"
+ },
+ "{0} وصل {1}": {
+  "en": "{0} reached {1}",
+  "fr": "{0} arrive à {1}"
+ },
+ "{0} يرمي مرة ثانية": {
+  "en": "{0} rolls again",
+  "fr": "{0} relance"
+ },
+ "{0} راح السجن": {
+  "en": "{0} went to jail",
+  "fr": "{0} va en prison"
+ },
+ "{0} طلع من السجن": {
+  "en": "{0} got out of jail",
+  "fr": "{0} sort de prison"
+ },
+ "{0} طلع من السجن بالدبل": {
+  "en": "{0} got out of jail with doubles",
+  "fr": "{0} sort de prison grâce au double"
+ },
+ "{0} طلع من السجن بدفع 50": {
+  "en": "{0} paid 50 to get out of jail",
+  "fr": "{0} paie 50 pour sortir de prison"
+ },
+ "{0} طلع من السجن ببطاقة الخروج": {
+  "en": "{0} used the card to get out of jail",
+  "fr": "{0} sort de prison avec la carte"
+ },
+ "دفع 50 بعد المحاولة الثالثة": {
+  "en": "paid 50 after the third try",
+  "fr": "a payé 50 après le troisième essai"
+ },
+ "ما جاك دبل": {
+  "en": "No doubles",
+  "fr": "Pas de double"
+ },
+ "باقي لك {0} محاولة": {
+  "en": "{0} tries left",
+  "fr": "{0} essais restants"
+ },
+ "{0} باقي في السجن": {
+  "en": "{0} stays in jail",
+  "fr": "{0} reste en prison"
+ },
+ "فرصة: {0}": {
+  "en": "Chance: {0}",
+  "fr": "Chance : {0}"
+ },
+ "صندوق المجلس: {0}": {
+  "en": "Majlis Chest: {0}",
+  "fr": "Caisse du Majlis : {0}"
+ },
+ "دفعت {0}": {
+  "en": "You paid {0}",
+  "fr": "Vous payez {0}"
+ },
+ "{0} دفع {1}": {
+  "en": "{0} paid {1}",
+  "fr": "{0} paie {1}"
+ },
+ "دفعت {0} إيجار لـ {1}": {
+  "en": "You paid {0} rent to {1}",
+  "fr": "Vous payez {0} de loyer à {1}"
+ },
+ "{0} دفع {1} إيجار لك": {
+  "en": "{0} paid you {1} rent",
+  "fr": "{0} vous paie {1} de loyer"
+ },
+ "{0} دفع {1} إيجار لـ {2}": {
+  "en": "{0} paid {1} rent to {2}",
+  "fr": "{0} paie {1} de loyer à {2}"
+ },
+ "دفعت {0} لـ {1}": {
+  "en": "You paid {0} to {1}",
+  "fr": "Vous payez {0} à {1}"
+ },
+ "{0} دفع {1} لك": {
+  "en": "{0} paid you {1}",
+  "fr": "{0} vous paie {1}"
+ },
+ "{0} دفع {1} لـ {2}": {
+  "en": "{0} paid {1} to {2}",
+  "fr": "{0} paie {1} à {2}"
+ },
+ "دفعت {0} غرامة السجن": {
+  "en": "You paid the {0} jail fine",
+  "fr": "Vous payez l'amende de {0}"
+ },
+ "{0} دفع {1} غرامة السجن": {
+  "en": "{0} paid the {1} jail fine",
+  "fr": "{0} paie l'amende de {1}"
+ },
+ "دفعت {0} صيانة": {
+  "en": "You paid {0} for repairs",
+  "fr": "Vous payez {0} d'entretien"
+ },
+ "{0} دفع {1} صيانة": {
+  "en": "{0} paid {1} for repairs",
+  "fr": "{0} paie {1} d'entretien"
+ },
+ "أخذت {0} من الانطلاق": {
+  "en": "You collected {0} from Go",
+  "fr": "Vous recevez {0} au Départ"
+ },
+ "{0} أخذ {1} من الانطلاق": {
+  "en": "{0} collected {1} from Go",
+  "fr": "{0} reçoit {1} au Départ"
+ },
+ "أخذت {0}": {
+  "en": "You collected {0}",
+  "fr": "Vous recevez {0}"
+ },
+ "{0} أخذ {1}": {
+  "en": "{0} collected {1}",
+  "fr": "{0} reçoit {1}"
+ },
+ "اشتريت {0} بـ {1}": {
+  "en": "You bought {0} for {1}",
+  "fr": "Vous achetez {0} pour {1}"
+ },
+ "{0} اشترى {1} بـ {2}": {
+  "en": "{0} bought {1} for {2}",
+  "fr": "{0} achète {1} pour {2}"
+ },
+ "مزاد على {0}": {
+  "en": "Auction for {0}",
+  "fr": "Enchère pour {0}"
+ },
+ "زايدت {0}": {
+  "en": "You bid {0}",
+  "fr": "Vous enchérissez {0}"
+ },
+ "{0} زايد {1}": {
+  "en": "{0} bid {1}",
+  "fr": "{0} enchérit {1}"
+ },
+ "{0} انسحب": {
+  "en": "{0} passed",
+  "fr": "{0} passe"
+ },
+ "فزت بالمزاد: {0} بـ {1}": {
+  "en": "You won the auction: {0} for {1}",
+  "fr": "Vous remportez l'enchère : {0} pour {1}"
+ },
+ "{0} فاز بالمزاد: {1} بـ {2}": {
+  "en": "{0} won the auction: {1} for {2}",
+  "fr": "{0} remporte l'enchère : {1} pour {2}"
+ },
+ "ما أحد اشترى {0}": {
+  "en": "Nobody bought {0}",
+  "fr": "Personne n'achète {0}"
+ },
+ "بنيت بيت في {0}": {
+  "en": "You built a house on {0}",
+  "fr": "Vous construisez une maison sur {0}"
+ },
+ "بنيت برج في {0}": {
+  "en": "You built a tower on {0}",
+  "fr": "Vous construisez une tour sur {0}"
+ },
+ "{0} بنى بيت في {1}": {
+  "en": "{0} built a house on {1}",
+  "fr": "{0} construit une maison sur {1}"
+ },
+ "{0} بنى برج في {1}": {
+  "en": "{0} built a tower on {1}",
+  "fr": "{0} construit une tour sur {1}"
+ },
+ "بعت بيت في {0}": {
+  "en": "You sold a house on {0}",
+  "fr": "Vous vendez une maison sur {0}"
+ },
+ "{0} باع بيت في {1}": {
+  "en": "{0} sold a house on {1}",
+  "fr": "{0} vend une maison sur {1}"
+ },
+ "رهنت {0}": {
+  "en": "You mortgaged {0}",
+  "fr": "Vous hypothéquez {0}"
+ },
+ "{0} رهن {1}": {
+  "en": "{0} mortgaged {1}",
+  "fr": "{0} hypothèque {1}"
+ },
+ "فكيت رهن {0}": {
+  "en": "You paid off {0}",
+  "fr": "Vous levez l'hypothèque de {0}"
+ },
+ "{0} فك رهن {1}": {
+  "en": "{0} paid off {1}",
+  "fr": "{0} lève l'hypothèque de {1}"
+ },
+ "عليك {0} وفلوسك ما تكفي": {
+  "en": "You owe {0} and don't have enough",
+  "fr": "Vous devez {0} et n'avez pas assez"
+ },
+ "بِع بيوت أو ارهن": {
+  "en": "sell houses or mortgage",
+  "fr": "vendez des maisons ou hypothéquez"
+ },
+ "أو أعلن الإفلاس": {
+  "en": "or declare bankruptcy",
+  "fr": "ou déclarez faillite"
+ },
+ "{0} عليه {1} وفلوسه ما تكفي": {
+  "en": "{0} owes {1} and doesn't have enough",
+  "fr": "{0} doit {1} et n'a pas assez"
+ },
+ "{0} أفلس": {
+  "en": "{0} went bankrupt",
+  "fr": "{0} fait faillite"
+ },
+ "وأملاكه راحت لـ {0}": {
+  "en": "and their properties went to {0}",
+  "fr": "et ses propriétés vont à {0}"
+ },
+ "عرضت على {0}": {
+  "en": "You offered {0}",
+  "fr": "Vous proposez à {0}"
+ },
+ "{0} عرض عليك": {
+  "en": "{0} offered you",
+  "fr": "{0} vous propose"
+ },
+ "{0} عرض على {1}": {
+  "en": "{0} offered {1}",
+  "fr": "{0} propose à {1}"
+ },
+ "يعطي {0}": {
+  "en": "gives {0}",
+  "fr": "donne {0}"
+ },
+ "ويبي {0}": {
+  "en": "wants {0}",
+  "fr": "veut {0}"
+ },
+ "{0} قبل العرض": {
+  "en": "{0} accepted the offer",
+  "fr": "{0} accepte l'offre"
+ },
+ "{0} رفض العرض": {
+  "en": "{0} rejected the offer",
+  "fr": "{0} refuse l'offre"
+ },
+ "المحاولة {0} من 3": {
+  "en": "try {0} of 3",
+  "fr": "essai {0} sur 3"
+ },
+ "ارمِ دبل": {
+  "en": "roll doubles",
+  "fr": "faites un double"
+ },
+ "أو ادفع {0}": {
+  "en": "or pay {0}",
+  "fr": "ou payez {0}"
+ },
+ "{0} للبيع بـ {1}": {
+  "en": "{0} is for sale at {1}",
+  "fr": "{0} est à vendre pour {1}"
+ },
+ "معك {0}": {
+  "en": "you have {0}",
+  "fr": "vous avez {0}"
+ },
+ "تشتري؟": {
+  "en": "buy it?",
+  "fr": "acheter ?"
+ },
+ "دورك في مزاد {0}": {
+  "en": "Your turn in the {0} auction",
+  "fr": "À vous dans l'enchère pour {0}"
+ },
+ "أعلى مزايدة {0} لك": {
+  "en": "highest bid {0} is yours",
+  "fr": "meilleure enchère {0} à vous"
+ },
+ "أعلى مزايدة {0} لـ {1}": {
+  "en": "highest bid {0} by {1}",
+  "fr": "meilleure enchère {0} par {1}"
+ },
+ "مزاد {0}": {
+  "en": "{0} auction",
+  "fr": "Enchère pour {0}"
+ },
+ "عرضك على {0}": {
+  "en": "Your offer to {0}",
+  "fr": "Votre offre à {0}"
+ },
+ "عرض {0} على أنت": {
+  "en": "{0}'s offer to you",
+  "fr": "Offre de {0} pour vous"
+ },
+ "عرض {0} على {1}": {
+  "en": "{0}'s offer to {1}",
+  "fr": "Offre de {0} à {1}"
+ },
+ "🃏 {0}": {
+  "en": "🃏 {0}",
+  "fr": "🃏 {0}"
  }
 }

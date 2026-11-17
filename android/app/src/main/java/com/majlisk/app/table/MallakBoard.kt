@@ -97,8 +97,8 @@ private class Cam(yaw: Float, pitch: Float, val size: Size) {
     private val f = (V3(0f, 0f, 0f) - eye).norm()
     private val r = f.cross(V3(0f, 1f, 0f)).norm()
     private val u = r.cross(f)
-    private val focal = size.minDimension * 1.32f
-    private val c = Offset(size.width / 2, size.height / 2 + size.height * 0.03f)
+    private val focal = size.minDimension * 0.98f
+    private val c = Offset(size.width / 2, size.height * 0.4f)
     fun depth(p: V3) = (p - eye).dot(f)
     fun scale(p: V3) = focal / max(0.5f, depth(p))
     fun project(p: V3): Offset {
@@ -151,12 +151,20 @@ private fun ownerStrip(c: Cell): Cell = when (c.side) {
 /** مكان الحجر في الخانة (بعيد عن شريط اللون)، وكل لاعب له مكان صغير */
 private fun pawnSpot(i: Int, slot: Int): Pair<Float, Float> {
     val c = cell(i)
-    val (bu, bv) = when (c.side) { 0 -> 0f to 0.25f; 1 -> -0.25f to 0f; 2 -> 0f to -0.25f; 3 -> 0.25f to 0f; else -> 0f to 0f }
+    val (bu, bv) = when (c.side) { 0 -> 0f to 0.25f; 1 -> -0.25f to 0f; 2 -> 0f to -0.25f; 3 -> 0.25f to 0f; else -> 0f to 0.4f }
     val span = if (c.side < 0) 0.42f else 0.22f
     val du = ((slot % 3) - 1) * span
     val dv = ((slot / 3) - 0.5f) * span * 1.4f
     // الخانات الجانبية: نقلب الصفوف على طولها
     return if (c.side == 1 || c.side == 3) (c.cu + bu + dv) to (c.cv + bv + du) else (c.cu + bu + du) to (c.cv + bv + dv)
+}
+
+/** مكان اسم الخانة (k=0) وسعرها (k=1): بعيد عن شريط اللون، والسعر تحت الاسم */
+private fun textSpot(i: Int, k: Int): Pair<Float, Float> {
+    val c = cell(i)
+    val (ou, ov) = when (c.side) { 0 -> 0f to 0.22f; 1 -> -0.22f to 0f; 2 -> 0f to -0.22f; else -> 0.22f to 0f }
+    val u = c.cu + ou; val v = c.cv + ov
+    return if (c.side == 1 || c.side == 3) u to v + (if (k == 1) 0.24f else -0.14f) else u to v + (if (k == 1) 0.38f else -0.2f)
 }
 
 private fun DrawScope.quad(cam: Cam, c: Cell, y: Float, color: Color) {
@@ -280,10 +288,18 @@ private fun DrawScope.label(cam: Cam, u: Float, v: Float, text: String, worldSiz
     textPaint.color = color.toArgb()
     textPaint.isFakeBoldText = bold
     textPaint.textSize = px
-    val w = textPaint.measureText(text)
+    var lines = listOf(text)
+    var w = textPaint.measureText(text)
+    // أعرض من الخانة: نقسمه سطرين (عند المسافة اللي تعطي أقصر سطر)
+    if (w > maxWidth && text.contains(' ')) {
+        val words = text.split(' ')
+        val best = (1 until words.size).map { k -> listOf(words.take(k).joinToString(" "), words.drop(k).joinToString(" ")) }
+            .minByOrNull { pair -> pair.maxOf { textPaint.measureText(it) } }!!
+        lines = best; w = best.maxOf { textPaint.measureText(it) }
+    }
     if (w > maxWidth) { px *= maxWidth / w; if (px < 6f) return; textPaint.textSize = px }
     val s = cam.project(p)
-    drawContext.canvas.nativeCanvas.drawText(text, s.x, s.y + px / 3, textPaint)
+    lines.forEachIndexed { k, line -> drawContext.canvas.nativeCanvas.drawText(line, s.x, s.y + px / 3 + (k - (lines.size - 1) / 2f) * px * 1.05f, textPaint) }
 }
 
 private fun DrawScope.drawMallak(m: MallakView, yaw: Float, pitch: Float, hops: Map<Int, Hop>, now: Long, diceSpin: Float) {
@@ -309,7 +325,7 @@ private fun DrawScope.drawMallak(m: MallakView, yaw: Float, pitch: Float, hops: 
     quad(cam, Cell(-6.5f, 6.5f, -6.5f, 6.5f, -1), 0.001f, Color(0xFFE9F1E2))
     // الوسط: لون أغمق واسم اللعبة
     quad(cam, Cell(-4.5f, 4.5f, -4.5f, 4.5f, -1), 0.002f, Color(0xFF1F5E43))
-    label(cam, 0f, -1.6f, "ملّاك", 1.1f, Color(0xFFF5D67B), bold = true)
+    label(cam, 0f, -1.6f, com.majlisk.app.i18n.tr("ملّاك"), 1.1f, Color(0xFFF5D67B), bold = true)
     // الخانات
     for (i in 0 until 40) {
         val c = cell(i)
@@ -324,12 +340,12 @@ private fun DrawScope.drawMallak(m: MallakView, yaw: Float, pitch: Float, hops: 
         val border = Path().apply { moveTo(pts[0].x, pts[0].y); pts.drop(1).forEach { lineTo(it.x, it.y) }; close() }
         drawPath(border, Color(0x55203020), style = Stroke(1f))
         // الاسم والسعر
-        val (lu, lv) = pawnSpot(i, 4).let { (u, v) -> if (c.side < 0) c.cu to c.cv - 0.35f else u to v }
-        val width = cam.scale(bp(c.cu, c.cv)) * (if (c.side < 0) 1.9f else 0.95f)
+        val (lu, lv) = if (c.side < 0) c.cu to c.cv - 0.45f else textSpot(i, 0)
+        val width = cam.scale(bp(c.cu, c.cv)) * (if (c.side < 0) 1.9f else if (c.side == 1 || c.side == 3) 1.45f else 0.92f)
         val icon = when (sq.kind) { "chance" -> "؟ "; "chest" -> "📦 "; "station" -> "✈ "; "utility" -> "⚡ "; "tax" -> "💰 "; "jail" -> "🔒 "; "goToJail" -> "👮 "; "rest" -> "☕ "; "go" -> "➜ "; else -> "" }
-        label(cam, lu, lv, icon + sq.name, if (c.side < 0) 0.3f else 0.2f, Color(0xFF1D2B22), bold = c.side < 0, maxWidth = width)
+        label(cam, lu, lv, icon + com.majlisk.app.i18n.tr(sq.name), if (c.side < 0) 0.3f else 0.2f, Color(0xFF1D2B22), bold = c.side < 0, maxWidth = width)
         if (sq.price > 0 && o == null) {
-            val (pu, pv) = if (c.side < 0) c.cu to c.cv + 0.3f else pawnSpot(i, 1)
+            val (pu, pv) = if (c.side < 0) c.cu to c.cv + 0.3f else textSpot(i, 1)
             label(cam, pu, pv, "${sq.price}", 0.17f, Color(0xFF55605A), maxWidth = width)
         }
     }
