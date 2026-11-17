@@ -369,7 +369,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
         }
 
-        if (g.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
+        // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
+        if (g.phase == "matchOver" && g.outcomeStatus == "won" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
         // مؤشر قارئ الشاشة: بعد ما تلعب ورقة ينتقل لكلمة «أوراقك»، وأزرار الشراء لما تختفي ينتقل لأوراقك
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
@@ -972,6 +973,10 @@ private fun gameSounds(prev: GameView, g: GameView, mySeat: Int?) {
         val h = android.os.Handler(android.os.Looper.getMainLooper())
         h.postDelayed({ Sounds.handEnd(result, r.kaboot != null) }, TRICK_HOLD_MS + 200)
         if (g.outcomeStatus == "won" && team != null) h.postDelayed({ Sounds.matchEnd(g.outcomeWinner == team) }, TRICK_HOLD_MS + 1600)
+    } else if (g.outcomeStatus == "won" && prev.outcomeStatus != "won" && mySeat != null) {
+        // القيد والقطع: النتيجة طلعت بعد مهلة التسجيلة
+        val team = teamOf(mySeat)
+        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({ Sounds.matchEnd(g.outcomeWinner == team) }, 300)
     }
     // المزايدة والدبل: أصوات منطوقة يرسلها الخادم مع الإعلان (Sounds.voices)
 }

@@ -295,7 +295,8 @@ struct BalootBoard: View {
                 Text(trSpoken(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
             }
 
-            if g.phase == "matchOver" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
+            // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
+            if g.phase == "matchOver" && g.outcomeStatus == "won" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
 
             // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
             VStack(spacing: 4) {
@@ -633,6 +634,10 @@ final class GameSoundTracker {
                 let won = g.outcomeWinner == team
                 DispatchQueue.main.asyncAfter(deadline: .now() + TRICK_HOLD + 1.6) { s.matchEnd(won: won) }
             }
+        } else if g.outcomeStatus == "won" && prev.outcomeStatus != "won", let me = mySeat {
+            // القيد والقطع: النتيجة طلعت بعد مهلة التسجيلة
+            let won = g.outcomeWinner == teamOf(me)
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { s.matchEnd(won: won) }
         }
         // المزايدة والدبل: أصوات منطوقة يرسلها الخادم مع الإعلان (Sounds.voices)
     }

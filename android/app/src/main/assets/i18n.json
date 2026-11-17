@@ -6186,5 +6186,13 @@
  "🃏 {0}": {
   "en": "🃏 {0}",
   "fr": "🃏 {0}"
+ },
+ "باقي عشر ثواني للتسجيلة قبل إعلان النتيجة": {
+  "en": "Ten seconds left to call a foul before the result is announced",
+  "fr": "Dix secondes pour signaler une faute avant l'annonce du résultat"
+ },
+ "انتظر لين تخلص مهلة التسجيلة (عشر ثواني)": {
+  "en": "Wait until the foul-call window ends (ten seconds)",
+  "fr": "Attendez la fin du délai de signalement (dix secondes)"
  }
 }
