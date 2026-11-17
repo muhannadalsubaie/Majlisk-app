@@ -387,51 +387,81 @@ struct MallakBoard: View {
         }
     }
 
-    var body: some View {
-        let _ = animTick
-        let now = Date().timeIntervalSince1970
-        let animating = !hops.isEmpty || now - rollAt < 0.7
-        VStack(spacing: 8) {
-            // اللاعبون: لون الحجر والاسم والفلوس
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    ForEach(m.playersUi) { p in
-                        let turn = p.seat == m.turn && m.phase != "over"
-                        HStack(spacing: 5) {
-                            Circle().fill(MALLAK_PLAYER_COLORS[p.seat % 6]).frame(width: 12, height: 12)
-                            VStack(alignment: .leading, spacing: 1) {
-                                Text(trSpoken("\(names[p.seat])\(p.seat == v.mySeat ? " (أنت)" : "")")).font(.system(size: 13, weight: turn ? .bold : .regular))
-                                    .foregroundColor(p.bankrupt ? Palette.textDim : Palette.text)
-                                Text(trSpoken(p.bankrupt ? "مفلس" : "\(p.cash) ريال\(p.inJail ? " 🔒" : "")")).font(.system(size: 12)).foregroundColor(Palette.goldSoft)
-                            }
-                            TurnClock(v: v, seat: p.seat, turn: turn)
-                        }
-                        .padding(.horizontal, 8).padding(.vertical, 5)
-                        .background(RoundedRectangle(cornerRadius: 12).fill(turn ? Palette.gold.opacity(0.33) : Color.black.opacity(0.2)))
-                        .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : .clear, lineWidth: 2))
-                        .accessibilityElement(children: .ignore)
-                        .accessibilityLabel(trSpoken("\(p.text)، \(MALLAK_PLAYER_COLOR_NAMES[p.seat % 6])\(turn ? "، عليه الدور" : "")"))
-                    }
-                }
+    // (الواجهة مقسّمة أجزاء صغيرة: لو كانت كلها في body وحدة، مترجم Swift ما يلحق يفحصها)
+
+    /// اللاعبون: لون الحجر والاسم والفلوس
+    private var playersStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) { ForEach(m.playersUi) { p in playerChip(p) } }
+        }
+    }
+
+    private func playerChip(_ p: MallakPlayerUi) -> some View {
+        let turn: Bool = p.seat == m.turn && m.phase != "over"
+        let name: String = names[p.seat] + (p.seat == v.mySeat ? " (أنت)" : "")
+        let money: String = p.bankrupt ? "مفلس" : "\(p.cash) ريال" + (p.inJail ? " 🔒" : "")
+        let label: String = "\(p.text)، \(MALLAK_PLAYER_COLOR_NAMES[p.seat % 6])" + (turn ? "، عليه الدور" : "")
+        return HStack(spacing: 5) {
+            Circle().fill(MALLAK_PLAYER_COLORS[p.seat % 6]).frame(width: 12, height: 12)
+            VStack(alignment: .leading, spacing: 1) {
+                Text(trSpoken(name)).font(.system(size: 13, weight: turn ? .bold : .regular)).foregroundColor(p.bankrupt ? Palette.textDim : Palette.text)
+                Text(trSpoken(money)).font(.system(size: 12)).foregroundColor(Palette.goldSoft)
             }
-            // الحالة: الدور، ونص قرارك، والمزاد/التفاوض/البطاقة
-            VStack(alignment: .leading, spacing: 2) {
-                Text(trSpoken(m.turnText)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
-                if m.myTurn && !m.prompt.isEmpty { Text(trSpoken(m.prompt)).font(.system(size: 14)) }
-                if !m.auctionText.isEmpty { Text(trSpoken(m.auctionText)).font(.system(size: 14)) }
-                if !m.tradeText.isEmpty { Text(trSpoken(m.tradeText)).font(.system(size: 14)) }
-                if !m.cardText.isEmpty && m.phase != "over" { Text(trSpoken("🃏 \(m.cardText)")).font(.system(size: 13)).foregroundColor(Palette.textDim) }
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(8).background(RoundedRectangle(cornerRadius: 12).fill(Color.black.opacity(0.2)))
-            // اللوحة: للعين (اللمس يقرأ الخانة، والسحب يدوّر اللوحة)، وقارئ الشاشة يستخدم القائمة والإيماءات
-            TimelineView(.animation(paused: !animating)) { tl in
-                let t = tl.date.timeIntervalSince1970
-                let spin = CGFloat(pow(max(0, min(1, (0.7 - (t - rollAt)) / 0.7)), 2))
-                Canvas { ctx, size in drawMallak(ctx, size: size, m: m, yaw: yaw, pitch: pitch, hops: hops, now: t, spin: spin) }
-            }
-            .task(id: (hops.values.map(\.end).max() ?? 0) + rollAt) {
-                let end = max(hops.values.map(\.end).max() ?? 0, rollAt + 0.7)
+            TurnClock(v: v, seat: p.seat, turn: turn)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: 12).fill(turn ? Palette.gold.opacity(0.33) : Color.black.opacity(0.2)))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : Color.clear, lineWidth: 2))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(trSpoken(label))
+    }
+
+    /// الحالة: الدور، ونص قرارك، والمزاد/التفاوض/البطاقة
+    private var statusBox: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text(trSpoken(m.turnText)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+            if m.myTurn && !m.prompt.isEmpty { Text(trSpoken(m.prompt)).font(.system(size: 14)) }
+            if !m.auctionText.isEmpty { Text(trSpoken(m.auctionText)).font(.system(size: 14)) }
+            if !m.tradeText.isEmpty { Text(trSpoken(m.tradeText)).font(.system(size: 14)) }
+            if !m.cardText.isEmpty && m.phase != "over" { Text(trSpoken("🃏 " + m.cardText)).font(.system(size: 13)).foregroundColor(Palette.textDim) }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(8).background(RoundedRectangle(cornerRadius: 12).fill(Color.black.opacity(0.2)))
+    }
+
+    /// الرسم نفسه (يتحدث مع كل إطار وقت الحركة)
+    private func canvas(_ animating: Bool) -> some View {
+        TimelineView(.animation(paused: !animating)) { tl in
+            let t: Double = tl.date.timeIntervalSince1970
+            let k: Double = max(0, min(1, (0.7 - (t - rollAt)) / 0.7))
+            let spin = CGFloat(k * k)
+            Canvas { ctx, size in drawMallak(ctx, size: size, m: m, yaw: yaw, pitch: pitch, hops: hops, now: t, spin: spin) }
+        }
+    }
+
+    private func onDrag(_ g: DragGesture.Value) {
+        guard !reader else { return }
+        if dragStart == nil { dragStart = (yaw, pitch) }
+        let start = dragStart!
+        yaw = start.0 + g.translation.width * 0.008
+        pitch = min(1.45, max(0.55, start.1 - g.translation.height * 0.005))
+    }
+
+    private func onDragEnd(_ g: DragGesture.Value, _ size: CGSize) {
+        defer { dragStart = nil }
+        guard !reader else { return }
+        if abs(g.translation.width) < 6 && abs(g.translation.height) < 6 {
+            if let start = dragStart { yaw = start.0; pitch = start.1 }
+            info = hitSquare(g.location, size: size, yaw: yaw, pitch: pitch)
+        }
+    }
+
+    /// اللوحة: للعين (اللمس يقرأ الخانة، والسحب يدوّر اللوحة)، وقارئ الشاشة يستخدم القائمة والإيماءات
+    private func board(_ animating: Bool) -> some View {
+        let lastEnd: Double = hops.values.map(\.end).max() ?? 0
+        return canvas(animating)
+            .task(id: lastEnd + rollAt) {
+                let end = max(lastEnd, rollAt + 0.7)
                 let wait = end - Date().timeIntervalSince1970 + 0.05
                 if wait > 0 { try? await Task.sleep(nanoseconds: UInt64(wait * 1_000_000_000)) }
                 if Task.isCancelled { return }
@@ -442,63 +472,82 @@ struct MallakBoard: View {
             .aspectRatio(1, contentMode: .fit).frame(maxWidth: 560)
             .overlay(GeometryReader { geo in
                 Color.clear.contentShape(Rectangle())
-                    .gesture(DragGesture(minimumDistance: 0).onChanged { g in
-                        guard !reader else { return }
-                        if dragStart == nil { dragStart = (yaw, pitch) }
-                        yaw = dragStart!.0 + g.translation.width * 0.008
-                        pitch = min(1.45, max(0.55, dragStart!.1 - g.translation.height * 0.005))
-                    }.onEnded { g in
-                        defer { dragStart = nil }
-                        guard !reader else { return }
-                        if abs(g.translation.width) < 6 && abs(g.translation.height) < 6 {
-                            yaw = dragStart?.0 ?? yaw; pitch = dragStart?.1 ?? pitch
-                            info = hitSquare(g.location, size: geo.size, yaw: yaw, pitch: pitch)
-                        }
-                    })
+                    .gesture(DragGesture(minimumDistance: 0).onChanged { onDrag($0) }.onEnded { onDragEnd($0, geo.size) })
                     .onTapGesture(count: 2) { if !reader { yaw = 0; pitch = 0.98 } }
             })
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
-            // أزرار القرار الحين
-            if !m.actions.isEmpty {
-                FlowButtons(items: actionButtons)
-            }
+    }
+
+    @ViewBuilder private var endBox: some View {
+        if m.phase == "over" {
+            let w = m.winner ?? 0
+            Text(trSpoken(m.winner == v.mySeat ? "🎉 فزت!" : "فاز " + names[w])).font(.system(size: 20, weight: .bold)).foregroundColor(Palette.goldSoft)
+            if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
+        }
+    }
+
+    private var content: some View {
+        let now = Date().timeIntervalSince1970
+        let animating: Bool = !hops.isEmpty || now - rollAt < 0.7
+        return VStack(spacing: 8) {
+            playersStrip
+            statusBox
+            board(animating)
+            if !m.actions.isEmpty { FlowButtons(items: actionButtons) }
             FlowButtons(items: moreButtons)
-            if m.phase == "over" {
-                Text(trSpoken(m.winner == v.mySeat ? "🎉 فزت!" : "فاز \(names[m.winner ?? 0])")).font(.system(size: 20, weight: .bold)).foregroundColor(Palette.goldSoft)
-                if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
-            }
+            endBox
         }
         .foregroundColor(Palette.text)
-        .onAppear { seenMove = m.moveSeq; seenRoll = m.rollSeq; Gestures.shared.set("mallak") { read($0) } }
-        .onDisappear { Gestures.shared.clear("mallak") }
-        .onChange(of: m.moveSeq) { _ in animate() }
-        .onChange(of: m.rollSeq) { _ in animate() }
-        .sheet(item: Binding(get: { info.map { MallakSheetItem(id: $0) } }, set: { info = $0?.id })) { item in
-            Sheet(title: MALLAK_BOARD[item.id].name) {
-                Text(trSpoken(item.id < m.squares.count ? m.squares[item.id] : ""))
-                MButton("إغلاق") { info = nil }
-            }
+    }
+
+    private var squareSheetItem: Binding<MallakSheetItem?> {
+        Binding(get: { info.map { MallakSheetItem(id: $0) } }, set: { info = $0?.id })
+    }
+
+    private func squareSheet(_ item: MallakSheetItem) -> some View {
+        Sheet(title: MALLAK_BOARD[item.id].name) {
+            Text(trSpoken(item.id < m.squares.count ? m.squares[item.id] : ""))
+            MButton("إغلاق") { info = nil }
         }
-        .sheet(isPresented: $listOpen) {
-            let cur = conn.view?.mallak ?? m
-            Sheet(title: "خانات اللوحة") {
-                ForEach(Array(cur.squares.enumerated()), id: \.offset) { _, s in Text(trSpoken(s)).frame(maxWidth: .infinity, alignment: .leading) }
-                MButton("إغلاق") { listOpen = false }
-            }
+    }
+
+    private var listSheet: some View {
+        let cur = conn.view?.mallak ?? m
+        return Sheet(title: "خانات اللوحة") {
+            ForEach(Array(cur.squares.enumerated()), id: \.offset) { _, s in Text(trSpoken(s)).frame(maxWidth: .infinity, alignment: .leading) }
+            MButton("إغلاق") { listOpen = false }
         }
-        .sheet(isPresented: $logOpen) {
-            let cur = conn.view?.mallak ?? m
-            Sheet(title: "سجل اللعبة") {
-                if cur.log.isEmpty { Note("ما فيه شي بعد") }
-                ForEach(Array(cur.log.suffix(80).reversed().enumerated()), id: \.offset) { _, s in Text(trSpoken(s)).frame(maxWidth: .infinity, alignment: .leading) }
-                MButton("إغلاق") { logOpen = false }
-            }
+    }
+
+    private var logSheet: some View {
+        let cur = conn.view?.mallak ?? m
+        let lines: [String] = Array(cur.log.suffix(80).reversed())
+        return Sheet(title: "سجل اللعبة") {
+            if lines.isEmpty { Note("ما فيه شي بعد") }
+            ForEach(Array(lines.enumerated()), id: \.offset) { _, s in Text(trSpoken(s)).frame(maxWidth: .infinity, alignment: .leading) }
+            MButton("إغلاق") { logOpen = false }
         }
-        .sheet(isPresented: $manageOpen) { MallakManageSheet(conn: conn, close: { manageOpen = false }) }
-        .sheet(isPresented: $tradeOpen) {
-            if let s = v.mySeat { MallakTradeSheet(m: conn.view?.mallak ?? m, me: s, names: names, send: { act("propose", ["offer": $0]) }, close: { tradeOpen = false }) }
+    }
+
+    @ViewBuilder private var tradeSheet: some View {
+        if let s = v.mySeat {
+            MallakTradeSheet(m: conn.view?.mallak ?? m, me: s, names: names, send: { act("propose", ["offer": $0]) }, close: { tradeOpen = false })
         }
+    }
+
+    var body: some View {
+        let _ = animTick
+        content
+            .onAppear { seenMove = m.moveSeq; seenRoll = m.rollSeq; Gestures.shared.set("mallak") { read($0) } }
+            .onDisappear { Gestures.shared.clear("mallak") }
+            .onChange(of: m.moveSeq) { _ in animate() }
+            .onChange(of: m.rollSeq) { _ in animate() }
+            .sheet(item: squareSheetItem) { squareSheet($0) }
+            .sheet(isPresented: $listOpen) { listSheet }
+            .sheet(isPresented: $logOpen) { logSheet }
+            .sheet(isPresented: $manageOpen) { MallakManageSheet(conn: conn, close: { manageOpen = false }) }
+            .sheet(isPresented: $tradeOpen) { tradeSheet }
     }
 }
 
@@ -612,7 +661,9 @@ final class MallakSounds {
             }
             if m.cardSeq != p.cardSeq { s.drawCard() }
             if m.houses.reduce(0, +) > p.houses.reduce(0, +) { s.build() }
-            let cashChanged = m.seats.contains { i in (i < m.players.count ? m.players[i]?.cash : nil) != (i < p.players.count ? p.players[i]?.cash : nil) }
+            let cashNow: [Int] = m.players.map { $0?.cash ?? -1 }
+            let cashBefore: [Int] = p.players.map { $0?.cash ?? -1 }
+            let cashChanged = cashNow != cashBefore
             if cashChanged || m.owner != p.owner { s.coins() }
             if m.phase == "over" && p.phase != "over", let me = v.mySeat {
                 let won = m.winner == me
