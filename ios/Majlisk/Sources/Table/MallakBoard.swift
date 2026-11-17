@@ -369,6 +369,24 @@ struct MallakBoard: View {
         return true
     }
 
+    /// أزرار ثانية: عقاراتي، التفاوض، قائمة اللوحة، السجل
+    private var moreButtons: [(String, Bool, () -> Void)] {
+        var out: [(String, Bool, () -> Void)] = []
+        if v.mySeat != nil && m.phase != "over" { out.append(("عقاراتي", false, { manageOpen = true })) }
+        if m.canTrade { out.append(("تفاوض", false, { tradeOpen = true })) }
+        out.append(("اللوحة", false, { listOpen = true }))
+        out.append(("السجل", false, { logOpen = true }))
+        return out
+    }
+
+    /// أزرار القرار الحين
+    private var actionButtons: [(String, Bool, () -> Void)] {
+        m.actions.map { a -> (String, Bool, () -> Void) in
+            let primary = ["roll", "buy", "accept", "endTurn"].contains(a.type) || (a.type == "bid" && a.id == m.actions.first?.id)
+            return (a.label, primary, { if a.type == "bid" { act("bid", ["amount": a.amount ?? 0]) } else { act(a.type) } })
+        }
+    }
+
     var body: some View {
         let _ = animTick
         let now = Date().timeIntervalSince1970
@@ -443,18 +461,9 @@ struct MallakBoard: View {
             .accessibilityHidden(true)
             // أزرار القرار الحين
             if !m.actions.isEmpty {
-                FlowButtons(items: m.actions.map { a in
-                    (a.label, ["roll", "buy", "accept", "endTurn"].contains(a.type) || (a.type == "bid" && a.id == m.actions.first?.id), {
-                        if a.type == "bid" { act("bid", ["amount": a.amount ?? 0]) } else { act(a.type) }
-                    })
-                })
+                FlowButtons(items: actionButtons)
             }
-            FlowButtons(items: [
-                v.mySeat != nil && m.phase != "over" ? ("عقاراتي", false, { manageOpen = true }) : nil,
-                m.canTrade ? ("تفاوض", false, { tradeOpen = true }) : nil,
-                ("اللوحة", false, { listOpen = true }),
-                ("السجل", false, { logOpen = true }),
-            ].compactMap { $0 })
+            FlowButtons(items: moreButtons)
             if m.phase == "over" {
                 Text(trSpoken(m.winner == v.mySeat ? "🎉 فزت!" : "فاز \(names[m.winner ?? 0])")).font(.system(size: 20, weight: .bold)).foregroundColor(Palette.goldSoft)
                 if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
