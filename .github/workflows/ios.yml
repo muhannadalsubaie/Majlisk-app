@@ -30,7 +30,7 @@ on:
       runner:
         description: نوع جهاز الماك (لو نوع ما يتوفر نجرب الثاني)
         type: choice
-        options: [macos-26, macos-15-intel]
+        options: [macos-26, macos-15-intel, macos-15]
         default: macos-26
 
 # فحص البناء (مع كل تعديل) والرفع (يدوي) في مجموعتين منفصلتين، فلا يلغي تعديلٌ جديد رفعاً ينتظر دوره
