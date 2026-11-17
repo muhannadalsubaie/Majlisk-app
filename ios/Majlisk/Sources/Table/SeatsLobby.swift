@@ -10,6 +10,31 @@ func occupantLabel(_ v: TableView, _ i: Int) -> String {
 private struct Candidate: Identifiable { let id: String; let label: String }
 private struct Team: Identifiable { let id: String; let seats: [Int] }
 
+/// «دق ولد»: يختار المالك من الموجودين (أربعة أو أكثر)، وينختار منهم أربعة عشوائياً على الفريقين
+private struct DaqWaladSheet: View {
+    let people: [Person]
+    let conn: TableConnection
+    let close: () -> Void
+    @State private var picked: Set<String>
+    init(people: [Person], conn: TableConnection, close: @escaping () -> Void) {
+        // بدون تكرار (نفس الشخص ما ينعرض مرتين)، والكل مختار في البداية
+        var seen = Set<String>()
+        self.people = people.filter { seen.insert($0.uid).inserted }
+        self.conn = conn; self.close = close
+        _picked = State(initialValue: Set(people.map(\.uid)))
+    }
+    var body: some View {
+        Sheet(title: "دق ولد") {
+            Note("اختر اللاعبين (أربعة أو أكثر)، وينختار منهم أربعة عشوائياً ويتوزعون على الفريقين.")
+            ForEach(people, id: \.uid) { p in
+                SwitchRow(label: p.username, isOn: picked.contains(p.uid), onChange: { on in if on { picked.insert(p.uid) } else { picked.remove(p.uid) } })
+            }
+            MButton("دق ولد", .primary, enabled: picked.count >= 4) { conn.send("daqWalad", ["uids": Array(picked)]); close() }
+            MButton("إلغاء", action: close)
+        }
+    }
+}
+
 private enum SeatPanel: Identifiable {
     case invite(Int), add(Int), change(Int)
     var id: String { switch self { case .invite(let s): return "i\(s)"; case .add(let s): return "a\(s)"; case .change(let s): return "c\(s)" } }
@@ -36,7 +61,6 @@ struct SeatsLobby: View {
     private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
     @State private var daq = false
-    @State private var daqPicked: Set<String> = []
     /// الموجودين في الطاولة (الجالسين بدون الروبوتات، والمشاهدين)
     private var daqPeople: [Person] {
         v.seats.enumerated().compactMap { i, s in s.flatMap { $0.isBot ? nil : Person(uid: v.seatUid(i), username: $0.username) } }.filter { !$0.uid.isEmpty } + v.spectators
@@ -95,7 +119,7 @@ struct SeatsLobby: View {
             SectionTitle("المقاعد")
             // «دق ولد» (للمالك المشترك، البلوت): يختار من الموجودين ٤ أو أكثر، وينختار ٤ عشوائياً على الفريقين
             if isOwner && pro && v.kind == "baloot" {
-                HStack { SmallButton("دق ولد", primary: true) { daqPicked = Set(daqPeople.map(\.uid)); daq = true }; Spacer() }
+                HStack { SmallButton("دق ولد", primary: true) { daq = true }; Spacer() }
             }
             // ملّاك: 6 مقاعد بلا فرق (كل واحد لنفسه)
             ForEach(v.kind == "mallak" ? [Team(id: "اللاعبون (من 2 إلى 6)", seats: Array(0..<max(6, v.seats.count)))]
@@ -123,16 +147,8 @@ struct SeatsLobby: View {
             if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = true } }
             else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }
         }
-        .sheet(isPresented: $daq) {
-            Sheet(title: "دق ولد") {
-                Note("اختر اللاعبين (أربعة أو أكثر)، وينختار منهم أربعة عشوائياً ويتوزعون على الفريقين.")
-                ForEach(daqPeople, id: \.uid) { p in
-                    SwitchRow(label: p.username, isOn: daqPicked.contains(p.uid), onChange: { on in if on { daqPicked.insert(p.uid) } else { daqPicked.remove(p.uid) } })
-                }
-                MButton("دق ولد", .primary, enabled: daqPicked.count >= 4) { conn.send("daqWalad", ["uids": Array(daqPicked)]); daq = false }
-                MButton("إلغاء") { daq = false }
-            }
-        }
+        // النافذة لها حالتها الخاصة: كانت تفتح على نسخة قديمة من الاختيار (الكل مطفي، والمفاتيح ما تتحرك)
+        .sheet(isPresented: $daq) { DaqWaladSheet(people: daqPeople, conn: conn) { daq = false } }
         .sheet(isPresented: $setup) {
             Sheet(title: "إعدادات المباراة") {
                 Menu {
