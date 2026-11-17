@@ -229,7 +229,7 @@ final class Online: ObservableObject {
     }
 }
 
-let GAME_NAMES = ["baloot": "بلوت", "domino": "دومينو", "jackaroo": "جاكارو", "ludo": "لودو"]
+let GAME_NAMES = ["baloot": "بلوت", "domino": "دومينو", "jackaroo": "جاكارو", "ludo": "لودو", "mallak": "ملّاك"]
 
 /// اسم اللعبة كما في الخادم (shared/games.ts → gameTitle)
 func gameTitle(_ kind: String, _ variant: String?) -> String {

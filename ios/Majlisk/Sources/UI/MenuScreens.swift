@@ -120,6 +120,7 @@ struct CreateTableScreen: View {
                 GameTile(name: "دومينو", image: "domino_table") { picked = "domino"; variant = "classic" }
                 GameTile(name: "جاكارو", image: "jackaroo_table") { picked = "jackaroo"; variant = "classic" }
                 GameTile(name: "لودو", image: "ludo_table") { picked = "ludo"; variant = "classic" }
+                GameTile(name: "ملّاك", image: "mallak_table") { picked = "mallak"; variant = "classic" }
             }
             // ومن قائمة الألعاب للقائمة الرئيسية
             .accessibilityAction(.escape) { navigate(.menu) }

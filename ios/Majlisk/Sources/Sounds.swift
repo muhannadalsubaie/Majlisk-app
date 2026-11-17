@@ -113,6 +113,11 @@ final class Sounds {
     func jackarooCard() { play("jackaroo-card", gain: 1) }
     /// لودو: رمي النرد
     func dice() { play("dice", gain: 0.9) }
+    // ملّاك: فلوس (شراء/دفع/استلام)، بناء بيت، سجن، بطاقة
+    func coins() { play(pick("chips1", "chips2", "chips3"), gain: 0.9) }
+    func build() { play("lay1", gain: 1, vary: false) }
+    func jail() { play("collide", gain: 1, vary: false) }
+    func drawCard() { play("fan", gain: 0.9, vary: false) }
     /// مشي الحجر في اللودو: نقرة لكل خطوة
     func steps(_ n: Int, at: Double = 0) {
         for i in 0..<min(max(n, 1), 13) { play(i % 2 == 0 ? "step1" : "step2", at: at + Double(i) * Sounds.stepGap, gain: 0.9) }

@@ -127,6 +127,10 @@ struct GoldMenuScreen: View {
                         GameCard(name: "جاكارو", icon: "🎯", featured: false) { play("jackaroo") }
                         GameCard(name: "لودو", icon: "🎲", featured: false) { play("ludo") }
                     }
+                    HStack(spacing: 14) {
+                        GameCard(name: "ملّاك", icon: "🏘", featured: false) { play("mallak") }
+                        Color.clear.frame(maxWidth: .infinity)
+                    }
                 }
                 .padding(.horizontal, 18).padding(.vertical, 12)
             }
