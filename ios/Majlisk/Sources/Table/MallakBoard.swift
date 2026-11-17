@@ -413,7 +413,7 @@ struct MallakBoard: View {
         .background(RoundedRectangle(cornerRadius: 12).fill(turn ? Palette.gold.opacity(0.33) : Color.black.opacity(0.2)))
         .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : Color.clear, lineWidth: 2))
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(trSpoken(label))
+        .accessibilityLabel(spokenText(label))
     }
 
     /// الحالة: الدور، ونص قرارك، والمزاد/التفاوض/البطاقة
