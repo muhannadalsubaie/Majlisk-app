@@ -325,7 +325,7 @@ private fun DrawScope.drawMallak(m: MallakView, yaw: Float, pitch: Float, hops: 
     quad(cam, Cell(-6.5f, 6.5f, -6.5f, 6.5f, -1), 0.001f, Color(0xFFE9F1E2))
     // الوسط: لون أغمق واسم اللعبة
     quad(cam, Cell(-4.5f, 4.5f, -4.5f, 4.5f, -1), 0.002f, Color(0xFF1F5E43))
-    label(cam, 0f, -1.6f, com.majlisk.app.i18n.tr("ملّاك"), 1.1f, Color(0xFFF5D67B), bold = true)
+    label(cam, 0f, -1.6f, com.majlisk.app.i18n.tr("تاجر العقار"), 0.8f, Color(0xFFF5D67B), bold = true)
     // الخانات
     for (i in 0 until 40) {
         val c = cell(i)

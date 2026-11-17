@@ -5203,9 +5203,9 @@
   "en": "On screen",
   "fr": "À l'écran"
  },
- "ملّاك": {
-  "en": "Mallak",
-  "fr": "Mallak"
+ "تاجر العقار": {
+  "en": "Property Trader",
+  "fr": "Marchand immobilier"
  },
  "الانطلاق": {
   "en": "Go",
@@ -5799,9 +5799,9 @@
   "en": "{0} is considering the offer",
   "fr": "{0} étudie l'offre"
  },
- "بدأت ملّاك بين {0} لاعبين، كل واحد معه 1500 ريال": {
-  "en": "Mallak started with {0} players, each with 1500 SAR",
-  "fr": "Mallak commence avec {0} joueurs, chacun avec 1500 SAR"
+ "بدأت تاجر العقار بين {0} لاعبين، كل واحد معه 1500 ريال": {
+  "en": "Property Trader started with {0} players, each with 1500 SAR",
+  "fr": "Marchand immobilier commence avec {0} joueurs, chacun avec 1500 SAR"
  },
  "{0}. {1}": {
   "en": "{0}. {1}",

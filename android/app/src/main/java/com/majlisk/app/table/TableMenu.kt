@@ -119,7 +119,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
         Page.ChangeGame -> MajliskDialog("تغيير اللعبة", { page = Page.Main }) {
             Body("الحالية: ${com.majlisk.app.data.gameTitle(v.kind, "classic")}. لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة. خيارات اللعبة (فردي أو فرق، عادي أو كومبلكس، نهاية المباراة) تختارها من صفحة المقاعد.")
             // اسم اللعبة بس
-            listOf("baloot", "domino", "jackaroo", "ludo", "mallak").filter { it != v.kind }.forEach { k ->
+            (listOf("baloot", "domino", "jackaroo", "ludo") + if (com.majlisk.app.Flags.SHOW_MALLAK) listOf("mallak") else emptyList()).filter { it != v.kind }.forEach { k ->
                 PrimaryButton(com.majlisk.app.data.gameTitle(k, "classic"), { conn.send("changeGame", "kind" to k); onClose() })
             }
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)

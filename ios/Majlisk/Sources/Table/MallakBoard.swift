@@ -244,7 +244,7 @@ private func drawMallak(_ ctx: GraphicsContext, size: CGSize, m: MallakView, yaw
     ctx.fill(quadPath(cam, Cell(u0: -6.7, u1: 6.7, v0: -6.7, v1: 6.7, side: -1), 0), with: .color(Color(red: 0.42, green: 0.29, blue: 0.17)))
     ctx.fill(quadPath(cam, Cell(u0: -6.5, u1: 6.5, v0: -6.5, v1: 6.5, side: -1), 0.001), with: .color(Color(red: 0.91, green: 0.95, blue: 0.89)))
     ctx.fill(quadPath(cam, Cell(u0: -4.5, u1: 4.5, v0: -4.5, v1: 4.5, side: -1), 0.002), with: .color(Color(red: 0.12, green: 0.37, blue: 0.26)))
-    drawLabel(ctx, cam, u: 0, v: -1.6, text: tr("ملّاك"), worldSize: 1.1, color: Color(red: 0.96, green: 0.84, blue: 0.48), bold: true)
+    drawLabel(ctx, cam, u: 0, v: -1.6, text: tr("تاجر العقار"), worldSize: 0.8, color: Color(red: 0.96, green: 0.84, blue: 0.48), bold: true)
     for i in 0..<40 {
         let c = cell(i)
         let sq = MALLAK_BOARD[i]

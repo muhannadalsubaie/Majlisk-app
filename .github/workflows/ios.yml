@@ -23,6 +23,10 @@ on:
         description: إضافة النسخة لرابط المختبرين الخارجيين (بعد الرفع)
         type: boolean
         default: false
+      mallak:
+        description: إظهار لعبة «تاجر العقار» في النسخة (للتجربة الداخلية — لا تستخدمه مع الرابط العام)
+        type: boolean
+        default: false
       runner:
         description: نوع جهاز الماك (لو نوع ما يتوفر نجرب الثاني)
         type: choice
@@ -49,6 +53,10 @@ jobs:
           X=$(ls -d /Applications/Xcode_26*.app 2>/dev/null | sort -V | tail -1)
           if [ -n "$X" ]; then sudo xcode-select -s "$X"; else echo "::warning::no Xcode 26 on this image"; ls /Applications | grep -i xcode; fi
           xcodebuild -version
+      # نسخة التجربة الداخلية: تطلع فيها لعبة «تاجر العقار» (النسخة العامة مخفية فيها)
+      - name: Internal games
+        if: github.event_name == 'workflow_dispatch' && inputs.mallak
+        run: sed -i '' 's/static let showMallak = false/static let showMallak = true/' ios/Majlisk/Sources/Flags.swift && grep showMallak ios/Majlisk/Sources/Flags.swift
       - name: Generate Xcode project
         working-directory: ios
         run: |
