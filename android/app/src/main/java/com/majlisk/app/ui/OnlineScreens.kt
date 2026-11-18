@@ -25,6 +25,7 @@ import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -150,15 +151,16 @@ private fun OnlineDialog(onClose: () -> Unit, openTable: (String) -> Unit) {
                             }
                         },
                     ) {
-                        Avatar(p.uid, p.username, 38.dp)
-                        Column(Modifier.weight(1f)) {
+                        // قارئ الشاشة يقرأ وصف السطر بس (بدون تكرار الاسم والمكان من النص المكتوب)
+                        androidx.compose.foundation.layout.Box(Modifier.clearAndSetSemantics { }) { Avatar(p.uid, p.username, 38.dp) }
+                        Column(Modifier.weight(1f).clearAndSetSemantics { }) {
                             Text(if (p.me) "${p.username} (أنت)" else p.username, color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             Text(place, color = Palette.textDim, fontSize = 13.sp)
                         }
                         when {
                             p.me -> {}
-                            friend -> Text("صديقك", color = Palette.goldSoft, fontSize = 13.sp)
-                            p.uid in sent -> Text("أُرسل", color = Palette.textDim, fontSize = 13.sp)
+                            friend -> Text("صديقك", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.clearAndSetSemantics { })
+                            p.uid in sent -> Text("أُرسل", color = Palette.textDim, fontSize = 13.sp, modifier = Modifier.clearAndSetSemantics { })
                             asked -> SmallButton("قبول", { acceptFriend(p) }, primary = true, description = "قبول طلب صداقة ${p.username}")
                             else -> SmallButton("إضافة صديق", { addFriend(p) }, description = "إضافة ${p.username} صديق")
                         }

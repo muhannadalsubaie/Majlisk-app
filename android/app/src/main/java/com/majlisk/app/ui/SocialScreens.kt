@@ -18,6 +18,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.liveRegion
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.CustomAccessibilityAction
@@ -129,8 +130,9 @@ fun FriendsScreen(hub: HubState, navigate: (Route) -> Unit, openTable: (String) 
                             customActions = listOf(com.majlisk.app.i18n.A11yAction("دخول طاولته") { joinFriend(f); true })
                         },
                     ) {
-                        Avatar(f.uid, f.username, 40.dp)
-                        Text("${if (f.online) "🟢" else "⚪"} ${f.username}، $status", color = Palette.text, modifier = Modifier.weight(1f))
+                        // قارئ الشاشة يقرأ وصف السطر بس (كان يكرر الاسم ونوع الطاولة من النص المكتوب)
+                        androidx.compose.foundation.layout.Box(Modifier.clearAndSetSemantics { }) { Avatar(f.uid, f.username, 40.dp) }
+                        Text("${if (f.online) "🟢" else "⚪"} ${f.username}، $status", color = Palette.text, modifier = Modifier.weight(1f).clearAndSetSemantics { })
                     }
                 }
             }
