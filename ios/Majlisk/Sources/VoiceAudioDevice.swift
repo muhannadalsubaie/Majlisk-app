@@ -307,7 +307,7 @@ final class EffectMixer {
     }
 
     /// صوت المحادثة أوطى من صوت الوسائط: نرفع المؤثرات داخلها عشان ما تضعف وقت المحادثة
-    static let boost: Float = 1.8
+    static let boost: Float = 2.4
 
     func play(_ name: String, url: URL, gain: Float) {
         let gain = gain * EffectMixer.boost
