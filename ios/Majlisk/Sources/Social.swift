@@ -469,6 +469,13 @@ final class TableConnection: ObservableObject {
                 retry = min(retry + 1, 6)
                 // بعد عدة محاولات: هل الطاولة أُغلقت أو أُخرجنا منها؟ أم الشبكة فقط؟
                 if retry >= 3, let member = try? await Api.get("/tables/\(self.tableId)/member"), !member.bool("member") {
+                    // غبت أكثر من المهلة (مكالمة مثلاً) فطلعك الخادم من الطاولة: لو الطاولة موجودة نرجعك لها على طول،
+                    // وما نقول «أُغلقت الطاولة» إلا لو فعلاً ما تقدر ترجع (انقفلت أو خاصة أو انحذفت)
+                    if (try? await Tables.join(self.tableId)) != nil {
+                        Announcer.announce("رجعت للطاولة")
+                        retry = 0
+                        continue
+                    }
                     self.stopped = true
                     await MainActor.run { self.closed = true }
                     break

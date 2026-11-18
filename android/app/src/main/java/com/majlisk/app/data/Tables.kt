@@ -262,7 +262,16 @@ class TableConnection(val tableId: String) {
                 // بعد عدة محاولات: هل الطاولة أُغلقت أو أُخرجنا منها؟ أم الشبكة فقط؟
                 if (retry >= 3) {
                     val member = runCatching { Api.get("/tables/$tableId/member").optBoolean("member") }.getOrNull()
-                    if (member == false) { _closed.value = true; stopped = true; break }
+                    if (member == false) {
+                        // غبت أكثر من المهلة (مكالمة مثلاً) فطلعك الخادم من الطاولة: لو الطاولة موجودة نرجعك لها على طول،
+                        // وما نقول «أُغلقت الطاولة» إلا لو فعلاً ما تقدر ترجع (انقفلت أو خاصة أو انحذفت)
+                        if (runCatching { Tables.join(tableId) }.isSuccess) {
+                            Announcer.announce("رجعت للطاولة")
+                            retry = 0
+                            continue
+                        }
+                        _closed.value = true; stopped = true; break
+                    }
                 }
                 wake = CompletableDeferred()
                 // يرجع النت: نعيد الاتصال على طول بدل انتظار المحاولة التالية
