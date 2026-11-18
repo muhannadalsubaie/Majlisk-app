@@ -839,7 +839,7 @@ private struct ProjectSpotlight: View {
 
 private struct SpotPanel: View {
     let spot: Spot
-    @State private var shown = Announcer.readerOn
+    // تطلع بشكلها الكامل (ثلاثي الأبعاد) على طول: حركة الظهور كانت تعلّقها صغيرة لين آخر اللفة
     var body: some View {
         let w: CGFloat = spot.cards.count >= 5 ? 54 : 62
         // جنب بعض بدون تراكب، خمس في السطر
@@ -855,9 +855,6 @@ private struct SpotPanel: View {
                             // كل ورقة تنقلب على وجهها، وترتاح مايلة شوي كأنها مفروشة باليد
                             .rotationEffect(.degrees(Double(d) * 3))
                             .offset(y: d * d * 2)
-                            .rotation3DEffect(.degrees(shown ? 0 : -90), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
-                            .opacity(shown ? 1 : 0)
-                            .animation(Announcer.readerOn ? nil : .easeOut(duration: 0.38).delay(0.15 + Double(r * 5 + i) * 0.11), value: shown)
                     }
                 }
             }
@@ -867,16 +864,10 @@ private struct SpotPanel: View {
         .background(shape.fill(LinearGradient(colors: [Color(red: 0.11, green: 0.17, blue: 0.24), Color(red: 0.04, green: 0.07, blue: 0.11)], startPoint: .top, endPoint: .bottom)).opacity(0.96))
         .overlay(shape.stroke(LinearGradient(colors: [Palette.goldSoft, Palette.gold, Color(red: 0.54, green: 0.42, blue: 0.12)], startPoint: .topLeading, endPoint: .bottomTrailing), lineWidth: 1.5))
         .shadow(color: .black.opacity(0.7), radius: 18, y: 10)
-        // اللوحة تطلع من الطاولة: تميل وتكبر وهي تظهر
-        .scaleEffect(shown ? 1 : 0.8)
-        .rotation3DEffect(.degrees(shown ? 0 : 35), axis: (x: 1, y: 0, z: 0), perspective: 0.5)
-        .opacity(shown ? 1 : 0)
-        .animation(Announcer.readerOn ? nil : .easeOut(duration: 0.4), value: shown)
         .fixedSize()
         .onTapGesture { ProjectSpot.shared.spot = nil }
         .accessibilityHidden(true)
         .onAppear {
-            shown = true
             let id = spot.id
             DispatchQueue.main.asyncAfter(deadline: .now() + 4.5) { if ProjectSpot.shared.spot?.id == id { ProjectSpot.shared.spot = nil } }
         }
