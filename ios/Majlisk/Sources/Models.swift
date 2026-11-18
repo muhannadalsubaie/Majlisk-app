@@ -188,7 +188,6 @@ struct TableView {
     var jackaroo: JackarooView?
     let ludo: LudoView?
     /// ملّاك (لعبة العقارات)
-    let mallak: MallakView?
     /// كم لاعب يقدر يبدأ اللعبة
     let startCounts: [Int]
     /// مؤقت الدور: الثواني المختارة (٠ = بدون)، واللي عليه الوقت، ومتى يخلص وقته (بساعة الجوال)
@@ -216,7 +215,7 @@ struct TableView {
 
     var hasGame: Bool { game != nil || otherGame }
     var playing: Bool {
-        (game != nil && game!.phase != "matchOver") || (domino != nil && domino!.phase != "matchOver") || jackaroo?.phase == "playing" || (ludo != nil && ludo!.phase != "over") || (mallak != nil && mallak!.phase != "over")
+        (game != nil && game!.phase != "matchOver") || (domino != nil && domino!.phase != "matchOver") || jackaroo?.phase == "playing" || (ludo != nil && ludo!.phase != "over")
     }
     func seat(_ i: Int) -> SeatInfo? { i < seats.count ? seats[i] : nil }
     func seatUid(_ i: Int) -> String { i < seatUids.count ? seatUids[i] : "" }
@@ -234,7 +233,7 @@ struct TableView {
         game = o.obj("game").map(TableView.parseGame)
         kind = o.str("kind", "baloot")
         variant = o.str("variant", "classic")
-        otherGame = ["domino", "jackaroo", "ludo", "mallak"].contains { o.obj($0) != nil }
+        otherGame = ["domino", "jackaroo", "ludo"].contains { o.obj($0) != nil }
         history = o.objs("history").map(TableView.parseRecord)
         let ui = o.obj("ui") ?? [:]
         domino = o.obj("domino").map { DominoView($0, ui, log: o.objs("dominoLog")) }
@@ -256,7 +255,6 @@ struct TableView {
         pinnedOwner = o.bool("pinnedOwner")
         pinnedViewers = o.strs("pinnedViewers")
         ludo = o.obj("ludo").map { LudoView($0, ui, log: o.strs("ludoLog")) }
-        mallak = o.obj("mallak").map { MallakView($0, ui, log: o.strs("mallakLog")) }
     }
 
     private static func played(_ a: [JSON]) -> [PlayedCard] {

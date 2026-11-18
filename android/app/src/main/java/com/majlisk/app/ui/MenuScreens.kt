@@ -115,7 +115,6 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
             GameTile("دومينو", com.majlisk.app.R.drawable.domino_table) { picked = "domino"; variant = "classic" }
             GameTile("جاكارو", com.majlisk.app.R.drawable.jackaroo_table) { picked = "jackaroo"; variant = "classic" }
             GameTile("لودو", com.majlisk.app.R.drawable.ludo_table) { picked = "ludo"; variant = "classic" }
-            if (com.majlisk.app.Flags.SHOW_MALLAK) GameTile("تاجر العقار", com.majlisk.app.R.drawable.mallak_table) { picked = "mallak"; variant = "classic" }
         }
         return
     }

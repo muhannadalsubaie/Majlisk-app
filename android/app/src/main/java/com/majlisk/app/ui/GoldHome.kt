@@ -159,10 +159,6 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                 GameCard("جاكارو", "🎯", false, Modifier.weight(1f)) { play("jackaroo") }
                 GameCard("لودو", "🎲", false, Modifier.weight(1f)) { play("ludo") }
             }
-            if (com.majlisk.app.Flags.SHOW_MALLAK) Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                GameCard("تاجر العقار", "🏘", false, Modifier.weight(1f)) { play("mallak") }
-                androidx.compose.foundation.layout.Spacer(Modifier.weight(1f))
-            }
         }
     }
     if (getCoins) {

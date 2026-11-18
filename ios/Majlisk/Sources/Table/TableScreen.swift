@@ -37,8 +37,7 @@ struct TableScreen: View {
             c.myUid = uid
             let sounds = GameSoundTracker()
             let other = OtherGameSounds()
-            let mallak = MallakSounds()
-            c.onState = { sounds.update($0); other.update($0); mallak.update($0) }
+            c.onState = { sounds.update($0); other.update($0) }
             return c
         }())
     }
@@ -127,8 +126,6 @@ struct TableScreen: View {
                 // اللودو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
                 Spacer(minLength: 0)
                 LudoBoard(v: v, l: l, conn: conn, isOwner: v.ownerUid == uid)
-            } else if let m = v.mallak {
-                MallakBoard(v: v, m: m, conn: conn, isOwner: v.ownerUid == uid)
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
             }

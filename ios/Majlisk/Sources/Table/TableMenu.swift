@@ -116,7 +116,7 @@ struct TableMenu: View {
             Sheet(title: "تغيير اللعبة") {
                 BodyText("الحالية: \(gameTitle(view.kind, "classic")). لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة. خيارات اللعبة (فردي أو فرق، عادي أو كومبلكس، نهاية المباراة) تختارها من صفحة المقاعد.")
                 // اسم اللعبة بس
-                ForEach((["baloot", "domino", "jackaroo", "ludo"] + (Flags.showMallak ? ["mallak"] : [])).filter { $0 != view.kind }, id: \.self) { k in
+                ForEach(["baloot", "domino", "jackaroo", "ludo"].filter { $0 != view.kind }, id: \.self) { k in
                     MButton(gameTitle(k, "classic"), .primary) { conn.send("changeGame", ["kind": k]); onClose() }
                 }
                 MButton("رجوع") { page = .main }

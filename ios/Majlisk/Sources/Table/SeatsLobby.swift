@@ -121,9 +121,7 @@ struct SeatsLobby: View {
             if isOwner && pro && v.kind == "baloot" {
                 HStack { SmallButton("دق ولد", primary: true) { daq = true }; Spacer() }
             }
-            // ملّاك: 6 مقاعد بلا فرق (كل واحد لنفسه)
-            ForEach(v.kind == "mallak" ? [Team(id: "اللاعبون (من 2 إلى 6)", seats: Array(0..<max(6, v.seats.count)))]
-                    : [Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
+            ForEach([Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
                 Text(trSpoken(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
                     ItemRow {
