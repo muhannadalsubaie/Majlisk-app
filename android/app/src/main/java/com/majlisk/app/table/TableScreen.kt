@@ -353,9 +353,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 Box(Modifier.weight(0.8f))
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.weight(0.7f), conn = conn, me = uid)
-                Box(Modifier.weight(3.4f).zIndex(1f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads); ProjectSpotlight(v, g, text) }
-                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.weight(0.7f), conn = conn, me = uid)
+                PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.width(SIDE_TAG), conn = conn, me = uid)
+                Box(Modifier.weight(1f).zIndex(1f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads); ProjectSpotlight(v, g, text) }
+                PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.width(SIDE_TAG), conn = conn, me = uid)
             }
         }
 
@@ -626,7 +626,8 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         if (s?.away == true) append(" (انقطع الاتصال)")
         if (partner) append(" (شريكك)")
     }
-    val box = modifier.padding(horizontal = 4.dp, vertical = 4.dp)
+    // على الجنب: بلا هوامش جانبية، عشان الصورة تبقى دائرة بحجمها والاسم ما ينكسر
+    val box = modifier.padding(horizontal = if (wide) 4.dp else 0.dp, vertical = 4.dp)
     // اللي عليه الدور: إطار على قد اللاعب نفسه (صورته واسمه) — مو على عرض المكان كله،
     // والمؤقت فوق صورته (بحجمها) ويروح للي بعده أول ما يلعب
     val who: @Composable () -> Unit = {
@@ -635,11 +636,11 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
                 .then(if (playerActions.isNotEmpty()) Modifier.semantics(mergeDescendants = true) { customActions = playerActions } else Modifier)
                 .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
                 .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
-                .padding(horizontal = 8.dp, vertical = 6.dp),
+                .padding(horizontal = if (wide) 8.dp else 2.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             TurnAvatar(v, seat, turn, v.seatUids.getOrNull(seat), s?.username.orEmpty(), 40.dp)
-            Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = 14.sp, textAlign = TextAlign.Center)
+            Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = if (wide) 14.sp else 13.sp, textAlign = TextAlign.Center, softWrap = wide || label.contains(' '))
             if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
         }
     }
@@ -654,6 +655,9 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         if (faces.isNotEmpty()) ProjectFaces(faces, 62f, onTap = onTap)
     }
 }
+
+/** عرض اللاعب اللي على الجنب: ثابت (الصورة دائرة بحجمها الطبيعي والاسم كامل)، والطاولة تاخذ الباقي */
+private val SIDE_TAG = 70.dp
 
 /** أوراق المشروع مكشوفة قدام صاحبه طوال اللفة الثانية (للعرض فقط — قارئ الشاشة يسمعها من الإعلان) */
 @OptIn(ExperimentalLayoutApi::class)
