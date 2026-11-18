@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import CallKit
 import WebRTC
 
 /**
@@ -45,6 +46,10 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     private var pulled: [String: String] = [:]
     private var members: [VoiceMember] = []
     private var leaving = false
+    /// كنت في المحادثة وما طلعت منها بنفسك: لو قطعتها مكالمة نرجعك لها بعد المكالمة
+    private var wanted = false
+    /// مكالمة أخذت الصوت منا: نرجع للمحادثة أول ما تخلص
+    private var interrupted = false
     private var rejoining = false
     private var autoRetries = 0
     private var missingTask: Task<Void, Never>?
@@ -106,6 +111,7 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
                 }
                 members = members.filter { $0.uid != uid } + [VoiceMember(uid: uid, username: "", sessionId: sessionId!, muted: true, mic: false, blocked: false)]
                 update(joined: true, muted: true, busy: false)
+                wanted = true
                 DispatchQueue.main.async { self.reconnecting = false }
                 autoRetries = 0
                 if mode != .rejoin { Announcer.announce("أنت في المحادثة الصوتية، والميكروفون مغلق") }
@@ -132,6 +138,8 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     }
 
     func leave(quiet: Bool = false) {
+        wanted = false
+        interrupted = false
         if isJoined { leaving = true }
         queue.run { [self] in
             defer { leaving = false }
@@ -271,11 +279,30 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
 
     /// بعد مكالمة هاتفية قد ينقطع اتصال الصوت: نصلحه عند العودة للتطبيق
     func onForeground() {
+        if interrupted { resumeAfterCall(); return }
         guard isJoined, !isBusy else { return }
         if pc == nil || pc?.connectionState == .failed || pc?.connectionState == .closed { rejoin() }
     }
 
-    private func rejoin() {
+    private let callObserver = CXCallObserver()
+
+    /// خلصت المكالمة: نرجعك للمحادثة الصوتية (الميكروفون مقفل) — الصوت كله انقطع وقتها فنعيد الاتصال من جديد
+    private func resumeAfterCall() {
+        guard interrupted else { return }
+        if callObserver.calls.contains(where: { !$0.hasEnded }) { return }
+        interrupted = false
+        guard wanted, !leaving, tableId != nil else { return }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [self] in
+            guard wanted, !leaving else { return }
+            rejoin(force: true)
+            Announcer.announce("رجعت للمحادثة الصوتية، والميكروفون مغلق")
+        }
+    }
+
+    private func rejoin(force: Bool = false) {
+        // وسط مكالمة: ما نرجع الحين (كنا ناخذ الصوت من المكالمة)، ننتظر لين تخلص
+        if callObserver.calls.contains(where: { !$0.hasEnded }) { interrupted = true; return }
+        if force { interrupted = false }
         guard !rejoining, !leaving, let id = tableId else { return }
         rejoining = true
         DispatchQueue.main.async { self.reconnecting = true }
@@ -305,6 +332,15 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         super.init()
         NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
             self?.keepBluetooth()
+        }
+        // مكالمة قطعت الصوت: لما تخلص نرجعك للمحادثة الصوتية
+        NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] n in
+            guard let self, let raw = n.userInfo?[AVAudioSessionInterruptionTypeKey] as? UInt, let type = AVAudioSession.InterruptionType(rawValue: raw) else { return }
+            switch type {
+            case .began: if self.wanted { self.interrupted = true }
+            case .ended: self.resumeAfterCall()
+            @unknown default: break
+            }
         }
     }
 

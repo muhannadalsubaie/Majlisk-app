@@ -75,6 +75,10 @@ object Voice {
     private val pulled = HashMap<String, String>()
     private var members: List<VoiceMember> = emptyList()
     private var leaving = false
+    /** كنت في المحادثة وما طلعت منها بنفسك: لو قطعتها مكالمة نرجعك لها بعد المكالمة */
+    @Volatile private var wanted = false
+    /** مكالمة (أو تطبيق ثاني) أخذت الصوت منا: نرجع للمحادثة أول ما تخلص */
+    @Volatile private var interrupted = false
     private var rejoining = false
     private var autoRetries = 0
     private var missingJob: Job? = null
@@ -137,6 +141,7 @@ object Voice {
                     else runCatching { created.setLocalAwait(SessionDescription(SessionDescription.Type.ROLLBACK, "")) }
                     members = members.filter { it.uid != uid } + VoiceMember(uid, "", sessionId!!, muted = true, mic = false, blocked = false)
                     set { State(joined = true, muted = true, busy = false) }
+                    wanted = true
                     audio(true)
                     autoRetries = 0
                     if (mode != Mode.Rejoin) Announcer.announce("أنت في المحادثة الصوتية، والميكروفون مغلق")
@@ -164,6 +169,8 @@ object Voice {
     }
 
     fun leave(quiet: Boolean = false) {
+        wanted = false
+        interrupted = false
         if (_state.value.joined) leaving = true
         voiceScope.launch {
             lock.withLock {
@@ -311,15 +318,39 @@ object Voice {
 
     /** بعد مكالمة هاتفية قد ينقطع اتصال الصوت: نصلحه عند العودة للتطبيق */
     fun onResume() {
+        if (interrupted) { resumeAfterCall(); return }
         val s = _state.value
         if (!s.joined || s.busy) return
         val st = pc?.connectionState()
         if (pc == null || st == PeerConnection.PeerConnectionState.FAILED || st == PeerConnection.PeerConnectionState.CLOSED) rejoin()
     }
 
-    private fun rejoin() {
+    /** في مكالمة الحين: ما نرجع للمحادثة وسطها (كانت تاخذ الصوت من المكالمة)، ننتظر لين تخلص */
+    private fun inPhoneCall(): Boolean {
+        val m = (ctx.getSystemService(Context.AUDIO_SERVICE) as AudioManager).mode
+        return m == AudioManager.MODE_IN_CALL || m == AudioManager.MODE_RINGTONE || (m == AudioManager.MODE_IN_COMMUNICATION && !audioOn)
+    }
+
+    /** خلصت المكالمة: نرجعك للمحادثة الصوتية (الميكروفون مقفل) */
+    private fun resumeAfterCall() {
+        if (!interrupted) return
+        if (inPhoneCall()) return
+        interrupted = false
+        if (!wanted || leaving || tableId == null) return
+        voiceScope.launch {
+            // نعطي الجوال لحظة يرجع الصوت من المكالمة
+            delay(1200)
+            if (!wanted || leaving) return@launch
+            rejoin(force = true)
+            Announcer.announce("رجعت للمحادثة الصوتية، والميكروفون مغلق")
+        }
+    }
+
+    private fun rejoin(force: Boolean = false) {
         if (rejoining || leaving) return
+        if (inPhoneCall()) { interrupted = true; return }
         val id = tableId ?: return
+        if (force) interrupted = false
         rejoining = true
         set { copy(reconnecting = true) }
         voiceScope.launch {
@@ -458,7 +489,13 @@ object Voice {
                 focus = AudioFocusRequest.Builder(AudioManager.AUDIOFOCUS_GAIN)
                     .setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build())
                     .setWillPauseWhenDucked(true)
-                    .setOnAudioFocusChangeListener { }
+                    // مكالمة أخذت الصوت: نتذكر، ولما يرجع الصوت (أو ترجع للتطبيق) نرجعك للمحادثة
+                    .setOnAudioFocusChangeListener { change ->
+                        when (change) {
+                            AudioManager.AUDIOFOCUS_LOSS, AudioManager.AUDIOFOCUS_LOSS_TRANSIENT -> if (inPhoneCall()) interrupted = true
+                            AudioManager.AUDIOFOCUS_GAIN -> resumeAfterCall()
+                        }
+                    }
                     .build()
                     .also { am.requestAudioFocus(it) }
             }
