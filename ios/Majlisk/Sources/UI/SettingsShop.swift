@@ -7,7 +7,6 @@ struct SettingsScreen: View {
     let onBack: () -> Void
     @State private var muted = Prefs.muted
     @AppStorage("handStyle") private var handStyle = "fan"
-    @AppStorage("chatStyle") private var chatStyle = "inline"
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
@@ -29,9 +28,6 @@ struct SettingsScreen: View {
             // اختيارك أنت فقط ويتحفظ على جوالك
             SwitchRow(label: "مروحة (الأوراق فوق بعض)", isOn: handStyle == "fan", onChange: { if $0 { handStyle = "fan" } })
             SwitchRow(label: "كروت جنب بعض (مفصولة)", isOn: handStyle == "row", onChange: { if $0 { handStyle = "row" } })
-            SectionTitle("شكل الدردشة")
-            SwitchRow(label: "فقاعة", isOn: chatStyle == "bubble", onChange: { if $0 { chatStyle = "bubble" } })
-            SwitchRow(label: "على الشاشة مباشرة", isOn: chatStyle != "bubble", onChange: { if $0 { chatStyle = "inline" } })
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
             ForEach(ChatMode.allCases, id: \.self) { m in
