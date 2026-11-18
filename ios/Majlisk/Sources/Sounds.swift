@@ -23,7 +23,7 @@ final class Sounds {
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
-        "game-change", "domino-pass", "qaid-right", "qaid-wrong",
+        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last",
     ]
 
     func preload() {
@@ -102,7 +102,9 @@ final class Sounds {
 
     func dominoTile() { play("domino-tile", gain: 1) }
     /// الدومينو: لاعب جلا (ما عنده قطعة تصلح)
-    func dominoPass() { play("domino-pass", gain: 0.9, vary: false) }
+    func dominoPass() { play("domino-pass", gain: 1, vary: false) }
+    /// الدومينو: لاعب لعب القطعة اللي قبل الأخيرة (بقت معه قطعة وحدة)
+    func dominoLast(at: Double = 0) { play("domino-last", at: at, gain: 1, vary: false) }
     /// تغيّرت اللعبة داخل الطاولة
     func gameChange() { play("game-change", gain: 0.9, vary: false) }
     /// القيد: التسجيلة صحيحة أو غلط

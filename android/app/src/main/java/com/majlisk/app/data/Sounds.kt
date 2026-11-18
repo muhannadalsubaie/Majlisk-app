@@ -40,7 +40,7 @@ object Sounds {
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
-        "game-change", "domino-pass", "qaid-right", "qaid-wrong",
+        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last",
     ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -119,7 +119,9 @@ object Sounds {
 
     fun dominoTile() = play("domino-tile", gain = 1f)
     /** الدومينو: لاعب جلا (ما عنده قطعة تصلح) */
-    fun dominoPass() = play("domino-pass", gain = 0.9f, vary = false)
+    fun dominoPass() = play("domino-pass", gain = 1f, vary = false)
+    /** الدومينو: لاعب لعب القطعة اللي قبل الأخيرة (بقت معه قطعة وحدة) */
+    fun dominoLast(at: Double = 0.0) = play("domino-last", at = at, gain = 1f, vary = false)
     /** تغيّرت اللعبة داخل الطاولة */
     fun gameChange() = play("game-change", gain = 0.9f, vary = false)
     /** القيد: التسجيلة صحيحة أو غلط */

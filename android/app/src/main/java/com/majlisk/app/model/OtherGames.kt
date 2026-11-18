@@ -48,6 +48,8 @@ data class DominoView(
     val chooser: Int? = null,
     /** خياراتك لمن يبدأ (أنت أو شريكك) لو الاختيار لك */
     val starterOptions: List<Pair<Int, String>> = emptyList(),
+    /** صاحب آخر حركة (-1 لو ما فيه) */
+    val lastSeat: Int = -1,
 ) {
     companion object {
         fun parse(s: JSONObject, ui: JSONObject, log: org.json.JSONArray? = null): DominoView {
@@ -64,6 +66,7 @@ data class DominoView(
                 boneyard = s.optJSONArray("boneyard")?.length() ?: 0,
                 moveSig = "${s.opt("lastMove")}|${s.optString("phase")}|${s.optInt("handNo")}",
                 lastKind = s.optJSONObject("lastMove")?.optString("kind"),
+                lastSeat = s.optJSONObject("lastMove")?.optInt("seat", -1) ?: -1,
                 myTurn = ui.optBoolean("myTurn"),
                 canDraw = ui.optBoolean("canDraw"),
                 canPass = ui.optBoolean("canPass"),

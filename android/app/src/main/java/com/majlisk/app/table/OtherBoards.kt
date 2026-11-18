@@ -1364,6 +1364,8 @@ class OtherGameSounds {
                         !first && (d.lastKind == "play" || d.lastKind == "draw") -> { if (!(d.lastKind == "play" && Sounds.consumeLocal("domino"))) Sounds.dominoTile() }
                         !first && d.lastKind == "pass" -> Sounds.dominoPass()
                     }
+                    // لاعب بقت معه قطعة وحدة: صوت التنبيه بعد طقة القطعة
+                    if (!first && d.lastKind == "play" && d.phase == "playing" && d.handCounts.getOrNull(d.lastSeat) == 1) Sounds.dominoLast(0.25)
                     // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
                     if (!first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver")) Sounds.dominoEnd(0.5)
                 }

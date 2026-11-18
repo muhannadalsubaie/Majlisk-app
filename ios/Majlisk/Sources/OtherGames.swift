@@ -31,6 +31,8 @@ struct DominoView {
     let boneyard: Int
     let moveSig: String
     let lastKind: String?
+    /// صاحب آخر حركة (-1 لو ما فيه)
+    let lastSeat: Int
     var myTurn: Bool, canDraw: Bool, canPass: Bool
     var hand: [DominoHandTile]
     let ends: (left: Int, right: Int)?
@@ -54,6 +56,7 @@ struct DominoView {
         boneyard = s.arr("boneyard").count
         moveSig = jsonSig(s["lastMove"]) + "|\(s.str("phase"))|\(s.int("handNo"))"
         lastKind = s.obj("lastMove")?.str("kind")
+        lastSeat = s.obj("lastMove")?.int("seat", -1) ?? -1
         myTurn = ui.bool("myTurn"); canDraw = ui.bool("canDraw"); canPass = ui.bool("canPass")
         hand = ui.objs("hand").enumerated().map { i, h in
             DominoHandTile(id: i, tile: Tile(h.obj("tile")), label: h.str("label"), legal: h.bool("legal"), askSide: h.bool("askSide"))
