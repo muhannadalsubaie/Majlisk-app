@@ -54,7 +54,8 @@ struct DominoView {
         line = s.objs("line").map { PlacedTile(tile: Tile($0.obj("tile")), seat: $0.int("seat"), outer: $0.int("outer"), side: $0.str("side")) }
         handCounts = s.arr("hands").map { ($0 as? [Any])?.count ?? 0 }
         boneyard = s.arr("boneyard").count
-        moveSig = jsonSig(s["lastMove"]) + "|\(s.str("phase"))|\(s.int("handNo"))"
+        // عدد البنك داخل البصمة: كل سحبة تتغير فيها (لو سحب نفس اللاعب مرتين ورا بعض يطلع الصوت كل مرة)
+        moveSig = jsonSig(s["lastMove"]) + "|\(s.str("phase"))|\(s.int("handNo"))|\(s.arr("boneyard").count)"
         lastKind = s.obj("lastMove")?.str("kind")
         lastSeat = s.obj("lastMove")?.int("seat", -1) ?? -1
         myTurn = ui.bool("myTurn"); canDraw = ui.bool("canDraw"); canPass = ui.bool("canPass")

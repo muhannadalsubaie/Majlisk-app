@@ -64,7 +64,8 @@ data class DominoView(
                 line = s.optJSONArray("line").objects().map { PlacedTile(tile(it.optJSONObject("tile")), it.optInt("seat"), it.optInt("outer"), it.optString("side")) },
                 handCounts = s.optJSONArray("hands").mapIndexed { a, i -> a.optJSONArray(i)?.length() ?: 0 },
                 boneyard = s.optJSONArray("boneyard")?.length() ?: 0,
-                moveSig = "${s.opt("lastMove")}|${s.optString("phase")}|${s.optInt("handNo")}",
+                // عدد البنك داخل البصمة: كل سحبة تتغير فيها (لو سحب نفس اللاعب مرتين ورا بعض يطلع الصوت كل مرة)
+                moveSig = "${s.opt("lastMove")}|${s.optString("phase")}|${s.optInt("handNo")}|${s.optJSONArray("boneyard")?.length() ?: 0}",
                 lastKind = s.optJSONObject("lastMove")?.optString("kind"),
                 lastSeat = s.optJSONObject("lastMove")?.optInt("seat", -1) ?: -1,
                 myTurn = ui.optBoolean("myTurn"),
