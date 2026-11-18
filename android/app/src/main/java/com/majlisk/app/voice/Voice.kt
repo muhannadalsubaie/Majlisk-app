@@ -352,6 +352,35 @@ object Voice {
 
     private var focus: AudioFocusRequest? = null
     private var savedMode = AudioManager.MODE_NORMAL
+    /** صوت المكالمات قبل المحادثة، وكم رفعناه (نرجعه لما تطلع إذا ما غيّرته أنت) */
+    private var savedCallVolume = -1
+    private var raisedCallVolume = -1
+
+    /** أصوات اللعبة تنتقل لقناة المكالمات وقت المحادثة، وصوت المكالمات غالباً أوطى من صوت الوسائط:
+     *  نرفعه لنفس نسبة صوت الوسائط، فما تضعف المؤثرات أول ما تدخل الطاولة */
+    private fun matchCallVolume(am: AudioManager) {
+        if (raisedCallVolume >= 0) return
+        runCatching {
+            val call = AudioManager.STREAM_VOICE_CALL
+            val ratio = am.getStreamVolume(AudioManager.STREAM_MUSIC).toFloat() / am.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            val target = kotlin.math.ceil(ratio * am.getStreamMaxVolume(call)).toInt()
+            val now = am.getStreamVolume(call)
+            if (target > now) {
+                am.setStreamVolume(call, target, 0)
+                savedCallVolume = now
+                raisedCallVolume = am.getStreamVolume(call)
+            }
+        }
+    }
+
+    private fun restoreCallVolume(am: AudioManager) {
+        runCatching {
+            if (savedCallVolume >= 0 && am.getStreamVolume(AudioManager.STREAM_VOICE_CALL) == raisedCallVolume)
+                am.setStreamVolume(AudioManager.STREAM_VOICE_CALL, savedCallVolume, 0)
+        }
+        savedCallVolume = -1
+        raisedCallVolume = -1
+    }
 
     /**
      * أثناء المحادثة: إذا فيه سماعة موصولة (سلكية أو USB أو بلوتوث) يطلع الصوت منها،
@@ -370,6 +399,7 @@ object Voice {
             return
         }
         Sounds.callMode(true)
+        matchCallVolume(am)
         // وضع المكالمات طول المحادثة: إلغاء الصدى في الجوال يشتغل صح (في الوضع العادي كان يرجع صدى الأصوات)،
         // وأصوات اللعبة على نفس القناة (انظر Sounds.callMode) فكلها بنفس المستوى ويتحكم فيها نفس زر الصوت
         am.mode = AudioManager.MODE_IN_COMMUNICATION
@@ -443,6 +473,7 @@ object Voice {
                 am.isSpeakerphoneOn = false
             }
             am.mode = savedMode
+            restoreCallVolume(am)
             if (Build.VERSION.SDK_INT >= 26) focus?.let { am.abandonAudioFocusRequest(it) }
             focus = null
         }
