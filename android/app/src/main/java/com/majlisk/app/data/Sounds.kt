@@ -180,7 +180,7 @@ object Sounds {
     }
 
     fun handEnd(result: String, kaboot: Boolean) {
-        if (kaboot && result != "lose") {
+        if (kaboot) {
             // الكبوت: زجاج يتكسر
             play("kaboot", gain = 1f, vary = false)
             return

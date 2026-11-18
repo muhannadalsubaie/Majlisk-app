@@ -173,7 +173,7 @@ final class Sounds {
     }
 
     func handEnd(_ result: String, kaboot: Bool) {
-        if kaboot && result != "lose" {
+        if kaboot {
             // الكبوت: زجاج يتكسر
             play("kaboot", gain: 1, vary: false)
             return
