@@ -545,7 +545,7 @@ final class TableConnection: ObservableObject {
             // المزايدة والدبل: التعليق الصوتي يبيّن وش اشترى أو قال، فقارئ الشاشة ما يقرأ نصها
             // (يقول بس «دور فلان» مع تغيّر الدور)، ويبقى ما سواها مثل «ورقة الأرض لفلان»
             let spoken = voices.isEmpty ? events : events.filter { !isBidLine($0) }
-            if !spoken.isEmpty { Announcer.announceEvent(spoken.joined(separator: "، ")) }
+            if !spoken.isEmpty { Announcer.announceEvent(spoken.joined(separator: "، "), urgent: view?.ludo != nil) }
         case "joinRequest":
             let r = JoinRequest(uid: msg.str("uid"), name: msg.str("name"))
             DispatchQueue.main.async {

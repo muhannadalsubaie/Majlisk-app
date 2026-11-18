@@ -65,8 +65,20 @@ object Announcer {
     fun interruptNextEvents() { interruptUntil = System.currentTimeMillis() + 30_000 }
 
     /** إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد */
-    fun announceEvent(text: String) {
-        if (System.currentTimeMillis() < interruptUntil) { interruptUntil = 0; announceNow(text) } else announce(text)
+    fun announceEvent(text: String, urgent: Boolean = false) {
+        if (System.currentTimeMillis() < interruptUntil) { interruptUntil = 0; announceNow(text); return }
+        if (!urgent) { announce(text); return }
+        // اللودو: الإعلان ما ينتظر قراءة TalkBack لعنصر تغيّر نصه (صف اللاعب، أو زر اختفى فانتقل المؤشر)،
+        // يقطعها ويُقرأ على طول — إلا لو إعلاناتنا نفسها لسا تُقرأ فينتظر دوره (ما يقطع بعضها)
+        if (text.isBlank()) return
+        val t = com.majlisk.app.i18n.tr(text)
+        main.post {
+            if (queue.isNotEmpty() || System.currentTimeMillis() < busyUntil) { queue.addLast(t); if (!scheduled) pump(); return@post }
+            runCatching { manager?.takeIf { it.isEnabled }?.interrupt() }
+            busyUntil = System.currentTimeMillis() + readTime(t)
+            @Suppress("DEPRECATION")
+            view.get()?.announceForAccessibility(com.majlisk.app.i18n.spoken(t))
+        }
     }
 
     /**

@@ -329,7 +329,7 @@ class TableConnection(val tableId: String) {
                 // المزايدة والدبل: التعليق الصوتي يبيّن وش اشترى أو قال، فقارئ الشاشة ما يقرأ نصها
                 // (يقول بس «دور فلان» مع تغيّر الدور)، ويبقى ما سواها مثل «ورقة الأرض لفلان»
                 val spoken = if (voices.isEmpty()) events else events.filterNot { e -> BID_LINE.any { it.matches(e) } }
-                if (spoken.isNotEmpty()) Announcer.announceEvent(spoken.joinToString("، "))
+                if (spoken.isNotEmpty()) Announcer.announceEvent(spoken.joinToString("، "), urgent = _view.value?.ludo != null)
             }
             "joinRequest" -> scope.launch {
                 val name = msg.optString("name")

@@ -34,6 +34,9 @@ enum Announcer {
         }
     }
 
+    /// اللودو: الإعلان يقطع قراءة VoiceOver لعنصر تغيّر (ما ينتظره)، بس ما يقطع إعلاناتنا نفسها
+    private static var urgentQueue = false
+
     private static func post(_ text: String, queued: Bool) {
         current = text
         busyUntil = Date().addingTimeInterval(readTime(text))
@@ -50,7 +53,8 @@ enum Announcer {
         listen()
         guard current == nil, Date() >= busyUntil, !queue.isEmpty else { return }
         retries = 0
-        post(queue.removeFirst(), queued: true)
+        // إعلاناتنا ما تقطع بعضها (ننتظر انتهاء اللي قبله بأنفسنا)، فاللودو يُرسل بدون «انتظر دورك» عند VoiceOver
+        post(queue.removeFirst(), queued: !urgentQueue)
     }
 
     /// يُقرأ بعد ما يخلص اللي قبله (ما يقطعه)
@@ -71,8 +75,9 @@ enum Announcer {
     static func interruptNextEvents() { interruptUntil = Date().addingTimeInterval(30) }
 
     /// إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد
-    static func announceEvent(_ text: String) {
+    static func announceEvent(_ text: String, urgent: Bool = false) {
         DispatchQueue.main.async {
+            urgentQueue = urgent
             if Date() < interruptUntil { interruptUntil = .distantPast; announceNow(text) } else { announce(text) }
         }
     }
