@@ -23,7 +23,7 @@ final class Sounds {
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
-        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last",
+        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw",
     ]
 
     func preload() {
@@ -102,6 +102,8 @@ final class Sounds {
 
     func dominoTile() { play("domino-tile", gain: 1) }
     /// الدومينو: لاعب جلا (ما عنده قطعة تصلح)
+    /// الدومينو: سحب حجر من البنك
+    func dominoDraw() { play("domino-draw", gain: 1) }
     func dominoPass() { play("domino-pass", gain: 1, vary: false) }
     /// الدومينو: لاعب لعب القطعة اللي قبل الأخيرة (بقت معه قطعة وحدة)
     func dominoLast(at: Double = 0) { play("domino-last", at: at, gain: 1, vary: false) }
@@ -172,8 +174,8 @@ final class Sounds {
 
     func handEnd(_ result: String, kaboot: Bool) {
         if kaboot && result != "lose" {
-            play("kaboot", gain: 0.8, vary: false)
-            for (i, n) in ["chips3", "chips4", "chips5", "chips6", "collide2", "collide3"].enumerated() { play(n, at: 0.1 + Double(i) * 0.11, gain: 0.85) }
+            // الكبوت: زجاج يتكسر
+            play("kaboot", gain: 1, vary: false)
             return
         }
         // نهاية كل جولة: صوت هادئ (أجراس صغيرة)

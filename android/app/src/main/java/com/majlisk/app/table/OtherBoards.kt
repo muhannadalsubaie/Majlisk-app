@@ -1361,7 +1361,8 @@ class OtherGameSounds {
                     when {
                         (first && d.line.isEmpty() && d.phase == "playing") || (phase != null && phase != "playing" && d.phase == "playing") -> Sounds.dominoShuffle()
                         // لعبت قطعتك (لعب فوري): صوتها طلع وقت الضغط
-                        !first && (d.lastKind == "play" || d.lastKind == "draw") -> { if (!(d.lastKind == "play" && Sounds.consumeLocal("domino"))) Sounds.dominoTile() }
+                        !first && d.lastKind == "draw" -> Sounds.dominoDraw()
+                        !first && d.lastKind == "play" -> { if (!Sounds.consumeLocal("domino")) Sounds.dominoTile() }
                         !first && d.lastKind == "pass" -> Sounds.dominoPass()
                     }
                     // لاعب بقت معه قطعة وحدة: صوت التنبيه بعد طقة القطعة

@@ -40,7 +40,7 @@ object Sounds {
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
-        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last",
+        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw",
     ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -119,6 +119,8 @@ object Sounds {
 
     fun dominoTile() = play("domino-tile", gain = 1f)
     /** الدومينو: لاعب جلا (ما عنده قطعة تصلح) */
+    /** الدومينو: سحب حجر من البنك */
+    fun dominoDraw() = play("domino-draw", gain = 1f)
     fun dominoPass() = play("domino-pass", gain = 1f, vary = false)
     /** الدومينو: لاعب لعب القطعة اللي قبل الأخيرة (بقت معه قطعة وحدة) */
     fun dominoLast(at: Double = 0.0) = play("domino-last", at = at, gain = 1f, vary = false)
@@ -179,8 +181,8 @@ object Sounds {
 
     fun handEnd(result: String, kaboot: Boolean) {
         if (kaboot && result != "lose") {
-            play("kaboot", gain = 0.8f, vary = false)
-            listOf("chips3", "chips4", "chips5", "chips6", "collide2", "collide3").forEachIndexed { i, n -> play(n, at = 0.1 + i * 0.11, gain = 0.85f) }
+            // الكبوت: زجاج يتكسر
+            play("kaboot", gain = 1f, vary = false)
             return
         }
         // نهاية كل جولة: صوت هادئ (أجراس صغيرة)

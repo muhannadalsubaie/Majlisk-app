@@ -1476,9 +1476,10 @@ final class OtherGameSounds {
             if let d {
                 // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
                 if (first && d.line.isEmpty && d.phase == "playing") || (phase != nil && phase != "playing" && d.phase == "playing") { s.dominoShuffle() }
-                else if !first && (d.lastKind == "play" || d.lastKind == "draw") {
+                else if !first && d.lastKind == "draw" { s.dominoDraw() }
+                else if !first && d.lastKind == "play" {
                     // لعبت قطعتك (لعب فوري): صوتها طلع وقت الضغط
-                    if !(d.lastKind == "play" && s.consumeLocal("domino")) { s.dominoTile() }
+                    if !s.consumeLocal("domino") { s.dominoTile() }
                 }
                 else if !first && d.lastKind == "pass" { s.dominoPass() }
                 // لاعب بقت معه قطعة وحدة: صوت التنبيه بعد طقة القطعة
