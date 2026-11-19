@@ -226,7 +226,7 @@ class TableConnection(val tableId: String) {
                             _connected.value = true; retry = 0
                             webSocket.send(org.json.JSONObject().put("type", "chatPref").put("off", ChatSettings.mode.value == ChatMode.OFF).toString())
                             // z: حالة الطاولة توصل مضغوطة (أصغر بثلاث لأربع مرات، أسرع على النت الضعيف)
-                            webSocket.send("{\"type\":\"caps\",\"voice\":true,\"z\":true}")
+                            webSocket.send("{\"type\":\"caps\",\"voice\":true,\"z\":true,\"lock\":true}")
                             // حركات انرسلت والاتصال ميت (ضاعت): نعيد إرسالها بالترتيب مع الاتصال الجديد.
                             // كل حركة لها رقم (mid): لو كانت وصلت الخادم قبل، يتجاهلها ويرد بالحالة بس (ما تنحسب مرتين)
                             val now = System.currentTimeMillis()

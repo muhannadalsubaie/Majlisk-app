@@ -433,7 +433,7 @@ final class TableConnection: ObservableObject {
                     ws.resume()
                     ws.send(.string(self.chatPrefMessage())) { _ in }
                     // z: حالة الطاولة توصل مضغوطة (أصغر بثلاث لأربع مرات، أسرع على النت الضعيف)
-                    ws.send(.string("{\"type\":\"caps\",\"voice\":true,\"z\":true}")) { _ in }
+                    ws.send(.string("{\"type\":\"caps\",\"voice\":true,\"z\":true,\"lock\":true}")) { _ in }
                     // حركات انرسلت والاتصال ميت (ضاعت): نعيد إرسالها بالترتيب مع الاتصال الجديد.
                     // كل حركة لها رقم (mid): لو كانت وصلت الخادم قبل، يتجاهلها ويرد بالحالة بس (ما تنحسب مرتين)
                     await MainActor.run {
