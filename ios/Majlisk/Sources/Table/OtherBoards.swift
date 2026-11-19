@@ -1086,6 +1086,46 @@ struct LudoBoard: View {
         }
     }
 
+    /// نافذة فوق اللوحة: الفوز (ولعبة جديدة للمالك)، أو اختيار الحجر لقارئ الشاشة
+    @ViewBuilder private func ludoPopup(names: [String], mySeat: Int?) -> some View {
+        let shape = RoundedRectangle(cornerRadius: 18)
+        if l.phase == "over" {
+            let w = l.winner ?? 0
+            let won = l.winner != nil && mySeat != nil && (l.teams ? l.winner == mySeat! % 2 : l.winner == mySeat)
+            VStack(spacing: 10) {
+                Text(trSpoken(won ? "🎉 فزت!" : l.teams ? "فاز فريق \(names[w]) و\(names[(w + 2) % 4])" : "فاز \(w < names.count ? names[w] : "")"))
+                    .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
+                if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .frame(maxWidth: 300)
+            .background(shape.fill(Color(red: 0.04, green: 0.10, blue: 0.08).opacity(0.93)))
+            .overlay(shape.stroke(Palette.gold, lineWidth: 1.5))
+        } else if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
+            // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+            let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
+            let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
+            VStack(spacing: 8) {
+                Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+                if dice.count > 1 {
+                    HStack(spacing: 6) {
+                        ForEach(dice, id: \.self) { d in
+                            SmallButton(die == d ? "✓ \(d)" : "\(d)", primary: die == d, label: "بالـ\(d)\(die == d ? "، محدد" : "")") { pickedDie = d }
+                        }
+                    }
+                }
+                HStack(spacing: 6) {
+                    ForEach(l.options.filter { $0.die == die }) { o in
+                        SmallButton("حجر \(o.token + 1)", primary: true, label: o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
+                    }
+                }
+            }
+            .padding(.horizontal, 16).padding(.vertical, 12)
+            .background(shape.fill(Color(red: 0.04, green: 0.10, blue: 0.08).opacity(0.93)))
+            .overlay(shape.stroke(Palette.gold, lineWidth: 1.5))
+        }
+    }
+
     @ViewBuilder private func cornerRow(top: Bool, names: [String], mySeat: Int?, partner: Int) -> some View {
         let here = l.seats.filter { corner($0, mySeat).top == top }
         if !here.isEmpty {
@@ -1154,37 +1194,9 @@ struct LudoBoard: View {
             })
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
+            // فوق اللوحة (نافذة منبثقة): الفوز، واختيارات قارئ الشاشة — ما تغيّر طول الشاشة ولا تحركها
+            .overlay { ludoPopup(names: names, mySeat: mySeat) }
             cornerRow(top: false, names: names, mySeat: mySeat, partner: partner)
-            if l.phase == "over" {
-                let w = l.winner ?? 0
-                let won = l.winner != nil && mySeat != nil && (l.teams ? l.winner == mySeat! % 2 : l.winner == mySeat)
-                Text(trSpoken(won ? "🎉 فزت!" : l.teams ? "فاز فريق \(names[w]) و\(names[(w + 2) % 4])" : "فاز \(w < names.count ? names[w] : "")"))
-                    .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
-                if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
-            } else {
-                // زر «ارمِ النرد» انشال: الرمي بالضغط على النرد نفسه (أو على اسمك مع VoiceOver، أو بالسحب)
-                EmptyView()
-            }
-            // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
-            if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
-                Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
-                // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
-                // أزرار صغيرة جنب بعض: فوق الأرقام (لو عندك أكثر من رقم)، وتحتها الأحجار
-                let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
-                let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
-                if dice.count > 1 {
-                    HStack(spacing: 6) {
-                        ForEach(dice, id: \.self) { d in
-                            SmallButton(die == d ? "✓ \(d)" : "\(d)", primary: die == d, label: "بالـ\(d)\(die == d ? "، محدد" : "")") { pickedDie = d }
-                        }
-                    }
-                }
-                HStack(spacing: 6) {
-                    ForEach(l.options.filter { $0.die == die }) { o in
-                        SmallButton("حجر \(o.token + 1)", primary: true, label: o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
-                    }
-                }
-            }
         }
         .onAppear { Gestures.shared.set("ludo") { read($0) }; noteRoll() }
         .onDisappear { Gestures.shared.clear("ludo") }

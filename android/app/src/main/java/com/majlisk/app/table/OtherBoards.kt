@@ -1061,6 +1061,8 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
         }
         cornerRow(true)
         // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
+        // فوق اللوحة (نافذة منبثقة): الفوز، واختيارات قارئ الشاشة — ما تغيّر طول الشاشة ولا تحركها
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Box(
             Modifier.fillMaxWidth().clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
@@ -1078,34 +1080,40 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 drawLudo(shown, mySeat ?: 0, movable, hops, clock)
             }
         }
+            val card = Modifier
+                .background(Color(0xEE0B1A14), RoundedCornerShape(18.dp))
+                .border(1.5.dp, Palette.gold, RoundedCornerShape(18.dp))
+                .padding(horizontal = 16.dp, vertical = 12.dp)
+            if (l.phase == "over") {
+                val won = l.winner != null && mySeat != null && (if (l.teams) l.winner == mySeat % 2 else l.winner == mySeat)
+                val w = l.winner ?: 0
+                Column(card.widthIn(max = 300.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(if (won) "🎉 فزت!" else if (l.teams) "فاز فريق ${names[w]} و${names[w + 2]}" else "فاز ${names.getOrElse(w) { "" }}",
+                        color = Palette.goldSoft, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
+                }
+            }
+            // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)، فوق اللوحة بدل ما تنزّل الشاشة
+            if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
+                Column(card, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+                    // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+                    val dice = l.options.map { it.die }.distinct()
+                    val die = pickedDie?.takeIf { it in dice } ?: dice.firstOrNull()
+                    if (dice.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        dice.forEach { d ->
+                            com.majlisk.app.ui.SmallButton(if (die == d) "✓ $d" else "$d", { pickedDie = d }, primary = die == d, description = "بالـ$d${if (die == d) "، محدد" else ""}")
+                        }
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        l.options.filter { it.die == die }.forEach { o ->
+                            com.majlisk.app.ui.SmallButton("حجر ${o.token + 1}", { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, primary = true, description = o.text)
+                        }
+                    }
+                }
+            }
+        }
         cornerRow(false)
-        if (l.phase == "over") {
-            val won = l.winner != null && mySeat != null && (if (l.teams) l.winner == mySeat % 2 else l.winner == mySeat)
-            val w = l.winner ?: 0
-            Text(if (won) "🎉 فزت!" else if (l.teams) "فاز فريق ${names[w]} و${names[w + 2]}" else "فاز ${names.getOrElse(w) { "" }}",
-                color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
-        } else {
-            // زر «ارمِ النرد» انشال: الرمي بالضغط على النرد نفسه (أو سحب إصبعين لليمين مع قارئ الشاشة)
-        }
-        // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)
-        if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
-            Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
-            // أزرار صغيرة جنب بعض: فوق الأرقام (لو عندك أكثر من رقم)، وتحتها الأحجار
-            val dice = l.options.map { it.die }.distinct()
-            val die = pickedDie?.takeIf { it in dice } ?: dice.firstOrNull()
-            if (dice.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                dice.forEach { d ->
-                    com.majlisk.app.ui.SmallButton(if (die == d) "✓ $d" else "$d", { pickedDie = d }, primary = die == d, description = "بالـ$d${if (die == d) "، محدد" else ""}")
-                }
-            }
-            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                l.options.filter { it.die == die }.forEach { o ->
-                    com.majlisk.app.ui.SmallButton("حجر ${o.token + 1}", { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, primary = true, description = o.text)
-                }
-            }
-        }
     }
 }
 
