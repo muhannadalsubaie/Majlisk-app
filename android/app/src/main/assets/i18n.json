@@ -6202,5 +6202,85 @@
  "مستوى صوت المؤثرات: {0}%": {
   "en": "Sound effects volume: {0}%",
   "fr": "Volume des effets sonores : {0}%"
+ },
+ "قفلة": {
+  "en": "Lock",
+  "fr": "Blocage"
+ },
+ "قفلة معلنة": {
+  "en": "Lock called",
+  "fr": "Blocage annoncé"
+ },
+ "قفلة دبل معلنة": {
+  "en": "Double lock called",
+  "fr": "Double blocage annoncé"
+ },
+ "قفلة: عادي أو دبل؟": {
+  "en": "Lock: normal or double?",
+  "fr": "Blocage : normal ou double ?"
+ },
+ "قفلة عادي": {
+  "en": "Normal lock",
+  "fr": "Blocage normal"
+ },
+ "قفلة دبل": {
+  "en": "Double lock",
+  "fr": "Double blocage"
+ },
+ "أعلنت القفلة، العب حجرك": {
+  "en": "You called the lock, play your tile",
+  "fr": "Vous avez annoncé le blocage, jouez votre domino"
+ },
+ "القفلة بس في دورك": {
+  "en": "You can call the lock only on your turn",
+  "fr": "Vous ne pouvez annoncer le blocage qu’à votre tour"
+ },
+ "ما تقدر تعلن قفلة الحين": {
+  "en": "You can’t call a lock now",
+  "fr": "Vous ne pouvez pas annoncer de blocage maintenant"
+ },
+ "{0} أعلن قفلة": {
+  "en": "{0} called a lock",
+  "fr": "{0} a annoncé un blocage"
+ },
+ "{0} أعلن قفلة دبل": {
+  "en": "{0} called a double lock",
+  "fr": "{0} a annoncé un double blocage"
+ },
+ "قفلة صحيحة من {0}، الأقل {1}": {
+  "en": "Correct lock by {0}, lowest: {1}",
+  "fr": "Blocage correct de {0}, le plus bas : {1}"
+ },
+ "قفلة دبل صحيحة من {0}، الأقل {1}": {
+  "en": "Correct double lock by {0}, lowest: {1}",
+  "fr": "Double blocage correct de {0}, le plus bas : {1}"
+ },
+ "قفلة صحيحة من {0}، تعادل الأقل فما انحسبت لأحد": {
+  "en": "Correct lock by {0}, tie for lowest: no points",
+  "fr": "Blocage correct de {0}, égalité : aucun point"
+ },
+ "قفلة دبل صحيحة من {0}، تعادل الأقل فما انحسبت لأحد": {
+  "en": "Correct double lock by {0}, tie for lowest: no points",
+  "fr": "Double blocage correct de {0}, égalité : aucun point"
+ },
+ "قفلة غلط من {0}، عليه 25": {
+  "en": "Wrong lock by {0}, 25 against him",
+  "fr": "Blocage erroné de {0}, 25 contre lui"
+ },
+ "قفلة دبل غلط من {0}، عليه 50": {
+  "en": "Wrong double lock by {0}, 50 against him",
+  "fr": "Double blocage erroné de {0}, 50 contre lui"
+ },
+ "قفلة غشيم من {0}، عليه 25": {
+  "en": "Careless lock by {0}, 25 against him",
+  "fr": "Blocage naïf de {0}, 25 contre lui"
+ },
+ "قفلة معلنة من {0}": {
+  "en": "Lock called by {0}",
+  "fr": "Blocage annoncé par {0}"
+ },
+ "قفلة دبل معلنة من {0}": {
+  "en": "Double lock called by {0}",
+  "fr": "Double blocage annoncé par {0}"
  }
 }

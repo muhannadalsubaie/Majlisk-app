@@ -453,6 +453,7 @@ struct DominoHand: View {
     let d: DominoView
     let conn: TableConnection
     @State private var chooseSide: DominoHandTile?
+    @State private var lockAsk = false
 
     private func act(_ a: JSON) { conn.send(["type": "domino", "action": a]) }
 
@@ -468,10 +469,17 @@ struct DominoHand: View {
                                 MButton(o.text, .primary) { act(["type": "starter", "starter": o.seat]) }
                             }
                         }
-                    } else if d.myTurn && (d.canDraw || d.canPass) {
+                    } else if d.phase == "playing" {
                         HStack(spacing: 8) {
-                            if d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
-                            if d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
+                            // زر «قفلة» ثابت طول اللعب: تعلنها في دورك قبل ما تلعب الحجر اللي يسدّ (عادي أو دبل)، وما تنلغي
+                            MButton(d.myLockCall == "double" ? "قفلة دبل معلنة" : d.myLockCall == "normal" ? "قفلة معلنة" : "قفلة") {
+                                if d.myLockCall != nil { Announcer.announceNow("أعلنت القفلة، العب حجرك") }
+                                else if d.canLock { lockAsk = true }
+                                else if !d.myTurn { Announcer.announceNow("القفلة بس في دورك") }
+                                else { Announcer.announceNow(d.lockText.isEmpty ? "ما تقدر تعلن قفلة الحين" : d.lockText) }
+                            }
+                            if d.myTurn && d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
+                            if d.myTurn && d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
                         }
                     }
                 }
@@ -490,6 +498,13 @@ struct DominoHand: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(spokenText(h.label))
+                }
+            }
+            .sheet(isPresented: $lockAsk) {
+                Sheet(title: "قفلة: عادي أو دبل؟") {
+                    MButton("قفلة عادي", .primary) { lockAsk = false; act(["type": "lock", "double": false]) }
+                    MButton("قفلة دبل", .primary) { lockAsk = false; act(["type": "lock", "double": true]) }
+                    MButton("إلغاء") { lockAsk = false }
                 }
             }
             .sheet(item: $chooseSide) { h in

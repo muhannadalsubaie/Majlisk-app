@@ -33,6 +33,10 @@ struct DominoView {
     let lastKind: String?
     /// صاحب آخر حركة (-1 لو ما فيه)
     let lastSeat: Int
+    /// زر «قفلة»: تقدر تعلنها الحين، وهل أعلنتها (normal / double)، ونص القفلة القائمة
+    let canLock: Bool
+    let myLockCall: String?
+    let lockText: String
     var myTurn: Bool, canDraw: Bool, canPass: Bool
     var hand: [DominoHandTile]
     let ends: (left: Int, right: Int)?
@@ -58,6 +62,9 @@ struct DominoView {
         moveSig = jsonSig(s["lastMove"]) + "|\(s.str("phase"))|\(s.int("handNo"))|\(s.arr("boneyard").count)"
         lastKind = s.obj("lastMove")?.str("kind")
         lastSeat = s.obj("lastMove")?.int("seat", -1) ?? -1
+        canLock = ui.bool("canLock")
+        myLockCall = ui["myLockCall"] as? String
+        lockText = ui.str("lockText")
         myTurn = ui.bool("myTurn"); canDraw = ui.bool("canDraw"); canPass = ui.bool("canPass")
         hand = ui.objs("hand").enumerated().map { i, h in
             DominoHandTile(id: i, tile: Tile(h.obj("tile")), label: h.str("label"), legal: h.bool("legal"), askSide: h.bool("askSide"))

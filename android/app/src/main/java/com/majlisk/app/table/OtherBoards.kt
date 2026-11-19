@@ -413,6 +413,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
 fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -> Unit) {
     if (v.mySeat == null) return
     var chooseSide by remember { mutableStateOf<DominoHandTile?>(null) }
+    var lockAsk by remember { mutableStateOf(false) }
     // الإيماءات مسجّلة من لوحة الدومينو، وتشتغل في أي مكان في الشاشة
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         // مكان محجوز دائماً للأزرار (من يبدأ، أو السحب والجلا): تطلع وتختفي والشاشة ما تتحرك
@@ -424,10 +425,20 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                         PrimaryButton(text, { act(conn, "domino", jsonOf("type" to "starter", "starter" to seat)) }, modifier = Modifier.weight(1f))
                     }
                 }
-            } else if (d.myTurn && (d.canDraw || d.canPass)) {
+            } else if (d.phase == "playing") {
                 Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    if (d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
-                    if (d.canPass) PrimaryButton("جلا", { dominoJala(conn, d) }, modifier = Modifier.weight(1f))
+                    // زر «قفلة» ثابت طول اللعب: تعلنها في دورك قبل ما تلعب الحجر اللي يسدّ (عادي أو دبل)، وما تنلغي
+                    val lockLabel = when (d.myLockCall) { "double" -> "قفلة دبل معلنة"; "normal" -> "قفلة معلنة"; else -> "قفلة" }
+                    SecondaryButton(lockLabel, {
+                        when {
+                            d.myLockCall != null -> Announcer.announceNow("أعلنت القفلة، العب حجرك")
+                            d.canLock -> lockAsk = true
+                            !d.myTurn -> Announcer.announceNow("القفلة بس في دورك")
+                            else -> Announcer.announceNow(d.lockText.ifEmpty { "ما تقدر تعلن قفلة الحين" })
+                        }
+                    }, modifier = Modifier.weight(1f), fill = true)
+                    if (d.myTurn && d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
+                    if (d.myTurn && d.canPass) PrimaryButton("جلا", { dominoJala(conn, d) }, modifier = Modifier.weight(1f))
                 }
             }
         }
@@ -449,6 +460,14 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                         .padding(4.dp),
                 ) { DominoTileView(h.tile, vertical = true, unit = 24f * com.majlisk.app.data.Look.tileScale, dim = d.myTurn && !h.legal) }
             }
+        }
+    }
+
+    if (lockAsk) {
+        MajliskDialog("قفلة: عادي أو دبل؟", { lockAsk = false }) {
+            PrimaryButton("قفلة عادي", { lockAsk = false; act(conn, "domino", jsonOf("type" to "lock", "double" to false)) })
+            PrimaryButton("قفلة دبل", { lockAsk = false; act(conn, "domino", jsonOf("type" to "lock", "double" to true)) })
+            SecondaryButton("إلغاء", { lockAsk = false }, fill = true)
         }
     }
 

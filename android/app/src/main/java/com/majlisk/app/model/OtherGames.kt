@@ -50,6 +50,10 @@ data class DominoView(
     val starterOptions: List<Pair<Int, String>> = emptyList(),
     /** صاحب آخر حركة (-1 لو ما فيه) */
     val lastSeat: Int = -1,
+    /** زر «قفلة»: تقدر تعلنها الحين، وهل أعلنتها (normal / double)، ونص القفلة القائمة */
+    val canLock: Boolean = false,
+    val myLockCall: String? = null,
+    val lockText: String = "",
 ) {
     companion object {
         fun parse(s: JSONObject, ui: JSONObject, log: org.json.JSONArray? = null): DominoView {
@@ -68,6 +72,9 @@ data class DominoView(
                 moveSig = "${s.opt("lastMove")}|${s.optString("phase")}|${s.optInt("handNo")}|${s.optJSONArray("boneyard")?.length() ?: 0}",
                 lastKind = s.optJSONObject("lastMove")?.optString("kind"),
                 lastSeat = s.optJSONObject("lastMove")?.optInt("seat", -1) ?: -1,
+                canLock = ui.optBoolean("canLock"),
+                myLockCall = ui.optString("myLockCall").takeIf { it.isNotEmpty() && it != "null" },
+                lockText = ui.optString("lockText"),
                 myTurn = ui.optBoolean("myTurn"),
                 canDraw = ui.optBoolean("canDraw"),
                 canPass = ui.optBoolean("canPass"),
