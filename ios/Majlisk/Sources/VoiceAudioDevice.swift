@@ -306,11 +306,7 @@ final class EffectMixer {
         return arr
     }
 
-    /// صوت المحادثة أوطى من صوت الوسائط: نرفع المؤثرات داخلها عشان ما تضعف وقت المحادثة
-    static let boost: Float = 2.4
-
     func play(_ name: String, url: URL, gain: Float) {
-        let gain = gain * EffectMixer.boost
         work.async {
             guard let s = self.samples(name, url) else { return }
             self.lock.lock()
@@ -326,16 +322,6 @@ final class EffectMixer {
         lock.unlock()
     }
 
-    /// قص ناعم بدل القص الحاد: الأصوات العالية ما تتشوه بعد الرفع
-    @inline(__always) static func soft(_ v: Float) -> Float {
-        let knee: Float = 24000, top: Float = 32767
-        let a = abs(v)
-        if a <= knee { return v }
-        let over = (a - knee) / (top - knee)
-        let shaped = knee + (top - knee) * (over / (1 + over))
-        return v < 0 ? -shaped : shaped
-    }
-
     /// يُستدعى من خيط الصوت: يضيف الأصوات الشغّالة فوق صوت المحادثة
     func mix(into out: UnsafeMutablePointer<Int16>, frames: Int) {
         guard lock.try() else { return }
@@ -347,8 +333,8 @@ final class EffectMixer {
             if n <= 0 { continue }
             p.samples.withUnsafeBufferPointer { b in
                 for f in 0..<n {
-                    let v = Float(out[f]) + Float(b[p.pos + f]) * p.gain
-                    out[f] = Int16(EffectMixer.soft(v))
+                    let v = Int32(out[f]) + Int32(Float(b[p.pos + f]) * p.gain)
+                    out[f] = Int16(clamping: v)
                 }
             }
             playing[i].pos += n
