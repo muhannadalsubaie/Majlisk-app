@@ -264,18 +264,33 @@ struct BalootBoard: View {
                 VStack(spacing: 6) {
                     PlayerTag(v: v, g: g, seat: (me + 2) % 4, faces: shownFaces((me + 2) % 4), note: seatNote(g, (me + 2) % 4), partner: mySeat != nil, wide: true, conn: conn, me: uid).frame(width: unit * 3)
                     HStack(spacing: 6) {
-                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4), conn: conn, me: uid).frame(width: unit * 0.7)
+                        // مشاريع اللاعبين على الجنب: تحت اسمه ومايلة لجهة الطاولة (ما تطلع برا الشاشة ولا تطوّلها)
+                        PlayerTag(v: v, g: g, seat: (me + 1) % 4, faces: shownFaces((me + 1) % 4), note: seatNote(g, (me + 1) % 4), conn: conn, me: uid,
+                                  fanShift: I18n.shared.rtl ? -unit * 0.55 : unit * 0.55).frame(width: unit * 0.7).zIndex(2)
                         // الطاولة مائلة فشكلها أقصر من مربعها، لكن طرفها القريب يكبر مع الميلان: نحجز لها ٨٤٪ من الطول
                         // (أقل من كذا كان طرفها ينزل فوق الأزرار والأوراق)
                         trickArea.frame(width: min(unit * 3.1, 360), height: min(unit * 3.1, 360))
                             .frame(height: min(unit * 3.1, 360) * 0.84)
-                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4), conn: conn, me: uid).frame(width: unit * 0.7)
+                        PlayerTag(v: v, g: g, seat: (me + 3) % 4, faces: shownFaces((me + 3) % 4), note: seatNote(g, (me + 3) % 4), conn: conn, me: uid,
+                                  fanShift: I18n.shared.rtl ? unit * 0.55 : -unit * 0.55).frame(width: unit * 0.7).zIndex(2)
                     }
                 }
                 .frame(maxWidth: .infinity)
             }
             .padding(.bottom, 6)
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
+            // مشروعك: في زاوية الطاولة اللي جهتك (فوقها)، بدل سطر جديد تحتها يطوّل الشاشة
+            .overlay(alignment: .bottomTrailing) {
+                if let mine = mySeat, !text.faces(mine).isEmpty {
+                    let myFaces = text.faces(mine)
+                    VStack(spacing: 2) {
+                        Text(trSpoken("مشروعك")).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.goldSoft)
+                        ProjectFaces(sorted: myFaces, maxWidth: 110, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
+                    }
+                    .padding(.trailing, 6).padding(.bottom, 4)
+                    .accessibilityHidden(true)
+                }
+            }
             // كشف المشروع: أوراقه كبيرة وسط الطاولة
             .overlay(ProjectSpotlight(g: g, text: text, faces: (0..<4).map { text.faces($0) }))
             .zIndex(1)
@@ -343,15 +358,6 @@ struct BalootBoard: View {
                 // يد اللاعب
                 if let mine = mySeat {
                     if let note = seatNote(g, mine) { Text(trSpoken("أنت: \(note)")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
-                    let myFaces = text.faces(mine)
-                    if !myFaces.isEmpty {
-                        HStack(spacing: 8) {
-                            Text(trSpoken("مشروعك")).font(.system(size: 13, weight: .bold)).foregroundColor(Palette.goldSoft)
-                            ProjectFaces(sorted: myFaces, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
-                        }
-                        .frame(maxWidth: .infinity)
-                        .accessibilityHidden(true)
-                    }
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)
@@ -684,6 +690,8 @@ private struct PlayerTag: View {
     var wide = false
     var conn: TableConnection? = nil
     var me = ""
+    /// اللاعب على الجنب: كم تنزاح مروحة مشروعه لجهة الطاولة
+    var fanShift: CGFloat = 0
     var body: some View {
         let s = v.seat(seat)
         let turn = g.turn == seat && g.phase != "matchOver"
@@ -714,8 +722,8 @@ private struct PlayerTag: View {
         Group {
             // فوق وتحت: المروحة جنب الاسم (مو تحته) عشان الشاشة ما تطول وتنسحب كأنها صفحتين
             if across { HStack(spacing: 14) { who; fan } }
-            // على الجنب: المروحة تحت الاسم (الطاولة أطول منها فما تزيد الشاشة)
-            else { VStack(spacing: 4) { who; if !faces.isEmpty { fan.padding(.top, 2) } } }
+            // على الجنب: المروحة فوق الطاولة تحت الاسم ومايلة لجهة الطاولة — ما تاخذ مكان (الشاشة ما تطول) وما تطلع برا الشاشة
+            else { who.overlay(alignment: .bottom) { if !faces.isEmpty { fan.fixedSize().offset(x: fanShift, y: 64) } } }
         }
             .padding(.horizontal, 4).padding(.vertical, 4)
             .frame(maxWidth: .infinity)

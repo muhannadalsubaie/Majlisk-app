@@ -356,7 +356,17 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.width(SIDE_TAG), conn = conn, me = uid)
-                Box(Modifier.weight(1f).zIndex(1f), contentAlignment = Alignment.Center) { TrickArea(v, g, shownTrick, me, text, reads); ProjectSpotlight(v, g, text) }
+                Box(Modifier.weight(1f).zIndex(1f), contentAlignment = Alignment.Center) {
+                    TrickArea(v, g, shownTrick, me, text, reads)
+                    // مشروعك: في زاوية الطاولة اللي جهتك (فوقها)، بدل سطر جديد تحتها يطوّل الشاشة
+                    mySeat?.let { ms -> text.faces(ms).takeIf { it.isNotEmpty() } }?.let { mine ->
+                        Column(Modifier.align(Alignment.BottomEnd).padding(end = 4.dp, bottom = 2.dp).clearAndSetSemantics { }, horizontalAlignment = Alignment.CenterHorizontally) {
+                            Text("مشروعك", color = Palette.goldSoft, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            ProjectFaces(mine, 110f, onTap = { projectSpot.value = Spot("مشروعك", mine) })
+                        }
+                    }
+                    ProjectSpotlight(v, g, text)
+                }
                 PlayerTag(v, g, seatOf(3), faces = g.sawaHands?.getOrNull(seatOf(3)) ?: text.faces(seatOf(3)), note = seatNote(g, seatOf(3)), modifier = Modifier.width(SIDE_TAG), conn = conn, me = uid)
             }
         }
@@ -488,12 +498,6 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         // يد اللاعب
         if (mySeat != null) {
             seatNote(g, mySeat)?.let { Text("أنت: $it", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
-            text.faces(mySeat).takeIf { it.isNotEmpty() }?.let { mine ->
-                Row(Modifier.fillMaxWidth().clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
-                    Text("مشروعك", color = Palette.goldSoft, fontSize = 13.sp, fontWeight = FontWeight.Bold)
-                    ProjectFaces(mine, onTap = { projectSpot.value = Spot("مشروعك", mine) })
-                }
-            }
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
             // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)
