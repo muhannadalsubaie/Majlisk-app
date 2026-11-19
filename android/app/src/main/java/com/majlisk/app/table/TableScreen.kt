@@ -14,6 +14,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -371,14 +372,6 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             }
         }
 
-        if (g.phase == "matchOver" && g.outcomeStatus == "won") {
-            // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
-            Text(if (mySeat == null) "فاز فريق ${teamName(g.outcomeWinner ?: 0)}" else if (g.outcomeWinner == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر", color = Palette.goldSoft,
-                style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-        }
-
-        // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
-        if (g.phase == "matchOver" && g.outcomeStatus == "won" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
 
         // مؤشر قارئ الشاشة: بعد ما تلعب ورقة ينتقل لكلمة «أوراقك»، وأزرار الشراء لما تختفي ينتقل لأوراقك
         val hand = if (mySeat != null) sortHand(g.myHand) else emptyList()
@@ -449,6 +442,16 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         }
         // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
         Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // خانة ثابتة لكل الأزرار (الشراء، الدبل، التسجيلة، المشاريع، ورق، نتيجة المباراة):
+        // مكانها محجوز دائماً، تطلع فيها الأزرار وتختفي والشاشة ما تتحرك
+        Column(Modifier.fillMaxWidth().heightIn(min = BALOOT_ACTIONS_SLOT), verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
+            if (g.phase == "matchOver" && g.outcomeStatus == "won") {
+                // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
+                Text(if (mySeat == null) "فاز فريق ${teamName(g.outcomeWinner ?: 0)}" else if (g.outcomeWinner == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر", color = Palette.goldSoft,
+                    style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
+            }
+            // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
+            if (g.phase == "matchOver" && g.outcomeStatus == "won" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
         // أزرار المزايدة
             if (g.actions.bids.isNotEmpty()) {
                 FlowRow(
@@ -495,6 +498,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                     PrimaryButton("مفتوح", { toHand(); act(jsonOf("type" to "doubleLock", "locked" to false)) }, modifier = Modifier.weight(1f))
                 }
             }
+        }
         // يد اللاعب
         if (mySeat != null) {
             seatNote(g, mySeat)?.let { Text("أنت: $it", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
@@ -661,6 +665,9 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         if (faces.isNotEmpty()) ProjectFaces(faces, 62f, onTap = onTap)
     }
 }
+
+/** ارتفاع خانة أزرار البلوت الثابتة (يكفي سطرين أزرار الشراء) */
+private val BALOOT_ACTIONS_SLOT = 96.dp
 
 /** عرض اللاعب اللي على الجنب: ثابت (الصورة دائرة بحجمها الطبيعي والاسم كامل)، والطاولة تاخذ الباقي */
 private val SIDE_TAG = 70.dp

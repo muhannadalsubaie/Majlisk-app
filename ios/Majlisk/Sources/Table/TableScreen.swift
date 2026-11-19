@@ -295,17 +295,18 @@ struct BalootBoard: View {
             .overlay(ProjectSpotlight(g: g, text: text, faces: (0..<4).map { text.faces($0) }))
             .zIndex(1)
 
-            if g.phase == "matchOver" && g.outcomeStatus == "won" {
-                // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
-                let w = g.outcomeWinner ?? 0
-                Text(trSpoken(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
-            }
-
-            // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
-            if g.phase == "matchOver" && g.outcomeStatus == "won" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
-
             // أزرار الشراء فوق الأوراق مباشرة، بمسافة بسيطة جداً
             VStack(spacing: 4) {
+                // خانة ثابتة لكل الأزرار (الشراء، الدبل، التسجيلة، المشاريع، ورق، نتيجة المباراة):
+                // مكانها محجوز دائماً، تطلع فيها الأزرار وتختفي والشاشة ما تتحرك
+                VStack(spacing: 4) {
+                if g.phase == "matchOver" && g.outcomeStatus == "won" {
+                    // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
+                    let w = g.outcomeWinner ?? 0
+                    Text(trSpoken(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
+                }
+                // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
+                if g.phase == "matchOver" && g.outcomeStatus == "won" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
                 // أزرار المزايدة
                 if !g.actions.bids.isEmpty {
                     FlowLayout(spacing: 8) {
@@ -355,6 +356,8 @@ struct BalootBoard: View {
                         MButton("مفتوح", .primary) { toHand(); act(["type": "doubleLock", "locked": false]) }
                     }
                 }
+                }
+                .frame(maxWidth: .infinity, minHeight: BALOOT_ACTIONS_SLOT)
                 // يد اللاعب
                 if let mine = mySeat {
                     if let note = seatNote(g, mine) { Text(trSpoken("أنت: \(note)")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
@@ -678,6 +681,9 @@ func seatNote(_ g: GameView, _ seat: Int) -> String? {
     }
     return parts.isEmpty ? nil : parts.joined(separator: "، ")
 }
+
+/// ارتفاع خانة أزرار البلوت الثابتة (يكفي سطرين أزرار الشراء)
+let BALOOT_ACTIONS_SLOT: CGFloat = 96
 
 private struct PlayerTag: View {
     let v: TableView
