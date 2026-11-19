@@ -57,12 +57,22 @@ enum Announcer {
         post(queue.removeFirst(), queued: !urgentQueue)
     }
 
+    /**
+     * نص فيه لغتين (اسم لاعب بالإنجليزي وسط كلام عربي): VoiceOver يقرأ الجملة كلها بصوت أول لغة،
+     * فينقرأ الكرت بالإنجليزي. نقسمه قطع، كل قطعة بلغتها، وتنقرأ ورا بعض
+     */
+    private static func pieces(_ text: String) -> [String] {
+        let runs = langRuns(text)
+        guard runs.count > 1 else { return [text] }
+        return runs.map { String(text[$0.0]) }.filter { $0.contains { $0.isLetter || $0.isNumber } }
+    }
+
     /// يُقرأ بعد ما يخلص اللي قبله (ما يقطعه)
     static func announce(_ text0: String) {
         guard !text0.isEmpty else { return }
         let text = tr(text0)
         DispatchQueue.main.async {
-            queue.append(text)
+            queue.append(contentsOf: pieces(text))
             pump()
         }
     }
@@ -88,9 +98,11 @@ enum Announcer {
         let text = tr(text0)
         DispatchQueue.main.async {
             listen()
-            queue.removeAll()
+            // لغتين: أول قطعة الحين (تقطع القديم)، والباقي ورا بعض بعدها
+            var parts = pieces(text)
+            queue = Array(parts.dropFirst())
             retries = 1 // ما نعيده لو انقطع: الجديد أهم
-            post(text, queued: false)
+            post(parts.removeFirst(), queued: false)
         }
     }
 }
