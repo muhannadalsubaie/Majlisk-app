@@ -203,16 +203,13 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                     )
                 })
                 if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
-                // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
-                if (v.ownerUid == uid && v.playing && v.allPro && com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true)
-                    com.majlisk.app.ui.BackButton({ timerOpen = true }, "⏱ المؤقت")
                 if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
                 Text(
                     // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                     "طاولة ${if (v.kind == "domino") "دومينو ${v.optTarget}" else gameTitle(v.kind, v.variant)}${if (v.ownerName.isNotEmpty()) " — المالك ${v.ownerName}" else ""}",
                     color = Palette.textDim,
                     // سطرين بالكثير (كان ينكسر أسطر كثيرة جنب الأزرار ويدف الطاولة والأوراق لتحت)
-                    fontSize = 14.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+                    fontSize = 13.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f).semantics { heading() },
                     textAlign = TextAlign.End,
                 )
@@ -272,7 +269,10 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             com.majlisk.app.ui.DangerButton("رفض", { answer("reject") })
         }
     }
-    if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false }, start = menuStart)
+    // المالك المشترك في الباقة الاحترافية: إعداد المؤقت والمباراة شغالة (داخل القائمة)
+    val canTimer = v.ownerUid == uid && v.playing && v.allPro && com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true
+    if (menuOpen && !confirmLeave) TableMenu(v, uid, conn, onLeave = { confirmLeave = true }, onClose = { menuOpen = false }, start = menuStart,
+        onTimer = if (canTimer) ({ menuOpen = false; timerOpen = true }) else null)
     if (confirmLeave) {
         ConfirmDialog(
             "مغادرة الطاولة",
@@ -323,7 +323,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         SwipeDir.Down to { Announcer.announceNow(text.projects()) },
     )
 
-    Column(Modifier.fillMaxWidth().twoFingerSwipes { reads[it]?.invoke() }, verticalArrangement = Arrangement.spacedBy(10.dp)) {
+    Column(Modifier.fillMaxWidth().twoFingerSwipes { reads[it]?.invoke() }, verticalArrangement = Arrangement.spacedBy(6.dp)) {
         // النقاط: جملة واحدة كاملة لقارئ الشاشة
         val us = g.scores.getOrElse(myTeam) { 0 }
         val them = g.scores.getOrElse(1 - myTeam) { 0 }
@@ -342,7 +342,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
             ScoreBox(themLabel, them, mine = false, modifier = Modifier.weight(1f).fillMaxHeight())
         }
         // سطر المشتري: محجوز دائماً (قبل الشراء يبقى فاضي) فالطاولة ما تنزل وترجع
-        Text(text.statusLine() ?: " ", color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, maxLines = 1)
+        Text(text.statusLine() ?: " ", color = Palette.goldSoft, fontWeight = FontWeight.Bold, fontSize = 14.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, maxLines = 1)
 
         // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
         val seatOf = { r: Int -> (me + r) % 4 }
@@ -505,7 +505,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         // يد اللاعب
         if (mySeat != null) {
             // سطر ملاحظتك (اشتريت، دبلت…): محجوز دائماً فأوراقك ما تتحرك
-            Text(seatNote(g, mySeat)?.let { "أنت: $it" } ?: " ", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, maxLines = 1)
+            Text(seatNote(g, mySeat)?.let { "أنت: $it" } ?: " ", color = Palette.goldSoft, fontSize = 12.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, maxLines = 1)
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
             // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)
@@ -569,11 +569,11 @@ private fun ScoreBox(label: String, value: Int, mine: Boolean, modifier: Modifie
         modifier.shadow(6.dp, RoundedCornerShape(14.dp))
             .background(Brush.verticalGradient(listOf(Palette.green700, Palette.green800)), RoundedCornerShape(14.dp))
             .border(1.dp, if (mine) Palette.gold else Palette.green700, RoundedCornerShape(14.dp))
-            .padding(horizontal = 4.dp, vertical = 8.dp),
+            .padding(horizontal = 4.dp, vertical = 5.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
     ) {
-        Text(label, color = Palette.textDim, fontSize = 14.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
-        Text("$value", color = Palette.gold, fontWeight = FontWeight.Bold, fontSize = 30.sp, lineHeight = 30.sp)
+        Text(label, color = Palette.textDim, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center)
+        Text("$value", color = Palette.gold, fontWeight = FontWeight.Bold, fontSize = 24.sp, lineHeight = 24.sp)
     }
 }
 
@@ -654,10 +654,10 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             TurnAvatar(v, seat, turn, v.seatUids.getOrNull(seat), s?.username.orEmpty(), 40.dp)
-            Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = if (wide) 14.sp else 13.sp, textAlign = TextAlign.Center, softWrap = wide || label.contains(' '))
+            Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = if (wide) 13.sp else 12.sp, textAlign = TextAlign.Center, softWrap = wide || label.contains(' '))
             // ملاحظة اللاعب (اشترى، دبل…): للشريك فوق الطاولة سطرها محجوز دائماً فالطاولة ما تتحرك
-            if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 1)
-            else if (wide) Text(" ", fontSize = 12.sp)
+            if (note != null) Text(note, color = Palette.goldSoft, fontSize = 11.sp, textAlign = TextAlign.Center, maxLines = 1)
+            else if (wide) Text(" ", fontSize = 11.sp)
         }
     }
     val onTap = { projectSpot.value = Spot("أوراق ${s?.username ?: "اللاعب"}", faces) }

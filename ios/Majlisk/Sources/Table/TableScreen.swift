@@ -105,13 +105,11 @@ struct TableScreen: View {
                         Button(tr("مغادرة الطاولة")) { confirmLeave = true }
                     }
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
-                // المالك المشترك في الباقة الاحترافية: يغيّر المؤقت أو يوقفه والمباراة شغالة
-                if v.ownerUid == uid && v.playing && v.allPro && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                 // سطرين بالكثير ويصغر الخط لو طال (كان ينكسر خمسة أسطر جنب الأزرار ويدف الطاولة والأوراق لتحت)
                 Text(trSpoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim)
-                    .font(.system(size: 14)).lineLimit(2).minimumScaleFactor(0.6)
+                    .font(.system(size: 13)).lineLimit(2).minimumScaleFactor(0.6)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
             if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }
@@ -176,7 +174,10 @@ struct TableScreen: View {
             Button(tr("رفض"), role: .destructive) { conn.send(["type": "joinAnswer", "uid": r.uid, "answer": "reject", "accept": false]) }
         }
         .sheet(item: $menuSheet) { start in
-            TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuSheet = nil }, start: start)
+            TableMenu(v: conn.view ?? v, uid: uid, conn: conn, onLeave: { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { confirmLeave = true } }, onClose: { menuSheet = nil }, start: start,
+                      // المالك المشترك في الباقة الاحترافية: إعداد المؤقت والمباراة شغالة (داخل القائمة)
+                      onTimer: v.ownerUid == uid && v.playing && v.allPro && Session.shared.profile?.isPro == true
+                        ? { menuSheet = nil; DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { timerOpen = true } } : nil)
         }
         .confirm("مغادرة الطاولة", isPresented: $confirmLeave,
                  message: v.playing && v.mySeat != nil ? "المباراة جارية — سيحل روبوت مكانك. هل تريد المغادرة؟" : "هل تريد مغادرة الطاولة؟",
@@ -257,7 +258,7 @@ struct BalootBoard: View {
             .accessibilityLabel(spokenText("النقاط: \(usLabel) \(us)، \(themLabel) \(them). الفوز عند 152"))
 
             // سطر المشتري: محجوز دائماً (قبل الشراء يبقى فاضي) فالطاولة ما تنزل وترجع
-            Text(text.statusLine().map { trSpoken($0) } ?? AttributedString(" ")).bold().foregroundColor(Palette.goldSoft).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity)
+            Text(text.statusLine().map { trSpoken($0) } ?? AttributedString(" ")).font(.system(size: 15, weight: .bold)).foregroundColor(Palette.goldSoft).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity)
 
             // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
             // كل شي ياخذ مكانه الحقيقي ويترتب تحت بعض (الاسم، ثم الطاولة، ثم الأزرار، ثم أوراقك): ما يطلع شي فوق شي
@@ -653,11 +654,11 @@ private struct ScoreBox: View {
     let mine: Bool
     var body: some View {
         VStack(spacing: 2) {
-            Text(trSpoken(label)).font(.system(size: 14, weight: .semibold)).foregroundColor(Palette.textDim)
-            Text(trSpoken("\(value)")).font(.system(size: 30, weight: .bold)).foregroundColor(Palette.gold)
+            Text(trSpoken(label)).font(.system(size: 12, weight: .semibold)).foregroundColor(Palette.textDim)
+            Text(trSpoken("\(value)")).font(.system(size: 24, weight: .bold)).foregroundColor(Palette.gold)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .padding(.vertical, 8)
+        .padding(.vertical, 5)
         .background(LinearGradient(colors: [Palette.green700, Palette.green800], startPoint: .top, endPoint: .bottom))
         .clipShape(RoundedRectangle(cornerRadius: 14))
         .overlay(RoundedRectangle(cornerRadius: 14).stroke(mine ? Palette.gold : Palette.green700, lineWidth: 1))
@@ -712,7 +713,7 @@ private struct PlayerTag: View {
         let who = VStack(spacing: 4) {
             TurnAvatar(v: v, seat: seat, turn: turn, uid: v.seatUid(seat), name: s?.username ?? "", size: 40)
             Text(trSpoken(label))
-                .font(.system(size: 14, weight: .bold))
+                .font(.system(size: 13, weight: .bold))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
             // ملاحظة اللاعب (اشترى، دبل…): للشريك فوق الطاولة سطرها محجوز دائماً فالطاولة ما تتحرك

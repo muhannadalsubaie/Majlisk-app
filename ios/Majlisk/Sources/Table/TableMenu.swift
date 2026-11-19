@@ -16,6 +16,8 @@ struct TableMenu: View {
     let onLeave: () -> Void
     let onClose: () -> Void
     var start: TableMenuStart = .main
+    /// إعداد المؤقت (المالك المشترك والمباراة شغالة)
+    var onTimer: (() -> Void)? = nil
     @ObservedObject private var voice = Voice.shared
     @ObservedObject private var hub = Hub.shared
     @State private var page: Page = .main
@@ -63,6 +65,7 @@ struct TableMenu: View {
                     SwitchRow(label: "طاولة خاصة", isOn: view.isPrivate, onChange: { conn.send("setPrivate", ["isPrivate": $0]) })
                 } else { Note(view.isPrivate ? "طاولة خاصة: الدخول بالدعوة فقط" : "طاولة عامة") }
                 MButton("اللاعبون") { page = .players }
+                if let onTimer { MButton("⏱ المؤقت") { onTimer() } }
                 if isOwner { MButton("دعوة صديق") { page = .invite } }
                 MButton("الأصدقاء") { page = .friends }
                 MButton("مشاهدة إعلان (+2 🪙)") { onClose(); DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) { Ads.watch() } }

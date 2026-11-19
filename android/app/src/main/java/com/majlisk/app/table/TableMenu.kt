@@ -53,7 +53,7 @@ enum class TableMenuStart { Main, Players, Invite, Friends }
 
 /** قائمة الطاولة: اللاعبون، دعوة صديق، مشاهدة إعلان، المحادثة الصوتية، الإعدادات، مغادرة */
 @Composable
-fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> Unit, onClose: () -> Unit, start: TableMenuStart = TableMenuStart.Main) {
+fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> Unit, onClose: () -> Unit, start: TableMenuStart = TableMenuStart.Main, onTimer: (() -> Unit)? = null) {
     var page by remember {
         mutableStateOf<Page>(when (start) {
             TableMenuStart.Main -> Page.Main
@@ -84,6 +84,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
                 SwitchRow("طاولة خاصة", v.isPrivate, { conn.send("setPrivate", "isPrivate" to it) })
             } else Note(if (v.isPrivate) "طاولة خاصة: الدخول بالدعوة فقط" else "طاولة عامة")
             SecondaryButton("اللاعبون", { page = Page.Players }, fill = true)
+            // إعداد المؤقت (المالك المشترك والمباراة شغالة)
+            if (onTimer != null) SecondaryButton("⏱ المؤقت", onTimer, fill = true)
             if (isOwner) SecondaryButton("دعوة صديق", { page = Page.Invite }, fill = true)
             SecondaryButton("الأصدقاء", { page = Page.Friends }, fill = true)
             SecondaryButton("مشاهدة إعلان (+2 🪙)", { Ads.watch() }, fill = true)
