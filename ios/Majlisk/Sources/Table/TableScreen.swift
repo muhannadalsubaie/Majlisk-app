@@ -109,7 +109,9 @@ struct TableScreen: View {
                 if v.ownerUid == uid && v.playing && v.allPro && Session.shared.profile?.isPro == true { SmallButton("⏱ المؤقت") { timerOpen = true } }
                 if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
+                // سطرين بالكثير ويصغر الخط لو طال (كان ينكسر خمسة أسطر جنب الأزرار ويدف الطاولة والأوراق لتحت)
                 Text(trSpoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim)
+                    .font(.system(size: 14)).lineLimit(2).minimumScaleFactor(0.6)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
             if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }
@@ -684,8 +686,8 @@ func seatNote(_ g: GameView, _ seat: Int) -> String? {
     return parts.isEmpty ? nil : parts.joined(separator: "، ")
 }
 
-/// ارتفاع خانة أزرار البلوت الثابتة (يكفي سطرين أزرار الشراء)
-let BALOOT_ACTIONS_SLOT: CGFloat = 96
+/// ارتفاع خانة أزرار البلوت الثابتة: سطر أزرار (سطرين كانت تدف أوراقك تحت أزرار المايك والدردشة)
+let BALOOT_ACTIONS_SLOT: CGFloat = 52
 
 private struct PlayerTag: View {
     let v: TableView

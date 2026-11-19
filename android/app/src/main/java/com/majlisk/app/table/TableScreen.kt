@@ -211,6 +211,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                     // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                     "طاولة ${if (v.kind == "domino") "دومينو ${v.optTarget}" else gameTitle(v.kind, v.variant)}${if (v.ownerName.isNotEmpty()) " — المالك ${v.ownerName}" else ""}",
                     color = Palette.textDim,
+                    // سطرين بالكثير (كان ينكسر أسطر كثيرة جنب الأزرار ويدف الطاولة والأوراق لتحت)
+                    fontSize = 14.sp, maxLines = 2, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f).semantics { heading() },
                     textAlign = TextAlign.End,
                 )
@@ -681,8 +683,8 @@ private object ProjectsShown {
     }
 }
 
-/** ارتفاع خانة أزرار البلوت الثابتة (يكفي سطرين أزرار الشراء) */
-private val BALOOT_ACTIONS_SLOT = 96.dp
+/** ارتفاع خانة أزرار البلوت الثابتة: سطر أزرار (سطرين كانت تدف أوراقك تحت أزرار المايك والدردشة) */
+private val BALOOT_ACTIONS_SLOT = 52.dp
 
 /** عرض اللاعب اللي على الجنب: ثابت (الصورة دائرة بحجمها الطبيعي والاسم كامل)، والطاولة تاخذ الباقي */
 private val SIDE_TAG = 70.dp
