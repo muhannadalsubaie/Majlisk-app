@@ -6,6 +6,7 @@ struct SettingsScreen: View {
     let embedded: Bool
     let onBack: () -> Void
     @State private var muted = Prefs.muted
+    @State private var effects = Double(Prefs.effectsVolume)
     @AppStorage("handStyle") private var handStyle = "fan"
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
@@ -24,6 +25,15 @@ struct SettingsScreen: View {
             HStack { LanguageButton(); Spacer() }
             SectionTitle("الصوت")
             SwitchRow(label: "كتم عام لجميع الأصوات", isOn: muted, onChange: { muted = $0; Prefs.muted = $0 })
+            // مستوى صوت المؤثرات: 70% المستوى الأصلي، وتقدر ترفعه لين 100% أو تنزله (كل خطوة 5%)
+            Text(trSpoken("مستوى صوت المؤثرات: \(Int(effects))%")).foregroundColor(Palette.text).accessibilityHidden(true)
+            Slider(value: $effects, in: 0...100, step: 5, onEditingChanged: { editing in
+                if !editing { Prefs.effectsVolume = Int(effects); Sounds.shared.preview() }
+            })
+            .tint(Palette.gold)
+            .accessibilityLabel(spokenText("مستوى صوت المؤثرات"))
+            .accessibilityValue("\(Int(effects))%")
+            .onChange(of: effects) { v in Prefs.effectsVolume = Int(v) }
             SectionTitle("شكل الورق")
             // اختيارك أنت فقط ويتحفظ على جوالك
             SwitchRow(label: "مروحة (الأوراق فوق بعض)", isOn: handStyle == "fan", onChange: { if $0 { handStyle = "fan" } })

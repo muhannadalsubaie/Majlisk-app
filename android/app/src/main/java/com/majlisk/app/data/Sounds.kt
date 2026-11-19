@@ -58,7 +58,7 @@ object Sounds {
         pool.setOnLoadCompleteListener { p, id, status ->
             if (status != 0) return@setOnLoadCompleteListener
             loaded += id
-            if (openPending && id == ids["app-open"]) { openPending = false; if (!Prefs.muted) p.play(id, 0.8f, 0.8f, 1, 0, 1f) }
+            if (openPending && id == ids["app-open"]) { openPending = false; if (!Prefs.muted) { val g = 0.8f * level(); p.play(id, g, g, 1, 0, 1f) } }
         }
         for (name in FILES) {
             runCatching { c.assets.openFd("sounds/$name.mp3").use { ids[name] = pool.load(it, 1) } }
@@ -70,9 +70,16 @@ object Sounds {
         if (Prefs.muted) return
         val id = ids[name] ?: return
         val r = (rate * if (vary) 0.95f + Random.nextFloat() * 0.1f else 1f).coerceIn(0.5f, 2f)
-        val run = Runnable { pool.play(id, gain, gain, 1, 0, r) }
+        val g = (gain * level()).coerceIn(0f, 1f)
+        val run = Runnable { pool.play(id, g, g, 1, 0, r) }
         if (at <= 0) run.run() else main.postDelayed(run, (at * 1000).toLong())
     }
+
+    /** مستوى المؤثرات من الإعدادات: الملفات مرفوعة ٣ ديسيبل، فـ70% = المستوى الأصلي و100% = أعلى منه بـ30% */
+    private fun level() = Prefs.effectsVolume / 100f
+
+    /** تجربة المستوى بعد تحريك الشريط في الإعدادات */
+    fun preview() = play("card1", gain = 1f, vary = false)
 
     private fun pick(vararg names: String) = names[Random.nextInt(names.size)]
 

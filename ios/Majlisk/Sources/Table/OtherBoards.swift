@@ -1551,7 +1551,7 @@ struct LudoReaderChoices: View {
         let show = l.myTurn && l.phase == "move" && l.options.count > 1
         let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
         let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
-        VStack(spacing: 6) {
+        return VStack(spacing: 6) {
             Spacer(minLength: 0)
             if show {
                 Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)

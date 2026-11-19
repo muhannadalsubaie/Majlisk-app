@@ -6194,5 +6194,13 @@
  "انتظر لين تخلص مهلة التسجيلة (عشر ثواني)": {
   "en": "Wait until the foul-call window ends (ten seconds)",
   "fr": "Attendez la fin du délai de signalement (dix secondes)"
+ },
+ "مستوى صوت المؤثرات": {
+  "en": "Sound effects volume",
+  "fr": "Volume des effets sonores"
+ },
+ "مستوى صوت المؤثرات: {0}%": {
+  "en": "Sound effects volume: {0}%",
+  "fr": "Volume des effets sonores : {0}%"
  }
 }

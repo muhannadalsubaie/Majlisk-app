@@ -20,6 +20,11 @@ object Prefs {
         get() = sp.getBoolean("muted", false)
         set(v) { sp.edit().putBoolean("muted", v).apply() }
 
+    /** مستوى صوت المؤثرات من 0 إلى 100 (70 = المستوى الأصلي، وفوقه مجال 30% للرفع) */
+    var effectsVolume: Int
+        get() = sp.getInt("effectsVolume", 70)
+        set(v) { sp.edit().putInt("effectsVolume", v.coerceIn(0, 100)).apply() }
+
     /** الدردشة الكتابية: read / silent / off */
     var chatMode: String
         get() = sp.getString("chatMode", "read") ?: "read"

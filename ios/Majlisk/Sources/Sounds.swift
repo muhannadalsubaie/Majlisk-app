@@ -44,7 +44,8 @@ final class Sounds {
         guard let d = data[name] else { return }
         let run = { [weak self] in
             guard let self else { return }
-            let g = gain * (vary ? Float.random(in: 0.9...1) : 1)
+            // مستوى المؤثرات من الإعدادات: الملفات مرفوعة ٣ ديسيبل، فـ70% = المستوى الأصلي و100% = أعلى بـ30%
+            let g = min(1, gain * (vary ? Float.random(in: 0.9...1) : 1) * Float(Prefs.effectsVolume) / 100)
             // المحادثة الصوتية شغّالة: الصوت ينخلط في صوت المحادثة نفسه، فما ينخفض لما تفتح الميكروفون
             if let dev = VoiceAudioDevice.active, let url = self.urls[name] { dev.effects.play(name, url: url, gain: g); return }
             guard let p = try? AVAudioPlayer(data: d) else { return }
@@ -58,6 +59,9 @@ final class Sounds {
         }
         if at <= 0 { DispatchQueue.main.async(execute: run) } else { DispatchQueue.main.asyncAfter(deadline: .now() + at, execute: run) }
     }
+
+    /// تجربة المستوى بعد تحريك الشريط في الإعدادات
+    func preview() { play("card1", gain: 1, vary: false) }
 
     private func pick(_ names: String...) -> String { names.randomElement()! }
 
@@ -163,9 +167,9 @@ final class Sounds {
         DispatchQueue.main.async { [weak self] in
             // نغمة الدور (ملف voice-turn)
             guard let self else { return }
-            if let dev = VoiceAudioDevice.active, let url = self.urls["voice-turn"] { dev.effects.play("voice-turn", url: url, gain: 1); return }
+            if let dev = VoiceAudioDevice.active, let url = self.urls["voice-turn"] { dev.effects.play("voice-turn", url: url, gain: Float(Prefs.effectsVolume) / 100); return }
             guard let d = self.data["voice-turn"], let p = try? AVAudioPlayer(data: d) else { return }
-            p.volume = 1
+            p.volume = min(1, Float(Prefs.effectsVolume) / 100)
             p.play()
             self.playing.removeAll { !$0.isPlaying }
             self.playing.append(p)

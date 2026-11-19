@@ -16,6 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.stateDescription
 import com.majlisk.app.a11y.Announcer
 import com.majlisk.app.data.AuthService
 import com.majlisk.app.data.Billing
@@ -34,6 +37,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
     var muted by remember { mutableStateOf(Prefs.muted) }
+    var effects by remember { mutableStateOf(Prefs.effectsVolume) }
     var confirmDelete by remember { mutableStateOf(false) }
     var support by remember { mutableStateOf(false) }
     if (support) {
@@ -51,6 +55,19 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         com.majlisk.app.i18n.LanguageButton()
         SectionTitle("الصوت")
         SwitchRow("كتم عام لجميع الأصوات", muted, { muted = it; Prefs.muted = it })
+        // مستوى صوت المؤثرات: 70% المستوى الأصلي، وتقدر ترفعه لين 100% أو تنزله (كل خطوة 5%)
+        Text("مستوى صوت المؤثرات: $effects%", color = Palette.text, fontSize = 15.sp)
+        androidx.compose.material3.Slider(
+            value = effects.toFloat(),
+            onValueChange = { effects = (Math.round(it / 5f) * 5) },
+            onValueChangeFinished = { Prefs.effectsVolume = effects; com.majlisk.app.data.Sounds.preview() },
+            valueRange = 0f..100f, steps = 19,
+            colors = androidx.compose.material3.SliderDefaults.colors(thumbColor = Palette.gold, activeTrackColor = Palette.gold, inactiveTrackColor = Palette.green700),
+            modifier = Modifier.fillMaxWidth().semantics {
+                contentDescription = com.majlisk.app.i18n.tr("مستوى صوت المؤثرات")
+                stateDescription = "$effects%"
+            },
+        )
         SectionTitle("شكل الورق")
         // اختيارك أنت فقط ويتحفظ على جوالك
         SwitchRow("مروحة (الأوراق فوق بعض)", Prefs.handStyle.value == "fan", { if (it) Prefs.setHandStyle("fan") })

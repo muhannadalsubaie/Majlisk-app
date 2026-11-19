@@ -114,6 +114,11 @@ enum Prefs {
         get { UserDefaults.standard.bool(forKey: "muted") }
         set { UserDefaults.standard.set(newValue, forKey: "muted") }
     }
+    /// مستوى صوت المؤثرات من 0 إلى 100 (70 = المستوى الأصلي، وفوقه مجال 30% للرفع)
+    static var effectsVolume: Int {
+        get { UserDefaults.standard.object(forKey: "effectsVolume") as? Int ?? 70 }
+        set { UserDefaults.standard.set(min(100, max(0, newValue)), forKey: "effectsVolume") }
+    }
     /// الدردشة الكتابية: read / silent / off
     static var chatMode: String {
         get { UserDefaults.standard.string(forKey: "chatMode") ?? "read" }
