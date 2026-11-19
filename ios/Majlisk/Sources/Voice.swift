@@ -334,15 +334,14 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
     private func wiredRejoin(micWasOpen: Bool, attempt: Int) {
         guard tableId != nil, !leaving else { return }
         rejoin(force: true)
+        // بعد ما يرجع: الميكروفون مثل ما كان (لو كان مفتوح نفتحه)، وبعدها نتأكد إنه على ميكروفون السماعة
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
             guard let self, !self.leaving else { return }
-            if attempt < 1 && self.micAudio && self.wiredMicMismatch { self.wiredRejoin(micWasOpen: micWasOpen, attempt: attempt + 1); return }
-            // بعد ما يرجع: الميكروفون مثل ما كان
-            if micWasOpen {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-                    guard let self, self.isJoined, self.muted else { return }
-                    self.setMuted(false)
-                }
+            guard micWasOpen else { return }
+            if self.isJoined && self.muted { self.setMuted(false) }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) { [weak self] in
+                guard let self, !self.leaving, attempt < 1, self.wiredMicMismatch else { return }
+                self.wiredRejoin(micWasOpen: micWasOpen, attempt: attempt + 1)
             }
         }
     }
