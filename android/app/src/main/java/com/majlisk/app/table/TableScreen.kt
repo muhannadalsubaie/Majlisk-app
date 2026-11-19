@@ -339,7 +339,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 modifier = Modifier.dashedPill().padding(horizontal = 10.dp, vertical = 4.dp))
             ScoreBox(themLabel, them, mine = false, modifier = Modifier.weight(1f).fillMaxHeight())
         }
-        text.statusLine()?.let { Text(it, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
+        // سطر المشتري: محجوز دائماً (قبل الشراء يبقى فاضي) فالطاولة ما تنزل وترجع
+        Text(text.statusLine() ?: " ", color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, maxLines = 1)
 
         // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
         val seatOf = { r: Int -> (me + r) % 4 }
@@ -651,7 +652,9 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         ) {
             TurnAvatar(v, seat, turn, v.seatUids.getOrNull(seat), s?.username.orEmpty(), 40.dp)
             Text(label, color = Palette.text, fontWeight = FontWeight.Bold, fontSize = if (wide) 14.sp else 13.sp, textAlign = TextAlign.Center, softWrap = wide || label.contains(' '))
-            if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center)
+            // ملاحظة اللاعب (اشترى، دبل…): للشريك فوق الطاولة سطرها محجوز دائماً فالطاولة ما تتحرك
+            if (note != null) Text(note, color = Palette.goldSoft, fontSize = 12.sp, textAlign = TextAlign.Center, maxLines = 1)
+            else if (wide) Text(" ", fontSize = 12.sp)
         }
     }
     val onTap = { projectSpot.value = Spot("أوراق ${s?.username ?: "اللاعب"}", faces) }

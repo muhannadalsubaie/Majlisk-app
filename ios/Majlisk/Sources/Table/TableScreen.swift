@@ -254,7 +254,8 @@ struct BalootBoard: View {
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenText("النقاط: \(usLabel) \(us)، \(themLabel) \(them). الفوز عند 152"))
 
-            if let line = text.statusLine() { Text(trSpoken(line)).bold().foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+            // سطر المشتري: محجوز دائماً (قبل الشراء يبقى فاضي) فالطاولة ما تنزل وترجع
+            Text(text.statusLine().map { trSpoken($0) } ?? AttributedString(" ")).bold().foregroundColor(Palette.goldSoft).lineLimit(1).minimumScaleFactor(0.7).frame(maxWidth: .infinity)
 
             // اللاعبون حول الطاولة: الشريك في الأعلى، والخصمان يميناً ويساراً، ووسط الطاولة دائرة
             // كل شي ياخذ مكانه الحقيقي ويترتب تحت بعض (الاسم، ثم الطاولة، ثم الأزرار، ثم أوراقك): ما يطلع شي فوق شي
@@ -711,7 +712,9 @@ private struct PlayerTag: View {
                 .font(.system(size: 14, weight: .bold))
                 .multilineTextAlignment(.center)
                 .minimumScaleFactor(0.7)
-            if let note { Text(trSpoken(note)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center) }
+            // ملاحظة اللاعب (اشترى، دبل…): للشريك فوق الطاولة سطرها محجوز دائماً فالطاولة ما تتحرك
+            if let note { Text(trSpoken(note)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center).lineLimit(1) }
+            else if wide || partner { Text(" ").font(.system(size: 12)) }
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
         .background(turn ? Palette.gold.opacity(0.08) : .clear)
