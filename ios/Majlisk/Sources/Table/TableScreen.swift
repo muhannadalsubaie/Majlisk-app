@@ -361,7 +361,8 @@ struct BalootBoard: View {
                 .frame(maxWidth: .infinity, minHeight: BALOOT_ACTIONS_SLOT)
                 // يد اللاعب
                 if let mine = mySeat {
-                    if let note = seatNote(g, mine) { Text(trSpoken("أنت: \(note)")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity) }
+                    // سطر ملاحظتك (اشتريت، دبلت…): محجوز دائماً فأوراقك ما تتحرك
+                    Text(seatNote(g, mine).map { trSpoken("أنت: \($0)") } ?? AttributedString(" ")).font(.system(size: 13)).foregroundColor(Palette.goldSoft).lineLimit(1).frame(maxWidth: .infinity)
                     // أوراقك في أسفل الشاشة، أكبر قليلاً من أوراق الطاولة
                     // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
                     let hand = sortHand(g.myHand)

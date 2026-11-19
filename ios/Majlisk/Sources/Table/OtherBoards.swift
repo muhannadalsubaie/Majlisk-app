@@ -485,6 +485,7 @@ struct DominoHand: View {
                 }
                 .frame(maxWidth: .infinity, minHeight: 52)
                 Text(trSpoken("قطعك")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
+                // مكان القطع محجوز لسطرين دائماً: لما تقل قطعك (أو تزيد بالسحب) ما تتحرك الشاشة
                 Wrap(items: d.hand, spacing: 8) { h in
                     Button {
                         if !d.myTurn { Announcer.announceNow("ليس دورك") }
@@ -499,6 +500,7 @@ struct DominoHand: View {
                     .buttonStyle(.plain)
                     .accessibilityLabel(spokenText(h.label))
                 }
+                .frame(minHeight: 2 * (24 * Look.tileScale * 2 + 12) + 8, alignment: .top)
             }
             .sheet(isPresented: $lockAsk) {
                 Sheet(title: "قفلة: عادي أو دبل؟") {
@@ -1106,7 +1108,10 @@ struct LudoBoard: View {
                 .overlay(RoundedRectangle(cornerRadius: 10).stroke(canTap ? Palette.gold : .clear, lineWidth: 3).padding(-3))
                 .shadow(color: canTap ? Palette.gold.opacity(0.8) : .clear, radius: canTap ? 8 : 0)
                 .onTapGesture { if canTap { act(["type": "roll"]) } }
-            if !pool.isEmpty {
+                // النرد الكبير بمقاس ثابت (لما يجي دورك يكبر داخل نفس المكان)
+                .frame(width: 56, height: 56)
+            // النرد الصغير: مكانه محجوز دائماً (يطلع ويختفي والشاشة ما تتحرك)
+            ZStack {
                 HStack(spacing: 4) {
                     ForEach(Array(pool.enumerated()), id: \.offset) { _, d in
                         DiceView(value: d, color: LUDO_COLORS[o], size: selectable ? 26 : 20)
@@ -1117,6 +1122,7 @@ struct LudoBoard: View {
                     }
                 }
             }
+            .frame(height: 32)
         }
     }
 

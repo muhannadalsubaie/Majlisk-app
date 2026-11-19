@@ -502,7 +502,8 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         }
         // يد اللاعب
         if (mySeat != null) {
-            seatNote(g, mySeat)?.let { Text("أنت: $it", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center) }
+            // سطر ملاحظتك (اشتريت، دبلت…): محجوز دائماً فأوراقك ما تتحرك
+            Text(seatNote(g, mySeat)?.let { "أنت: $it" } ?: " ", color = Palette.goldSoft, fontSize = 13.sp, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center, maxLines = 1)
             // أوراقك مروحة على قوس كأنها في يدك: كل ورقة فوق التي على يسارها، فيبقى رمزها (في زاويتها اليسرى) ظاهراً
             // ترتيب الأوراق لقارئ الشاشة داخل اليد فقط (لا يختلط بباقي عناصر الشاشة)
             // شكل الورق من الإعدادات: كروت جنب بعض مفصولة (سطرين لو ما كفّت)

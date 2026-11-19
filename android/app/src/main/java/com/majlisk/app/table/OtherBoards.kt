@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.fillMaxSize
@@ -443,7 +444,9 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
             }
         }
         Text("قطعك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-        FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        // مكان القطع محجوز لسطرين دائماً: لما تقل قطعك (أو تزيد بالسحب) ما تتحرك الشاشة
+        val tileUnit = 24f * com.majlisk.app.data.Look.tileScale
+        FlowRow(Modifier.fillMaxWidth().heightIn(min = (2 * (tileUnit * 2 + 12) + 8).dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             d.hand.forEach { h ->
                 Box(
                     Modifier
@@ -1046,13 +1049,15 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 val canTap = mine && l.canRoll
                 Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Box(
-                        Modifier.graphicsLayer { rotationZ = spin.value }
+                        // النرد الكبير بمقاس ثابت (لما يجي دورك يكبر داخل نفس المكان)
+                        Modifier.size(56.dp).wrapContentSize(Alignment.Center).graphicsLayer { rotationZ = spin.value }
                             // النرد نفسه زر الرمي (وقارئ الشاشة يقرأه «ارمِ النرد»)
                             .then(if (canTap) Modifier.border(3.dp, Palette.gold, RoundedCornerShape(10.dp)).padding(3.dp)
                                 .clickable(onClickLabel = com.majlisk.app.i18n.tr("ارمِ النرد"), role = androidx.compose.ui.semantics.Role.Button) { doRoll() }
                                 .semantics { contentDescription = com.majlisk.app.i18n.tr("ارمِ النرد") } else Modifier),
                     ) { Dice(if (canTap && l.pool.isEmpty()) null else roll, LUDO_COLORS[o], if (canTap) 46 else 40) }
-                    if (pool.isNotEmpty()) Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    // النرد الصغير: مكانه محجوز دائماً (يطلع ويختفي والشاشة ما تتحرك)
+                    Row(Modifier.height(32.dp), horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
                         pool.forEach { d ->
                             Box(
                                 Modifier.border(2.5.dp, if (selectable && chosen == d) Palette.gold else Color.Transparent, RoundedCornerShape(6.dp)).padding(1.dp)
