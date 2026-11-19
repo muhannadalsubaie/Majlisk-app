@@ -387,15 +387,23 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
                 left?.let { seatChip(it, Modifier.align(Alignment.CenterStart).width(64.dp)) }
                 right?.let { seatChip(it, Modifier.align(Alignment.CenterEnd).width(64.dp)) }
                 seatChip(bottom, Modifier.align(Alignment.BottomCenter))
+                // نهاية الصكة أو المباراة: نافذة فوق الطاولة (ما تغيّر طول الشاشة)
+                if (d.phase != "playing") Column(
+                    Modifier.align(Alignment.Center).widthIn(max = 300.dp)
+                        .background(Color(0xEE0B1A14), RoundedCornerShape(18.dp))
+                        .border(1.5.dp, Palette.gold, RoundedCornerShape(18.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(dominoTurnText(v, d), color = Palette.goldSoft, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
+                }
             }
         }
-        d.ends?.let { (left, right) ->
-            Text("يمين $right — يسار $left${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft, fontWeight = FontWeight.Bold,
-                modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
-        }
-        if (d.phase != "playing") Text(dominoTurnText(v, d),
-            color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-        if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
+        // الطرفين: سطر محجوز دائماً (قبل أول قطعة يبقى فاضي) فالشاشة ما تتحرك
+        val e = d.ends
+        Text(if (e == null) " " else "يمين ${e.second} — يسار ${e.first}${if (d.boneyard > 0) " — في البنك ${d.boneyard}" else ""}", color = Palette.goldSoft, fontWeight = FontWeight.Bold,
+            modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center, maxLines = 1)
     }
 }
 
@@ -407,18 +415,20 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
     var chooseSide by remember { mutableStateOf<DominoHandTile?>(null) }
     // الإيماءات مسجّلة من لوحة الدومينو، وتشتغل في أي مكان في الشاشة
     Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
-        if (d.starterOptions.isNotEmpty()) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                d.starterOptions.forEach { (seat, text) ->
-                    PrimaryButton(text, { act(conn, "domino", jsonOf("type" to "starter", "starter" to seat)) }, modifier = Modifier.weight(1f))
+        // مكان محجوز دائماً للأزرار (من يبدأ، أو السحب والجلا): تطلع وتختفي والشاشة ما تتحرك
+        Box(Modifier.fillMaxWidth().heightIn(min = 52.dp), contentAlignment = Alignment.Center) {
+            // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
+            if (d.starterOptions.isNotEmpty()) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    d.starterOptions.forEach { (seat, text) ->
+                        PrimaryButton(text, { act(conn, "domino", jsonOf("type" to "starter", "starter" to seat)) }, modifier = Modifier.weight(1f))
+                    }
                 }
-            }
-        }
-        if (d.myTurn && (d.canDraw || d.canPass)) {
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                if (d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
-                if (d.canPass) PrimaryButton("جلا", { dominoJala(conn, d) }, modifier = Modifier.weight(1f))
+            } else if (d.myTurn && (d.canDraw || d.canPass)) {
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
+                    if (d.canPass) PrimaryButton("جلا", { dominoJala(conn, d) }, modifier = Modifier.weight(1f))
+                }
             }
         }
         Text("قطعك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
@@ -537,8 +547,10 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
         }
         // اللوحة: للعين فقط، لمسها ما يقرأ شي (أماكن الأحجار بالإيماءات)
         // الشكل الطويل: اللوحة تاخذ كل المساحة الباقية في الشاشة (فوق وتحت)
+        // فوق اللوحة: نافذة الفوز (ما تغيّر طول الشاشة)
+        Box((if (JK_TALL) Modifier.fillMaxWidth().weight(1f).heightIn(min = 220.dp) else Modifier.fillMaxWidth()), contentAlignment = Alignment.Center) {
         Box(
-            (if (JK_TALL) Modifier.fillMaxWidth().weight(1f).heightIn(min = 220.dp) else Modifier.fillMaxWidth()).clearAndSetSemantics { },
+            (if (JK_TALL) Modifier.fillMaxSize() else Modifier.fillMaxWidth()).clearAndSetSemantics { },
             contentAlignment = Alignment.Center,
         ) {
             Canvas(if (JK_TALL) Modifier.fillMaxSize() else Modifier.widthIn(max = jkSide()).fillMaxWidth().aspectRatio(1f)) { drawJackaroo(j, mySeat ?: 0) }
@@ -555,17 +567,26 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                 }
             }
         }
-        if (j.phase == "over") {
-            val w = j.winnerTeam ?: 0
-            val wonText = if (!j.teams) (if (j.winner == mySeat && mySeat != null) "🎉 فزت!" else "فاز ${names.getOrElse(j.winner ?: 0) { "" }}")
-                else if (mySeat == null) "فاز فريق ${names[w]} و${names[w + 2]}" else if (w == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر"
-            Text(wonText,
-                color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
-            if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
+            if (j.phase == "over") {
+                val w = j.winnerTeam ?: 0
+                val wonText = if (!j.teams) (if (j.winner == mySeat && mySeat != null) "🎉 فزت!" else "فاز ${names.getOrElse(j.winner ?: 0) { "" }}")
+                    else if (mySeat == null) "فاز فريق ${names[w]} و${names[w + 2]}" else if (w == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر"
+                Column(
+                    Modifier.widthIn(max = 300.dp)
+                        .background(Color(0xEE0B1A14), RoundedCornerShape(18.dp))
+                        .border(1.5.dp, Palette.gold, RoundedCornerShape(18.dp))
+                        .padding(horizontal = 16.dp, vertical = 12.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp),
+                ) {
+                    Text(wonText, color = Palette.goldSoft, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+                    if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
+                }
+            }
         }
         if (mySeat != null) {
             Text("أوراقك${if (j.burning) "، اختر ورقة لحرقها" else ""}", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
-            if (j.burning) Text("لا لعب صالح: اختر ورقة لحرقها", color = Palette.goldSoft, modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
+            // سطر محجوز دائماً (يطلع فيه تنبيه الحرق) فالشاشة ما تتحرك
+            Text(if (j.burning) "لا لعب صالح: اختر ورقة لحرقها" else " ", color = Palette.goldSoft, modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center, maxLines = 1)
             FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 j.hand.forEach { h ->
                     Box(

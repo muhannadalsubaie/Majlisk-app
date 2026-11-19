@@ -381,15 +381,22 @@ struct DominoBoard: View {
             }
             .environment(\.layoutDirection, .leftToRight)
             .frame(height: dominoBoardHeight())
-            if let e = d.ends {
-                Text(trSpoken("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")"))
-                    .foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true)
+            // نهاية الصكة أو المباراة: نافذة فوق الطاولة (ما تغيّر طول الشاشة)
+            .overlay {
+                if d.phase != "playing" {
+                    VStack(spacing: 10) {
+                        Text(trSpoken(dominoTurnText(v, d))).font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
+                        if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                .frame(maxWidth: 300)
+                .background(RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.04, green: 0.10, blue: 0.08).opacity(0.93)))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.gold, lineWidth: 1.5))
+                }
             }
-            if d.phase != "playing" {
-                Text(trSpoken(dominoTurnText(v, d)))
-                    .font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
-            }
-            if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
+            // الطرفين: سطر محجوز دائماً (قبل أول قطعة يبقى فاضي) فالشاشة ما تتحرك
+            Text(d.ends.map { e in trSpoken("يمين \(e.right) — يسار \(e.left)\(d.boneyard > 0 ? " — في البنك \(d.boneyard)" : "")") } ?? AttributedString(" "))
+                .foregroundColor(Palette.goldSoft).lineLimit(1).frame(maxWidth: .infinity).accessibilityHidden(true)
         }
         .onAppear { Gestures.shared.set("domino") { read($0) } }
         .onDisappear { Gestures.shared.clear("domino") }
@@ -452,20 +459,23 @@ struct DominoHand: View {
     var body: some View {
         if v.mySeat != nil {
             VStack(spacing: 8) {
-                // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
-                if !d.starterOptions.isEmpty {
-                    HStack(spacing: 8) {
-                        ForEach(Array(d.starterOptions.enumerated()), id: \.offset) { _, o in
-                            MButton(o.text, .primary) { act(["type": "starter", "starter": o.seat]) }
+                // مكان محجوز دائماً للأزرار (من يبدأ، أو السحب والجلا): تطلع وتختفي والشاشة ما تتحرك
+                ZStack {
+                    // فاز فريقك بالصكة: تختار من يبدأ (أنت أو شريكك)
+                    if !d.starterOptions.isEmpty {
+                        HStack(spacing: 8) {
+                            ForEach(Array(d.starterOptions.enumerated()), id: \.offset) { _, o in
+                                MButton(o.text, .primary) { act(["type": "starter", "starter": o.seat]) }
+                            }
+                        }
+                    } else if d.myTurn && (d.canDraw || d.canPass) {
+                        HStack(spacing: 8) {
+                            if d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
+                            if d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
                         }
                     }
                 }
-                if d.myTurn && (d.canDraw || d.canPass) {
-                    HStack(spacing: 8) {
-                        if d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
-                        if d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
-                    }
-                }
+                .frame(maxWidth: .infinity, minHeight: 52)
                 Text(trSpoken("قطعك")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 Wrap(items: d.hand, spacing: 8) { h in
                     Button {
@@ -593,17 +603,26 @@ struct JackarooBoard: View {
             }
             .frame(maxWidth: .infinity)
             .accessibilityHidden(true)
-            if j.phase == "over" {
-                let w = j.winnerTeam ?? 0
-                let wonText = !j.teams ? (j.winner != nil && j.winner == mySeat ? "🎉 فزت!" : "فاز \(names[j.winner ?? 0])")
-                    : mySeat == nil ? "فاز فريق \(names[w]) و\(names[w + 2])" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر"
-                Text(trSpoken(wonText))
-                    .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity)
-                if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
+            // نافذة الفوز فوق اللوحة (ما تغيّر طول الشاشة)
+            .overlay {
+                if j.phase == "over" {
+                    let w = j.winnerTeam ?? 0
+                    let wonText = !j.teams ? (j.winner != nil && j.winner == mySeat ? "🎉 فزت!" : "فاز \(names[j.winner ?? 0])")
+                        : mySeat == nil ? "فاز فريق \(names[w]) و\(names[w + 2])" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر"
+                    VStack(spacing: 10) {
+                        Text(trSpoken(wonText)).font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
+                        if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
+                    }
+                    .padding(.horizontal, 16).padding(.vertical, 12)
+                .frame(maxWidth: 300)
+                .background(RoundedRectangle(cornerRadius: 18).fill(Color(red: 0.04, green: 0.10, blue: 0.08).opacity(0.93)))
+                .overlay(RoundedRectangle(cornerRadius: 18).stroke(Palette.gold, lineWidth: 1.5))
+                }
             }
             if mySeat != nil {
                 Text(trSpoken("أوراقك\(j.burning ? "، اختر ورقة لحرقها" : "")")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
-                if j.burning { Text(trSpoken("لا لعب صالح: اختر ورقة لحرقها")).foregroundColor(Palette.goldSoft).frame(maxWidth: .infinity).accessibilityHidden(true) }
+                // سطر محجوز دائماً (يطلع فيه تنبيه الحرق) فالشاشة ما تتحرك
+                Text(j.burning ? trSpoken("لا لعب صالح: اختر ورقة لحرقها") : AttributedString(" ")).foregroundColor(Palette.goldSoft).lineLimit(1).frame(maxWidth: .infinity).accessibilityHidden(true)
                 Wrap(items: j.hand, spacing: 8) { h in
                     Button {
                         if !j.myTurn { Announcer.announceNow("ليس دورك") }
