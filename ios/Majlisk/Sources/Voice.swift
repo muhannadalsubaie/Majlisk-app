@@ -316,20 +316,35 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         guard wired(now) || (prev.map(wired) ?? false), isJoined, !leaving else { return }
         let micWasOpen = !muted
         wiredWork?.cancel()
-        let work = DispatchWorkItem { [weak self] in
-            guard let self, self.isJoined || self.tableId != nil, !self.leaving else { return }
-            self.rejoin(force: true)
+        let work = DispatchWorkItem { [weak self] in self?.wiredRejoin(micWasOpen: micWasOpen, attempt: 0) }
+        wiredWork = work
+        // شبه لحظي: نجمع التبليغات اللي تجي ورا بعض في نفس اللحظة بس (خُمس ثانية)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2, execute: work)
+    }
+
+    /// الميكروفون اللي لازم يكون الحين: ميكروفون السماعة السلكية لو موصولة
+    private var wiredMicMismatch: Bool {
+        let s = AVAudioSession.sharedInstance()
+        let wiredAvailable = s.availableInputs?.contains { $0.portType == .headsetMic } == true
+        let onWired = s.currentRoute.inputs.contains { $0.portType == .headsetMic }
+        return wiredAvailable != onWired
+    }
+
+    /// نعيد الاتصال، وبعده نتأكد إن الميكروفون صار الصحيح؛ لو الآيفون تأخر وعلق على القديم نعيده مرة ثانية
+    private func wiredRejoin(micWasOpen: Bool, attempt: Int) {
+        guard tableId != nil, !leaving else { return }
+        rejoin(force: true)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) { [weak self] in
+            guard let self, !self.leaving else { return }
+            if attempt < 1 && self.micAudio && self.wiredMicMismatch { self.wiredRejoin(micWasOpen: micWasOpen, attempt: attempt + 1); return }
             // بعد ما يرجع: الميكروفون مثل ما كان
             if micWasOpen {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
                     guard let self, self.isJoined, self.muted else { return }
                     self.setMuted(false)
                 }
             }
         }
-        wiredWork = work
-        // ننتظر السماعة تستقر قبل ما نعيد الاتصال
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
     }
 
     private func rejoin(force: Bool = false) {
