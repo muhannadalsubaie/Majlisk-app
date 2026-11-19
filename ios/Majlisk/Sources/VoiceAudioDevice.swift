@@ -73,8 +73,30 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
     }
     private var pendingRoute: DispatchWorkItem?
 
-    private func routeChanged() {
-        guard isRecordingInitialized, isRecording, unit != nil, headphones != plainUnit else { return }
+    /// السماعة السلكية: نقول للآيفون صراحة يستخدم ميكروفونها (كان أحياناً يعلق على ميكروفون الجوال فيطلع الصوت بعيد)،
+    /// ولما تنفصل نرجّع الاختيار للنظام (ميكروفون الجوال، أو البلوتوث لو موصول)
+    private func pickInput() -> AVAudioSession.Port? {
+        let wired = session.availableInputs?.first { $0.portType == .headsetMic }
+        if let wired {
+            if session.preferredInput?.portType != .headsetMic { try? session.setPreferredInput(wired) }
+            return .headsetMic
+        }
+        if session.preferredInput?.portType == .headsetMic { try? session.setPreferredInput(nil) }
+        return nil
+    }
+
+    /// الميكروفون الفعلي الحين غير اللي اخترناه (لسا ما انتقل)
+    private func inputMismatch(_ want: AVAudioSession.Port?) -> Bool {
+        let now = session.currentRoute.inputs.first?.portType
+        if let want { return now != want }
+        // انفصلت السماعة السلكية والميكروفون للحين عليها
+        return now == .headsetMic
+    }
+
+    private func routeChanged(attempt: Int = 0) {
+        let want = pickInput()
+        guard isRecordingInitialized, isRecording, unit != nil else { return }
+        guard headphones != plainUnit || inputMismatch(want) || attempt > 0 else { return }
         let wasRunning = isPlaying || isRecording
         disposeUnit()
         guard makeUnit(input: true) else { return }
@@ -82,6 +104,13 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         isRecordingInitialized = true
         effects.setRate(VoiceAudioDevice.rate)
         if wasRunning, let unit { AudioOutputUnitStart(unit) }
+        // نتأكد إن الميكروفون انتقل فعلاً؛ لو لسا على القديم نعيد بعد نص ثانية (لين ٣ مرات)
+        if attempt < 3 {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
+                guard let self, self.inputMismatch(self.pickInput()) else { return }
+                self.routeChanged(attempt: attempt + 1)
+            }
+        }
     }
 
     func initialize(with delegate: RTCAudioDeviceDelegate) -> Bool {
@@ -130,6 +159,8 @@ final class VoiceAudioDevice: NSObject, RTCAudioDevice {
         disposeUnit()
         // إلغاء الصدى من وحدة المكالمات (مو من النظام): نطفّي تفضيل النظام عشان ما تنعالج مرتين
         if #available(iOS 18.2, *), session.isEchoCancelledInputAvailable { try? session.setPrefersEchoCancelledInput(false) }
+        // الميكروفون الصحيح من أول مرة (السلكية لو موصولة)
+        _ = pickInput()
         guard makeUnit(input: true) else { return false }
         isRecordingInitialized = true
         if wasPlaying, let unit { AudioOutputUnitStart(unit) }
