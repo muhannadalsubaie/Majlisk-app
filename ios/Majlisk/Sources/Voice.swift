@@ -299,6 +299,39 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
         }
     }
 
+    /**
+     * شبكت السماعة السلكية أو فصلتها وأنت في المحادثة: الآيفون أحياناً يعلق على الميكروفون القديم فيطلع صوتك بعيد،
+     * واللي يصلحها الطلوع والرجوع للمحادثة — فنسويها تلقائياً بهدوء، والميكروفون يرجع مثل ما كان (مفتوح أو مقفل)
+     */
+    private var wiredWork: DispatchWorkItem?
+    private func wiredChanged(_ n: Notification) {
+        guard let raw = n.userInfo?[AVAudioSessionRouteChangeReasonKey] as? UInt,
+              let reason = AVAudioSession.RouteChangeReason(rawValue: raw),
+              reason == .newDeviceAvailable || reason == .oldDeviceUnavailable else { return }
+        let wired: (AVAudioSessionRouteDescription) -> Bool = { r in
+            r.outputs.contains { $0.portType == .headphones } || r.inputs.contains { $0.portType == .headsetMic }
+        }
+        let prev = n.userInfo?[AVAudioSessionRouteChangePreviousRouteKey] as? AVAudioSessionRouteDescription
+        let now = AVAudioSession.sharedInstance().currentRoute
+        guard wired(now) || (prev.map(wired) ?? false), isJoined, !leaving else { return }
+        let micWasOpen = !muted
+        wiredWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self, self.isJoined || self.tableId != nil, !self.leaving else { return }
+            self.rejoin(force: true)
+            // بعد ما يرجع: الميكروفون مثل ما كان
+            if micWasOpen {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 2.5) { [weak self] in
+                    guard let self, self.isJoined, self.muted else { return }
+                    self.setMuted(false)
+                }
+            }
+        }
+        wiredWork = work
+        // ننتظر السماعة تستقر قبل ما نعيد الاتصال
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8, execute: work)
+    }
+
     private func rejoin(force: Bool = false) {
         // وسط مكالمة: ما نرجع الحين (كنا ناخذ الصوت من المكالمة)، ننتظر لين تخلص
         if callObserver.calls.contains(where: { !$0.hasEnded }) { interrupted = true; return }
@@ -330,8 +363,9 @@ final class Voice: NSObject, ObservableObject, RTCPeerConnectionDelegate {
 
     override init() {
         super.init()
-        NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] _ in
+        NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification, object: nil, queue: .main) { [weak self] n in
             self?.keepBluetooth()
+            self?.wiredChanged(n)
         }
         // مكالمة قطعت الصوت: لما تخلص نرجعك للمحادثة الصوتية
         NotificationCenter.default.addObserver(forName: AVAudioSession.interruptionNotification, object: nil, queue: .main) { [weak self] n in
