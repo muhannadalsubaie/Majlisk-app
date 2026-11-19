@@ -100,6 +100,7 @@ enum Announcer {
             listen()
             // لغتين: أول قطعة الحين (تقطع القديم)، والباقي ورا بعض بعدها
             var parts = pieces(text)
+            if parts.isEmpty { parts = [text] }
             queue = Array(parts.dropFirst())
             retries = 1 // ما نعيده لو انقطع: الجديد أهم
             post(parts.removeFirst(), queued: false)
