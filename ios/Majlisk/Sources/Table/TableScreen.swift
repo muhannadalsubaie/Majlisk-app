@@ -818,6 +818,14 @@ struct Spot: Identifiable {
 final class ProjectSpot: ObservableObject {
     static let shared = ProjectSpot()
     @Published var spot: Spot?
+    /// مشاريع انكشفت لوحتها (لكل صكة ولاعب): هنا مو داخل الشاشة، فما تنعاد لو انبنت الشاشة من جديد
+    private var shown: [String] = []
+    func markShown(_ k: String) -> Bool {
+        if shown.contains(k) { return false }
+        shown.append(k)
+        if shown.count > 200 { shown.removeFirst(shown.count - 200) }
+        return true
+    }
     /// فرش المشروع: لوحة اختيار الأوراق مفتوحة؟ (الزر فوق مع أزرار القيد، واللوحة تحت)
     @Published var choosing = false
 }
@@ -829,7 +837,6 @@ private struct ProjectSpotlight: View {
     let text: BalootText
     let faces: [[Card]]
     @ObservedObject private var hub = ProjectSpot.shared
-    @State private var seen = Set<Int>()
     @State private var queue: [Spot] = []
     var body: some View {
         ZStack {
@@ -841,8 +848,10 @@ private struct ProjectSpotlight: View {
         .onChange(of: hub.spot?.id) { _ in next() }
     }
     private func scan() {
-        if faces.allSatisfy(\.isEmpty) { seen.removeAll(); queue.removeAll(); return }
-        for (seat, cards) in faces.enumerated() where !cards.isEmpty && seen.insert(seat * 100 + cards.count).inserted {
+        // مرة وحدة بس لكل لاعب في الصكة، ووقت اللفة الثانية نفسها بس (ما تنعاد لو انبنت الشاشة أو رجع الاتصال، وما تطلع في الثالثة)
+        guard g.phase == "playing", g.trickNo == 1 else { return }
+        let hand = "\(text.view.id)|\(g.dealer)|\(g.scores.map(String.init).joined(separator: ","))"
+        for (seat, cards) in faces.enumerated() where !cards.isEmpty && hub.markShown("\(hand)|\(seat)") {
             let kinds = g.declared.filter { $0.seat == seat && !$0.faces.isEmpty }.flatMap(\.kinds).map { PROJECT_KIND_NAMES[$0] ?? $0 }
             queue.append(Spot(title: "مشروع \(text.name(seat))" + (kinds.isEmpty ? "" : ": " + kinds.joined(separator: " و")), cards: cards))
         }

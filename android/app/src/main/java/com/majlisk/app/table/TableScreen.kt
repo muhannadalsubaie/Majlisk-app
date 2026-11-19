@@ -666,6 +666,17 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
     }
 }
 
+/** مشاريع انكشفت لوحتها (لكل صكة ولاعب): برا الشاشة، فما تنعاد لو انبنت الشاشة من جديد */
+private object ProjectsShown {
+    private val keys = LinkedHashSet<String>()
+    fun add(k: String): Boolean {
+        if (k in keys) return false
+        keys += k
+        while (keys.size > 200) keys.remove(keys.first())
+        return true
+    }
+}
+
 /** ارتفاع خانة أزرار البلوت الثابتة (يكفي سطرين أزرار الشراء) */
 private val BALOOT_ACTIONS_SLOT = 96.dp
 
@@ -726,13 +737,14 @@ private val projectSpot = mutableStateOf<Spot?>(null)
 private fun ProjectSpotlight(v: TableView, g: GameView, text: BalootText) {
     // ميزة للمشتركين في الباقة الاحترافية بس (غيرهم يشوفون الأوراق الصغيرة تحت الاسم)
     if (!Palette.goldMode) return
-    val seen = remember { mutableSetOf<Int>() }
     val queue = remember { androidx.compose.runtime.mutableStateListOf<Spot>() }
     val now = (0..3).map { text.faces(it) }
+    // مرة وحدة بس لكل لاعب في الصكة، ووقت اللفة الثانية نفسها بس (ما تنعاد لو انبنت الشاشة أو رجع الاتصال، وما تطلع في الثالثة)
+    val hand = "${v.id}|${g.dealer}|${g.scores.joinToString(",")}"
     LaunchedEffect(now) {
-        if (now.all { it.isEmpty() }) { seen.clear(); queue.clear() }
+        if (g.phase != "playing" || g.trickNo != 1) return@LaunchedEffect
         now.forEachIndexed { seat, cards ->
-            if (cards.isNotEmpty() && seen.add(seat * 100 + cards.size)) {
+            if (cards.isNotEmpty() && ProjectsShown.add("$hand|$seat")) {
                 val kinds = g.declared.filter { it.seat == seat && it.faces.isNotEmpty() }.flatMap { it.kinds }.map { PROJECT_KIND_NAMES[it] ?: it }
                 val name = v.seats.getOrNull(seat)?.username ?: "اللاعب"
                 queue.add(Spot("مشروع $name" + if (kinds.isEmpty()) "" else ": " + kinds.joinToString(" و"), cards))
