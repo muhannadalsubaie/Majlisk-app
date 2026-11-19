@@ -40,7 +40,7 @@ object Sounds {
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
-        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw",
+        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw", "domino-lock", "domino-lock-normal", "domino-lock-double", "domino-ghashim",
     ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -126,6 +126,10 @@ object Sounds {
 
     fun dominoTile() = play("domino-tile", gain = 1f)
     /** الدومينو: لاعب جلا (ما عنده قطعة تصلح) */
+    /** الدومينو: ضغطت زر «قفلة» / اختيار عادي أو دبل (لكل اللاعبين) / قفلة غشيم */
+    fun dominoLock() = play("domino-lock", gain = 1f, vary = false)
+    fun dominoLockKind(double: Boolean) = play(if (double) "domino-lock-double" else "domino-lock-normal", gain = 1f, vary = false)
+    fun dominoGhashim(at: Double = 0.0) = play("domino-ghashim", at = at, gain = 1f, vary = false)
     /** الدومينو: سحب حجر من البنك */
     fun dominoDraw() = play("domino-draw", gain = 1f)
     fun dominoPass() = play("domino-pass", gain = 1f, vary = false)

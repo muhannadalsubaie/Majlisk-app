@@ -23,7 +23,7 @@ final class Sounds {
         "domino-shuffle", "domino-tile", "dice", "step1", "step2", "marble1", "marble2", "deal", "capture", "jackaroo-card", "voice-first", "voice-second", "voice-paper", "voice-sawa", "voice-ekka", "domino-end", "proj-baloot", "trump-cut", "hand-end",
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
-        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw",
+        "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw", "domino-lock", "domino-lock-normal", "domino-lock-double", "domino-ghashim",
     ]
 
     func preload() {
@@ -106,6 +106,10 @@ final class Sounds {
 
     func dominoTile() { play("domino-tile", gain: 1) }
     /// الدومينو: لاعب جلا (ما عنده قطعة تصلح)
+    /// الدومينو: ضغطت زر «قفلة» / اختيار عادي أو دبل (لكل اللاعبين) / قفلة غشيم
+    func dominoLock() { play("domino-lock", gain: 1, vary: false) }
+    func dominoLockKind(_ double: Bool) { play(double ? "domino-lock-double" : "domino-lock-normal", gain: 1, vary: false) }
+    func dominoGhashim(at: Double = 0) { play("domino-ghashim", at: at, gain: 1, vary: false) }
     /// الدومينو: سحب حجر من البنك
     func dominoDraw() { play("domino-draw", gain: 1) }
     func dominoPass() { play("domino-pass", gain: 1, vary: false) }

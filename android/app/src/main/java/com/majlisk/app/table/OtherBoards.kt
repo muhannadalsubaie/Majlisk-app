@@ -432,7 +432,7 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                     SecondaryButton(lockLabel, {
                         when {
                             d.myLockCall != null -> Announcer.announceNow("أعلنت القفلة، العب حجرك")
-                            d.canLock -> lockAsk = true
+                            d.canLock -> { Sounds.dominoLock(); lockAsk = true }
                             !d.myTurn -> Announcer.announceNow("القفلة بس في دورك")
                             else -> Announcer.announceNow(d.lockText.ifEmpty { "ما تقدر تعلن قفلة الحين" })
                         }
@@ -465,8 +465,8 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
 
     if (lockAsk) {
         MajliskDialog("قفلة: عادي أو دبل؟", { lockAsk = false }) {
-            PrimaryButton("قفلة عادي", { lockAsk = false; act(conn, "domino", jsonOf("type" to "lock", "double" to false)) })
-            PrimaryButton("قفلة دبل", { lockAsk = false; act(conn, "domino", jsonOf("type" to "lock", "double" to true)) })
+            PrimaryButton("قفلة عادي", { lockAsk = false; Sounds.dominoLockKind(false); Sounds.markLocal("lock"); act(conn, "domino", jsonOf("type" to "lock", "double" to false)) })
+            PrimaryButton("قفلة دبل", { lockAsk = false; Sounds.dominoLockKind(true); Sounds.markLocal("lock"); act(conn, "domino", jsonOf("type" to "lock", "double" to true)) })
             SecondaryButton("إلغاء", { lockAsk = false }, fill = true)
         }
     }
@@ -1405,6 +1405,8 @@ class OtherGameSounds {
     private var deal: Int? = null
     private var ludoLast: String? = null
     private var ludoTurn: Int? = null
+    /** القفلة المعلنة الحين (مقعد ونوع): صوت عادي أو دبل لكل اللاعبين أول ما تنعلن */
+    private var lockSig: String? = null
 
     fun update(v: TableView) {
         val d = v.domino; val j = v.jackaroo; val l = v.ludo
@@ -1413,6 +1415,12 @@ class OtherGameSounds {
         val first = sig == null
         val changed = sig != newSig
         sig = newSig
+        // الدومينو: أحد أعلن قفلة (عادي أو دبل) — اللي ضغطها سمع صوته وقت الاختيار
+        if (d != null) {
+            val ls = if (d.lockCallSeat >= 0) "${d.lockCallSeat}|${d.lockCallDouble}" else null
+            if (ls != null && ls != lockSig && !first && !Sounds.consumeLocal("lock")) Sounds.dominoLockKind(d.lockCallDouble)
+            lockSig = ls
+        }
         if (changed) {
             when {
                 // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
@@ -1427,7 +1435,10 @@ class OtherGameSounds {
                     // لاعب بقت معه قطعة وحدة: صوت التنبيه بعد طقة القطعة
                     if (!first && d.lastKind == "play" && d.phase == "playing" && d.handCounts.getOrNull(d.lastSeat) == 1) Sounds.dominoLast(0.25)
                     // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
-                    if (!first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver")) Sounds.dominoEnd(0.5)
+                    if (!first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver")) {
+                        // قفلة غشيم: صوتها الخاص بدل صوت نهاية الصكة
+                        if (d.handKind == "ghashim") Sounds.dominoGhashim(0.4) else Sounds.dominoEnd(0.5)
+                    }
                 }
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 j != null -> {

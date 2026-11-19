@@ -37,6 +37,11 @@ struct DominoView {
     let canLock: Bool
     let myLockCall: String?
     let lockText: String
+    /// قفلة معلنة الحين (أي لاعب): مقعده ونوعها — للصوت عند كل اللاعبين
+    let lockCallSeat: Int
+    let lockCallDouble: Bool
+    /// نوع نهاية آخر صكة (domino / blocked / lock / lockWrong / ghashim)
+    let handKind: String
     var myTurn: Bool, canDraw: Bool, canPass: Bool
     var hand: [DominoHandTile]
     let ends: (left: Int, right: Int)?
@@ -65,6 +70,9 @@ struct DominoView {
         canLock = ui.bool("canLock")
         myLockCall = ui["myLockCall"] as? String
         lockText = ui.str("lockText")
+        lockCallSeat = s.obj("lockCall")?.int("seat", -1) ?? -1
+        lockCallDouble = s.obj("lockCall")?.bool("double") ?? false
+        handKind = s.obj("lastHand")?.str("kind") ?? ""
         myTurn = ui.bool("myTurn"); canDraw = ui.bool("canDraw"); canPass = ui.bool("canPass")
         hand = ui.objs("hand").enumerated().map { i, h in
             DominoHandTile(id: i, tile: Tile(h.obj("tile")), label: h.str("label"), legal: h.bool("legal"), askSide: h.bool("askSide"))

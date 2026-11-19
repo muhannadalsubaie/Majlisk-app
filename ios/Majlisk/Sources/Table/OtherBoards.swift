@@ -474,7 +474,7 @@ struct DominoHand: View {
                             // زر «قفلة» ثابت طول اللعب: تعلنها في دورك قبل ما تلعب الحجر اللي يسدّ (عادي أو دبل)، وما تنلغي
                             MButton(d.myLockCall == "double" ? "قفلة دبل معلنة" : d.myLockCall == "normal" ? "قفلة معلنة" : "قفلة") {
                                 if d.myLockCall != nil { Announcer.announceNow("أعلنت القفلة، العب حجرك") }
-                                else if d.canLock { lockAsk = true }
+                                else if d.canLock { Sounds.shared.dominoLock(); lockAsk = true }
                                 else if !d.myTurn { Announcer.announceNow("القفلة بس في دورك") }
                                 else { Announcer.announceNow(d.lockText.isEmpty ? "ما تقدر تعلن قفلة الحين" : d.lockText) }
                             }
@@ -502,8 +502,8 @@ struct DominoHand: View {
             }
             .sheet(isPresented: $lockAsk) {
                 Sheet(title: "قفلة: عادي أو دبل؟") {
-                    MButton("قفلة عادي", .primary) { lockAsk = false; act(["type": "lock", "double": false]) }
-                    MButton("قفلة دبل", .primary) { lockAsk = false; act(["type": "lock", "double": true]) }
+                    MButton("قفلة عادي", .primary) { lockAsk = false; Sounds.shared.dominoLockKind(false); Sounds.shared.markLocal("lock"); act(["type": "lock", "double": false]) }
+                    MButton("قفلة دبل", .primary) { lockAsk = false; Sounds.shared.dominoLockKind(true); Sounds.shared.markLocal("lock"); act(["type": "lock", "double": true]) }
                     MButton("إلغاء") { lockAsk = false }
                 }
             }
@@ -1486,6 +1486,8 @@ final class OtherGameSounds {
     private var deal: Int?
     private var ludoLast: String?
     private var ludoTurn: Int?
+    /// القفلة المعلنة الحين (مقعد ونوع): صوت عادي أو دبل لكل اللاعبين أول ما تنعلن
+    private var lockSig: String?
 
     func update(_ v: TableView) {
         let d = v.domino, j = v.jackaroo, l = v.ludo
@@ -1496,6 +1498,12 @@ final class OtherGameSounds {
         let changed = sig != newSig
         sig = newSig
         let s = Sounds.shared
+        // الدومينو: أحد أعلن قفلة (عادي أو دبل) — اللي ضغطها سمع صوته وقت الاختيار
+        if let d {
+            let ls: String? = d.lockCallSeat >= 0 ? "\(d.lockCallSeat)|\(d.lockCallDouble)" : nil
+            if let ls, ls != lockSig, !first, !s.consumeLocal("lock") { s.dominoLockKind(d.lockCallDouble) }
+            lockSig = ls
+        }
         if changed {
             if let d {
                 // الدومينو: صوت خلط القطع مع كل توزيع، وطقة القطعة لما تنلعب أو تنسحب
@@ -1509,7 +1517,8 @@ final class OtherGameSounds {
                 // لاعب بقت معه قطعة وحدة: صوت التنبيه بعد طقة القطعة
                 if !first && d.lastKind == "play" && d.phase == "playing" && d.lastSeat >= 0 && d.lastSeat < d.handCounts.count && d.handCounts[d.lastSeat] == 1 { s.dominoLast(at: 0.25) }
                 // انتهت الصكة (أو المباراة): بعد طقة آخر قطعة
-                if !first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver") { s.dominoEnd(at: 0.5) }
+                // قفلة غشيم: صوتها الخاص بدل صوت نهاية الصكة
+                if !first && phase == "playing" && (d.phase == "handOver" || d.phase == "matchOver") { if d.handKind == "ghashim" { s.dominoGhashim(at: 0.4) } else { s.dominoEnd(at: 0.5) } }
             } else if let j {
                 // الجاكارو: توزيع الورق، وصوت الورقة، ونقرة لكل خطوة يمشيها الحجر
                 if (first && !j.hasMove) || (!first && deal != nil && deal != j.dealNo) { s.deal(newHand: true) }
