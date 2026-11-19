@@ -1101,28 +1101,6 @@ struct LudoBoard: View {
             .frame(maxWidth: 300)
             .background(shape.fill(Color(red: 0.04, green: 0.10, blue: 0.08).opacity(0.93)))
             .overlay(shape.stroke(Palette.gold, lineWidth: 1.5))
-        } else if reader && l.myTurn && l.phase == "move" && l.options.count > 1 {
-            // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
-            let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
-            let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
-            VStack(spacing: 8) {
-                Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
-                if dice.count > 1 {
-                    HStack(spacing: 6) {
-                        ForEach(dice, id: \.self) { d in
-                            SmallButton(die == d ? "✓ \(d)" : "\(d)", primary: die == d, label: "بالـ\(d)\(die == d ? "، محدد" : "")") { pickedDie = d }
-                        }
-                    }
-                }
-                HStack(spacing: 6) {
-                    ForEach(l.options.filter { $0.die == die }) { o in
-                        SmallButton("حجر \(o.token + 1)", primary: true, label: o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
-                    }
-                }
-            }
-            .padding(.horizontal, 16).padding(.vertical, 12)
-            .background(shape.fill(Color(red: 0.04, green: 0.10, blue: 0.08).opacity(0.93)))
-            .overlay(shape.stroke(Palette.gold, lineWidth: 1.5))
         }
     }
 
@@ -1552,5 +1530,46 @@ final class OtherGameSounds {
         if myTurn && !prompt.isEmpty && changed && (prompt != lastPrompt || !wasMyTurn) { Announcer.announce(prompt) }
         lastPrompt = myTurn ? prompt : nil
         wasMyTurn = myTurn
+    }
+}
+
+/// قارئ الشاشة في اللودو: اختيار الحجر (والرقم) في مكان ثابت فوق الميكروفون، قريب منه بالتنقل.
+/// المكان محجوز دائماً وVoiceOver شغّال، فالشاشة ما تتحرك لما تطلع الأزرار أو تختفي.
+struct LudoReaderChoices: View {
+    let l: LudoView
+    let conn: TableConnection
+    @State private var pickedDie: Int?
+    @Environment(\.accessibilityVoiceOverEnabled) private var reader
+
+    private func act(_ a: JSON) { conn.send(["type": "ludo", "action": a]) }
+
+    var body: some View {
+        if reader { choices }
+    }
+
+    private var choices: some View {
+        let show = l.myTurn && l.phase == "move" && l.options.count > 1
+        let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
+        let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
+        VStack(spacing: 6) {
+            Spacer(minLength: 0)
+            if show {
+                Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+                // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+                if dice.count > 1 {
+                    HStack(spacing: 6) {
+                        ForEach(dice, id: \.self) { d in
+                            SmallButton(die == d ? "✓ \(d)" : "\(d)", primary: die == d, label: "بالـ\(d)\(die == d ? "، محدد" : "")") { pickedDie = d }
+                        }
+                    }
+                }
+                HStack(spacing: 6) {
+                    ForEach(l.options.filter { $0.die == die }) { o in
+                        SmallButton("حجر \(o.token + 1)", primary: true, label: o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: 104)
     }
 }

@@ -131,6 +131,8 @@ struct TableScreen: View {
             Spacer(minLength: 0)
             // الدومينو: قطعك تحت فوق الميكروفون
             if let d = v.domino { DominoHand(v: v, d: d, conn: conn) }
+            // اللودو مع VoiceOver: اختيار الحجر في مكان ثابت فوق الميكروفون
+            if let l = v.ludo, v.mySeat != nil { LudoReaderChoices(l: l, conn: conn) }
         }
         // زر الميكروفون أسفل يسار الشاشة، ثابت دائماً حتى لو طالت الطاولة،
         // وبعد الأوراق مباشرة في ترتيب VoiceOver (الرجوع منه يعود للأوراق، لا لبداية الصفحة)

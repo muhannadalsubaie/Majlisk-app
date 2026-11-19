@@ -234,6 +234,8 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             if (v.domino == null && !jkTall) Spacer(Modifier.weight(1f))
             // الدومينو: قطعك تحت فوق الميكروفون
             v.domino?.let { DominoHand(v, it, conn) { dominoLogOpen = true } }
+            // اللودو مع قارئ الشاشة: اختيار الحجر في مكان ثابت فوق الميكروفون
+            if (v.ludo != null && v.mySeat != null && Announcer.readerOn) LudoReaderChoices(v.ludo, conn)
             // الدردشة الكتابية (تختفي إن أطفأتها من الإعدادات): فقاعة فقط (زر الدردشة ونافذتها، وآخر رسالة لحظات في الزاوية)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
                 if (chatMode != com.majlisk.app.data.ChatMode.OFF) ChatButton(conn) { chatOpen = true; conn.chatOpen = true }

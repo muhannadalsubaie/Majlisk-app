@@ -1093,27 +1093,38 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                     if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
                 }
             }
-            // قارئ الشاشة: الاختيارات كما هي (كل حجر مع الرقم اللي يمشيه)، فوق اللوحة بدل ما تنزّل الشاشة
-            if (reader && l.myTurn && l.phase == "move" && l.options.size > 1) {
-                Column(card, horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
-                    // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
-                    val dice = l.options.map { it.die }.distinct()
-                    val die = pickedDie?.takeIf { it in dice } ?: dice.firstOrNull()
-                    if (dice.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        dice.forEach { d ->
-                            com.majlisk.app.ui.SmallButton(if (die == d) "✓ $d" else "$d", { pickedDie = d }, primary = die == d, description = "بالـ$d${if (die == d) "، محدد" else ""}")
-                        }
-                    }
-                    Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                        l.options.filter { it.die == die }.forEach { o ->
-                            com.majlisk.app.ui.SmallButton("حجر ${o.token + 1}", { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, primary = true, description = o.text)
-                        }
-                    }
-                }
-            }
         }
         cornerRow(false)
+    }
+}
+
+/**
+ * قارئ الشاشة في اللودو: اختيار الحجر (والرقم) في مكان ثابت فوق الميكروفون، قريب منه بالتنقل.
+ * المكان محجوز دائماً وقارئ الشاشة شغّال، فالشاشة ما تتحرك لما تطلع الأزرار أو تختفي.
+ */
+@Composable
+fun LudoReaderChoices(l: LudoView, conn: TableConnection) {
+    var pickedDie by remember { mutableStateOf<Int?>(null) }
+    val show = l.myTurn && l.phase == "move" && l.options.size > 1
+    Column(
+        Modifier.fillMaxWidth().heightIn(min = 104.dp),
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Bottom),
+    ) {
+        if (!show) return@Column
+        Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+        // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
+        val dice = l.options.map { it.die }.distinct()
+        val die = pickedDie?.takeIf { it in dice } ?: dice.firstOrNull()
+        if (dice.size > 1) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            dice.forEach { d ->
+                com.majlisk.app.ui.SmallButton(if (die == d) "✓ $d" else "$d", { pickedDie = d }, primary = die == d, description = "بالـ$d${if (die == d) "، محدد" else ""}")
+            }
+        }
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            l.options.filter { it.die == die }.forEach { o ->
+                com.majlisk.app.ui.SmallButton("حجر ${o.token + 1}", { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, primary = true, description = o.text)
+            }
+        }
     }
 }
 
