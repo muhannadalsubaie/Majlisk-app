@@ -113,10 +113,12 @@ func tr(_ s: String?) -> String? { s.map { I18n.shared.tr($0) } }
 /// القراءة ثنائية اللغة: نقسم النص لأجزاء حسب الحروف (عربي / لاتيني)، وكل جزء ياخذ لغته،
 /// فـ VoiceOver يقرأ العربي بالناطق العربي والإنجليزي بالإنجليزي. المسافات والأرقام والرموز تمشي مع اللي قبلها.
 func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
-    let latin = I18n.shared.lang == "fr" ? "fr-FR" : "en-US"
+    // رموز اللغة العامة (ar / en / fr): صوت العربي في الآيفون لغته ar-001 مو ar-SA، فـ «ar-SA» ما يلقى له صوت
+    // ويرجع VoiceOver لصوت لغة الجهاز (فينقرأ الكلام العربي بالإنجليزي). الرمز العام يطابق أي صوت عربي
+    let latin = I18n.shared.lang == "fr" ? "fr" : "en"
     func cls(_ u: Unicode.Scalar) -> String? {
         let v = u.value
-        if (0x0600...0x06FF).contains(v) || (0x0750...0x077F).contains(v) || (0xFB50...0xFDFF).contains(v) || (0xFE70...0xFEFF).contains(v) { return "ar-SA" }
+        if (0x0600...0x06FF).contains(v) || (0x0750...0x077F).contains(v) || (0xFB50...0xFDFF).contains(v) || (0xFE70...0xFEFF).contains(v) { return "ar" }
         if (0x41...0x5A).contains(v) || (0x61...0x7A).contains(v) || ((0xC0...0x24F).contains(v) && CharacterSet.letters.contains(u)) { return latin }
         return nil
     }
@@ -130,7 +132,7 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
         }
         i = s.index(after: i)
     }
-    out.append((start..<s.endIndex, cur ?? (I18n.shared.rtl ? "ar-SA" : latin)))
+    out.append((start..<s.endIndex, cur ?? (I18n.shared.rtl ? "ar" : latin)))
     return out
 }
 
