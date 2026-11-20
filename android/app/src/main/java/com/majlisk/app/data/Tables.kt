@@ -235,21 +235,30 @@ class TableConnection(val tableId: String) {
                                 outbox.forEach { resent = true; webSocket.send(it.text) }
                             }
                         }
-                        override fun onMessage(webSocket: WebSocket, text: String) { lastHeard = System.currentTimeMillis(); if (text != "pong") handle(text) }
-                        override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) {
+                        override fun onMessage(webSocket: WebSocket, text: String) {
                             lastHeard = System.currentTimeMillis()
+                            if (text != "pong") { lastData = lastHeard; handle(text) }
+                        }
+                        override fun onMessage(webSocket: WebSocket, bytes: okio.ByteString) {
+                            lastHeard = System.currentTimeMillis(); lastData = lastHeard
                             inflate(bytes.toByteArray())?.let { handle(it) }
                         }
                         override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { done.complete(Unit) }
                         override fun onFailure(webSocket: WebSocket, t: Throwable, response: Response?) { done.complete(Unit) }
                     })
                     // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
-                    lastHeard = System.currentTimeMillis()
+                    lastHeard = System.currentTimeMillis(); lastData = lastHeard; syncAt = 0L
                     val beat = scope.launch {
                         while (true) {
-                            delay(3_000)
+                            delay(if (myTurn()) 2_000 else 3_000)
+                            val now = System.currentTimeMillis()
                             // ١٢ ثانية بلا أي رد = الاتصال ميت (كانت ٨: على النت الضعيف كانت تقطع وتعيد بلا داعي)
-                            if (System.currentTimeMillis() - lastHeard > 12_000) { ws?.cancel(); break }
+                            // والدور عندك: ٦ ثوانٍ تكفي، فترجع بسرعة وما يحس البقية بتعليق
+                            if (now - lastHeard > (if (myTurn()) 6_000 else 12_000)) { ws?.cancel(); break }
+                            // طلبنا الحالة وما وصلت خلال ٤ ثوانٍ: الطاولة ما توصلنا (الاتصال معلّق)، نعيده
+                            if (syncAt > 0 && lastData < syncAt && now - syncAt > 4_000) { ws?.cancel(); break }
+                            // ما وصلنا شي من الطاولة ١٠ ثوانٍ: نطلب الحالة الحالية (لا تبقى الشاشة على حالة قديمة)
+                            if (now - lastData > 10_000 && (syncAt == 0L || lastData >= syncAt)) resync()
                             ws?.send("ping")
                         }
                     }
@@ -282,15 +291,32 @@ class TableConnection(val tableId: String) {
     }
 
     /** العودة للتطبيق: نعيد الاتصال فوراً بدل انتظار المحاولة التالية */
-    fun reconnectNow() { if (!_connected.value) wake.complete(Unit) }
+    fun reconnectNow() { if (!_connected.value) wake.complete(Unit) else resync() }
+
+    /** نطلب الحالة الحالية من الطاولة (ونتأكد إن الاتصال يوصل لها فعلاً) */
+    fun resync() {
+        if (!_connected.value) return
+        syncAt = System.currentTimeMillis()
+        ws?.send("{\"type\":\"sync\"}")
+    }
+
+    /** الدور عندك الحين (في أي لعبة) */
+    private fun myTurn(): Boolean = _view.value?.let { v ->
+        v.game?.myTurn == true || v.domino?.myTurn == true || v.jackaroo?.myTurn == true || v.ludo?.myTurn == true
+    } ?: false
 
     @Volatile private var lastHeard = 0L
+    /** آخر رسالة حقيقية من الطاولة (غير رد النبضة) */
+    @Volatile private var lastData = 0L
+    /** متى طلبنا الحالة (0 = ما فيه طلب ينتظر) */
+    @Volatile private var syncAt = 0L
     // رجع النت (أو تغيّرت الشبكة): نعيد الاتصال فوراً، فيُعلن رجوعك للبقية على طول
     private val connectivity = com.majlisk.app.MajliskApp.instance.getSystemService(android.net.ConnectivityManager::class.java)
     private val netCallback = object : android.net.ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: android.net.Network) {
             scope.launch {
-                if (_connected.value && System.currentTimeMillis() - lastHeard > 3_500) ws?.cancel()
+                // تغيّرت الشبكة والدور عندك: الاتصال القديم غالباً مات، نعيده على طول بدل ما ننتظر نكتشف
+                if (_connected.value && (myTurn() || System.currentTimeMillis() - lastHeard > 3_500)) ws?.cancel()
                 reconnectNow()
             }
         }

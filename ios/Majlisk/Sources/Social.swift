@@ -441,12 +441,20 @@ final class TableConnection: ObservableObject {
                         for o in self.outbox { self.resent = true; ws.send(.string(o.text)) { _ in } }
                     }
                     // نبضة كل 3 ثوانٍ: الخادم يكتشف انقطاع نتك خلال ثوانٍ، ونحن نكتشف الاتصال الميت (ما يرد) فنعيده فوراً
-                    self.lastHeard = Date()
+                    self.lastHeard = Date(); self.lastData = Date(); self.syncAt = nil
                     let ping = Task { [weak self] in
                         while !Task.isCancelled {
-                            try? await Task.sleep(nanoseconds: 3_000_000_000)
+                            let mine = self?.myTurn ?? false
+                            try? await Task.sleep(nanoseconds: mine ? 2_000_000_000 : 3_000_000_000)
+                            guard let self else { break }
+                            let now = Date()
                             // ١٢ ثانية بلا أي رد = الاتصال ميت (كانت ٨: على النت الضعيف كانت تقطع وتعيد بلا داعي)
-                            if let self, Date().timeIntervalSince(self.lastHeard) > 12 { ws.cancel(with: .goingAway, reason: nil); break }
+                            // والدور عندك: ٦ ثوانٍ تكفي، فترجع بسرعة وما يحس البقية بتعليق
+                            if now.timeIntervalSince(self.lastHeard) > (self.myTurn ? 6 : 12) { ws.cancel(with: .goingAway, reason: nil); break }
+                            // طلبنا الحالة وما وصلت خلال ٤ ثوانٍ: الطاولة ما توصلنا (الاتصال معلّق)، نعيده
+                            if let s = self.syncAt, self.lastData < s, now.timeIntervalSince(s) > 4 { ws.cancel(with: .goingAway, reason: nil); break }
+                            // ما وصلنا شي من الطاولة ١٠ ثوانٍ: نطلب الحالة الحالية (لا تبقى الشاشة على حالة قديمة)
+                            if now.timeIntervalSince(self.lastData) > 10, self.syncAt.map({ self.lastData >= $0 }) ?? true { self.resync(ws) }
                             try? await ws.send(.string("ping"))
                         }
                     }
@@ -454,6 +462,7 @@ final class TableConnection: ObservableObject {
                     while !self.stopped {
                         guard let msg = try? await ws.receive() else { break }
                         self.lastHeard = Date()
+                        if case .string(let t) = msg, t == "pong" {} else { self.lastData = self.lastHeard }
                         if !self.connected { await MainActor.run { self.connected = true } }
                         retry = 0
                         switch msg {
@@ -496,16 +505,33 @@ final class TableConnection: ObservableObject {
     private func resumeWake() { DispatchQueue.main.async { self.wake?.resume(); self.wake = nil } }
 
     /// العودة للتطبيق: نعيد الاتصال فوراً بدل انتظار المحاولة التالية
-    func reconnectNow() { if !connected { resumeWake() } }
+    func reconnectNow() { if !connected { resumeWake() } else if let ws { resync(ws) } }
+
+    /// نطلب الحالة الحالية من الطاولة (ونتأكد إن الاتصال يوصل لها فعلاً)
+    private func resync(_ ws: URLSessionWebSocketTask) {
+        syncAt = Date()
+        ws.send(.string("{\"type\":\"sync\"}")) { _ in }
+    }
+
+    /// الدور عندك الحين (في أي لعبة)
+    private var myTurn: Bool {
+        guard let v = view else { return false }
+        return v.game?.myTurn == true || v.domino?.myTurn == true || v.jackaroo?.myTurn == true || v.ludo?.myTurn == true
+    }
 
     private var lastHeard = Date()
+    /// آخر رسالة حقيقية من الطاولة (غير رد النبضة)
+    private var lastData = Date()
+    /// متى طلبنا الحالة (nil = ما فيه طلب ينتظر)
+    private var syncAt: Date?
     /// رجع النت (أو تغيّرت الشبكة): نعيد الاتصال فوراً، فيُعلن رجوعك للبقية على طول
     private lazy var pathMonitor: NWPathMonitor = {
         let m = NWPathMonitor()
         m.pathUpdateHandler = { [weak self] path in
             guard let self, path.status == .satisfied else { return }
             DispatchQueue.main.async {
-                if self.connected && Date().timeIntervalSince(self.lastHeard) > 3.5 { self.ws?.cancel(with: .goingAway, reason: nil) }
+                // تغيّرت الشبكة والدور عندك: الاتصال القديم غالباً مات، نعيده على طول بدل ما ننتظر نكتشف
+                if self.connected && (self.myTurn || Date().timeIntervalSince(self.lastHeard) > 3.5) { self.ws?.cancel(with: .goingAway, reason: nil) }
                 self.reconnectNow()
             }
         }
