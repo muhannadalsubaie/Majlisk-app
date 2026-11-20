@@ -125,11 +125,25 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
     var out: [(Range<String.Index>, String)] = []
     var start = s.startIndex
     var cur: String? = nil
+    // نهاية آخر حرف من لغة القطعة الحالية: بعد اسم إنجليزي، المسافات والأرقام والرموز تروح مع العربي اللي بعده
+    // (فـ «Mohanad: 10 هاص» ينقرأ «Mohanad» بالإنجليزي و«10 هاص» بالعربي، مو العشرة بالإنجليزي)
+    var lastEnd = s.startIndex
+    var prevLetter: String? = nil
     var i = s.startIndex
     while i < s.endIndex {
-        if let u = s[i].unicodeScalars.first, let k = cls(u) {
-            if cur == nil { cur = k } else if k != cur { out.append((start..<i, cur!)); start = i; cur = k }
+        let u = s[i].unicodeScalars.first
+        var k = u.flatMap(cls)
+        // رقم ملتصق باسم إنجليزي (مثل ibrahim997) يبقى جزء من الاسم
+        if k == nil, s[i].isNumber, prevLetter == latin { k = latin }
+        if let k {
+            if cur == nil { cur = k } else if k != cur {
+                // من إنجليزي لعربي: الأرقام بينهم عربية. ومن عربي لإنجليزي: تبقى مع العربي
+                let cut = cur == "ar" ? i : lastEnd
+                out.append((start..<cut, cur!)); start = cut; cur = k
+            }
+            lastEnd = s.index(after: i)
         }
+        if !s[i].isNumber { prevLetter = k }
         i = s.index(after: i)
     }
     out.append((start..<s.endIndex, cur ?? (I18n.shared.rtl ? "ar" : latin)))
