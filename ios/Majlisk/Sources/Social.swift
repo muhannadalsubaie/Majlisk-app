@@ -524,14 +524,22 @@ final class TableConnection: ObservableObject {
     private var lastData = Date()
     /// متى طلبنا الحالة (nil = ما فيه طلب ينتظر)
     private var syncAt: Date?
+    /// آخر شبكة (واي فاي / بيانات): نعيد الاتصال بس لما تتغيّر فعلاً
+    private var pathSig: String?
     /// رجع النت (أو تغيّرت الشبكة): نعيد الاتصال فوراً، فيُعلن رجوعك للبقية على طول
     private lazy var pathMonitor: NWPathMonitor = {
         let m = NWPathMonitor()
         m.pathUpdateHandler = { [weak self] path in
             guard let self, path.status == .satisfied else { return }
+            // بعض الجوالات يوصلها تنبيه «تغيّرت الشبكة» كل شوي وهي ما تغيّرت (المحادثة الصوتية، VPN...):
+            // نتصرف بس لما تتغيّر الشبكة فعلاً (واي فاي ↔ بيانات)
+            let sig = path.availableInterfaces.map { "\($0.type)" }.joined(separator: ",")
             DispatchQueue.main.async {
-                // تغيّرت الشبكة والدور عندك: الاتصال القديم غالباً مات، نعيده على طول بدل ما ننتظر نكتشف
-                if self.connected && (self.myTurn || Date().timeIntervalSince(self.lastHeard) > 3.5) { self.ws?.cancel(with: .goingAway, reason: nil) }
+                let changed = self.pathSig != nil && self.pathSig != sig
+                self.pathSig = sig
+                guard changed else { return }
+                // ما نقطع الاتصال على طول (كان يقطعه ويعيده كل ٣ ثوانٍ): نطلب الحالة، ولو ما ردت الطاولة خلال ثوانٍ نعيده
+                if self.connected && Date().timeIntervalSince(self.lastHeard) > 3.5 { self.ws?.cancel(with: .goingAway, reason: nil) }
                 self.reconnectNow()
             }
         }

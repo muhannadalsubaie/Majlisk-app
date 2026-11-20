@@ -315,8 +315,8 @@ class TableConnection(val tableId: String) {
     private val netCallback = object : android.net.ConnectivityManager.NetworkCallback() {
         override fun onAvailable(network: android.net.Network) {
             scope.launch {
-                // تغيّرت الشبكة والدور عندك: الاتصال القديم غالباً مات، نعيده على طول بدل ما ننتظر نكتشف
-                if (_connected.value && (myTurn() || System.currentTimeMillis() - lastHeard > 3_500)) ws?.cancel()
+                // ما نقطع الاتصال على طول وهو حي: نطلب الحالة، ولو ما ردت الطاولة خلال ثوانٍ نعيده
+                if (_connected.value && System.currentTimeMillis() - lastHeard > 3_500) ws?.cancel()
                 reconnectNow()
             }
         }
