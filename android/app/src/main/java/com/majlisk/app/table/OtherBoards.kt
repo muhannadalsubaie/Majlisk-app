@@ -103,8 +103,8 @@ private fun ScoreTile(label: String, value: String, mine: Boolean, modifier: Mod
 private fun PlayerLine(text: String, turn: Boolean, color: Color? = null, spoken: String? = null, trailing: (@Composable () -> Unit)? = null, avatar: Pair<String?, String>? = null) {
     Row(
         Modifier.fillMaxWidth()
-            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(12.dp))
-            .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(12.dp))
+            .border(1.dp, Color.Transparent, RoundedCornerShape(12.dp))
+            .background(Color.Transparent, RoundedCornerShape(12.dp))
             .padding(horizontal = 10.dp, vertical = 6.dp)
             .let { m -> if (spoken != null) m.semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(spoken) } else m },
         verticalAlignment = Alignment.CenterVertically,
@@ -163,8 +163,8 @@ private fun orient(p: PlacedTile): Tile {
 private fun JkSeatTag(name: String, uid: String?, color: Color, count: Int, turn: Boolean, spoken: String) {
     Column(
         Modifier
-            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(10.dp))
-            .background(if (turn) Palette.gold.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(10.dp))
+            .border(1.dp, Color.Transparent, RoundedCornerShape(10.dp))
+            .background(Color.Transparent, RoundedCornerShape(10.dp))
             .padding(4.dp)
             .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr(spoken) },
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -181,8 +181,8 @@ private fun JkSeatTag(name: String, uid: String?, color: Color, count: Int, turn
 private fun DominoSeatTag(name: String, uid: String?, count: Int, partner: Boolean, turn: Boolean, modifier: Modifier) {
     Column(
         modifier
-            .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(10.dp))
-            .background(if (turn) Palette.gold.copy(alpha = 0.08f) else Color.Transparent, RoundedCornerShape(10.dp))
+            .border(1.dp, Color.Transparent, RoundedCornerShape(10.dp))
+            .background(Color.Transparent, RoundedCornerShape(10.dp))
             .padding(4.dp)
             .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("$name${if (partner) "، شريكك" else ""}، $count قطع${if (turn) "، عليه الدور" else ""}") },
         horizontalAlignment = Alignment.CenterHorizontally,

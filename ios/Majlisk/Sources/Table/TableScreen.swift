@@ -721,9 +721,9 @@ private struct PlayerTag: View {
             else if wide || partner { Text(" ").font(.system(size: 12)) }
         }
         .padding(.horizontal, 8).padding(.vertical, 6)
-        .background(turn ? Palette.gold.opacity(0.08) : .clear)
+        .background(Color.clear)
         .clipShape(RoundedRectangle(cornerRadius: 14))
-        .overlay(RoundedRectangle(cornerRadius: 14).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.clear, lineWidth: 1))
         // إجراءات VoiceOver على اللاعب (سحب لفوق أو لتحت): أوراقه المكشوفة، صداقة، وللمالك كتم الصوت والطرد
         .accessibilityElement(children: .combine)
         .accessibilityAction(named: Text(trSpoken("أوراقه المكشوفة"))) {

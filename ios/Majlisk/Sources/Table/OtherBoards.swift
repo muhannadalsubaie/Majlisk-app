@@ -77,8 +77,8 @@ private struct PlayerLine: View {
             if let roll { DiceView(value: roll, color: color ?? Palette.gold, size: 26) }
         }
         .padding(.horizontal, 10).padding(.vertical, 6)
-        .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 12))
-        .overlay(RoundedRectangle(cornerRadius: 12).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+        .background(Color.clear).clipShape(RoundedRectangle(cornerRadius: 12))
+        .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.clear, lineWidth: 1))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spokenText(spoken ?? text))
     }
@@ -199,8 +199,8 @@ private struct DominoSeatTag: View {
             Text(trSpoken("\(count) قطع")).font(.system(size: 11)).foregroundColor(Palette.textDim)
         }
         .padding(4)
-        .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 10))
-        .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+        .background(Color.clear).clipShape(RoundedRectangle(cornerRadius: 10))
+        .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.clear, lineWidth: 1))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spokenText("\(name)\(partner ? "، شريكك" : "")، \(count) قطع\(turn ? "، عليه الدور" : "")"))
     }
@@ -704,8 +704,8 @@ struct JackarooBoard: View {
                 Text(trSpoken("\(cards) أوراق")).font(.system(size: 11)).foregroundColor(Palette.textDim)
             }
             .padding(4)
-            .background(turn ? Palette.gold.opacity(0.08) : .clear).clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(RoundedRectangle(cornerRadius: 10).stroke(turn ? Palette.gold : .clear, lineWidth: 1))
+            .background(Color.clear).clipShape(RoundedRectangle(cornerRadius: 10))
+            .overlay(RoundedRectangle(cornerRadius: 10).stroke(Color.clear, lineWidth: 1))
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(spokenText("\(seat == mySeat ? "أنت" : n)\(partner ? "، شريكك" : "")، \(JK_COLOR_NAMES[seat])، \(cards) أوراق\(turn ? "، عليه الدور" : "")"))
         }

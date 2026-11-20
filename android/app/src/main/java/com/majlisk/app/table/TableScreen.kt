@@ -648,8 +648,8 @@ private fun PlayerTag(v: TableView, g: GameView, seat: Int, faces: List<Card> = 
         Column(
             Modifier
                 .then(if (playerActions.isNotEmpty()) Modifier.semantics(mergeDescendants = true) { customActions = playerActions } else Modifier)
-                .border(1.dp, if (turn) Palette.gold else Color.Transparent, RoundedCornerShape(14.dp))
-                .background(if (turn) Color(0x14D4AF37) else Color.Transparent, RoundedCornerShape(14.dp))
+                .border(1.dp, Color.Transparent, RoundedCornerShape(14.dp))
+                .background(Color.Transparent, RoundedCornerShape(14.dp))
                 .padding(horizontal = if (wide) 8.dp else 2.dp, vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
         ) {
