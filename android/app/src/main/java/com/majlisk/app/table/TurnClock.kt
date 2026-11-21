@@ -59,7 +59,8 @@ fun TurnClock(v: TableView, seat: Int, turn: Boolean) {
  */
 @Composable
 fun TurnAvatar(v: TableView, seat: Int, turn: Boolean, uid: String?, name: String, size: androidx.compose.ui.unit.Dp) {
-    androidx.compose.foundation.layout.Box(contentAlignment = Alignment.Center) {
+    // مقاس ثابت دائماً (بحجم حلقة المؤقت): كانت الصورة تكبر ٨ نقاط لما يجي دور اللاعب فتتحرك الطاولة كلها
+    androidx.compose.foundation.layout.Box(Modifier.size(size + 8.dp), contentAlignment = Alignment.Center) {
         com.majlisk.app.ui.Avatar(uid, name, size)
         if (!turn) return@Box
         val deadline = if (v.clockLimit > 0 && v.clockSeat == seat) v.clockDeadline else null
