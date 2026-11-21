@@ -591,12 +591,26 @@ struct DominoLogView: View {
 private let JK_COLORS: [Color] = [Color(red: 0.83, green: 0.69, blue: 0.22), Color(red: 0.75, green: 0.22, blue: 0.17), Color(red: 0.18, green: 0.53, blue: 0.87), Color(red: 0.15, green: 0.68, blue: 0.38)]
 private let JK_COLOR_NAMES = ["الذهبي", "الأحمر", "الأزرق", "الأخضر"]
 
+/// ورقة جاكارو في مكانها من اليد: الهوية رقم المكان (مو الورقة)
+private struct JackarooSlot: Identifiable {
+    let id: Int
+    let h: JackarooHandCard
+}
+
 struct JackarooBoard: View {
     let v: TableView
     let j: JackarooView
     let conn: TableConnection
     let isOwner: Bool
     @State private var picked: JackarooHandCard?
+    /// كل ورقة عنصر مربوط بمكانها (مثل البلوت): تلعب ورقة فيبقى المؤشر مكانه وما يقفز
+    @AccessibilityFocusState private var slotFocus: Int?
+    @State private var playedPos: Int?
+    private func played(_ i: Int?) {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        Announcer.interruptNextEvents()
+        if let i { playedPos = i }
+    }
     /// أماكن الأحجار: تفتح بسحبة من فوق لتحت
     @State private var posOpen = false
 
@@ -674,13 +688,15 @@ struct JackarooBoard: View {
                 Text(trSpoken("أوراقك\(j.burning ? "، اختر ورقة لحرقها" : "")")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 // سطر محجوز دائماً (يطلع فيه تنبيه الحرق) فالشاشة ما تتحرك
                 Text(j.burning ? trSpoken("لا لعب صالح: اختر ورقة لحرقها") : AttributedString(" ")).foregroundColor(Palette.goldSoft).lineLimit(1).frame(maxWidth: .infinity).accessibilityHidden(true)
-                Wrap(items: j.hand, spacing: 8) { h in
+                // مكان الأوراق محجوز (حتى لما تخلص أوراقك آخر اللفة) فاللوحة فوقها ما تكبر وتصغر
+                Wrap(items: j.hand.enumerated().map { JackarooSlot(id: $0.offset, h: $0.element) }, spacing: 8) { slot in
+                    let h = slot.h
                     Button {
                         if !j.myTurn { Announcer.announceNow("ليس دورك") }
-                        else if j.burning { act(["type": "burn", "card": h.card.json]) }
+                        else if j.burning { played(slot.id); act(["type": "burn", "card": h.card.json]) }
                         else if h.moves.isEmpty { Sounds.shared.illegal() } // صوت «ما تنلعب» بس، بدون كلام (مثل البلوت)
-                        else if h.moves.count == 1 { act(["type": "play", "card": h.card.json, "move": h.moves[0].move]) }
-                        else { picked = h }
+                        else if h.moves.count == 1 { played(slot.id); act(["type": "play", "card": h.card.json, "move": h.moves[0].move]) }
+                        else { playedPos = slot.id; picked = h }
                     } label: {
                         Text(trSpoken("\(h.card.rank)\(h.card.symbol)"))
                             .font(.system(size: 22, weight: .bold))
@@ -692,7 +708,17 @@ struct JackarooBoard: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(spokenText(h.label))
+                    .accessibilityFocused($slotFocus, equals: slot.id)
                 }
+                .frame(minHeight: 84, alignment: .top)
+            }
+        }
+        // لعبت آخر ورقة في الصف (مكانها اختفى): المؤشر للمكان اللي قبله
+        .onChange(of: j.hand.count) { n in
+            guard let p = playedPos else { return }
+            playedPos = nil
+            if p >= n && n > 0 && UIAccessibility.isVoiceOverRunning {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { slotFocus = n - 1 }
             }
         }
         .onAppear { Gestures.shared.set("jackaroo") { read($0) } }
@@ -717,7 +743,7 @@ struct JackarooBoard: View {
         .sheet(item: $picked) { h in
             Sheet(title: "\(short(h.label)): اختر الحركة") {
                 ForEach(h.moves) { m in
-                    MButton(m.text, .primary) { picked = nil; act(["type": "play", "card": h.card.json, "move": m.move]) }
+                    MButton(m.text, .primary) { picked = nil; played(nil); act(["type": "play", "card": h.card.json, "move": m.move]) }
                 }
                 MButton("إلغاء") { picked = nil }
             }

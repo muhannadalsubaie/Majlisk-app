@@ -202,8 +202,13 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                         com.majlisk.app.i18n.A11yAction("مغادرة الطاولة") { confirmLeave = true; true },
                     )
                 })
-                if (v.kind == "baloot") com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
-                if (v.domino != null) com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
+                // مكان زر «السجل» محجوز دائماً (في الألعاب اللي ما فيها سجل يبقى مكانه فاضي ومخفي)
+                // فزر القائمة واسم الطاولة ما يتحركون لما تتغير اللعبة أو تبدأ
+                when {
+                    v.kind == "baloot" -> com.majlisk.app.ui.BackButton({ historyOpen = true }, "السجل")
+                    v.domino != null -> com.majlisk.app.ui.BackButton({ dominoLogOpen = true }, "السجل")
+                    else -> Box(Modifier.alpha(0f).clearAndSetSemantics { }) { com.majlisk.app.ui.BackButton({}, "السجل") }
+                }
                 Text(
                     // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                     "طاولة ${if (v.kind == "domino") "دومينو ${v.optTarget}" else gameTitle(v.kind, v.variant)}${if (v.ownerName.isNotEmpty()) " — المالك ${v.ownerName}" else ""}",
@@ -214,7 +219,6 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                     textAlign = TextAlign.End,
                 )
             }
-            if (!connected) Note("انقطع الاتصال — جارٍ إعادة المحاولة…")
 
             // اللودو والجاكارو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
             // (الجاكارو الطويلة تملأ المساحة كلها بنفسها)
@@ -238,12 +242,17 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
             if (v.ludo != null && v.mySeat != null && Announcer.readerOn) LudoReaderChoices(v.ludo, conn)
             // الدردشة الكتابية (تختفي إن أطفأتها من الإعدادات): فقاعة فقط (زر الدردشة ونافذتها، وآخر رسالة لحظات في الزاوية)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp, Alignment.End), verticalAlignment = Alignment.CenterVertically) {
+                // مكان زر الدردشة محجوز حتى لو أطفأتها من الإعدادات (زر الميكروفون ما يتحرك)
                 if (chatMode != com.majlisk.app.data.ChatMode.OFF) ChatButton(conn) { chatOpen = true; conn.chatOpen = true }
+                else Box(Modifier.alpha(0f).clearAndSetSemantics { }) { ChatButton(conn) {} }
                 VoiceButton(v.id, uid)
             }
         }
         // الفقاعة: آخر رسالة لحظات في الزاوية تحت، بعيداً عن الطاولة والأوراق
         if (chatMode != com.majlisk.app.data.ChatMode.OFF && !chatOpen) ChatToast(conn, Modifier.align(Alignment.BottomStart))
+        // انقطع الاتصال: تنبيه طافي فوق الشاشة (كان سطر داخل الصفحة يدف الطاولة والأوراق لتحت)
+        if (!connected) Note("انقطع الاتصال — جارٍ إعادة المحاولة…", Modifier.align(Alignment.TopCenter).padding(top = 60.dp)
+            .background(Palette.green900.copy(alpha = 0.92f), RoundedCornerShape(10.dp)).padding(horizontal = 12.dp, vertical = 6.dp))
     }
     if (chatOpen) ChatDialog(conn) { chatOpen = false; conn.chatOpen = false }
 

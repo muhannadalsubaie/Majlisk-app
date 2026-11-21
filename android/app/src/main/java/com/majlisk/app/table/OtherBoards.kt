@@ -642,25 +642,43 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
             Text("أوراقك${if (j.burning) "، اختر ورقة لحرقها" else ""}", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
             // سطر محجوز دائماً (يطلع فيه تنبيه الحرق) فالشاشة ما تتحرك
             Text(if (j.burning) "لا لعب صالح: اختر ورقة لحرقها" else " ", color = Palette.goldSoft, modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center, maxLines = 1)
-            FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                j.hand.forEach { h ->
+            // مكان الأوراق محجوز (حتى لما تخلص أوراقك آخر اللفة) فاللوحة فوقها ما تكبر وتصغر.
+            // وكل ورقة عنصر مربوط بمكانها (مثل البلوت): تلعب ورقة فيبقى المؤشر مكانه وما يقفز
+            val slotFocus = remember { mutableMapOf<Int, FocusRequester>() }
+            var playedPos by remember { mutableStateOf<Int?>(null) }
+            val handSize = j.hand.size
+            LaunchedEffect(handSize) {
+                val p = playedPos ?: return@LaunchedEffect
+                playedPos = null
+                if (p >= handSize && handSize > 0 && Announcer.readerOn) { delay(50); runCatching { slotFocus[handSize - 1]?.requestFocus() } }
+            }
+            val played: (Int) -> Unit = { i -> if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i } }
+            FlowRow(Modifier.fillMaxWidth().heightIn(min = 84.dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                j.hand.forEachIndexed { i, h ->
+                    androidx.compose.runtime.key(i) {
+                    val fr = remember { FocusRequester() }
+                    DisposableEffect(Unit) {
+                        slotFocus[i] = fr
+                        onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
+                    }
                     Box(
-                        Modifier.size(58.dp, 84.dp)
+                        Modifier.size(58.dp, 84.dp).focusRequester(fr)
                             .background(if (j.myTurn && !h.usable) Color(0xFFCFCABB) else Color.White, RoundedCornerShape(8.dp))
                             .border(2.dp, if (h.usable) Palette.gold else Color(0xFFB9B4A6), RoundedCornerShape(8.dp))
                             .clickable(role = Role.Button) {
                                 when {
                                     !j.myTurn -> Announcer.announceNow("ليس دورك")
-                                    j.burning -> act(conn, "jackaroo", jsonOf("type" to "burn", "card" to h.card.json()))
+                                    j.burning -> { played(i); act(conn, "jackaroo", jsonOf("type" to "burn", "card" to h.card.json())) }
                                     h.moves.isEmpty() -> Sounds.illegal() // صوت «ما تنلعب» بس، بدون كلام (مثل البلوت)
-                                    h.moves.size == 1 -> act(conn, "jackaroo", jsonOf("type" to "play", "card" to h.card.json(), "move" to h.moves[0].move))
-                                    else -> picked = h
+                                    h.moves.size == 1 -> { played(i); act(conn, "jackaroo", jsonOf("type" to "play", "card" to h.card.json(), "move" to h.moves[0].move)) }
+                                    else -> { playedPos = i; picked = h }
                                 }
                             }
                             .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(h.label) },
                         contentAlignment = Alignment.Center,
                     ) {
                         Text("${h.card.rank}${h.card.symbol}", color = if (h.card.red) Color(0xFFC62828) else Color(0xFF1A1A1A), fontSize = 22.sp, fontWeight = FontWeight.Bold)
+                    }
                     }
                 }
             }
@@ -670,7 +688,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
     picked?.let { h ->
         MajliskDialog("${h.label.substringBefore("،")}: اختر الحركة", { picked = null }) {
             h.moves.forEach { m ->
-                PrimaryButton(m.text, { picked = null; act(conn, "jackaroo", jsonOf("type" to "play", "card" to h.card.json(), "move" to m.move)) })
+                PrimaryButton(m.text, { picked = null; if (Announcer.readerOn) Announcer.interruptNextEvents(); act(conn, "jackaroo", jsonOf("type" to "play", "card" to h.card.json(), "move" to m.move)) })
             }
             SecondaryButton("إلغاء", { picked = null }, fill = true)
         }

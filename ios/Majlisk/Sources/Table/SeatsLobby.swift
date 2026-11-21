@@ -125,8 +125,9 @@ struct SeatsLobby: View {
                 Text(trSpoken(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
                     ItemRow {
-                        if let m = v.seat(i) { Avatar(uid: v.seatUid(i), name: m.username, size: 32) }
-                        Text(trSpoken("المقعد \(i + 1): \(occupantLabel(v, i))")).frame(maxWidth: .infinity, alignment: .leading)
+                        // مكان الصورة محجوز (المقعد الفاضي مكانها فاضي) والاسم سطر واحد: لما يجلس أحد أو يقوم ما يتحرك شي
+                        if let m = v.seat(i) { Avatar(uid: v.seatUid(i), name: m.username, size: 32) } else { Color.clear.frame(width: 32, height: 32).accessibilityHidden(true) }
+                        Text(trSpoken("المقعد \(i + 1): \(occupantLabel(v, i))")).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
                         if isOwner {
                             if v.seat(i) == nil {
                                 SmallButton("دعوة صديق", label: "دعوة صديق للمقعد \(i + 1)") { panel = .invite(i) }
@@ -138,9 +139,9 @@ struct SeatsLobby: View {
                     }
                 }
             }
-            if !v.spectators.isEmpty {
-                Note("المشاهدون: " + v.spectators.map { $0.uid == uid ? "\($0.username) (أنت)" : $0.username }.joined(separator: "، "))
-            }
+            // سطر المشاهدين محجوز دائماً (سطر واحد، وVoiceOver يقرأه كامل): لما يدخل أو يطلع مشاهد ما تنزل الأزرار تحته
+            Text(trSpoken("المشاهدون: " + (v.spectators.isEmpty ? "لا أحد" : v.spectators.map { $0.uid == uid ? "\($0.username) (أنت)" : $0.username }.joined(separator: "، "))))
+                .font(.system(size: 14)).foregroundColor(Palette.textDim).lineLimit(1).truncationMode(.tail).frame(maxWidth: .infinity, alignment: .leading)
             // «بدء المباراة» يفتح نافذة إعدادات المباراة: فيها وقت كل دور (قائمة منسدلة) وأي إعدادات تنضاف بعدين، ثم «ابدأ»
             if isOwner { MButton("بدء المباراة", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = true } }
             else { BodyText("بانتظار مالك الطاولة لبدء المباراة") }

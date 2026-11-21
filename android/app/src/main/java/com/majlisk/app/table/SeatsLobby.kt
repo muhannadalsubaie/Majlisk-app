@@ -1,6 +1,8 @@
 package com.majlisk.app.table
 
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.size
 import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -106,8 +108,9 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
         Text(title, color = Palette.goldSoft)
         seats.forEach { i ->
             ItemRow {
-                v.seats.getOrNull(i)?.let { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(i), it.username, 32.dp) }
-                Text("المقعد ${i + 1}: ${occupantLabel(v, i)}", color = Palette.text, modifier = Modifier.weight(1f))
+                // مكان الصورة محجوز (المقعد الفاضي مكانها فاضي) والاسم سطر واحد: لما يجلس أحد أو يقوم ما يتحرك شي
+                v.seats.getOrNull(i)?.let { com.majlisk.app.ui.Avatar(v.seatUids.getOrNull(i), it.username, 32.dp) } ?: Box(Modifier.size(32.dp))
+                Text("المقعد ${i + 1}: ${occupantLabel(v, i)}", color = Palette.text, modifier = Modifier.weight(1f), maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis)
                 if (isOwner) {
                     if (v.seats.getOrNull(i) == null) {
                         SmallButton("دعوة صديق", { panel = SeatPanel.Invite(i) }, description = "دعوة صديق للمقعد ${i + 1}")
@@ -119,9 +122,11 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             }
         }
     }
-    if (v.spectators.isNotEmpty()) {
-        Note("المشاهدون: " + v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username })
-    }
+    // سطر المشاهدين محجوز دائماً (سطر واحد، وقارئ الشاشة يقرأه كامل): لما يدخل أو يطلع مشاهد ما تنزل الأزرار تحته
+    Text(
+        "المشاهدون: " + (if (v.spectators.isEmpty()) "لا أحد" else v.spectators.joinToString("، ") { if (it.uid == uid) "${it.username} (أنت)" else it.username }),
+        color = Palette.textDim, fontSize = 14.sp, maxLines = 1, overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis,
+    )
     val seated = v.seats.count { it != null }
     // «بدء المباراة» يفتح نافذة إعدادات المباراة: فيها وقت كل دور (قائمة منسدلة) وأي إعدادات تنضاف بعدين، ثم «ابدأ»
     if (isOwner) {

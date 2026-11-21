@@ -104,15 +104,17 @@ struct TableScreen: View {
                         if v.ownerUid == uid { Button(tr("دعوة صديق")) { menuSheet = .invite } }
                         Button(tr("مغادرة الطاولة")) { confirmLeave = true }
                     }
+                // مكان زر «السجل» محجوز دائماً (في الألعاب اللي ما فيها سجل يبقى مكانه فاضي ومخفي)
+                // فزر القائمة واسم الطاولة ما يتحركون لما تتغير اللعبة أو تبدأ
                 if v.kind == "baloot" { SmallButton("السجل") { historyOpen = true } }
-                if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
+                else if v.domino != nil { SmallButton("السجل") { dominoLogOpen = true } }
+                else { SmallButton("السجل") {}.hidden().accessibilityHidden(true) }
                 // اسم المالك جنب اسم الطاولة، ويتحدث أول ما يتغير المالك
                 // سطرين بالكثير ويصغر الخط لو طال (كان ينكسر خمسة أسطر جنب الأزرار ويدف الطاولة والأوراق لتحت)
                 Text(trSpoken("طاولة \(v.title)\(v.ownerName.isEmpty ? "" : " — المالك \(v.ownerName)")")).foregroundColor(Palette.textDim)
                     .font(.system(size: 13)).lineLimit(2).minimumScaleFactor(0.6)
                     .frame(maxWidth: .infinity, alignment: .trailing).accessibilityAddTraits(.isHeader)
             }
-            if !conn.connected { Note("انقطع الاتصال — جارٍ إعادة المحاولة…") }
             if !v.hasGame {
                 SeatsLobby(v: v, uid: uid, conn: conn)
             } else if let d = v.domino {
@@ -140,7 +142,9 @@ struct TableScreen: View {
             // الدردشة الكتابية فقاعة فقط: زر الدردشة يفتح نافذتها (يختفي إن أطفأتها من الإعدادات)
             HStack(spacing: 10) {
                 Spacer()
+                // مكان زر الدردشة محجوز حتى لو أطفأتها من الإعدادات (زر الميكروفون ما يتحرك)
                 if chatSettings.mode != .off { ChatButton(conn: conn) { conn.chatOpen = true; chatOpen = true } }
+                else { ChatButton(conn: conn) {}.hidden().accessibilityHidden(true) }
                 VoiceButton(tableId: v.id, uid: uid)
             }
             .padding(.horizontal, 16).padding(.bottom, 8)
@@ -148,6 +152,15 @@ struct TableScreen: View {
         // الفقاعة: آخر رسالة لحظات في الزاوية تحت، بعيداً عن الطاولة والأوراق
         .overlay(alignment: .bottomLeading) {
             if chatSettings.mode != .off && !chatOpen { ChatToast(conn: conn) }
+        }
+        // انقطع الاتصال: تنبيه طافي فوق الشاشة (كان سطر داخل الصفحة يدف الطاولة والأوراق لتحت)
+        .overlay(alignment: .top) {
+            if !conn.connected {
+                Note("انقطع الاتصال — جارٍ إعادة المحاولة…")
+                    .padding(.horizontal, 12).padding(.vertical, 6)
+                    .background(RoundedRectangle(cornerRadius: 10).fill(Palette.green900.opacity(0.92)))
+                    .padding(.top, 56)
+            }
         }
         .sheet(isPresented: $chatOpen, onDismiss: { conn.chatOpen = false }) { ChatSheet(conn: conn) { chatOpen = false } }
         .sheet(isPresented: $historyOpen) { HistoryView(history: v.history) { historyOpen = false } }
