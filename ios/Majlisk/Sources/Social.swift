@@ -229,7 +229,23 @@ final class Online: ObservableObject {
     }
 }
 
-let GAME_NAMES = ["baloot": "بلوت", "domino": "دومينو", "jackaroo": "جاكارو", "ludo": "لودو"]
+let GAME_NAMES = ["baloot": "بلوت", "domino": "دومينو", "jackaroo": "جاكارو", "ludo": "لودو",
+                  "tarneeb": "طرنيب", "trix": "تريكس", "konkan": "كنكان", "shayeb": "شايب"]
+/// ألعاب الورق التجريبية: تطلع بس للي فتحها له الخادم (/me/features)
+let BETA_GAMES = ["tarneeb", "trix", "konkan", "shayeb"]
+
+/// المزايا المفتوحة لهالحساب من الخادم: الألعاب التجريبية (تطلع في إنشاء الطاولة وتغيير اللعبة)
+final class Features: ObservableObject {
+    static let shared = Features()
+    @Published private(set) var betaGames: [String] = []
+    func refresh() {
+        Task {
+            guard let o = try? await Api.get("/me/features") else { return }
+            let list = o.strs("betaGames").filter { BETA_GAMES.contains($0) }
+            await MainActor.run { self.betaGames = list }
+        }
+    }
+}
 
 /// اسم اللعبة كما في الخادم (shared/games.ts → gameTitle)
 func gameTitle(_ kind: String, _ variant: String?) -> String {

@@ -99,7 +99,7 @@ private struct Wrap<Item: Identifiable, Cell: View>: View {
 }
 
 @available(iOS 16.0, *)
-private struct WrapLayout: Layout {
+struct WrapLayout: Layout {
     var spacing: CGFloat
     func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
         let width = proposal.width ?? 360

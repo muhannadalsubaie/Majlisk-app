@@ -64,6 +64,7 @@ struct CreateTableScreen: View {
     let openTable: (String) -> Void
     // أولاً تختار اللعبة، ثم إعدادات الطاولة
     // من الواجهة الذهبية: اللعبة مختارة على طول
+    @ObservedObject private var features = Features.shared
     @State private var picked: String? = { defer { PendingGame.game = nil }; return PendingGame.game }()
     @State private var variant = "classic"
     @State private var isPrivate = false
@@ -120,7 +121,12 @@ struct CreateTableScreen: View {
                 GameTile(name: "دومينو", image: "domino_table") { picked = "domino"; variant = "classic" }
                 GameTile(name: "جاكارو", image: "jackaroo_table") { picked = "jackaroo"; variant = "classic" }
                 GameTile(name: "لودو", image: "ludo_table") { picked = "ludo"; variant = "classic" }
+                // الألعاب التجريبية: تطلع بس للحسابات اللي فتحها لها الخادم
+                ForEach(features.betaGames, id: \.self) { k in
+                    MButton("\(GAME_NAMES[k] ?? k) (تجريبي)") { picked = k; variant = "classic" }
+                }
             }
+            .onAppear { features.refresh() }
             // ومن قائمة الألعاب للقائمة الرئيسية
             .accessibilityAction(.escape) { navigate(.menu) }
         }

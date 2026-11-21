@@ -69,6 +69,8 @@ struct TableScreen: View {
             conn.start()
             // نغمة الانضمام يسمعها المنضم نفسه أول ما يدخل الطاولة (الموجودون يسمعونها من إعلان الخادم)
             Sounds.shared.tableJoin()
+            // الألعاب التجريبية لتغيير اللعبة من القائمة
+            Features.shared.refresh()
             // المحادثة الصوتية ما تدخلها تلقائياً: اللي يبيها يضغط ضغطة مطولة على زر الميكروفون
         }
         .task {
@@ -127,10 +129,13 @@ struct TableScreen: View {
                 // اللودو في منتصف الشاشة: مسافة فوقها مثل اللي تحتها
                 Spacer(minLength: 0)
                 LudoBoard(v: v, l: l, conn: conn, isOwner: v.ownerUid == uid)
+            } else if let c = v.cards {
+                // ألعاب الورق الجديدة: لوحة وحدة للأربع، تملأ المساحة الباقية
+                CardsBoard(v: v, c: c, conn: conn, isOwner: v.ownerUid == uid)
             } else if let g = v.game {
                 BalootBoard(v: v, g: g, uid: uid, conn: conn)
             }
-            Spacer(minLength: 0)
+            if v.cards == nil { Spacer(minLength: 0) }
             // الدومينو: قطعك تحت فوق الميكروفون
             if let d = v.domino { DominoHand(v: v, d: d, conn: conn) }
             // اللودو مع VoiceOver: اختيار الحجر في مكان ثابت فوق الميكروفون
