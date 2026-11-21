@@ -140,12 +140,12 @@ struct CardsBoard: View {
                     .accessibilityLabel(spokenText("\(me ? "أنت" : s.name)، \(s.count) \(s.count == 1 ? "ورقة" : "أوراق")\(s.note.isEmpty ? "" : "، \(s.note)")"))
                 }
             }
-            // الأرض: الأكلة الحالية (أو آخر المكب في الكنكان) — مكان ثابت
+            // الأرض: الأكلة الحالية (أو الورق المرمي في الكنكان) — مكان ثابت
             HStack(spacing: 6) {
                 ForEach(Array(c.center.enumerated()), id: \.offset) { _, p in
                     VStack(spacing: 1) {
                         CardsFace(c: p.1, w: 46, h: 66)
-                        Text(trSpoken(p.0 < 0 ? "المكب" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 56)
+                        Text(trSpoken(p.0 < 0 ? "الأرض" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 56)
                     }
                 }
             }

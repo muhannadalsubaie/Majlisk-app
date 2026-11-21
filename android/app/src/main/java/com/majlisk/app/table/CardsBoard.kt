@@ -152,7 +152,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                 }
             }
         }
-        // الأرض: الأكلة الحالية (أو آخر المكب في الكنكان) — مكان ثابت
+        // الأرض: الأكلة الحالية (أو الورق المرمي في الكنكان) — مكان ثابت
         Box(
             Modifier.fillMaxWidth().height(96.dp).background(Color(0xFF0F3B2A), RoundedCornerShape(14.dp))
                 .semantics(mergeDescendants = true) { contentDescription = tr(c.readLeft) },
@@ -162,7 +162,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                 c.center.forEach { (seat, face) ->
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         CardsFace(face, 46, 66)
-                        Text(if (seat < 0) "المكب" else c.seats.firstOrNull { it.seat == seat }?.name.orEmpty(), color = Palette.textDim, fontSize = 10.sp, maxLines = 1,
+                        Text(if (seat < 0) "الأرض" else c.seats.firstOrNull { it.seat == seat }?.name.orEmpty(), color = Palette.textDim, fontSize = 10.sp, maxLines = 1,
                             modifier = Modifier.width(56.dp).clearAndSetSemantics { }, textAlign = TextAlign.Center)
                     }
                 }
