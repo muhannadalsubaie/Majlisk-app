@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -115,6 +116,12 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
             GameTile("دومينو", com.majlisk.app.R.drawable.domino_table) { picked = "domino"; variant = "classic" }
             GameTile("جاكارو", com.majlisk.app.R.drawable.jackaroo_table) { picked = "jackaroo"; variant = "classic" }
             GameTile("لودو", com.majlisk.app.R.drawable.ludo_table) { picked = "ludo"; variant = "classic" }
+            // الألعاب التجريبية: تطلع بس للحسابات اللي فتحها لها الخادم
+            val beta by com.majlisk.app.data.Features.betaGames.collectAsState()
+            androidx.compose.runtime.LaunchedEffect(Unit) { com.majlisk.app.data.Features.refresh() }
+            beta.forEach { k ->
+                SecondaryButton("${com.majlisk.app.data.GAME_NAMES[k] ?: k} (تجريبي)", { picked = k; variant = "classic" }, fill = true)
+            }
         }
         return
     }

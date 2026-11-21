@@ -230,12 +230,14 @@ fun TableScreen(tableId: String, uid: String, exit: () -> Unit) {
                 v.domino != null -> DominoBoard(v, v.domino, conn, v.ownerUid == uid, Modifier.weight(1f)) { dominoLogOpen = true }
                 v.jackaroo != null -> JackarooBoard(v, v.jackaroo, conn, v.ownerUid == uid, if (jkTall) Modifier.weight(1f) else Modifier)
                 v.ludo != null -> LudoBoard(v, v.ludo, conn, v.ownerUid == uid)
+                // ألعاب الورق الجديدة: لوحة وحدة للأربع، تملأ المساحة الباقية
+                v.cards != null -> CardsBoard(v, v.cards, conn, v.ownerUid == uid, Modifier.weight(1f))
                 v.game != null -> BalootBoard(v, v.game, uid, conn)
             }
             // زر الميكروفون أسفل يسار الشاشة، بعد الأوراق مباشرة في ترتيب قارئ الشاشة
             // (الرجوع منه يعود للأوراق، لا لبداية الصفحة)
             // للمشاهد (بلا أوراق) يبقى الزر في أسفل الشاشة
-            if (v.domino == null && !jkTall) Spacer(Modifier.weight(1f))
+            if (v.domino == null && v.cards == null && !jkTall) Spacer(Modifier.weight(1f))
             // الدومينو: قطعك تحت فوق الميكروفون
             v.domino?.let { DominoHand(v, it, conn) { dominoLogOpen = true } }
             // اللودو مع قارئ الشاشة: اختيار الحجر في مكان ثابت فوق الميكروفون

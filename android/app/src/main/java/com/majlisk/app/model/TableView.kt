@@ -134,6 +134,8 @@ data class TableView(
     val domino: DominoView? = null,
     val jackaroo: JackarooView? = null,
     val ludo: LudoView? = null,
+    /** ألعاب الورق الجديدة (طرنيب، تريكس، كنكان، شايب) */
+    val cards: CardsView? = null,
     /** كم لاعب يقدر يبدأ اللعبة */
     val startCounts: List<Int> = listOf(4),
     /** مؤقت الدور: الثواني المختارة (٠ = بدون)، واللي عليه الوقت، ومتى يخلص وقته (بساعة الجوال) */
@@ -161,7 +163,8 @@ data class TableView(
 ) {
     val hasGame: Boolean get() = game != null || otherGame
     val playing: Boolean get() = (game != null && game.phase != "matchOver") ||
-        (domino != null && domino.phase != "matchOver") || jackaroo?.phase == "playing" || (ludo != null && ludo.phase != "over")
+        (domino != null && domino.phase != "matchOver") || jackaroo?.phase == "playing" || (ludo != null && ludo.phase != "over") ||
+        (cards != null && !cards.over)
 
     companion object {
         fun parse(o: JSONObject): TableView = TableView(
@@ -179,7 +182,7 @@ data class TableView(
             game = o.optJSONObject("game")?.let(::parseGame),
             kind = o.optString("kind", "baloot"),
             variant = o.optString("variant", "classic"),
-            otherGame = listOf("domino", "jackaroo", "ludo").any { o.optJSONObject(it) != null },
+            otherGame = listOf("domino", "jackaroo", "ludo", "cards").any { o.optJSONObject(it) != null },
             history = o.optJSONArray("history").objects().map(::parseRecord),
             domino = o.optJSONObject("domino")?.let { DominoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("dominoLog")) },
             jackaroo = o.optJSONObject("jackaroo")?.let { JackarooView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optIntOrNull("mySeat")) },
@@ -200,6 +203,7 @@ data class TableView(
             pinnedOwner = o.optBoolean("pinnedOwner"),
             pinnedViewers = o.optJSONArray("pinnedViewers")?.let { a -> (0 until a.length()).map { a.optString(it) } } ?: emptyList(),
             ludo = o.optJSONObject("ludo")?.let { LudoView.parse(it, o.optJSONObject("ui") ?: JSONObject(), o.optJSONArray("ludoLog")) },
+            cards = o.optJSONObject("cards")?.let { CardsView.parse(it) },
         )
 
         private fun parseGame(g: JSONObject): GameView {

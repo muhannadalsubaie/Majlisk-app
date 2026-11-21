@@ -24,7 +24,12 @@ import okhttp3.WebSocket
 import okhttp3.WebSocketListener
 import org.json.JSONObject
 
-val GAME_NAMES = mapOf("baloot" to "بلوت", "domino" to "دومينو", "jackaroo" to "جاكارو", "ludo" to "لودو")
+val GAME_NAMES = mapOf(
+    "baloot" to "بلوت", "domino" to "دومينو", "jackaroo" to "جاكارو", "ludo" to "لودو",
+    "tarneeb" to "طرنيب", "trix" to "تريكس", "konkan" to "كنكان", "shayeb" to "شايب",
+)
+/** ألعاب الورق التجريبية: تطلع بس للي فتحها له الخادم (/me/features) */
+val BETA_GAMES = listOf("tarneeb", "trix", "konkan", "shayeb")
 
 /** اسم اللعبة كما في الخادم (shared/games.ts → gameTitle) */
 fun gameTitle(kind: String, variant: String?): String {
@@ -488,5 +493,16 @@ class TableConnection(val tableId: String) {
         runCatching { connectivity.unregisterNetworkCallback(netCallback) }
         ws?.close(1000, null)
         scope.cancel()
+    }
+}
+
+/** المزايا المفتوحة لهالحساب من الخادم: الألعاب التجريبية (تطلع في إنشاء الطاولة وتغيير اللعبة) */
+object Features {
+    val betaGames = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
+    suspend fun refresh() {
+        runCatching { com.majlisk.app.net.Api.get("/me/features") }.onSuccess { o ->
+            val a = o.optJSONArray("betaGames")
+            betaGames.value = if (a == null) emptyList() else (0 until a.length()).map { a.optString(it) }.filter { it in BETA_GAMES }
+        }
     }
 }
