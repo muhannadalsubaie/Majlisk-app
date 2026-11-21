@@ -3,7 +3,7 @@ import SwiftUI
 // ألعاب الورق الجديدة (طرنيب، تريكس، كنكان، شايب): الخادم يرسل لكل لاعب «وش يشوف» بس —
 // أوراقه وأزرار حركاته المسموحة ونصوص قارئ الشاشة — والتطبيق يرسم ويرسل الحركة كما هي.
 
-struct CardFace: Hashable {
+struct CardsCard: Hashable {
     let id: Int, r: String, s: String
     init(_ o: JSON?) { id = o?.int("id") ?? 0; r = o?.str("r") ?? ""; s = o?.str("s") ?? "" }
     var red: Bool { s == "H" || s == "D" }
@@ -14,8 +14,8 @@ struct CardFace: Hashable {
 
 struct CardsView {
     struct Seat { let seat: Int, name: String, count: Int, note: String, turn: Bool }
-    struct Pile { let id: String, title: String, text: String, cards: [CardFace] }
-    struct HandCard { let face: CardFace, label: String, legal: Bool }
+    struct Pile { let id: String, title: String, text: String, cards: [CardsCard] }
+    struct HandCard { let face: CardsCard, label: String, legal: Bool }
     struct Button { let id: String, label: String, primary: Bool, needsSelection: Bool }
 
     let game: String
@@ -25,7 +25,7 @@ struct CardsView {
     let status: String
     let scores: [(String, Int)]
     let seats: [Seat]
-    let center: [(Int, CardFace)]
+    let center: [(Int, CardsCard)]
     let piles: [Pile]
     let hand: [HandCard]
     let select: Bool
@@ -42,9 +42,9 @@ struct CardsView {
         status = u.str("status")
         scores = u.objs("scores").map { ($0.str("name"), $0.int("value")) }
         seats = u.objs("seats").map { Seat(seat: $0.int("seat"), name: $0.str("name"), count: $0.int("count"), note: $0.str("note"), turn: $0.bool("turn")) }
-        center = u.objs("center").map { ($0.int("seat"), CardFace($0.obj("card"))) }
-        piles = u.objs("piles").map { p in Pile(id: p.str("id"), title: p.str("title"), text: p.str("text"), cards: p.objs("cards").map { CardFace($0) }) }
-        hand = u.objs("hand").map { HandCard(face: CardFace($0), label: $0.str("label"), legal: $0.bool("legal")) }
+        center = u.objs("center").map { ($0.int("seat"), CardsCard($0.obj("card"))) }
+        piles = u.objs("piles").map { p in Pile(id: p.str("id"), title: p.str("title"), text: p.str("text"), cards: p.objs("cards").map { CardsCard($0) }) }
+        hand = u.objs("hand").map { HandCard(face: CardsCard($0), label: $0.str("label"), legal: $0.bool("legal")) }
         select = u.bool("select")
         buttons = u.objs("buttons").map { Button(id: $0.str("id"), label: $0.str("label"), primary: $0.bool("primary"), needsSelection: $0.bool("needsSelection")) }
         readUp = reads.str("up"); readDown = reads.str("down"); readLeft = reads.str("left"); readRight = reads.str("right")
@@ -53,7 +53,7 @@ struct CardsView {
 
 /// ورقة مرسومة: رقمها ونوعها (الأحمر للهاص والديمن)، والجوكر نجمة
 struct CardsFace: View {
-    let c: CardFace
+    let c: CardsCard
     let w: CGFloat, h: CGFloat
     var dim = false
     var body: some View {
