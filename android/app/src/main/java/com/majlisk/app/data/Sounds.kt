@@ -146,11 +146,6 @@ object Sounds {
     /** لودو: رمي النرد */
     fun dice() = play("dice", gain = 0.9f)
 
-    // ملّاك: فلوس (شراء/دفع/استلام)، بناء بيت، سجن، بطاقة
-    fun coins() = play(pick("chips1", "chips2", "chips3"), gain = 0.9f)
-    fun build() = play("lay1", gain = 1f, vary = false)
-    fun jail() = play("collide", gain = 1f, vary = false)
-    fun drawCard() = play("fan", gain = 0.9f, vary = false)
     /** مشي الحجر في اللودو: نقرة لكل خطوة */
     // النقرة الوحدة قصيرة جداً (٥٠ جزء من الألف من الثانية): تشغيلها نقرة نقرة كان يضيّع أغلبها في أندرويد
     // (تنسمع نقرة وحدة أو ولا شي). الحين كل عدد خطوات ملف واحد جاهز فيه النقرات كلها بنفس التوقيت

@@ -187,7 +187,6 @@ struct TableView {
     var domino: DominoView?
     var jackaroo: JackarooView?
     let ludo: LudoView?
-    /// ملّاك (لعبة العقارات)
     /// كم لاعب يقدر يبدأ اللعبة
     let startCounts: [Int]
     /// مؤقت الدور: الثواني المختارة (٠ = بدون)، واللي عليه الوقت، ومتى يخلص وقته (بساعة الجوال)

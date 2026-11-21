@@ -134,7 +134,6 @@ data class TableView(
     val domino: DominoView? = null,
     val jackaroo: JackarooView? = null,
     val ludo: LudoView? = null,
-    /** ملّاك (لعبة العقارات) */
     /** كم لاعب يقدر يبدأ اللعبة */
     val startCounts: List<Int> = listOf(4),
     /** مؤقت الدور: الثواني المختارة (٠ = بدون)، واللي عليه الوقت، ومتى يخلص وقته (بساعة الجوال) */
