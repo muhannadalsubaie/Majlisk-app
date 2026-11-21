@@ -6282,5 +6282,9 @@
  "قفلة دبل معلنة من {0}": {
   "en": "Double lock called by {0}",
   "fr": "Double blocage annoncé par {0}"
+ },
+ "وصل {0}": {
+  "en": "{0} went out",
+  "fr": "{0} a fini"
  }
 }
