@@ -69,6 +69,24 @@ struct CardsFace: View {
     }
 }
 
+/// لاعب حول الطاولة: صورته (ومؤقت الدور حولها)، واسمه، وكم ورقة معه، وملاحظته
+private struct CardsSeatTag: View {
+    let v: TableView
+    let s: CardsView.Seat
+    var body: some View {
+        let me = s.seat == v.mySeat
+        VStack(spacing: 1) {
+            TurnAvatar(v: v, seat: s.seat, turn: s.turn, uid: v.seatUid(s.seat), name: s.name, size: 44)
+            Text(trSpoken(me ? "أنت" : s.name)).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
+            Text(verbatim: "🂠 \(s.count)").font(.system(size: 11)).foregroundColor(Palette.textDim)
+            Text(trSpoken(s.note.isEmpty ? " " : s.note)).font(.system(size: 11)).foregroundColor(Palette.goldSoft).lineLimit(1)
+        }
+        .frame(width: 76)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenText("\(me ? "أنت" : s.name)، \(s.count) \(s.count == 1 ? "ورقة" : "أوراق")\(s.note.isEmpty ? "" : "، \(s.note)")\(s.turn ? "، عليه الدور" : "")"))
+    }
+}
+
 private struct CardsSlot: Identifiable { let id: Int; let h: CardsView.HandCard }
 
 /// لوحة ألعاب الورق الجديدة: نفس الشكل للأربع، والخادم يحدد المحتوى.
@@ -122,40 +140,53 @@ struct CardsBoard: View {
                 }
             }
             .frame(minHeight: 34)
-            // اللاعبين
-            HStack(spacing: 6) {
-                ForEach(c.seats, id: \.seat) { s in
-                    let me = s.seat == v.mySeat
-                    VStack(spacing: 1) {
-                        HStack(spacing: 2) {
-                            Text(trSpoken(me ? "أنت" : s.name)).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.text).lineLimit(1)
-                            TurnClock(v: v, seat: s.seat, turn: s.turn)
+            // الطاولة مثل البلوت: اللاعبين حولها (اللي بعدك على جنب، واللي قدامك فوق) ووسطها الأرض
+            let myIdx = c.seats.firstIndex { $0.seat == v.mySeat }
+            let n = c.seats.count
+            let others: [CardsView.Seat] = myIdx.map { m in (1..<max(n, 1)).map { c.seats[(m + $0) % n] } } ?? Array(c.seats.dropFirst())
+            let top: CardsView.Seat? = others.count == 1 ? others[0] : others.count == 3 ? others[1] : nil
+            let side1: CardsView.Seat? = others.count >= 2 ? others[0] : nil
+            let side2: CardsView.Seat? = others.count == 2 ? others[1] : others.count == 3 ? others[2] : nil
+            let stack = c.piles.first { $0.id == "stack" }
+            VStack(spacing: 6) {
+                ZStack { if let top { CardsSeatTag(v: v, s: top) } }.frame(minHeight: 92)
+                HStack(spacing: 6) {
+                    ZStack { if let side1 { CardsSeatTag(v: v, s: side1) } }.frame(width: 76)
+                    // وسط الطاولة: الأكلة الحالية، أو كومة الأزواج المرمية فوق بعض (الشايب)
+                    ZStack {
+                        RoundedRectangle(cornerRadius: 70).fill(Color(red: 0.06, green: 0.23, blue: 0.16))
+                        RoundedRectangle(cornerRadius: 70).stroke(Color(red: 0.42, green: 0.29, blue: 0.17), lineWidth: 3)
+                        if let stack {
+                            ForEach(Array(stack.cards.enumerated()), id: \.offset) { i, f in
+                                CardsFace(c: f, w: 40, h: 58)
+                                    .rotationEffect(.degrees(Double((i * 37) % 30 - 15)))
+                                    .offset(x: CGFloat((i * 53) % 24 - 12), y: CGFloat((i * 29) % 16 - 8))
+                            }
+                        } else {
+                            HStack(spacing: 4) {
+                                ForEach(Array(c.center.enumerated()), id: \.offset) { _, p in
+                                    VStack(spacing: 1) {
+                                        CardsFace(c: p.1, w: 40, h: 58)
+                                        Text(trSpoken(p.0 < 0 ? "الأرض" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 50)
+                                    }
+                                }
+                            }
                         }
-                        Text(verbatim: "🂠 \(s.count)").font(.system(size: 12)).foregroundColor(Palette.textDim)
-                        Text(trSpoken(s.note.isEmpty ? " " : s.note)).font(.system(size: 11)).foregroundColor(Palette.goldSoft).lineLimit(1)
                     }
-                    .frame(maxWidth: .infinity, minHeight: 58).padding(4)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.13)))
+                    .frame(maxWidth: .infinity, minHeight: 150, maxHeight: 150)
                     .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(spokenText("\(me ? "أنت" : s.name)، \(s.count) \(s.count == 1 ? "ورقة" : "أوراق")\(s.note.isEmpty ? "" : "، \(s.note)")"))
+                    .accessibilityLabel(spokenText(stack.map { "\($0.title): \($0.text)" } ?? c.readLeft))
+                    ZStack { if let side2 { CardsSeatTag(v: v, s: side2) } }.frame(width: 76)
                 }
+                // المشاهد: أول لاعب تحت الطاولة
+                if myIdx == nil, let first = c.seats.first { CardsSeatTag(v: v, s: first) }
             }
-            // الأرض: الأكلة الحالية (أو الورق المرمي في الكنكان) — مكان ثابت
-            HStack(spacing: 6) {
-                ForEach(Array(c.center.enumerated()), id: \.offset) { _, p in
-                    VStack(spacing: 1) {
-                        CardsFace(c: p.1, w: 46, h: 66)
-                        Text(trSpoken(p.0 < 0 ? "الأرض" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 56)
-                    }
-                }
-            }
-            .frame(maxWidth: .infinity, minHeight: 96, maxHeight: 96)
-            .background(RoundedRectangle(cornerRadius: 14).fill(Color(red: 0.06, green: 0.23, blue: 0.16)))
-            .accessibilityElement(children: .ignore).accessibilityLabel(spokenText(c.readLeft))
+            .padding(.vertical, 6)
+            .background(RoundedRectangle(cornerRadius: 24).fill(RadialGradient(colors: [Color(red: 0.11, green: 0.30, blue: 0.22).opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 260)))
             // المجموعات: تنزيلات الكنكان، صفوف التركس (تنضغط في الكنكان للصق المحدد عليها)
             ScrollView {
                 VStack(spacing: 4) {
-                    ForEach(c.piles, id: \.id) { p in
+                    ForEach(c.piles.filter { $0.id != "stack" }, id: \.id) { p in
                         let canLay = c.select && c.myTurn && p.id.hasPrefix("meld:")
                         HStack(spacing: 3) {
                             Text(trSpoken(p.title)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).lineLimit(1).frame(width: 70, alignment: .leading)
