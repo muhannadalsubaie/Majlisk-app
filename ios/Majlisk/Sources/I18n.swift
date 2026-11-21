@@ -161,14 +161,35 @@ func trSpoken(_ s0: String) -> AttributedString {
 }
 func trSpoken(_ s: Substring) -> AttributedString { trSpoken(String(s)) }
 
+/// الأرقام داخل الكلام العربي بالأرقام العربية (٧ بدل 7): الصوت العربي في الآيفون كان يتخطى الرقم الإنجليزي
+/// لما تكون القطعة معلّمة عربي (فينقال «Mohanad: دايمن» بدون السبعة). الرقم العربي ينقرأ بالعربي دايماً
+func arabicDigits(_ s: Substring) -> String {
+    String(s.map { c -> Character in
+        guard let v = c.asciiValue, v >= 48, v <= 57 else { return c }
+        return Character(Unicode.Scalar(0x0660 + UInt32(v - 48))!)
+    })
+}
+
+/// نص للقراءة: كل قطعة بلغتها، والأرقام في القطع العربية بالأرقام العربية
+func spokenAttributed(_ s: String, _ base: [NSAttributedString.Key: Any] = [:]) -> NSAttributedString {
+    let m = NSMutableAttributedString()
+    for (r, l) in langRuns(s) where !r.isEmpty {
+        var attrs = base
+        attrs[.accessibilitySpeechLanguage] = l
+        m.append(NSAttributedString(string: l == "ar" ? arabicDigits(s[r]) : String(s[r]), attributes: attrs))
+    }
+    return m
+}
+
 /// وصف قارئ الشاشة مترجم ومعلّم بلغاته
-func spokenText(_ s: String) -> Text { Text(trSpoken(s)) }
+func spokenText(_ s0: String) -> Text {
+    let s = tr(s0)
+    return Text((try? AttributedString(spokenAttributed(s), including: \.uiKit)) ?? AttributedString(s))
+}
 
 /// إعلان قارئ الشاشة معلّم بلغاته
 func spokenNS(_ s: String, queued: Bool) -> NSAttributedString {
-    let m = NSMutableAttributedString(string: s, attributes: [.accessibilitySpeechQueueAnnouncement: queued])
-    for (r, l) in langRuns(s) where !r.isEmpty { m.addAttribute(.accessibilitySpeechLanguage, value: l, range: NSRange(r, in: s)) }
-    return m
+    spokenAttributed(s, [.accessibilitySpeechQueueAnnouncement: queued])
 }
 
 /// الجذر: اتجاه الشاشة من لغة التطبيق، ويعاد بناؤه كله لما تتغير اللغة

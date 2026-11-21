@@ -38,12 +38,13 @@ enum Announcer {
     private static var urgentQueue = false
 
     private static func post(_ text: String, queued: Bool) {
-        current = text
-        busyUntil = Date().addingTimeInterval(readTime(text))
         let s = spokenNS(text, queued: queued) // كل جزء بلغته
+        // النص المقروء فعلاً (الأرقام فيه عربية): بلاغ الانتهاء يجي به، فنقارن عليه
+        current = s.string
+        busyUntil = Date().addingTimeInterval(readTime(text))
         UIAccessibility.post(notification: .announcement, argument: s)
         // احتياط: لو ما وصل بلاغ الانتهاء نكمل بعد الوقت التقريبي
-        let mine = text
+        let mine = s.string
         DispatchQueue.main.asyncAfter(deadline: .now() + readTime(text) + 0.6) {
             if current == mine { current = nil; pump() }
         }
