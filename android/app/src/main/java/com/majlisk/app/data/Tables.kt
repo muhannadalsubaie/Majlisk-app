@@ -257,8 +257,9 @@ class TableConnection(val tableId: String) {
                             if (now - lastHeard > (if (myTurn()) 6_000 else 12_000)) { ws?.cancel(); break }
                             // طلبنا الحالة وما وصلت خلال ٤ ثوانٍ: الطاولة ما توصلنا (الاتصال معلّق)، نعيده
                             if (syncAt > 0 && lastData < syncAt && now - syncAt > 4_000) { ws?.cancel(); break }
-                            // ما وصلنا شي من الطاولة ١٠ ثوانٍ: نطلب الحالة الحالية (لا تبقى الشاشة على حالة قديمة)
-                            if (now - lastData > 10_000 && (syncAt == 0L || lastData >= syncAt)) resync()
+                            // الدور عندك وما وصلنا شي من الطاولة ٢٠ ثانية: نطلب الحالة (لا تبقى شاشتك على حالة قديمة).
+                            // بس للي الدور عنده: طلب كل الجوالات كان يصحّي الطاولة كل ١٠ ثوانٍ فما تنام أبداً (يزيد المصروف)
+                            if (myTurn() && now - lastData > 20_000 && (syncAt == 0L || lastData >= syncAt)) resync()
                             ws?.send("ping")
                         }
                     }

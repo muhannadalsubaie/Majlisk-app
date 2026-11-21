@@ -453,8 +453,9 @@ final class TableConnection: ObservableObject {
                             if now.timeIntervalSince(self.lastHeard) > (self.myTurn ? 6 : 12) { ws.cancel(with: .goingAway, reason: nil); break }
                             // طلبنا الحالة وما وصلت خلال ٤ ثوانٍ: الطاولة ما توصلنا (الاتصال معلّق)، نعيده
                             if let s = self.syncAt, self.lastData < s, now.timeIntervalSince(s) > 4 { ws.cancel(with: .goingAway, reason: nil); break }
-                            // ما وصلنا شي من الطاولة ١٠ ثوانٍ: نطلب الحالة الحالية (لا تبقى الشاشة على حالة قديمة)
-                            if now.timeIntervalSince(self.lastData) > 10, self.syncAt.map({ self.lastData >= $0 }) ?? true { self.resync(ws) }
+                            // الدور عندك وما وصلنا شي من الطاولة ٢٠ ثانية: نطلب الحالة (لا تبقى شاشتك على حالة قديمة).
+                            // بس للي الدور عنده: طلب كل الجوالات كان يصحّي الطاولة كل ١٠ ثوانٍ فما تنام أبداً (يزيد المصروف)
+                            if self.myTurn, now.timeIntervalSince(self.lastData) > 20, self.syncAt.map({ self.lastData >= $0 }) ?? true { self.resync(ws) }
                             try? await ws.send(.string("ping"))
                         }
                     }
