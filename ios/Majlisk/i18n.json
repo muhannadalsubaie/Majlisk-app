@@ -6278,5 +6278,9 @@
  "وصل {0}": {
   "en": "{0} went out",
   "fr": "{0} a fini"
+ },
+ "معك 6 و 6: اختر من يبدأ، أنت أو شريكك": {
+  "en": "You have 6-6: choose who starts, you or your partner",
+  "fr": "Vous avez le 6-6 : choisissez qui commence, vous ou votre partenaire"
  }
 }
