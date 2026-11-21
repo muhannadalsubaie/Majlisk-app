@@ -113,7 +113,11 @@ data class HandRecord(
     val points: List<Int>,
     val buyerFailed: Boolean,
     val kaboot: Int?,
+    /** القيد والقطع: التسجيلة في هالصكة (مين سجّل، على مين، نوعها، وصحيحة أو غلط) */
+    val qaid: QaidRecord? = null,
 )
+
+data class QaidRecord(val by: String, val target: String, val kind: String, val correct: Boolean)
 
 data class TableView(
     val id: String,
@@ -286,6 +290,7 @@ data class TableView(
             points = r.optJSONArray("points").ints(),
             buyerFailed = r.optBoolean("buyerFailed"),
             kaboot = r.optIntOrNull("kaboot"),
+            qaid = r.optJSONObject("qaid")?.let { QaidRecord(it.optString("by"), it.optString("target"), it.optString("kind"), it.optBoolean("correct")) },
         )
     }
 }

@@ -165,6 +165,8 @@ struct HandRecord {
     let points: [Int]
     let buyerFailed: Bool
     let kaboot: Int?
+    /// القيد والقطع: التسجيلة في هالصكة (مين سجّل، على مين، نوعها، وصحيحة أو غلط)
+    var qaid: (by: String, target: String, kind: String, correct: Bool)? = nil
 }
 
 /// حالة الطاولة كما يرسلها الخادم لكل شخص (shared/table.ts → viewFor)
@@ -331,7 +333,8 @@ struct TableView {
             abnat: r.ints("abnat"),
             points: r.ints("points"),
             buyerFailed: r.bool("buyerFailed"),
-            kaboot: r.intOrNil("kaboot")
+            kaboot: r.intOrNil("kaboot"),
+            qaid: r.obj("qaid").map { (by: $0.str("by"), target: $0.str("target"), kind: $0.str("kind"), correct: $0.bool("correct")) }
         )
     }
 }

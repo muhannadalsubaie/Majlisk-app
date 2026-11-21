@@ -270,13 +270,13 @@ struct HistoryView: View {
         let tm = { (x: Int) in r.teams[safe: x] ?? "" }
         let p = r.projects ?? []
         let projects = (p[safe: 0] ?? 0) != 0 || (p[safe: 1] ?? 0) != 0 ? "\(tm(0)) \(p[0])، \(tm(1)) \(p[1])" : "لا توجد"
-        return [
+        return ([
             "الصكة \(n): \(r.contract)\(level.isEmpty ? "" : " \(level)")\(r.kaboot != nil ? "، كبوت" : "").",
             "المشتري: \(r.buyer) (\(tm(r.buyerTeam))).",
             "الأبناط: \(tm(0)) \(r.abnat[safe: 0] ?? 0)، \(tm(1)) \(r.abnat[safe: 1] ?? 0).",
             "المشاريع: \(projects).",
             "النقاط: \(tm(0)) \(r.points[safe: 0] ?? 0)، \(tm(1)) \(r.points[safe: 1] ?? 0).",
-        ].joined(separator: "\n")
+        ] + (r.qaid.map { q in ["التسجيلة: \(q.by) سجّل على \(q.target)، \(q.kind)، \(q.correct ? "صحيحة" : "غلط")."] } ?? [])).joined(separator: "\n")
     }
 
     var body: some View {

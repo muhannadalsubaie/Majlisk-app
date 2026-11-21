@@ -39,7 +39,7 @@ fun HistoryDialog(history: List<HandRecord>, onClose: () -> Unit) {
                     "الأبناط: ${tm(0)} ${r.abnat.getOrElse(0) { 0 }}، ${tm(1)} ${r.abnat.getOrElse(1) { 0 }}.",
                     "المشاريع: $projects.",
                     "النقاط: ${tm(0)} ${r.points.getOrElse(0) { 0 }}، ${tm(1)} ${r.points.getOrElse(1) { 0 }}.",
-                )
+                ) + listOfNotNull(r.qaid?.let { q -> "التسجيلة: ${q.by} سجّل على ${q.target}، ${q.kind}، ${if (q.correct) "صحيحة" else "غلط"}." })
                 Text(lines.joinToString("\n"), color = Palette.text, modifier = Modifier.fillMaxWidth().background(Palette.green900, RoundedCornerShape(10.dp)).padding(10.dp))
             }
         }
