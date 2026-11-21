@@ -31,6 +31,11 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import com.majlisk.app.i18n.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import kotlinx.coroutines.delay
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -438,30 +443,58 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
                             else -> Announcer.announceNow(d.lockText.ifEmpty { "ما تقدر تعلن قفلة الحين" })
                         }
                     }, modifier = Modifier.weight(1f), fill = true)
-                    if (d.myTurn && d.canDraw) PrimaryButton("سحب من البنك", { act(conn, "domino", jsonOf("type" to "draw")) }, modifier = Modifier.weight(1f))
-                    if (d.myTurn && d.canPass) PrimaryButton("جلا", { dominoJala(conn, d) }, modifier = Modifier.weight(1f))
+                    // «سحب» و«جلا» ثابتين طول الصكة (ما يطلعون ويختفون مع الدور فيقفز مؤشر قارئ الشاشة):
+                    // الضغط في غير وقتها يقول ليش. «سحب» يختفي بس لما يخلص البنك
+                    if (d.boneyard > 0 || d.canDraw) PrimaryButton("سحب من البنك", {
+                        when {
+                            !d.myTurn -> Announcer.announceNow("ليس دورك")
+                            d.canDraw -> { Announcer.interruptNextEvents(); act(conn, "domino", jsonOf("type" to "draw")) }
+                            else -> Announcer.announceNow("ما تحتاج تسحب، عندك قطعة تصلح")
+                        }
+                    }, modifier = Modifier.weight(1f))
+                    PrimaryButton("جلا", { if (d.myTurn && d.canPass) Announcer.interruptNextEvents(); dominoJala(conn, d) }, modifier = Modifier.weight(1f))
                 }
             }
         }
         Text("قطعك", color = Color.Transparent, modifier = Modifier.size(1.dp).semantics { heading() })
         // مكان القطع محجوز لسطرين دائماً: لما تقل قطعك (أو تزيد بالسحب) ما تتحرك الشاشة
         val tileUnit = 24f * com.majlisk.app.data.Look.tileScale
+        // كل قطعة عنصر مربوط بمكانها في اليد (مو بالقطعة نفسها) مثل البلوت: لما تلعب قطعة يبقى مكانها
+        // (وتصير فيه القطعة اللي بعدها) فمؤشر قارئ الشاشة ما يقفز، وإعلان لعبك واللي بعدك يقطع قراءته على طول
+        val slotFocus = remember { mutableMapOf<Int, FocusRequester>() }
+        var playedPos by remember { mutableStateOf<Int?>(null) }
+        val handSize = d.hand.size
+        LaunchedEffect(handSize) {
+            val p = playedPos ?: return@LaunchedEffect
+            playedPos = null
+            // لعبت آخر قطعة في الصف (مكانها اختفى): المؤشر للمكان اللي قبله
+            if (p >= handSize && handSize > 0 && Announcer.readerOn) { delay(50); runCatching { slotFocus[handSize - 1]?.requestFocus() } }
+        }
+        val played: (Int) -> Unit = { i -> if (Announcer.readerOn) { Announcer.interruptNextEvents(); playedPos = i } }
         FlowRow(Modifier.fillMaxWidth().heightIn(min = (2 * (tileUnit * 2 + 12) + 8).dp), horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            d.hand.forEach { h ->
-                Box(
-                    Modifier
-                        .border(2.dp, if (h.legal) Palette.gold else Color.Transparent, RoundedCornerShape(8.dp))
-                        .clickable(role = Role.Button) {
-                            when {
-                                !d.myTurn -> Announcer.announceNow("ليس دورك")
-                                !h.legal -> Sounds.illegal() // نفس صوت البلوت للورقة اللي ما تنلعب، بدون كلام
-                                h.askSide -> chooseSide = h
-                                else -> act(conn, "domino", jsonOf("type" to "play", "tile" to h.tile.json()))
+            d.hand.forEachIndexed { i, h ->
+                androidx.compose.runtime.key(i) {
+                    val fr = remember { FocusRequester() }
+                    DisposableEffect(Unit) {
+                        slotFocus[i] = fr
+                        onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
+                    }
+                    Box(
+                        Modifier
+                            .focusRequester(fr)
+                            .border(2.dp, if (h.legal) Palette.gold else Color.Transparent, RoundedCornerShape(8.dp))
+                            .clickable(role = Role.Button) {
+                                when {
+                                    !d.myTurn -> Announcer.announceNow("ليس دورك")
+                                    !h.legal -> Sounds.illegal() // نفس صوت البلوت للورقة اللي ما تنلعب، بدون كلام
+                                    h.askSide -> { playedPos = i; chooseSide = h }
+                                    else -> { played(i); act(conn, "domino", jsonOf("type" to "play", "tile" to h.tile.json())) }
+                                }
                             }
-                        }
-                        .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(h.label) }
-                        .padding(4.dp),
-                ) { DominoTileView(h.tile, vertical = true, unit = 24f * com.majlisk.app.data.Look.tileScale, dim = d.myTurn && !h.legal) }
+                            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(h.label) }
+                            .padding(4.dp),
+                    ) { DominoTileView(h.tile, vertical = true, unit = 24f * com.majlisk.app.data.Look.tileScale, dim = d.myTurn && !h.legal) }
+                }
             }
         }
     }
@@ -479,8 +512,8 @@ fun DominoHand(v: TableView, d: DominoView, conn: TableConnection, openLog: () -
     if (pick != null && e != null) {
         MajliskDialog("القطعة تصلح على الطرفين: وش تبي تصير الجهتين؟", { chooseSide = null }) {
             // على اليمين (يطابق ${e.second}) تصير الجهتين ${e.first}، وعلى اليسار تصير ${e.second}
-            PrimaryButton("الجهتين ${e.first}", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "right")) })
-            PrimaryButton("الجهتين ${e.second}", { chooseSide = null; act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "left")) })
+            PrimaryButton("الجهتين ${e.first}", { chooseSide = null; if (Announcer.readerOn) Announcer.interruptNextEvents(); act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "right")) })
+            PrimaryButton("الجهتين ${e.second}", { chooseSide = null; if (Announcer.readerOn) Announcer.interruptNextEvents(); act(conn, "domino", jsonOf("type" to "play", "tile" to pick.tile.json(), "side" to "left")) })
             SecondaryButton("إلغاء", { chooseSide = null }, fill = true)
         }
     }
@@ -1011,7 +1044,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 SwipeDir.Down -> logOpen = true
                 SwipeDir.Up -> Announcer.announceNow(l.turnText)
                 SwipeDir.Left -> Announcer.announceNow(l.diceText)
-                SwipeDir.Right -> if (l.canRoll) act(conn, "ludo", jsonOf("type" to "roll")) else Announcer.announceNow(if (l.myTurn) "اختر الحجر أولاً" else l.turnText)
+                SwipeDir.Right -> if (l.canRoll) { Announcer.interruptNextEvents(); act(conn, "ludo", jsonOf("type" to "roll")) } else Announcer.announceNow(if (l.myTurn) "اختر الحجر أولاً" else l.turnText)
             }
         },
         verticalArrangement = Arrangement.spacedBy(10.dp),
@@ -1072,7 +1105,9 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
             androidx.compose.runtime.CompositionLocalProvider(androidx.compose.ui.platform.LocalLayoutDirection provides androidx.compose.ui.unit.LayoutDirection.Ltr) {
             Row(
                 Modifier.semantics(mergeDescendants = true) {
-                    contentDescription = com.majlisk.app.i18n.tr("${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4${if (roll != null) "، آخر رمية $roll" else ""}${if (pool.size > 1) "، رمياته ${pool.joinToString(" و")}" else ""}${if (turn) "، عليه الدور" else ""}")
+                    // وصف ثابت (ما يتغير مع كل رمية أو دور): لو تغيّر والمؤشر عليه، قارئ الشاشة يعيد قراءته ويغطي
+                    // على إعلان اللاعب اللي بعدك. الرميات والدور تنسمع بالإعلانات والإيماءات
+                    contentDescription = com.majlisk.app.i18n.tr("${if (o == mySeat) "أنت" else n}${if (l.teams && o == partner) "، شريكك" else ""}، ${LUDO_COLOR_NAMES[o]}، وصل ${l.home(o)} من 4")
                 },
                 verticalAlignment = Alignment.Top,
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
@@ -1155,8 +1190,10 @@ fun LudoReaderChoices(l: LudoView, conn: TableConnection) {
         Modifier.fillMaxWidth().heightIn(min = 104.dp),
         horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp, Alignment.Bottom),
     ) {
-        if (!show) return@Column
-        Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.semantics { heading() })
+        if (l.phase == "over") return@Column
+        // أزرار الأحجار الأربعة ثابتة طول اللعب (ما تطلع وتختفي مع الدور فيقفز مؤشر قارئ الشاشة):
+        // اللي يتحرك يقول وين بيروح، والباقي يقول ليش ما يتحرك
+        if (show) Text(l.prompt.ifEmpty { "اختر الحجر" }, color = Palette.goldSoft, fontWeight = FontWeight.Bold, modifier = Modifier.clearAndSetSemantics { })
         // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
         val dice = l.options.map { it.die }.distinct()
         val die = pickedDie?.takeIf { it in dice } ?: dice.firstOrNull()
@@ -1166,8 +1203,17 @@ fun LudoReaderChoices(l: LudoView, conn: TableConnection) {
             }
         }
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-            l.options.filter { it.die == die }.forEach { o ->
-                com.majlisk.app.ui.SmallButton("حجر ${o.token + 1}", { pickedDie = null; act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }, primary = true, description = o.text)
+            val opts = if (l.myTurn && l.phase == "move") l.options.filter { it.die == die } else emptyList()
+            for (t in 0 until 4) {
+                val o = opts.firstOrNull { it.token == t }
+                com.majlisk.app.ui.SmallButton("حجر ${t + 1}", {
+                    when {
+                        o != null -> { pickedDie = null; Announcer.interruptNextEvents(); act(conn, "ludo", jsonOf("type" to "move", "token" to o.token, "die" to o.die)) }
+                        !l.myTurn -> Announcer.announceNow("ليس دورك")
+                        l.canRoll -> Announcer.announceNow("ارمِ النرد أولاً")
+                        else -> Announcer.announceNow("هالحجر ما يتحرك")
+                    }
+                }, primary = o != null, description = o?.text ?: "حجر ${t + 1}")
             }
         }
     }

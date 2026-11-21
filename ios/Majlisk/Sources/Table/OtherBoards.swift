@@ -447,6 +447,12 @@ struct DominoBoard: View {
     }
 }
 
+/// قطعة في مكانها من اليد: الهوية رقم المكان (مو القطعة)، فالمؤشر يبقى في نفس المكان بعد ما تلعب
+private struct DominoSlot: Identifiable {
+    let id: Int
+    let h: DominoHandTile
+}
+
 /// قطعك في أسفل الشاشة فوق الميكروفون، ومعها زر جلا (وسحب من البنك إن وجد)
 struct DominoHand: View {
     let v: TableView
@@ -454,8 +460,18 @@ struct DominoHand: View {
     let conn: TableConnection
     @State private var chooseSide: DominoHandTile?
     @State private var lockAsk = false
+    /// كل قطعة عنصر مربوط بمكانها في اليد (مو بالقطعة نفسها) مثل البلوت: لما تلعب قطعة يبقى مكانها
+    /// (وتصير فيه القطعة اللي بعدها) فمؤشر VoiceOver ما يقفز
+    @AccessibilityFocusState private var slotFocus: Int?
+    @State private var playedPos: Int?
 
     private func act(_ a: JSON) { conn.send(["type": "domino", "action": a]) }
+    /// لعبت (أو سحبت/جليت): إعلان لعبك واللي بعدك يقطع قراءة المؤشر على طول
+    private func played(_ i: Int?) {
+        guard UIAccessibility.isVoiceOverRunning else { return }
+        Announcer.interruptNextEvents()
+        if let i { playedPos = i }
+    }
 
     var body: some View {
         if v.mySeat != nil {
@@ -478,20 +494,29 @@ struct DominoHand: View {
                                 else if !d.myTurn { Announcer.announceNow("القفلة بس في دورك") }
                                 else { Announcer.announceNow(d.lockText.isEmpty ? "ما تقدر تعلن قفلة الحين" : d.lockText) }
                             }
-                            if d.myTurn && d.canDraw { MButton("سحب من البنك", .primary) { act(["type": "draw"]) } }
-                            if d.myTurn && d.canPass { MButton("جلا", .primary) { dominoJala(conn, d) } }
+                            // «سحب» و«جلا» ثابتين طول الصكة (ما يطلعون ويختفون مع الدور فيقفز مؤشر VoiceOver):
+                            // الضغط في غير وقتها يقول ليش. «سحب» يختفي بس لما يخلص البنك
+                            if d.boneyard > 0 || d.canDraw {
+                                MButton("سحب من البنك", .primary) {
+                                    if !d.myTurn { Announcer.announceNow("ليس دورك") }
+                                    else if d.canDraw { played(nil); act(["type": "draw"]) }
+                                    else { Announcer.announceNow("ما تحتاج تسحب، عندك قطعة تصلح") }
+                                }
+                            }
+                            MButton("جلا", .primary) { if d.myTurn && d.canPass { played(nil) }; dominoJala(conn, d) }
                         }
                     }
                 }
                 .frame(maxWidth: .infinity, minHeight: 52)
                 Text(trSpoken("قطعك")).font(.system(size: 1)).foregroundColor(.clear).accessibilityAddTraits(.isHeader)
                 // مكان القطع محجوز لسطرين دائماً: لما تقل قطعك (أو تزيد بالسحب) ما تتحرك الشاشة
-                Wrap(items: d.hand, spacing: 8) { h in
+                Wrap(items: d.hand.enumerated().map { DominoSlot(id: $0.offset, h: $0.element) }, spacing: 8) { slot in
+                    let h = slot.h
                     Button {
                         if !d.myTurn { Announcer.announceNow("ليس دورك") }
                         else if !h.legal { Sounds.shared.illegal() } // نفس صوت البلوت للورقة اللي ما تنلعب، بدون كلام
-                        else if h.askSide { chooseSide = h }
-                        else { act(["type": "play", "tile": h.tile.json]) }
+                        else if h.askSide { playedPos = slot.id; chooseSide = h }
+                        else { played(slot.id); act(["type": "play", "tile": h.tile.json]) }
                     } label: {
                         DominoTileView(t: h.tile, vertical: true, unit: 24 * Look.tileScale, dim: d.myTurn && !h.legal)
                             .padding(4)
@@ -499,8 +524,17 @@ struct DominoHand: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(spokenText(h.label))
+                    .accessibilityFocused($slotFocus, equals: slot.id)
                 }
                 .frame(minHeight: 2 * (24 * Look.tileScale * 2 + 12) + 8, alignment: .top)
+            }
+            // لعبت آخر قطعة في الصف (مكانها اختفى): المؤشر للمكان اللي قبله
+            .onChange(of: d.hand.count) { n in
+                guard let p = playedPos else { return }
+                playedPos = nil
+                if p >= n && n > 0 && UIAccessibility.isVoiceOverRunning {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { slotFocus = n - 1 }
+                }
             }
             .sheet(isPresented: $lockAsk) {
                 Sheet(title: "قفلة: عادي أو دبل؟") {
@@ -513,8 +547,8 @@ struct DominoHand: View {
                 Sheet(title: "القطعة تصلح على الطرفين: وش تبي تصير الجهتين؟") {
                     if let e = d.ends {
                         // على اليمين (يطابق \(e.right)) تصير الجهتين \(e.left)، وعلى اليسار تصير \(e.right)
-                        MButton("الجهتين \(e.left)", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "right"]) }
-                        MButton("الجهتين \(e.right)", .primary) { chooseSide = nil; act(["type": "play", "tile": h.tile.json, "side": "left"]) }
+                        MButton("الجهتين \(e.left)", .primary) { chooseSide = nil; played(nil); act(["type": "play", "tile": h.tile.json, "side": "right"]) }
+                        MButton("الجهتين \(e.right)", .primary) { chooseSide = nil; played(nil); act(["type": "play", "tile": h.tile.json, "side": "left"]) }
                     }
                     MButton("إلغاء") { chooseSide = nil }
                 }
@@ -1082,11 +1116,17 @@ struct LudoBoard: View {
             dice
         }
         .accessibilityElement(children: .ignore)
-        .accessibilityLabel(spokenText("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4\(shownRoll(o).map { "، آخر رمية \($0)" } ?? "")\(turnPool(o).count > 1 ? "، رمياته " + turnPool(o).map(String.init).joined(separator: " و") : "")\(turn ? "، عليه الدور" : "")"))
-        // النرد نفسه زر الرمي: مع VoiceOver الضغط مرتين على اسمك يرمي النرد
-        .accessibilityAddTraits(o == mySeat && l.canRoll ? .isButton : [])
-        .accessibilityHint(tr(o == mySeat && l.canRoll ? "اضغط مرتين لرمي النرد" : ""))
-        .accessibilityAction { if o == mySeat && l.canRoll { act(["type": "roll"]) } }
+        // وصف ثابت (ما يتغير مع كل رمية أو دور): لو تغيّر والمؤشر عليه، VoiceOver يعيد قراءته ويغطي
+        // على إعلان اللاعب اللي بعدك. الرميات والدور تنسمع بالإعلانات والإيماءات
+        .accessibilityLabel(spokenText("\(o == mySeat ? "أنت" : n)\(l.teams && o == partner ? "، شريكك" : "")، \(LUDO_COLOR_NAMES[o])، وصل \(l.home(o)) من 4"))
+        // النرد نفسه زر الرمي: مع VoiceOver الضغط مرتين على اسمك يرمي النرد (ثابت دائماً، وفي غير وقته يقول ليش)
+        .accessibilityAddTraits(o == mySeat ? .isButton : [])
+        .accessibilityHint(tr(o == mySeat ? "اضغط مرتين لرمي النرد" : ""))
+        .accessibilityAction {
+            guard o == mySeat else { return }
+            if l.canRoll { Announcer.interruptNextEvents(); act(["type": "roll"]) }
+            else { Announcer.announceNow(l.myTurn ? "اختر الحجر أولاً" : "ليس دورك") }
+        }
     }
 
     /// رميات هالدور (للي عليه الدور بس)
@@ -1248,7 +1288,7 @@ struct LudoBoard: View {
         case .up: Announcer.announceNow(cur.turnText)
         case .left: Announcer.announceNow(cur.diceText)
         case .right:
-            if cur.canRoll { act(["type": "roll"]) }
+            if cur.canRoll { Announcer.interruptNextEvents(); act(["type": "roll"]) }
             else { Announcer.announceNow(cur.myTurn ? "اختر الحجر أولاً" : cur.turnText) }
         }
         return true
@@ -1600,12 +1640,15 @@ struct LudoReaderChoices: View {
         let show = l.myTurn && l.phase == "move" && l.options.count > 1
         let dice = l.options.reduce(into: [Int]()) { if !$0.contains($1.die) { $0.append($1.die) } }
         let die = pickedDie.flatMap { dice.contains($0) ? $0 : nil } ?? dice.first
+        // أزرار الأحجار الأربعة ثابتة طول اللعب (ما تطلع وتختفي مع الدور فيقفز مؤشر VoiceOver):
+        // اللي يتحرك يقول وين بيروح، والباقي يقول ليش ما يتحرك
+        let opts = l.myTurn && l.phase == "move" ? l.options.filter { $0.die == die } : []
         return VStack(spacing: 6) {
             Spacer(minLength: 0)
-            if show {
-                Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).bold().foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
+            if l.phase != "over" {
+                if show { Text(trSpoken(l.prompt.isEmpty ? "اختر الحجر" : l.prompt)).bold().foregroundColor(Palette.goldSoft).accessibilityHidden(true) }
                 // أكثر من رقم (مثل ستة وستة وأربعة): تختار الرقم اللي تلعبه أول، وبعدين الحجر
-                if dice.count > 1 {
+                if show && dice.count > 1 {
                     HStack(spacing: 6) {
                         ForEach(dice, id: \.self) { d in
                             SmallButton(die == d ? "✓ \(d)" : "\(d)", primary: die == d, label: "بالـ\(d)\(die == d ? "، محدد" : "")") { pickedDie = d }
@@ -1613,8 +1656,14 @@ struct LudoReaderChoices: View {
                     }
                 }
                 HStack(spacing: 6) {
-                    ForEach(l.options.filter { $0.die == die }) { o in
-                        SmallButton("حجر \(o.token + 1)", primary: true, label: o.text) { pickedDie = nil; act(["type": "move", "token": o.token, "die": o.die]) }
+                    ForEach(0..<4, id: \.self) { t in
+                        let o = opts.first { $0.token == t }
+                        SmallButton("حجر \(t + 1)", primary: o != nil, label: o?.text ?? "حجر \(t + 1)") {
+                            if let o { pickedDie = nil; Announcer.interruptNextEvents(); act(["type": "move", "token": o.token, "die": o.die]) }
+                            else if !l.myTurn { Announcer.announceNow("ليس دورك") }
+                            else if l.canRoll { Announcer.announceNow("ارمِ النرد أولاً") }
+                            else { Announcer.announceNow("هالحجر ما يتحرك") }
+                        }
                     }
                 }
             }
