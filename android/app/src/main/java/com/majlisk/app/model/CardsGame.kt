@@ -29,10 +29,13 @@ data class CardsMark(val card: CardFace, val by: String?)
 data class CardsRowInfo(val id: String, val title: String, val text: String, val cards: List<CardFace>, val low: String?, val high: String?, val lowMine: Boolean, val highMine: Boolean)
 data class CardsHeap(val count: Int, val can: Boolean, val text: String, val card: CardFace?)
 data class CardsProgress(val value: Int, val need: Int, val text: String)
+/** الشايب: أوراق اللي تسحب منه (مقلوبة) */
+data class CardsDraw(val seat: Int, val name: String, val count: Int)
 data class CardsBoardInfo(
     val title: String, val sub: String, val tone: String,
     val steps: List<CardsBoardStep>, val counter: String, val marks: List<CardsMark>, val rows: List<CardsRowInfo>,
     val stock: CardsHeap?, val discard: CardsHeap?, val progress: CardsProgress?, val read: String,
+    val draw: CardsDraw? = null,
 )
 
 data class CardsView(
@@ -89,6 +92,7 @@ data class CardsView(
                         stock = heap(b.optJSONObject("stock")), discard = heap(b.optJSONObject("discard")),
                         progress = b.optJSONObject("progress")?.let { CardsProgress(it.optInt("value"), it.optInt("need"), it.optString("text")) },
                         read = b.optString("read"),
+                        draw = b.optJSONObject("draw")?.let { CardsDraw(it.optInt("seat"), it.optString("name"), it.optInt("count")) },
                     )
                 },
                 hand = u.optJSONArray("hand").objs().map { CardsHandCard(face(it), it.optString("label"), it.optBoolean("legal")) },

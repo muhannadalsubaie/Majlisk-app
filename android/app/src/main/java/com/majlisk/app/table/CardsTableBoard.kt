@@ -1,5 +1,7 @@
 package com.majlisk.app.table
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -16,6 +18,14 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.semantics.customActions
+import kotlinx.coroutines.delay
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -33,6 +43,7 @@ import androidx.compose.ui.unit.sp
 import com.majlisk.app.i18n.Text
 import com.majlisk.app.i18n.tr
 import com.majlisk.app.model.CardsBoardInfo
+import com.majlisk.app.model.CardsDraw
 import com.majlisk.app.model.CardsHeap
 import com.majlisk.app.model.CardsProgress
 import com.majlisk.app.model.CardsRowInfo
@@ -178,6 +189,46 @@ fun KonkanProgress(p: CardsProgress) {
         Text(p.text, color = if (done) Color(0xFF7FCF9A) else Palette.goldSoft, fontSize = 12.sp, maxLines = 2, modifier = Modifier.clearAndSetSemantics { })
         Box(Modifier.fillMaxWidth().height(6.dp).background(Color(0x22FFFFFF), RoundedCornerShape(3.dp)).clearAndSetSemantics { }) {
             Box(Modifier.fillMaxWidth(frac).height(6.dp).background(if (done) Color(0xFF7FCF9A) else Palette.gold, RoundedCornerShape(3.dp)))
+        }
+    }
+}
+
+/**
+ * الشايب: أوراق اللي تسحب منه مقلوبة صغيرة فوق الطاولة. تضغط وحدة: تنقلب (3D) وتنزل لأوراقك وتنرسل الحركة.
+ * قارئ الشاشة: عنصر واحد «أوراق فلان»، والإجراءات «كرت 1، كرت 2…».
+ */
+@Composable
+fun ShayebDrawRow(d: CardsDraw, onPick: (Int) -> Unit) {
+    var picked by remember(d.seat, d.count) { mutableStateOf<Int?>(null) }
+    LaunchedEffect(picked) { picked?.let { delay(320); onPick(it) } }
+    Column(
+        Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
+            contentDescription = tr("اسحب من ${d.name}: معه ${d.count} ${if (d.count == 1) "ورقة" else "أوراق"} مقلوبة. اختر كرت من الإجراءات")
+            customActions = (1..d.count).map { i -> com.majlisk.app.i18n.A11yAction("كرت $i") { if (picked == null) picked = i - 1; true } }
+        },
+        horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text("اسحب من ${d.name}", color = Palette.goldSoft, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.clearAndSetSemantics { })
+        Row(Modifier.clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(if (d.count > 9) (-8).dp else 4.dp)) {
+            repeat(d.count) { i ->
+                val on = picked == i
+                val rot by animateFloatAsState(if (on) 180f else 0f, tween(300), label = "flip")
+                val drop by animateFloatAsState(if (on) 1f else 0f, tween(300), label = "drop")
+                Box(
+                    Modifier.graphicsLayer {
+                        rotationY = rot
+                        cameraDistance = 12f * density
+                        translationY = drop * 60.dp.toPx()
+                        scaleX = 1f + drop * 0.25f; scaleY = 1f + drop * 0.25f
+                    }.clickable(enabled = picked == null) { picked = i },
+                ) {
+                    Box(
+                        Modifier.size(26.dp, 38.dp)
+                            .background(Brush.linearGradient(listOf(Color(0xFF7A2E2E), Color(0xFF4A1A1A))), RoundedCornerShape(5.dp))
+                            .border(1.5.dp, if (on) Palette.gold else Color(0xFFE9D7A6), RoundedCornerShape(5.dp)),
+                    )
+                }
+            }
         }
     }
 }

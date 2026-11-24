@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -184,6 +185,8 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         val watcher = myIdx < 0
         // رأس اللوحة: اسم العقد بلونه، ووش تتجنب، وعقود المملكة
         board?.let { CardsBoardHeader(it) }
+        // الشايب: أوراق اللي تسحب منه مقلوبة فوق الطاولة
+        board?.draw?.let { d -> ShayebDrawRow(d) { i -> press("draw:$i", false) } }
         Column(
             Modifier.fillMaxWidth()
                 .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0x661B4D39), Color.Transparent)), RoundedCornerShape(24.dp))
@@ -272,19 +275,22 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                 }
             }
         }
+        val shownButtons = c.buttons.filter { !(board?.draw != null && it.id.startsWith("draw:")) }
         // الكنكان: شريط الفتح (مجموع تنزيلك من الـ51)
         board?.progress?.let { KonkanProgress(it) }
         // الأزرار: مكان محجوز دايماً
-        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher && !(c.over && isOwner)) 0.dp else 52.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            c.buttons.forEach { b ->
-                if (b.primary) PrimaryButton(b.label, { press(b.id, b.needsSelection) })
-                else SecondaryButton(b.label, { press(b.id, b.needsSelection) })
-            }
+        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher && !(c.over && isOwner)) 0.dp else 44.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            // أزرار صغيرة مثل أزرار الشراء في البلوت (وأوراق السحب في الشايب ترسم مقلوبة فوق، ما تطلع أزرار)
+            shownButtons.forEach { b -> com.majlisk.app.ui.SmallButton(b.label, { press(b.id, b.needsSelection) }, primary = b.primary) }
             if (c.over && isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
         }
         // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
         if (!watcher) Text(if (c.select && selected.isNotEmpty()) "محدد ${selected.size}" else " ", color = Palette.goldSoft, fontSize = 12.sp,
             modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
+        val handActions = buildList {
+            board?.draw?.let { d -> for (k in 1..d.count) add(com.majlisk.app.i18n.A11yAction("اسحب كرت $k") { press("draw:${k - 1}", false); true }) }
+            shownButtons.forEach { b -> add(com.majlisk.app.i18n.A11yAction(b.label) { press(b.id, b.needsSelection); true }) }
+        }
         val slotFocus = remember { mutableMapOf<Int, FocusRequester>() }
         var playedPos by remember { mutableStateOf<Int?>(null) }
         val handSize = c.hand.size
@@ -314,7 +320,11 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                                     else -> { playedPos = i; Sounds.cardsFx(listOf(if (c.board?.rows.isNullOrEmpty()) "c-card" else "c-row"), null); Sounds.markLocal("cards"); send(jsonOf("op" to "card", "id" to h.face.id)) }
                                 }
                             }
-                            .semantics(mergeDescendants = true) { contentDescription = tr(h.label + if (sel) "، محددة" else "") },
+                            .semantics(mergeDescendants = true) {
+                                contentDescription = tr(h.label + if (sel) "، محددة" else "")
+                                // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
+                                if (handActions.isNotEmpty()) customActions = handActions
+                            },
                     ) { CardsFace(h.face, 40, 58, dim = c.myTurn && !c.select && !h.legal) }
                 }
             }
