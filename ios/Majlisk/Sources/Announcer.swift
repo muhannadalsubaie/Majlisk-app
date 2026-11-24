@@ -89,7 +89,12 @@ enum Announcer {
     static func announceEvent(_ text: String, urgent: Bool = false) {
         DispatchQueue.main.async {
             urgentQueue = urgent
-            if Date() < interruptUntil { interruptUntil = .distantPast; announceNow(text) } else { announce(text) }
+            // القطع للعنصر اللي انتقل له المؤشر بس: لو إعلاننا نفسه لسا يُقرأ (اسم إنجليزي ثم «عشرة هاص» قطعتين)
+            // ما نقطعه، كان يضيع باقيه (ينقال الاسم بس بدون الورقة)
+            if Date() < interruptUntil {
+                interruptUntil = .distantPast
+                if current == nil && queue.isEmpty { announceNow(text) } else { announce(text) }
+            } else { announce(text) }
         }
     }
 
