@@ -165,9 +165,12 @@ struct CardsBoard: View {
             let myIdx = c.seats.firstIndex { $0.seat == v.mySeat }
             let n = c.seats.count
             let others: [CardsView.Seat] = myIdx.map { m in (1..<max(n, 1)).map { c.seats[(m + $0) % n] } } ?? Array(c.seats.dropFirst())
+            // 4 لاعبين أو أقل: واحد فوق واثنين على الجنبين. أكثر (الكنكان والشايب حتى 7): أول واحد وآخر واحد على الجنبين، والباقي صف فوق
+            let many = others.count > 3
             let top: CardsView.Seat? = others.count == 1 ? others[0] : others.count == 3 ? others[1] : nil
             let side1: CardsView.Seat? = others.count >= 2 ? others[0] : nil
-            let side2: CardsView.Seat? = others.count == 2 ? others[1] : others.count == 3 ? others[2] : nil
+            let side2: CardsView.Seat? = many ? others.last : others.count == 2 ? others[1] : others.count == 3 ? others[2] : nil
+            let topRow: [CardsView.Seat] = many ? Array(others[1..<(others.count - 1)]) : (top.map { [$0] } ?? [])
             let stack = c.piles.first { $0.id == "stack" }
             // فيه مجموعات تحت الطاولة (تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
             let hasRows = c.piles.contains { $0.id != "stack" }
@@ -177,7 +180,7 @@ struct CardsBoard: View {
             if let b = c.board { CardsBoardHeader(b: b) }
             // الشايب: أوراق اللي تسحب منه مقلوبة فوق الطاولة
             if let d = c.board?.draw { ShayebDrawRow(d: d) { i in press("draw:\(i)", false) }.id("draw-\(d.seat)-\(d.count)") }
-            CardsTableArea(v: v, c: c, top: top, side1: side1, side2: side2, stack: stack, hasRows: hasRows, watcher: watcher,
+            CardsTableArea(v: v, c: c, top: top, topRow: topRow, side1: side1, side2: side2, stack: stack, hasRows: hasRows, watcher: watcher,
                            shownCenter: c.centerDone && doneHidden ? [] : c.center, press: press)
             // المجموعات: تنزيلات الكنكان، صفوف التركس (تنضغط في الكنكان للصق المحدد عليها)
             ScrollView {
@@ -290,7 +293,7 @@ struct CardsBoard: View {
 private struct CardsTableArea: View {
     let v: TableView
     let c: CardsView
-    let top: CardsView.Seat?, side1: CardsView.Seat?, side2: CardsView.Seat?
+    let top: CardsView.Seat?, topRow: [CardsView.Seat], side1: CardsView.Seat?, side2: CardsView.Seat?
     let stack: CardsView.Pile?
     let hasRows: Bool, watcher: Bool
     let shownCenter: [(Int, CardsCard)]
@@ -311,7 +314,10 @@ private struct CardsTableArea: View {
                     .background(RoundedRectangle(cornerRadius: 22).fill(felt))
                     .overlay(RoundedRectangle(cornerRadius: 22).stroke(rim, lineWidth: 3))
             } else {
-                ZStack { if let top { CardsSeatTag(v: v, s: top) } }.frame(minHeight: hasRows ? 0 : 92)
+                HStack(spacing: 0) {
+                    ForEach(topRow, id: \.seat) { s in CardsSeatTag(v: v, s: s).frame(maxWidth: .infinity) }
+                }
+                .frame(minHeight: hasRows ? 0 : 92)
                 HStack(spacing: 6) {
                     ZStack { if let side1 { CardsSeatTag(v: v, s: side1) } }.frame(width: 76)
                     middle

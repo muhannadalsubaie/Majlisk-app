@@ -172,7 +172,7 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
             SettingsScreen(onBack = { page = Page.Main }, embedded = true)
         }
         Page.Players -> MajliskDialog("اللاعبون", { page = Page.Main }) {
-            (0..3).forEach { i ->
+            v.seats.indices.forEach { i ->
                 val u = v.seatUids.getOrNull(i)
                 val muted = if (u != null && u in v.voiceBlocked) "، مكتوم" else ""
                 val s = v.seats.getOrNull(i)

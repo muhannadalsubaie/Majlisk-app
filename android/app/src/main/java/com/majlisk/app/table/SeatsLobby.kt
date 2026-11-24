@@ -103,7 +103,9 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             }
         }
     }
-    val groups = listOf("الفريق الأول" to listOf(0, 2), "الفريق الثاني" to listOf(1, 3))
+    // الكنكان والشايب: حتى 7 مقاعد بدون فرق
+    val groups = if (v.seats.size > 4) listOf("اللاعبون" to v.seats.indices.toList())
+        else listOf("الفريق الأول" to listOf(0, 2), "الفريق الثاني" to listOf(1, 3))
     groups.forEach { (title, seats) ->
         Text(title, color = Palette.goldSoft)
         seats.forEach { i ->
@@ -170,7 +172,7 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
 
     // كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
     fun candidates(seat: Int): List<Pair<String, String>> =
-        (0..3).filter { it != seat && v.seats.getOrNull(it) != null }.map { v.seatUids.getOrElse(it) { "" } to "${occupantLabel(v, it)} — من المقعد ${it + 1}" } +
+        v.seats.indices.filter { it != seat && v.seats.getOrNull(it) != null }.map { v.seatUids.getOrElse(it) { "" } to "${occupantLabel(v, it)} — من المقعد ${it + 1}" } +
             v.spectators.map { it.uid to "${it.username}${if (it.uid == uid) " (أنت)" else ""} — مشاهد" }
 
     when (val p = panel) {

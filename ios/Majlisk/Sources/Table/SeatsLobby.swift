@@ -68,7 +68,7 @@ struct SeatsLobby: View {
 
     /// كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
     private func candidates(_ seat: Int) -> [Candidate] {
-        let seated = (0..<4).filter { $0 != seat && v.seat($0) != nil }.map { Candidate(id: v.seatUid($0), label: "\(occupantLabel(v, $0)) — من المقعد \($0 + 1)") }
+        let seated = (0..<max(v.seats.count, 4)).filter { $0 != seat && v.seat($0) != nil }.map { Candidate(id: v.seatUid($0), label: "\(occupantLabel(v, $0)) — من المقعد \($0 + 1)") }
         let watching = v.spectators.map { Candidate(id: $0.uid, label: "\($0.username)\($0.uid == uid ? " (أنت)" : "") — مشاهد") }
         return (seated + watching).filter { !$0.id.isEmpty }
     }
@@ -121,7 +121,8 @@ struct SeatsLobby: View {
             if isOwner && pro && v.kind == "baloot" {
                 HStack { SmallButton("دق ولد", primary: true) { daq = true }; Spacer() }
             }
-            ForEach([Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
+            // الكنكان والشايب: حتى 7 مقاعد بدون فرق
+            ForEach(v.seats.count > 4 ? [Team(id: "اللاعبون", seats: Array(0..<v.seats.count))] : [Team(id: "الفريق الأول", seats: [0, 2]), Team(id: "الفريق الثاني", seats: [1, 3])]) { team in
                 Text(trSpoken(team.id)).foregroundColor(Palette.goldSoft).accessibilityAddTraits(.isHeader)
                 ForEach(team.seats, id: \.self) { i in
                     ItemRow {

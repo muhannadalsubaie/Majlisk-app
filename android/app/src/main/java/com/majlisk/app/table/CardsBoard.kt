@@ -168,9 +168,12 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         val myIdx = c.seats.indexOfFirst { it.seat == v.mySeat }
         val n = c.seats.size
         val others = if (myIdx >= 0) (1 until n).map { c.seats[(myIdx + it) % n] } else c.seats.drop(1)
+        // 4 لاعبين أو أقل: واحد فوق واثنين على الجنبين. أكثر (الكنكان والشايب حتى 7): أول واحد وآخر واحد على الجنبين، والباقي صف فوق
+        val many = others.size > 3
         val top = when (others.size) { 1 -> others[0]; 3 -> others[1]; else -> null }
-        val side1 = when (others.size) { 2 -> others[0]; 3 -> others[0]; else -> null }
-        val side2 = when (others.size) { 2 -> others[1]; 3 -> others[2]; else -> null }
+        val topRow = if (many) others.subList(1, others.size - 1) else listOfNotNull(top)
+        val side1 = when { many -> others.first(); others.size == 2 || others.size == 3 -> others[0]; else -> null }
+        val side2 = when { many -> others.last(); others.size == 2 -> others[1]; others.size == 3 -> others[2]; else -> null }
         val stack = c.piles.firstOrNull { it.id == "stack" }
         // الأكلة المكتملة: تبقى على الطاولة لحظة (تشوف آخر ورقة) وتنشال مع صوت الأخذ، بدل ما تنتظر أول ورقة في الأكلة الجاية
         var doneHidden by remember { mutableStateOf(false) }
@@ -204,7 +207,9 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                         .border(3.dp, Color(0xFF6B4A2B), RoundedCornerShape(22.dp)),
                 ) { TrixRows(trixRows) }
             } else {
-                Box(Modifier.heightIn(min = if (hasRows) 0.dp else 92.dp), contentAlignment = Alignment.Center) { top?.let { CardsSeatTag(v, it) } }
+                Row(Modifier.fillMaxWidth().heightIn(min = if (hasRows) 0.dp else 92.dp), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
+                    topRow.forEach { CardsSeatTag(v, it) }
+                }
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                     Box(Modifier.width(76.dp), contentAlignment = Alignment.Center) { side1?.let { CardsSeatTag(v, it) } }
                     // وسط الطاولة: الأكلة الحالية (وفوقها الأوراق الخطرة وعداد العقد)، أو السحب والأرض (الكنكان)، أو كومة الأزواج (الشايب)

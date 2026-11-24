@@ -139,7 +139,7 @@ struct TableMenu: View {
             SettingsScreen(embedded: true) { page = .main }
         case .players:
             Sheet(title: "اللاعبون") {
-                ForEach(0..<4, id: \.self) { i in
+                ForEach(0..<max(v.seats.count, 4), id: \.self) { i in
                     let u = view.seatUid(i)
                     let muted = !u.isEmpty && view.voiceBlocked.contains(u) ? "، مكتوم" : ""
                     // انقطع اتصاله: ما نكتب حالة المحادثة
