@@ -65,8 +65,7 @@ enum Announcer {
     private static func pieces(_ text: String) -> [String] {
         let runs = langRuns(text)
         guard runs.count > 1 else { return [text] }
-        // الجملة فيها اسم إنجليزي: أرقام القطع العربية كلمات (الصوت العربي يتخطى الرقم اللي بعد الإنجليزي)
-        return runs.map { $0.1 == "ar" ? arabicSpokenNumbers(text[$0.0]) : String(text[$0.0]) }.filter { $0.contains { $0.isLetter || $0.isNumber } }
+        return runs.map { String(text[$0.0]) }.filter { $0.contains { $0.isLetter || $0.isNumber } }
     }
 
     /// يُقرأ بعد ما يخلص اللي قبله (ما يقطعه)

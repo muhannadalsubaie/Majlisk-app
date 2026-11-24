@@ -125,9 +125,7 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
     var out: [(Range<String.Index>, String)] = []
     var start = s.startIndex
     var cur: String? = nil
-    // نهاية آخر حرف من لغة القطعة الحالية: بعد اسم إنجليزي، المسافات والأرقام والرموز تروح مع العربي اللي بعده
-    // (فـ «Mohanad: 10 هاص» ينقرأ «Mohanad» بالإنجليزي و«10 هاص» بالعربي، مو العشرة بالإنجليزي)
-    var lastEnd = s.startIndex
+    // «Mohanad: 10 هاص»: «Mohanad: 10» بالإنجليزي و«هاص» بالعربي (الرقم ينقرأ، ولو بالإنجليزي)
     var prevLetter: String? = nil
     var i = s.startIndex
     while i < s.endIndex {
@@ -137,11 +135,10 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
         if k == nil, s[i].isNumber, prevLetter == latin { k = latin }
         if let k {
             if cur == nil { cur = k } else if k != cur {
-                // من إنجليزي لعربي: الأرقام بينهم عربية. ومن عربي لإنجليزي: تبقى مع العربي
-                let cut = cur == "ar" ? i : lastEnd
+                // الأرقام والرموز بين اللغتين تبقى مع اللي قبلها (بعد اسم إنجليزي تنقرأ بالإنجليزي، وما تنبلع)
+                let cut = i
                 out.append((start..<cut, cur!)); start = cut; cur = k
             }
-            lastEnd = s.index(after: i)
         }
         if !s[i].isNumber { prevLetter = k }
         i = s.index(after: i)
@@ -231,13 +228,11 @@ func arabicSpokenNumbers(_ s: Substring) -> String {
 func spokenAttributed(_ s: String, _ base: [NSAttributedString.Key: Any] = [:], words: Bool? = nil) -> NSAttributedString {
     let m = NSMutableAttributedString()
     let runs = langRuns(s)
-    // الأرقام كلمات بس لما يكون فيه لغتين (اسم إنجليزي): الصوت العربي يتخطى الرقم بعد الإنجليزي.
-    // الكلام العربي وحده يقرأ الأرقام أرقام عادي (النتيجة 225، المتصلون 11)
-    let asWords = words ?? (runs.count > 1)
+    // الأرقام تنقرأ أرقام عادي (بدون تحويل لكلمات)
     for (r, l) in runs where !r.isEmpty {
         var attrs = base
         attrs[.accessibilitySpeechLanguage] = l
-        m.append(NSAttributedString(string: l == "ar" && asWords ? arabicSpokenNumbers(s[r]) : String(s[r]), attributes: attrs))
+        m.append(NSAttributedString(string: String(s[r]), attributes: attrs))
     }
     return m
 }
