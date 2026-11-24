@@ -26,6 +26,8 @@ struct CardsView {
     let scores: [(String, Int)]
     let seats: [Seat]
     let center: [(Int, CardsCard)]
+    /// الأكلة اكتملت: تنعرض لحظة وتنشال
+    let centerDone: Bool
     let piles: [Pile]
     let hand: [HandCard]
     let select: Bool
@@ -35,6 +37,7 @@ struct CardsView {
     let fxN: Int?
     let fxKeys: [String]
     let fxWin: [Int]?
+    let fxBy: Int?
 
     init(_ c: JSON) {
         let u = c.obj("ui") ?? [:]
@@ -47,6 +50,7 @@ struct CardsView {
         scores = u.objs("scores").map { ($0.str("name"), $0.int("value")) }
         seats = u.objs("seats").map { Seat(seat: $0.int("seat"), name: $0.str("name"), count: $0.int("count"), note: $0.str("note"), turn: $0.bool("turn")) }
         center = u.objs("center").map { ($0.int("seat"), CardsCard($0.obj("card"))) }
+        centerDone = u.bool("centerDone")
         piles = u.objs("piles").map { p in Pile(id: p.str("id"), title: p.str("title"), text: p.str("text"), cards: p.objs("cards").map { CardsCard($0) }) }
         hand = u.objs("hand").map { HandCard(face: CardsCard($0), label: $0.str("label"), legal: $0.bool("legal")) }
         select = u.bool("select")
@@ -56,6 +60,7 @@ struct CardsView {
         fxN = fx?.intOrNil("n")
         fxKeys = fx?.strs("keys") ?? []
         fxWin = fx?["win"] == nil ? nil : fx?.ints("win")
+        fxBy = fx?.intOrNil("by")
     }
 }
 
@@ -108,6 +113,9 @@ struct CardsBoard: View {
     @State private var selected: Set<Int> = []
     @AccessibilityFocusState private var slotFocus: Int?
     @State private var playedPos: Int?
+    /// الأكلة المكتملة: تبقى لحظة (تشوف آخر ورقة) وتنشال مع صوت الأخذ، بدل ما تنتظر أول ورقة في الأكلة الجاية
+    @State private var doneHidden = false
+    private var doneKey: String { c.centerDone ? c.center.map { "\($0.0):\($0.1.id)" }.joined(separator: ",") : "" }
 
     private func send(_ a: JSON) {
         if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents() }
@@ -176,7 +184,7 @@ struct CardsBoard: View {
                             }
                         } else {
                             HStack(spacing: 4) {
-                                ForEach(Array(c.center.enumerated()), id: \.offset) { _, p in
+                                ForEach(Array((c.centerDone && doneHidden ? [] : c.center).enumerated()), id: \.offset) { _, p in
                                     VStack(spacing: 1) {
                                         CardsFace(c: p.1, w: 40, h: 58)
                                         Text(trSpoken(p.0 < 0 ? "الأرض" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 50)
@@ -237,7 +245,7 @@ struct CardsBoard: View {
                         if c.select { if sel { selected.remove(h.face.id) } else { selected.insert(h.face.id) }; Announcer.announceNow(sel ? "شلت التحديد" : "محددة") }
                         else if !c.myTurn { Announcer.announceNow("ليس دورك") }
                         else if !h.legal { Sounds.shared.illegal() }
-                        else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; send(["op": "card", "id": h.face.id]) }
+                        else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.card(); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
                     } label: {
                         CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal)
                             .padding(2)
@@ -260,7 +268,10 @@ struct CardsBoard: View {
         // أصوات الحركات (توزيع، ورقة، أكلة، سحب، تنزيل…): مرة لكل حركة، وأول ما تفتح الطاولة ما نشغل القديم
         .onChange(of: c.fxN) { _ in
             let won: Bool? = c.fxWin.flatMap { w in v.mySeat.flatMap { $0 >= 0 ? w.contains($0) : nil } }
-            Sounds.shared.cardsFx(c.fxKeys, won: won)
+            // ورقتك: صوتها اشتغل وقت الضغط، فما نعيده لما يوصل رد الخادم
+            var keys = c.fxKeys
+            if let me = v.mySeat, c.fxBy == me, Sounds.shared.consumeLocal("cards"), let f = keys.first, f.hasPrefix("card") || f.hasPrefix("lay") { keys.removeFirst() }
+            Sounds.shared.cardsFx(keys, won: won)
         }
         // جاك الدور: نغمة الدور، وVoiceOver يقول وش المطلوب
         .onChange(of: c.myTurn) { mine in
@@ -270,6 +281,11 @@ struct CardsBoard: View {
                 let p = c.prompt
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { Announcer.announce(p) }
             }
+        }
+        .onChange(of: doneKey) { key in
+            doneHidden = false
+            guard !key.isEmpty else { return }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.85) { if doneKey == key { doneHidden = true } }
         }
         .onAppear { Gestures.shared.set("cards") { read($0) } }
         .onDisappear { Gestures.shared.clear("cards") }

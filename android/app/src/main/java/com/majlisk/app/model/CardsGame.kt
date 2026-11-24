@@ -21,7 +21,7 @@ data class CardsHandCard(val face: CardFace, val label: String, val legal: Boole
 data class CardsButton(val id: String, val label: String, val primary: Boolean, val needsSelection: Boolean)
 
 /** أصوات آخر حركة من الخادم: رقمها يتغير مع كل حركة فيها صوت. win = مقاعد الفائزين لما تخلص المباراة */
-data class CardsFx(val n: Int, val keys: List<String>, val win: List<Int>?)
+data class CardsFx(val n: Int, val keys: List<String>, val win: List<Int>?, val by: Int?)
 
 data class CardsView(
     val game: String,
@@ -32,6 +32,8 @@ data class CardsView(
     val scores: List<Pair<String, Int>>,
     val seats: List<CardsSeat>,
     val center: List<Pair<Int, CardFace>>,
+    /** الأكلة اكتملت: تنعرض لحظة وتنشال */
+    val centerDone: Boolean,
     val piles: List<CardsPile>,
     val hand: List<CardsHandCard>,
     val select: Boolean,
@@ -58,6 +60,7 @@ data class CardsView(
                 scores = u.optJSONArray("scores").objs().map { it.optString("name") to it.optInt("value") },
                 seats = u.optJSONArray("seats").objs().map { CardsSeat(it.optInt("seat"), it.optString("name"), it.optInt("count"), it.optString("note"), it.optBoolean("turn")) },
                 center = u.optJSONArray("center").objs().map { it.optInt("seat") to face(it.optJSONObject("card")) },
+                centerDone = u.optBoolean("centerDone"),
                 piles = u.optJSONArray("piles").objs().map { p -> CardsPile(p.optString("id"), p.optString("title"), p.optString("text"), p.optJSONArray("cards").objs().map { face(it) }) },
                 hand = u.optJSONArray("hand").objs().map { CardsHandCard(face(it), it.optString("label"), it.optBoolean("legal")) },
                 select = u.optBoolean("select"),
@@ -71,6 +74,7 @@ data class CardsView(
                         f.optInt("n"),
                         f.optJSONArray("keys")?.let { a -> (0 until a.length()).map { a.optString(it) } }.orEmpty(),
                         f.optJSONArray("win")?.let { a -> (0 until a.length()).map { a.optInt(it) } },
+                        if (f.has("by")) f.optInt("by") else null,
                     )
                 },
             )

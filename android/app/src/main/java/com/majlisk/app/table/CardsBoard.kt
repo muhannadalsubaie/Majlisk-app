@@ -127,7 +127,9 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         if (fx.n == heardFx) return@LaunchedEffect
         heardFx = fx.n
         val mine = v.mySeat
-        Sounds.cardsFx(fx.keys, fx.win?.let { w -> if (mine == null || mine < 0) null else mine in w })
+        // ورقتك: صوتها اشتغل وقت الضغط، فما نعيده لما يوصل رد الخادم
+        val keys = if (mine != null && fx.by == mine && Sounds.consumeLocal("cards") && fx.keys.firstOrNull()?.let { it.startsWith("card") || it.startsWith("lay") } == true) fx.keys.drop(1) else fx.keys
+        Sounds.cardsFx(keys, fx.win?.let { w -> if (mine == null || mine < 0) null else mine in w })
     }
 
     // جاك الدور: نغمة الدور، وقارئ الشاشة يقول وش المطلوب
@@ -169,6 +171,11 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         val side1 = when (others.size) { 2 -> others[0]; 3 -> others[0]; else -> null }
         val side2 = when (others.size) { 2 -> others[1]; 3 -> others[2]; else -> null }
         val stack = c.piles.firstOrNull { it.id == "stack" }
+        // الأكلة المكتملة: تبقى على الطاولة لحظة (تشوف آخر ورقة) وتنشال مع صوت الأخذ، بدل ما تنتظر أول ورقة في الأكلة الجاية
+        var doneHidden by remember { mutableStateOf(false) }
+        val doneKey = if (c.centerDone) c.center.joinToString { "${it.first}:${it.second.id}" } else ""
+        LaunchedEffect(doneKey) { doneHidden = false; if (doneKey.isNotEmpty()) { delay(850); doneHidden = true } }
+        val centerShown = if (c.centerDone && doneHidden) emptyList() else c.center
         // فيه مجموعات تحت الطاولة (صفوف التركس، تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
         val hasRows = c.piles.any { it.id != "stack" }
         // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
@@ -199,7 +206,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                             })
                         }
                     } else Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        c.center.forEach { (seat, face) ->
+                        centerShown.forEach { (seat, face) ->
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                                 CardsFace(face, 40, 58)
                                 Text(if (seat < 0) "الأرض" else c.seats.firstOrNull { it.seat == seat }?.name.orEmpty(), color = Palette.textDim, fontSize = 10.sp, maxLines = 1,
@@ -267,7 +274,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                                     c.select -> { selected = if (sel) selected - h.face.id else selected + h.face.id; Announcer.announceNow(if (sel) "شلت التحديد" else "محددة") }
                                     !c.myTurn -> Announcer.announceNow("ليس دورك")
                                     !h.legal -> Sounds.illegal()
-                                    else -> { playedPos = i; send(jsonOf("op" to "card", "id" to h.face.id)) }
+                                    else -> { playedPos = i; Sounds.card(); Sounds.markLocal("cards"); send(jsonOf("op" to "card", "id" to h.face.id)) }
                                 }
                             }
                             .semantics(mergeDescendants = true) { contentDescription = tr(h.label + if (sel) "، محددة" else "") },
