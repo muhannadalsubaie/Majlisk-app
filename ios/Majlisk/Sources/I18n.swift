@@ -125,7 +125,9 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
     var out: [(Range<String.Index>, String)] = []
     var start = s.startIndex
     var cur: String? = nil
-    // «Mohanad: 10 هاص»: «Mohanad: 10» بالإنجليزي و«هاص» بالعربي (الرقم ينقرأ، ولو بالإنجليزي)
+    // نهاية آخر حرف من لغة القطعة الحالية: بعد اسم إنجليزي، الفاصلة والأرقام تروح مع العربي اللي بعده
+    // («Mohanad: 10 هاص» ينقرأ «Mohanad» بالإنجليزي، ثم «10 هاص» بالعربي: الرقم مع اسم الورقة)
+    var lastEnd = s.startIndex
     var prevLetter: String? = nil
     var i = s.startIndex
     while i < s.endIndex {
@@ -135,10 +137,11 @@ func langRuns(_ s: String) -> [(Range<String.Index>, String)] {
         if k == nil, s[i].isNumber, prevLetter == latin { k = latin }
         if let k {
             if cur == nil { cur = k } else if k != cur {
-                // الأرقام والرموز بين اللغتين تبقى مع اللي قبلها (بعد اسم إنجليزي تنقرأ بالإنجليزي، وما تنبلع)
-                let cut = i
+                // من إنجليزي لعربي: الأرقام بينهم مع العربي (مع اسم الورقة). ومن عربي لإنجليزي: تبقى مع العربي
+                let cut = cur == "ar" ? i : lastEnd
                 out.append((start..<cut, cur!)); start = cut; cur = k
             }
+            lastEnd = s.index(after: i)
         }
         if !s[i].isNumber { prevLetter = k }
         i = s.index(after: i)

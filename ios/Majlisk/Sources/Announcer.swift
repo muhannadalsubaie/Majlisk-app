@@ -65,7 +65,9 @@ enum Announcer {
     private static func pieces(_ text: String) -> [String] {
         let runs = langRuns(text)
         guard runs.count > 1 else { return [text] }
-        return runs.map { String(text[$0.0]) }.filter { $0.contains { $0.isLetter || $0.isNumber } }
+        // القطعة تبدأ بالكلام نفسه: «10 هاص» بدل «: 10 هاص» (الاسم قطعة، والورقة برقمها قطعة)
+        return runs.map { String(String(text[$0.0]).drop { $0 == ":" || $0 == "،" || $0 == "," || $0.isWhitespace }) }
+            .filter { $0.contains { $0.isLetter || $0.isNumber } }
     }
 
     /// يُقرأ بعد ما يخلص اللي قبله (ما يقطعه)
