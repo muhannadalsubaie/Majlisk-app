@@ -156,8 +156,12 @@ struct CardsBoard: View {
             let side1: CardsView.Seat? = others.count >= 2 ? others[0] : nil
             let side2: CardsView.Seat? = others.count == 2 ? others[1] : others.count == 3 ? others[2] : nil
             let stack = c.piles.first { $0.id == "stack" }
+            // فيه مجموعات تحت الطاولة (صفوف التركس، تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
+            let hasRows = c.piles.contains { $0.id != "stack" }
+            // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
+            let watcher = myIdx == nil
             VStack(spacing: 6) {
-                ZStack { if let top { CardsSeatTag(v: v, s: top) } }.frame(minHeight: 92)
+                ZStack { if let top { CardsSeatTag(v: v, s: top) } }.frame(minHeight: hasRows ? 0 : 92)
                 HStack(spacing: 6) {
                     ZStack { if let side1 { CardsSeatTag(v: v, s: side1) } }.frame(width: 76)
                     // وسط الطاولة: الأكلة الحالية، أو كومة الأزواج المرمية فوق بعض (الشايب)
@@ -181,7 +185,7 @@ struct CardsBoard: View {
                             }
                         }
                     }
-                    .frame(maxWidth: .infinity, minHeight: 150, maxHeight: 150)
+                    .frame(maxWidth: .infinity, minHeight: hasRows ? 104 : 150, maxHeight: hasRows ? 104 : 150)
                     .accessibilityElement(children: .ignore)
                     .accessibilityLabel(spokenText(stack.map { "\($0.title): \($0.text)" } ?? c.readLeft))
                     ZStack { if let side2 { CardsSeatTag(v: v, s: side2) } }.frame(width: 76)
@@ -197,8 +201,11 @@ struct CardsBoard: View {
                     ForEach(c.piles.filter { $0.id != "stack" }, id: \.id) { p in
                         let canLay = c.select && c.myTurn && p.id.hasPrefix("meld:")
                         HStack(spacing: 3) {
-                            Text(trSpoken(p.title)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).lineLimit(1).frame(width: 70, alignment: .leading)
-                            ForEach(Array(p.cards.enumerated()), id: \.offset) { _, f in CardsFace(c: f, w: 24, h: 34) }
+                            Text(trSpoken(p.title)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).lineLimit(1).frame(width: 56, alignment: .leading)
+                            // صف طويل (التركس يوصل 13 ورقة): الأوراق فوق بعض شوي عشان يبان الصف كامل
+                            HStack(spacing: p.cards.count > 8 ? -8 : 3) {
+                                ForEach(Array(p.cards.enumerated()), id: \.offset) { _, f in CardsFace(c: f, w: 24, h: 34) }
+                            }
                             Spacer(minLength: 0)
                         }
                         .padding(4)
@@ -211,7 +218,7 @@ struct CardsBoard: View {
                     }
                 }
             }
-            .frame(maxHeight: .infinity)
+            .frame(minHeight: hasRows ? 120 : 0, maxHeight: .infinity)
             // الأزرار: مكان محجوز دايماً
             WrapLayout(spacing: 6) {
                 ForEach(c.buttons, id: \.id) { b in
@@ -219,8 +226,8 @@ struct CardsBoard: View {
                 }
                 if c.over && isOwner { SmallButton("لعبة جديدة", primary: true) { conn.send("start") } }
             }
-            .frame(maxWidth: .infinity, minHeight: 52)
-            Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true)
+            .frame(maxWidth: .infinity, minHeight: watcher && !(c.over && isOwner) ? 0 : 52)
+            if !watcher { Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true) }
             // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
             WrapLayout(spacing: 4) {
                 ForEach(c.hand.enumerated().map { CardsSlot(id: $0.offset, h: $0.element) }) { slot in
@@ -241,7 +248,7 @@ struct CardsBoard: View {
                     .accessibilityFocused($slotFocus, equals: slot.id)
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: 76, alignment: .top)
+            .frame(maxWidth: .infinity, minHeight: watcher ? 0 : 76, alignment: .top)
         }
         .onChange(of: c.hand.count) { n in
             guard let p = playedPos else { return }

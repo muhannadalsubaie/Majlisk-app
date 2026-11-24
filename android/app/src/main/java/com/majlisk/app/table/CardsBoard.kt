@@ -169,18 +169,22 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         val side1 = when (others.size) { 2 -> others[0]; 3 -> others[0]; else -> null }
         val side2 = when (others.size) { 2 -> others[1]; 3 -> others[2]; else -> null }
         val stack = c.piles.firstOrNull { it.id == "stack" }
+        // فيه مجموعات تحت الطاولة (صفوف التركس، تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
+        val hasRows = c.piles.any { it.id != "stack" }
+        // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
+        val watcher = myIdx < 0
         Column(
             Modifier.fillMaxWidth()
                 .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0x661B4D39), Color.Transparent)), RoundedCornerShape(24.dp))
                 .padding(vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Box(Modifier.heightIn(min = 92.dp), contentAlignment = Alignment.Center) { top?.let { CardsSeatTag(v, it) } }
+            Box(Modifier.heightIn(min = if (hasRows) 0.dp else 92.dp), contentAlignment = Alignment.Center) { top?.let { CardsSeatTag(v, it) } }
             Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
                 Box(Modifier.width(76.dp), contentAlignment = Alignment.Center) { side1?.let { CardsSeatTag(v, it) } }
                 // وسط الطاولة: الأكلة الحالية، أو كومة الأزواج المرمية فوق بعض (الشايب)
                 Box(
-                    Modifier.weight(1f).height(150.dp)
+                    Modifier.weight(1f).height(if (hasRows) 104.dp else 150.dp)
                         .background(Color(0xFF0F3B2A), RoundedCornerShape(70.dp))
                         .border(3.dp, Color(0xFF6B4A2B), RoundedCornerShape(70.dp))
                         .semantics(mergeDescendants = true) { contentDescription = tr(stack?.let { "${it.title}: ${it.text}" } ?: c.readLeft) },
@@ -210,7 +214,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             if (myIdx < 0) c.seats.firstOrNull()?.let { CardsSeatTag(v, it) }
         }
         // المجموعات (تنزيلات الكنكان، صفوف التركس): تنضغط في الكنكان للصق المحدد عليها
-        Column(Modifier.fillMaxWidth().weight(1f).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Column(Modifier.fillMaxWidth().weight(1f).heightIn(min = if (hasRows) 120.dp else 0.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             c.piles.filter { it.id != "stack" }.forEach { p ->
                 val canLay = c.select && c.myTurn && p.id.startsWith("meld:")
                 Row(
@@ -220,13 +224,14 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                         .semantics(mergeDescendants = true) { contentDescription = tr("${p.title}، ${p.text}${if (canLay) "، اضغط للصق الأوراق المحددة" else ""}") },
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Text(p.title, color = Palette.goldSoft, fontSize = 12.sp, maxLines = 1, modifier = Modifier.width(70.dp))
-                    p.cards.forEach { CardsFace(it, 24, 34) }
+                    Text(p.title, color = Palette.goldSoft, fontSize = 12.sp, maxLines = 1, modifier = Modifier.width(56.dp))
+                    // صف طويل (التركس يوصل 13 ورقة): الأوراق فوق بعض شوي عشان يبان الصف كامل
+                    Row(horizontalArrangement = Arrangement.spacedBy(if (p.cards.size > 8) (-8).dp else 3.dp)) { p.cards.forEach { CardsFace(it, 24, 34) } }
                 }
             }
         }
         // الأزرار: مكان محجوز دايماً
-        FlowRow(Modifier.fillMaxWidth().heightIn(min = 52.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher && !(c.over && isOwner)) 0.dp else 52.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             c.buttons.forEach { b ->
                 if (b.primary) PrimaryButton(b.label, { press(b.id, b.needsSelection) })
                 else SecondaryButton(b.label, { press(b.id, b.needsSelection) })
@@ -234,7 +239,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             if (c.over && isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
         }
         // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
-        Text(if (c.select && selected.isNotEmpty()) "محدد ${selected.size}" else " ", color = Palette.goldSoft, fontSize = 12.sp,
+        if (!watcher) Text(if (c.select && selected.isNotEmpty()) "محدد ${selected.size}" else " ", color = Palette.goldSoft, fontSize = 12.sp,
             modifier = Modifier.fillMaxWidth().clearAndSetSemantics { }, textAlign = TextAlign.Center)
         val slotFocus = remember { mutableMapOf<Int, FocusRequester>() }
         var playedPos by remember { mutableStateOf<Int?>(null) }
@@ -244,7 +249,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             playedPos = null
             if (p >= handSize && handSize > 0 && Announcer.readerOn) { delay(50); runCatching { slotFocus[handSize - 1]?.requestFocus() } }
         }
-        FlowRow(Modifier.fillMaxWidth().heightIn(min = 76.dp), horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher) 0.dp else 76.dp), horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             c.hand.forEachIndexed { i, h ->
                 key(i) {
                     val fr = remember { FocusRequester() }
