@@ -204,6 +204,8 @@ struct ShayebDrawRow: View {
     @State private var picked: Int?
     private func pick(_ i: Int) {
         guard picked == nil else { return }
+        // صوت السحب على طول وقت الضغط (ما ينعاد لما يوصل رد الخادم)
+        Sounds.shared.cardsFx(["c-draw"], won: nil); Sounds.shared.markLocal("cards")
         withAnimation(.easeIn(duration: 0.3)) { picked = i }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { onPick(i); picked = nil }
     }

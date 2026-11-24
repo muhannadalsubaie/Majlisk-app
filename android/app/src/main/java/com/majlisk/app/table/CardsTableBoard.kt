@@ -200,7 +200,13 @@ fun KonkanProgress(p: CardsProgress) {
 @Composable
 fun ShayebDrawRow(d: CardsDraw, onPick: (Int) -> Unit) {
     var picked by remember(d.seat, d.count) { mutableStateOf<Int?>(null) }
-    LaunchedEffect(picked) { picked?.let { delay(320); onPick(it) } }
+    LaunchedEffect(picked) {
+        picked?.let {
+            // صوت السحب على طول وقت الضغط (ما ينعاد لما يوصل رد الخادم)
+            com.majlisk.app.data.Sounds.cardsFx(listOf("c-draw"), null); com.majlisk.app.data.Sounds.markLocal("cards")
+            delay(320); onPick(it)
+        }
+    }
     Column(
         Modifier.fillMaxWidth().semantics(mergeDescendants = true) {
             contentDescription = tr("اسحب من ${d.name}: معه ${d.count} ${if (d.count == 1) "ورقة" else "أوراق"} مقلوبة. اختر كرت من الإجراءات")

@@ -255,19 +255,22 @@ struct CardsBoard: View {
             selected = selected.filter { ids.contains($0) }
         }
         // أصوات الحركات (توزيع، ورقة، أكلة، سحب، تنزيل…): مرة لكل حركة، وأول ما تفتح الطاولة ما نشغل القديم
-        .onChange(of: c.fxN) { _ in
-            let won: Bool? = c.fxWin.flatMap { w in v.mySeat.flatMap { $0 >= 0 ? w.contains($0) : nil } }
+        // الأصوات والدور: كل اللي نحتاجه يجي مع القيمة الجديدة نفسها. داخل onChange القيم الثانية من الواجهة
+        // ممكن تكون حق التحديث اللي قبله (كان يطلع صوت الحركة اللي قبل: تسحب ما يطلع شي، وترمي يطلع صوت السحب)
+        .onChange(of: FxEvent(c)) { ev in
+            guard ev.n != nil else { return }
+            let won: Bool? = ev.win.flatMap { w in v.mySeat.flatMap { $0 >= 0 ? w.contains($0) : nil } }
             // ورقتك: صوتها اشتغل وقت الضغط، فما نعيده لما يوصل رد الخادم
-            var keys = c.fxKeys
-            if let me = v.mySeat, c.fxBy == me, Sounds.shared.consumeLocal("cards"), let f = keys.first, f == "c-card" || f == "c-row" { keys.removeFirst() }
+            var keys = ev.keys
+            if let me = v.mySeat, ev.by == me, Sounds.shared.consumeLocal("cards"), let f = keys.first, f == "c-card" || f == "c-row" || f == "c-draw" { keys.removeFirst() }
             Sounds.shared.cardsFx(keys, won: won)
         }
         // جاك الدور: نغمة الدور، وVoiceOver يقول وش المطلوب
-        .onChange(of: c.myTurn) { mine in
-            guard mine else { return }
+        .onChange(of: TurnEvent(mine: c.myTurn, prompt: c.prompt)) { t in
+            guard t.mine else { return }
             Sounds.shared.turn(soft: Announcer.readerOn)
-            if !c.prompt.isEmpty && UIAccessibility.isVoiceOverRunning {
-                let p = c.prompt
+            if !t.prompt.isEmpty && UIAccessibility.isVoiceOverRunning {
+                let p = t.prompt
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) { Announcer.announce(p) }
             }
         }
@@ -365,4 +368,17 @@ private struct CardsTableArea: View {
                 .accessibilityLabel(spokenText(stack.map { "\($0.title): \($0.text)" } ?? [c.readLeft, b?.read ?? ""].filter { !$0.isEmpty }.joined(separator: ". ")))
         }
     }
+}
+
+
+/// صوت حركة من الخادم كقيمة وحدة (رقمها وأصواتها والفائزين واللي سواها)
+private struct FxEvent: Equatable {
+    let n: Int?, keys: [String], win: [Int]?, by: Int?
+    init(_ c: CardsView) { n = c.fxN; keys = c.fxKeys; win = c.fxWin; by = c.fxBy }
+    static func == (a: FxEvent, b: FxEvent) -> Bool { a.n == b.n }
+}
+/// جاك الدور: يتغير لما يبدأ دورك (وما ينعاد لو تغير نص الطلب وأنت في نفس الدور)
+private struct TurnEvent: Equatable {
+    let mine: Bool, prompt: String
+    static func == (a: TurnEvent, b: TurnEvent) -> Bool { a.mine == b.mine }
 }
