@@ -14,7 +14,7 @@ struct CardsCard: Hashable {
 
 struct CardsView {
     struct Seat { let seat: Int, name: String, count: Int, note: String, turn: Bool }
-    struct Pile { let id: String, title: String, text: String, cards: [CardsCard] }
+    struct Pile { let id: String, title: String, text: String, cards: [CardsCard], group: String }
     struct HandCard { let face: CardsCard, label: String, legal: Bool }
     struct Button { let id: String, label: String, primary: Bool, needsSelection: Bool }
 
@@ -38,6 +38,8 @@ struct CardsView {
     let fxKeys: [String]
     let fxWin: [Int]?
     let fxBy: Int?
+    /// لوحة اللعبة على الطاولة (عقد التريكس، سحب وأرض الكنكان)
+    let board: CardsBoardInfo?
 
     init(_ c: JSON) {
         let u = c.obj("ui") ?? [:]
@@ -51,7 +53,8 @@ struct CardsView {
         seats = u.objs("seats").map { Seat(seat: $0.int("seat"), name: $0.str("name"), count: $0.int("count"), note: $0.str("note"), turn: $0.bool("turn")) }
         center = u.objs("center").map { ($0.int("seat"), CardsCard($0.obj("card"))) }
         centerDone = u.bool("centerDone")
-        piles = u.objs("piles").map { p in Pile(id: p.str("id"), title: p.str("title"), text: p.str("text"), cards: p.objs("cards").map { CardsCard($0) }) }
+        piles = u.objs("piles").map { p in Pile(id: p.str("id"), title: p.str("title"), text: p.str("text"), cards: p.objs("cards").map { CardsCard($0) }, group: p.str("group")) }
+        board = u.obj("board").map { CardsBoardInfo($0) }
         hand = u.objs("hand").map { HandCard(face: CardsCard($0), label: $0.str("label"), legal: $0.bool("legal")) }
         select = u.bool("select")
         buttons = u.objs("buttons").map { Button(id: $0.str("id"), label: $0.str("label"), primary: $0.bool("primary"), needsSelection: $0.bool("needsSelection")) }
@@ -164,50 +167,24 @@ struct CardsBoard: View {
             let side1: CardsView.Seat? = others.count >= 2 ? others[0] : nil
             let side2: CardsView.Seat? = others.count == 2 ? others[1] : others.count == 3 ? others[2] : nil
             let stack = c.piles.first { $0.id == "stack" }
-            // فيه مجموعات تحت الطاولة (صفوف التركس، تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
+            // فيه مجموعات تحت الطاولة (تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
             let hasRows = c.piles.contains { $0.id != "stack" }
             // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
             let watcher = myIdx == nil
-            VStack(spacing: 6) {
-                ZStack { if let top { CardsSeatTag(v: v, s: top) } }.frame(minHeight: hasRows ? 0 : 92)
-                HStack(spacing: 6) {
-                    ZStack { if let side1 { CardsSeatTag(v: v, s: side1) } }.frame(width: 76)
-                    // وسط الطاولة: الأكلة الحالية، أو كومة الأزواج المرمية فوق بعض (الشايب)
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 70).fill(Color(red: 0.06, green: 0.23, blue: 0.16))
-                        RoundedRectangle(cornerRadius: 70).stroke(Color(red: 0.42, green: 0.29, blue: 0.17), lineWidth: 3)
-                        if let stack {
-                            ForEach(Array(stack.cards.enumerated()), id: \.offset) { i, f in
-                                CardsFace(c: f, w: 40, h: 58)
-                                    .rotationEffect(.degrees(Double((i * 37) % 30 - 15)))
-                                    .offset(x: CGFloat((i * 53) % 24 - 12), y: CGFloat((i * 29) % 16 - 8))
-                            }
-                        } else {
-                            HStack(spacing: 4) {
-                                ForEach(Array((c.centerDone && doneHidden ? [] : c.center).enumerated()), id: \.offset) { _, p in
-                                    VStack(spacing: 1) {
-                                        CardsFace(c: p.1, w: 40, h: 58)
-                                        Text(trSpoken(p.0 < 0 ? "الأرض" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 50)
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    .frame(maxWidth: .infinity, minHeight: hasRows ? 104 : 150, maxHeight: hasRows ? 104 : 150)
-                    .accessibilityElement(children: .ignore)
-                    .accessibilityLabel(spokenText(stack.map { "\($0.title): \($0.text)" } ?? c.readLeft))
-                    ZStack { if let side2 { CardsSeatTag(v: v, s: side2) } }.frame(width: 76)
-                }
-                // المشاهد: أول لاعب تحت الطاولة
-                if myIdx == nil, let first = c.seats.first { CardsSeatTag(v: v, s: first) }
-            }
-            .padding(.vertical, 6)
-            .background(RoundedRectangle(cornerRadius: 24).fill(RadialGradient(colors: [Color(red: 0.11, green: 0.30, blue: 0.22).opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 260)))
+            // رأس اللوحة: اسم العقد بلونه، ووش تتجنب، وعقود المملكة
+            if let b = c.board { CardsBoardHeader(b: b) }
+            CardsTableArea(v: v, c: c, top: top, side1: side1, side2: side2, stack: stack, hasRows: hasRows, watcher: watcher,
+                           shownCenter: c.centerDone && doneHidden ? [] : c.center, press: press)
             // المجموعات: تنزيلات الكنكان، صفوف التركس (تنضغط في الكنكان للصق المحدد عليها)
             ScrollView {
                 VStack(spacing: 4) {
-                    ForEach(c.piles.filter { $0.id != "stack" }, id: \.id) { p in
+                    let shownPiles = c.piles.filter { $0.id != "stack" }
+                    ForEach(Array(shownPiles.enumerated()), id: \.element.id) { k, p in
                         let canLay = c.select && c.myTurn && p.id.hasPrefix("meld:")
+                        // الكنكان: تنزيلات كل لاعب تحت اسمه
+                        if !p.group.isEmpty && (k == 0 || shownPiles[k - 1].group != p.group) {
+                            Text(trSpoken(p.group)).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.gold).frame(maxWidth: .infinity, alignment: .leading).accessibilityHidden(true)
+                        }
                         HStack(spacing: 3) {
                             Text(trSpoken(p.title)).font(.system(size: 12)).foregroundColor(Palette.goldSoft).lineLimit(1).frame(width: 56, alignment: .leading)
                             // صف طويل (التركس يوصل 13 ورقة): الأوراق فوق بعض شوي عشان يبان الصف كامل
@@ -227,6 +204,8 @@ struct CardsBoard: View {
                 }
             }
             .frame(minHeight: hasRows ? 120 : 0, maxHeight: .infinity)
+            // الكنكان: شريط الفتح (مجموع تنزيلك من الـ51)
+            if let pr = c.board?.progress { KonkanProgress(p: pr) }
             // الأزرار: مكان محجوز دايماً
             WrapLayout(spacing: 6) {
                 ForEach(c.buttons, id: \.id) { b in
@@ -289,5 +268,91 @@ struct CardsBoard: View {
         }
         .onAppear { Gestures.shared.set("cards") { read($0) } }
         .onDisappear { Gestures.shared.clear("cards") }
+    }
+}
+
+
+/// الطاولة: اللاعبين حولها ووسطها حسب اللعبة — الأكلة (وفوقها الأوراق الخطرة وعداد العقد)، أو صفوف التركس بعرض الشاشة،
+/// أو السحب والأرض (الكنكان)، أو كومة الأزواج (الشايب)
+private struct CardsTableArea: View {
+    let v: TableView
+    let c: CardsView
+    let top: CardsView.Seat?, side1: CardsView.Seat?, side2: CardsView.Seat?
+    let stack: CardsView.Pile?
+    let hasRows: Bool, watcher: Bool
+    let shownCenter: [(Int, CardsCard)]
+    let press: (String, Bool) -> Void
+
+    private var felt: Color { Color(red: 0.06, green: 0.23, blue: 0.16) }
+    private var rim: Color { Color(red: 0.42, green: 0.29, blue: 0.17) }
+
+    var body: some View {
+        VStack(spacing: 6) {
+            if let rows = c.board?.rows, !rows.isEmpty {
+                // التركس: اللاعبين في صف واحد فوق، والطاولة كلها بعرض الشاشة لصفوف الأنواع الأربعة
+                HStack(spacing: 0) {
+                    ForEach([side1, top, side2].compactMap { $0 }, id: \.seat) { s in CardsSeatTag(v: v, s: s).frame(maxWidth: .infinity) }
+                }
+                TrixRows(rows: rows)
+                    .frame(maxWidth: .infinity)
+                    .background(RoundedRectangle(cornerRadius: 22).fill(felt))
+                    .overlay(RoundedRectangle(cornerRadius: 22).stroke(rim, lineWidth: 3))
+            } else {
+                ZStack { if let top { CardsSeatTag(v: v, s: top) } }.frame(minHeight: hasRows ? 0 : 92)
+                HStack(spacing: 6) {
+                    ZStack { if let side1 { CardsSeatTag(v: v, s: side1) } }.frame(width: 76)
+                    middle
+                    ZStack { if let side2 { CardsSeatTag(v: v, s: side2) } }.frame(width: 76)
+                }
+            }
+            // المشاهد: أول لاعب تحت الطاولة
+            if watcher, let first = c.seats.first { CardsSeatTag(v: v, s: first) }
+        }
+        .padding(.vertical, 6)
+        .background(RoundedRectangle(cornerRadius: 24).fill(RadialGradient(colors: [Color(red: 0.11, green: 0.30, blue: 0.22).opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 260)))
+    }
+
+    @ViewBuilder private var middle: some View {
+        let b = c.board
+        let heaps = b?.stock != nil || b?.discard != nil
+        let marks = b?.marks ?? []
+        let h: CGFloat = !marks.isEmpty ? 176 : hasRows ? 112 : 150
+        let oval = ZStack {
+            RoundedRectangle(cornerRadius: 70).fill(felt)
+            RoundedRectangle(cornerRadius: 70).stroke(rim, lineWidth: 3)
+            if let stack {
+                ForEach(Array(stack.cards.enumerated()), id: \.offset) { i, f in
+                    CardsFace(c: f, w: 40, h: 58)
+                        .rotationEffect(.degrees(Double((i * 37) % 30 - 15)))
+                        .offset(x: CGFloat((i * 53) % 24 - 12), y: CGFloat((i * 29) % 16 - 8))
+                }
+            } else if heaps {
+                KonkanHeaps(stock: b?.stock, discard: b?.discard, onStock: { press("draw:stock", false) }, onDiscard: { press("draw:pile", false) })
+            } else {
+                VStack(spacing: 4) {
+                    if let b, !marks.isEmpty { CardsMarksRow(b: b) }
+                    HStack(spacing: 4) {
+                        ForEach(Array(shownCenter.enumerated()), id: \.offset) { _, p in
+                            VStack(spacing: 1) {
+                                CardsFace(c: p.1, w: 40, h: 58)
+                                Text(trSpoken(p.0 < 0 ? "الأرض" : c.seats.first { $0.seat == p.0 }?.name ?? "")).font(.system(size: 10)).foregroundColor(Palette.textDim).lineLimit(1).frame(width: 50)
+                            }
+                        }
+                    }
+                    .frame(minHeight: 70)
+                    if let counter = b?.counter, !counter.isEmpty {
+                        Text(trSpoken(counter)).font(.system(size: 11, weight: .bold)).foregroundColor(boardTone(b?.tone ?? "")).lineLimit(1)
+                    }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, minHeight: h, maxHeight: h)
+        if heaps {
+            oval
+        } else {
+            oval
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(spokenText(stack.map { "\($0.title): \($0.text)" } ?? [c.readLeft, b?.read ?? ""].filter { !$0.isEmpty }.joined(separator: ". ")))
+        }
     }
 }
