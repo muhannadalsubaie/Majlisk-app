@@ -157,6 +157,20 @@ final class Sounds {
     func jackarooSwap(at: Double = 0) { play("jk-swap", at: at, gain: 1, vary: false) }
 
     /// أخذ الأكلة: الأوراق تنسحب لصاحبها
+    /// ألعاب الورق الجديدة: الخادم يرسل أسماء الأصوات بالترتيب («اسم» أو «اسم@ثواني» للتأخير)،
+    /// ولما تخلص المباراة صوت الفوز أو الخسارة حسب مقعدك
+    func cardsFx(_ keys: [String], won: Bool?) {
+        var last = 0.0
+        for k in keys {
+            let parts = k.split(separator: "@", maxSplits: 1)
+            let name = String(parts.first ?? "")
+            let at = parts.count > 1 ? Double(parts[1]) ?? 0 : 0
+            last = max(last, at)
+            play(name, at: at, gain: 1, vary: name.hasPrefix("card"))
+        }
+        if let won { play(won ? "match-win" : "match-lose", at: last + 1.2, gain: 0.8, vary: false) }
+    }
+
     func collect() { play("trick-collect", gain: 1, vary: false) }
 
     func turn(soft: Bool) {

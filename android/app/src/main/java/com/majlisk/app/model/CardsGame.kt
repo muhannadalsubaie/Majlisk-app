@@ -20,6 +20,9 @@ data class CardsPile(val id: String, val title: String, val text: String, val ca
 data class CardsHandCard(val face: CardFace, val label: String, val legal: Boolean)
 data class CardsButton(val id: String, val label: String, val primary: Boolean, val needsSelection: Boolean)
 
+/** أصوات آخر حركة من الخادم: رقمها يتغير مع كل حركة فيها صوت. win = مقاعد الفائزين لما تخلص المباراة */
+data class CardsFx(val n: Int, val keys: List<String>, val win: List<Int>?)
+
 data class CardsView(
     val game: String,
     val over: Boolean,
@@ -37,6 +40,7 @@ data class CardsView(
     val readDown: String,
     val readLeft: String,
     val readRight: String,
+    val fx: CardsFx?,
 ) {
     companion object {
         private fun face(o: JSONObject?) = CardFace(o?.optInt("id") ?: 0, o?.optString("r").orEmpty(), o?.optString("s").orEmpty())
@@ -62,6 +66,13 @@ data class CardsView(
                 readDown = reads.optString("down"),
                 readLeft = reads.optString("left"),
                 readRight = reads.optString("right"),
+                fx = c.optJSONObject("fx")?.let { f ->
+                    CardsFx(
+                        f.optInt("n"),
+                        f.optJSONArray("keys")?.let { a -> (0 until a.length()).map { a.optString(it) } }.orEmpty(),
+                        f.optJSONArray("win")?.let { a -> (0 until a.length()).map { a.optInt(it) } },
+                    )
+                },
             )
         }
     }

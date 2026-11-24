@@ -31,6 +31,10 @@ struct CardsView {
     let select: Bool
     let buttons: [Button]
     let readUp: String, readDown: String, readLeft: String, readRight: String
+    /// أصوات آخر حركة من الخادم: رقمها يتغير مع كل حركة فيها صوت، وfxWin مقاعد الفائزين لما تخلص المباراة
+    let fxN: Int?
+    let fxKeys: [String]
+    let fxWin: [Int]?
 
     init(_ c: JSON) {
         let u = c.obj("ui") ?? [:]
@@ -48,6 +52,10 @@ struct CardsView {
         select = u.bool("select")
         buttons = u.objs("buttons").map { Button(id: $0.str("id"), label: $0.str("label"), primary: $0.bool("primary"), needsSelection: $0.bool("needsSelection")) }
         readUp = reads.str("up"); readDown = reads.str("down"); readLeft = reads.str("left"); readRight = reads.str("right")
+        let fx = c.obj("fx")
+        fxN = fx?.intOrNil("n")
+        fxKeys = fx?.strs("keys") ?? []
+        fxWin = fx?["win"] == nil ? nil : fx?.ints("win")
     }
 }
 
@@ -241,6 +249,11 @@ struct CardsBoard: View {
             if p >= n && n > 0 { DispatchQueue.main.asyncAfter(deadline: .now() + 0.05) { slotFocus = n - 1 } }
             let ids = Set(c.hand.map { $0.face.id })
             selected = selected.filter { ids.contains($0) }
+        }
+        // أصوات الحركات (توزيع، ورقة، أكلة، سحب، تنزيل…): مرة لكل حركة، وأول ما تفتح الطاولة ما نشغل القديم
+        .onChange(of: c.fxN) { _ in
+            let won: Bool? = c.fxWin.flatMap { w in v.mySeat.flatMap { $0 >= 0 ? w.contains($0) : nil } }
+            Sounds.shared.cardsFx(c.fxKeys, won: won)
         }
         // جاك الدور: نغمة الدور، وVoiceOver يقول وش المطلوب
         .onChange(of: c.myTurn) { mine in

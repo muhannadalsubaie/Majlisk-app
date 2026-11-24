@@ -177,6 +177,21 @@ object Sounds {
     fun jackarooBack(at: Double = 0.0) = play("jk-back", at = at, gain = 1f, vary = false)
     fun jackarooSwap(at: Double = 0.0) = play("jk-swap", at = at, gain = 1f, vary = false)
 
+    /**
+     * ألعاب الورق الجديدة: الخادم يرسل أسماء الأصوات بالترتيب («اسم» أو «اسم@ثواني» للتأخير)،
+     * ولما تخلص المباراة صوت الفوز أو الخسارة حسب مقعدك
+     */
+    fun cardsFx(keys: List<String>, won: Boolean?) {
+        var last = 0.0
+        for (k in keys) {
+            val name = k.substringBefore('@')
+            val at = k.substringAfter('@', "").toDoubleOrNull() ?: 0.0
+            last = maxOf(last, at)
+            play(name, at = at, gain = 1f, vary = name.startsWith("card"))
+        }
+        if (won != null) play(if (won) "match-win" else "match-lose", at = last + 1.2, gain = 0.8f, vary = false)
+    }
+
     /** أخذ الأكلة: الأوراق تنسحب لصاحبها */
     fun collect() = play("trick-collect", gain = 1f, vary = false)
 

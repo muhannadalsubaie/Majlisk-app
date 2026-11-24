@@ -120,6 +120,16 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         }
     }
 
+    // أصوات الحركات (توزيع، ورقة، أكلة، سحب، تنزيل…): مرة لكل حركة، وأول ما تفتح الطاولة ما نشغل القديم
+    var heardFx by remember { mutableStateOf(c.fx?.n) }
+    LaunchedEffect(c.fx?.n) {
+        val fx = c.fx ?: return@LaunchedEffect
+        if (fx.n == heardFx) return@LaunchedEffect
+        heardFx = fx.n
+        val mine = v.mySeat
+        Sounds.cardsFx(fx.keys, fx.win?.let { w -> if (mine == null || mine < 0) null else mine in w })
+    }
+
     // جاك الدور: نغمة الدور، وقارئ الشاشة يقول وش المطلوب
     LaunchedEffect(c.myTurn, c.prompt) {
         if (c.myTurn) {
