@@ -159,6 +159,15 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                 GameCard("جاكارو", "🎯", false, Modifier.weight(1f)) { play("jackaroo") }
                 GameCard("لودو", "🎲", false, Modifier.weight(1f)) { play("ludo") }
             }
+            // ألعاب الورق الجديدة
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                GameCard("طرنيب", "♠️", false, Modifier.weight(1f)) { play("tarneeb") }
+                GameCard("تريكس", "♥️", false, Modifier.weight(1f)) { play("trix") }
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
+                GameCard("كنكان", "🃏", false, Modifier.weight(1f)) { play("konkan") }
+                GameCard("شايب", "👴", false, Modifier.weight(1f)) { play("shayeb") }
+            }
         }
     }
     if (getCoins) {

@@ -127,6 +127,15 @@ struct GoldMenuScreen: View {
                         GameCard(name: "جاكارو", icon: "🎯", featured: false) { play("jackaroo") }
                         GameCard(name: "لودو", icon: "🎲", featured: false) { play("ludo") }
                     }
+                    // ألعاب الورق الجديدة
+                    HStack(spacing: 14) {
+                        GameCard(name: "طرنيب", icon: "♠️", featured: false) { play("tarneeb") }
+                        GameCard(name: "تريكس", icon: "♥️", featured: false) { play("trix") }
+                    }
+                    HStack(spacing: 14) {
+                        GameCard(name: "كنكان", icon: "🃏", featured: false) { play("konkan") }
+                        GameCard(name: "شايب", icon: "👴", featured: false) { play("shayeb") }
+                    }
                 }
                 .padding(.horizontal, 18).padding(.vertical, 12)
             }
