@@ -172,10 +172,11 @@ func arabicDigits(_ s: Substring) -> String {
 
 /// العدد بالكلمات العربية (٧ ← سبعة، ١٠ ← عشرة، ٢٥ ← خمسة وعشرين)
 func arabicNumberWords(_ n: Int) -> String {
-    let ones = ["صفر", "واحد", "اثنين", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة",
-                "إحدى عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"]
-    let tens = ["", "", "عشرين", "ثلاثين", "أربعين", "خمسين", "ستين", "سبعين", "ثمانين", "تسعين"]
-    let hundreds = ["", "مية", "ميتين", "ثلاثمية", "أربعمية", "خمسمية", "ستمية", "سبعمية", "ثمانمية", "تسعمية"]
+    // بالفصحى: الصوت العربي ينطقها صح (العامية مثل «ميتين» كان ينطقها غلط)
+    let ones = ["صفر", "واحد", "اثنان", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة",
+                "أحد عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"]
+    let tens = ["", "", "عشرون", "ثلاثون", "أربعون", "خمسون", "ستون", "سبعون", "ثمانون", "تسعون"]
+    let hundreds = ["", "مئة", "مئتان", "ثلاثمئة", "أربعمئة", "خمسمئة", "ستمئة", "سبعمئة", "ثمانمئة", "تسعمئة"]
     func below1000(_ n: Int) -> String {
         var parts: [String] = []
         if n >= 100 { parts.append(hundreds[n / 100]) }
@@ -194,7 +195,7 @@ func arabicNumberWords(_ n: Int) -> String {
     let thWord: String
     switch th {
     case 1: thWord = "ألف"
-    case 2: thWord = "ألفين"
+    case 2: thWord = "ألفان"
     case 3...10: thWord = "\(ones[th]) آلاف"
     default: thWord = "\(below1000(th)) ألف"
     }
@@ -227,12 +228,16 @@ func arabicSpokenNumbers(_ s: Substring) -> String {
 }
 
 /// نص للقراءة: كل قطعة بلغتها، والأرقام في القطع العربية تنقال كلمات عربية
-func spokenAttributed(_ s: String, _ base: [NSAttributedString.Key: Any] = [:]) -> NSAttributedString {
+func spokenAttributed(_ s: String, _ base: [NSAttributedString.Key: Any] = [:], words: Bool? = nil) -> NSAttributedString {
     let m = NSMutableAttributedString()
-    for (r, l) in langRuns(s) where !r.isEmpty {
+    let runs = langRuns(s)
+    // الأرقام كلمات بس لما يكون فيه لغتين (اسم إنجليزي): الصوت العربي يتخطى الرقم بعد الإنجليزي.
+    // الكلام العربي وحده يقرأ الأرقام أرقام عادي (النتيجة 225، المتصلون 11)
+    let asWords = words ?? (runs.count > 1)
+    for (r, l) in runs where !r.isEmpty {
         var attrs = base
         attrs[.accessibilitySpeechLanguage] = l
-        m.append(NSAttributedString(string: l == "ar" ? arabicSpokenNumbers(s[r]) : String(s[r]), attributes: attrs))
+        m.append(NSAttributedString(string: l == "ar" && asWords ? arabicSpokenNumbers(s[r]) : String(s[r]), attributes: attrs))
     }
     return m
 }
@@ -244,8 +249,8 @@ func spokenText(_ s0: String) -> Text {
 }
 
 /// إعلان قارئ الشاشة معلّم بلغاته
-func spokenNS(_ s: String, queued: Bool) -> NSAttributedString {
-    spokenAttributed(s, [.accessibilitySpeechQueueAnnouncement: queued])
+func spokenNS(_ s: String, queued: Bool, words: Bool? = nil) -> NSAttributedString {
+    spokenAttributed(s, [.accessibilitySpeechQueueAnnouncement: queued], words: words)
 }
 
 /// الجذر: اتجاه الشاشة من لغة التطبيق، ويعاد بناؤه كله لما تتغير اللغة
