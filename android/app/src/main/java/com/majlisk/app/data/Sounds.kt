@@ -41,6 +41,8 @@ object Sounds {
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
         "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw", "domino-lock", "domino-lock-normal", "domino-lock-double", "domino-ghashim",
+        // ألعاب الورق الجديدة: الأصوات اللي اختارها صاحب التطبيق
+        "c-shuffle", "c-deal", "c-card", "c-collect", "c-round", "c-win", "c-lose", "c-bid", "c-pass", "c-cut", "c-kaboot", "c-contract", "c-row", "c-draw", "c-take", "c-meld", "c-layoff", "c-open", "c-hand", "c-pair", "c-shayeb",
     ) + (1..13).flatMap { listOf("steps-$it", "marbles-$it") }
     private val loaded = HashSet<Int>()
     private var openPending = false
@@ -187,9 +189,11 @@ object Sounds {
             val name = k.substringBefore('@')
             val at = k.substringAfter('@', "").toDoubleOrNull() ?: 0.0
             last = maxOf(last, at)
-            play(name, at = at, gain = 1f, vary = name.startsWith("card"))
+            play(name, at = at, gain = 1f, vary = name == "c-card")
         }
-        if (won != null) play(if (won) "match-win" else "match-lose", at = last + 1.2, gain = 0.8f, vary = false)
+        // الشايب: اللي بقى معه الشايب يكفيه صوته، ما نزيد عليه صوت خسارة
+        if (won == true) play("c-win", at = last + 1.2, gain = 0.9f, vary = false)
+        else if (won == false && keys.none { it.startsWith("c-shayeb") }) play("c-lose", at = last + 1.2, gain = 0.9f, vary = false)
     }
 
     /** أخذ الأكلة: الأوراق تنسحب لصاحبها */
@@ -213,6 +217,8 @@ object Sounds {
     fun matchEnd(won: Boolean) = play(if (won) "match-win" else "match-lose", gain = 0.8f, vary = false)
 
     fun card() = play(pick("card1", "card2", "card3", "card4"), gain = 1f)
+    /** ألعاب الورق الجديدة: صوت ورقتك وقت الضغط */
+    fun cardsCard() = play("c-card", gain = 1f)
 
     /** القطع بالحكم: ضربة ورقة */
     fun cut() = play("trump-cut", gain = 1f, vary = false) // ورقة ومعها رنة عملة

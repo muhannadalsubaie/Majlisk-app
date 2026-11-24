@@ -224,7 +224,7 @@ struct CardsBoard: View {
                         if c.select { if sel { selected.remove(h.face.id) } else { selected.insert(h.face.id) }; Announcer.announceNow(sel ? "شلت التحديد" : "محددة") }
                         else if !c.myTurn { Announcer.announceNow("ليس دورك") }
                         else if !h.legal { Sounds.shared.illegal() }
-                        else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.card(); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
+                        else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.cardsFx([(c.board?.rows ?? []).isEmpty ? "c-card" : "c-row"], won: nil); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
                     } label: {
                         CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal)
                             .padding(2)
@@ -249,7 +249,7 @@ struct CardsBoard: View {
             let won: Bool? = c.fxWin.flatMap { w in v.mySeat.flatMap { $0 >= 0 ? w.contains($0) : nil } }
             // ورقتك: صوتها اشتغل وقت الضغط، فما نعيده لما يوصل رد الخادم
             var keys = c.fxKeys
-            if let me = v.mySeat, c.fxBy == me, Sounds.shared.consumeLocal("cards"), let f = keys.first, f.hasPrefix("card") || f.hasPrefix("lay") { keys.removeFirst() }
+            if let me = v.mySeat, c.fxBy == me, Sounds.shared.consumeLocal("cards"), let f = keys.first, f == "c-card" || f == "c-row" { keys.removeFirst() }
             Sounds.shared.cardsFx(keys, won: won)
         }
         // جاك الدور: نغمة الدور، وVoiceOver يقول وش المطلوب

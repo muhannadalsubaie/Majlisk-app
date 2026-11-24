@@ -128,7 +128,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         heardFx = fx.n
         val mine = v.mySeat
         // ورقتك: صوتها اشتغل وقت الضغط، فما نعيده لما يوصل رد الخادم
-        val keys = if (mine != null && fx.by == mine && Sounds.consumeLocal("cards") && fx.keys.firstOrNull()?.let { it.startsWith("card") || it.startsWith("lay") } == true) fx.keys.drop(1) else fx.keys
+        val keys = if (mine != null && fx.by == mine && Sounds.consumeLocal("cards") && fx.keys.firstOrNull()?.let { it == "c-card" || it == "c-row" } == true) fx.keys.drop(1) else fx.keys
         Sounds.cardsFx(keys, fx.win?.let { w -> if (mine == null || mine < 0) null else mine in w })
     }
 
@@ -311,7 +311,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                                     c.select -> { selected = if (sel) selected - h.face.id else selected + h.face.id; Announcer.announceNow(if (sel) "شلت التحديد" else "محددة") }
                                     !c.myTurn -> Announcer.announceNow("ليس دورك")
                                     !h.legal -> Sounds.illegal()
-                                    else -> { playedPos = i; Sounds.card(); Sounds.markLocal("cards"); send(jsonOf("op" to "card", "id" to h.face.id)) }
+                                    else -> { playedPos = i; Sounds.cardsFx(listOf(if (c.board?.rows.isNullOrEmpty()) "c-card" else "c-row"), null); Sounds.markLocal("cards"); send(jsonOf("op" to "card", "id" to h.face.id)) }
                                 }
                             }
                             .semantics(mergeDescendants = true) { contentDescription = tr(h.label + if (sel) "، محددة" else "") },

@@ -24,6 +24,8 @@ final class Sounds {
         "illegal", "voice-invite", "invite-in", "notify", "join-request", "chat-msg", "jk-home", "ludo-home", "jk-back", "jk-swap", "proj-reveal",
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
         "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw", "domino-lock", "domino-lock-normal", "domino-lock-double", "domino-ghashim",
+        // ألعاب الورق الجديدة: الأصوات اللي اختارها صاحب التطبيق
+        "c-shuffle", "c-deal", "c-card", "c-collect", "c-round", "c-win", "c-lose", "c-bid", "c-pass", "c-cut", "c-kaboot", "c-contract", "c-row", "c-draw", "c-take", "c-meld", "c-layoff", "c-open", "c-hand", "c-pair", "c-shayeb",
     ]
 
     func preload() {
@@ -166,9 +168,11 @@ final class Sounds {
             let name = String(parts.first ?? "")
             let at = parts.count > 1 ? Double(parts[1]) ?? 0 : 0
             last = max(last, at)
-            play(name, at: at, gain: 1, vary: name.hasPrefix("card"))
+            play(name, at: at, gain: 1, vary: name == "c-card")
         }
-        if let won { play(won ? "match-win" : "match-lose", at: last + 1.2, gain: 0.8, vary: false) }
+        // الشايب: اللي بقى معه الشايب يكفيه صوته، ما نزيد عليه صوت خسارة
+        if won == true { play("c-win", at: last + 1.2, gain: 0.9, vary: false) }
+        else if won == false && !keys.contains(where: { $0.hasPrefix("c-shayeb") }) { play("c-lose", at: last + 1.2, gain: 0.9, vary: false) }
     }
 
     func collect() { play("trick-collect", gain: 1, vary: false) }
@@ -201,6 +205,8 @@ final class Sounds {
 
     func matchEnd(won: Bool) { play(won ? "match-win" : "match-lose", gain: 0.8, vary: false) }
     func card() { play(pick("card1", "card2", "card3", "card4"), gain: 1) }
+    /// ألعاب الورق الجديدة: صوت ورقتك وقت الضغط
+    func cardsCard() { play("c-card", gain: 1) }
     /// القطع بالحكم: ضربة ورقة
     /// القطع بالحكم: ورقة ومعها رنة عملة
     func cut() { play("trump-cut", gain: 1, vary: false) }
