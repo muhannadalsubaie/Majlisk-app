@@ -25,6 +25,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -116,12 +118,11 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
             GameTile("دومينو", com.majlisk.app.R.drawable.domino_table) { picked = "domino"; variant = "classic" }
             GameTile("جاكارو", com.majlisk.app.R.drawable.jackaroo_table) { picked = "jackaroo"; variant = "classic" }
             GameTile("لودو", com.majlisk.app.R.drawable.ludo_table) { picked = "ludo"; variant = "classic" }
-            // الألعاب التجريبية: تطلع بس للحسابات اللي فتحها لها الخادم
-            val beta by com.majlisk.app.data.Features.betaGames.collectAsState()
-            androidx.compose.runtime.LaunchedEffect(Unit) { com.majlisk.app.data.Features.refresh() }
-            beta.forEach { k ->
-                SecondaryButton("${com.majlisk.app.data.GAME_NAMES[k] ?: k} (تجريبي)", { picked = k; variant = "classic" }, fill = true)
-            }
+            // ألعاب الورق: نفس بطاقات الألعاب، وبدل الصورة مروحة أوراق
+            CardsGameTile("طرنيب", listOf("A" to "S", "K" to "H", "7" to "D")) { picked = "tarneeb"; variant = "classic" }
+            CardsGameTile("تريكس", listOf("K" to "H", "Q" to "S", "J" to "D")) { picked = "trix"; variant = "classic" }
+            CardsGameTile("كنكان", listOf("5" to "C", "6" to "C", "★" to "X")) { picked = "konkan"; variant = "classic" }
+            CardsGameTile("شايب", listOf("Q" to "D", "Q" to "C", "K" to "H")) { picked = "shayeb"; variant = "classic" }
         }
         return
     }
@@ -253,6 +254,42 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
 }
 
 /** مربع لعبة عريض: اسمها على اليمين وصورتها على اليسار، ويُقرأ زراً واحداً باسم اللعبة */
+@Composable
+fun CardsGameTile(name: String, cards: List<Pair<String, String>>, onClick: () -> Unit) {
+    val shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)
+    Row(
+        Modifier.fillMaxWidth().height(150.dp)
+            .shadow(10.dp, shape)
+            .background(androidx.compose.ui.graphics.Brush.verticalGradient(listOf(Color(0xFFE2C45E), Palette.gold, Color(0xFFAE8E2D))), shape)
+            .clickable(role = androidx.compose.ui.semantics.Role.Button, onClick = onClick)
+            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(name) }
+            .padding(horizontal = 20.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(name, color = Palette.green900, fontSize = 30.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f).clearAndSetSemantics {})
+        // مروحة ثلاث أوراق مكان صورة الطاولة
+        androidx.compose.foundation.layout.Box(Modifier.size(130.dp, 120.dp).clearAndSetSemantics {}, contentAlignment = Alignment.Center) {
+            cards.forEachIndexed { i, (r, su) ->
+                val red = su == "H" || su == "D"
+                val sym = when (su) { "S" -> "♠"; "H" -> "♥"; "D" -> "♦"; "C" -> "♣"; else -> "" }
+                androidx.compose.foundation.layout.Box(
+                    Modifier.graphicsLayer {
+                        rotationZ = (i - 1) * 16f
+                        translationX = (i - 1) * 22.dp.toPx()
+                        translationY = if (i == 1) -6.dp.toPx() else 0f
+                        transformOrigin = androidx.compose.ui.graphics.TransformOrigin(0.5f, 1.2f)
+                    }.size(56.dp, 82.dp)
+                        .shadow(4.dp, androidx.compose.foundation.shape.RoundedCornerShape(8.dp))
+                        .background(Color.White, androidx.compose.foundation.shape.RoundedCornerShape(8.dp)),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text("$r$sym", color = if (su == "X") Color(0xFF6A3FB5) else if (red) Color(0xFFC62828) else Color(0xFF1A1A1A), fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+        }
+    }
+}
+
 @Composable
 fun GameTile(name: String, image: Int, onClick: () -> Unit) {
     val shape = androidx.compose.foundation.shape.RoundedCornerShape(20.dp)

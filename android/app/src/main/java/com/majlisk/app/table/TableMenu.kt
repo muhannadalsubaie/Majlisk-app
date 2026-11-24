@@ -120,11 +120,8 @@ fun TableMenu(v: TableView, uid: String, conn: TableConnection, onLeave: () -> U
         // المالك يغيّر لعبة الطاولة: تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة
         Page.ChangeGame -> MajliskDialog("تغيير اللعبة", { page = Page.Main }) {
             Body("الحالية: ${com.majlisk.app.data.gameTitle(v.kind, "classic")}. لو غيّرتها تنتهي اللعبة الحالية، ويبقى الكل في أماكنهم للعبة الجديدة. خيارات اللعبة (فردي أو فرق، عادي أو كومبلكس، نهاية المباراة) تختارها من صفحة المقاعد.")
-            // اسم اللعبة بس
-            // والألعاب التجريبية للحسابات المفتوحة لها
-            val beta by com.majlisk.app.data.Features.betaGames.collectAsState()
-            androidx.compose.runtime.LaunchedEffect(Unit) { com.majlisk.app.data.Features.refresh() }
-            (listOf("baloot", "domino", "jackaroo", "ludo") + beta).filter { it != v.kind }.forEach { k ->
+            // اسم اللعبة بس (الألعاب الثمان كلها)
+            (listOf("baloot", "domino", "jackaroo", "ludo") + com.majlisk.app.data.BETA_GAMES).filter { it != v.kind }.forEach { k ->
                 PrimaryButton(com.majlisk.app.data.gameTitle(k, "classic"), { conn.send("changeGame", "kind" to k); onClose() })
             }
             SecondaryButton("رجوع", { page = Page.Main }, fill = true)

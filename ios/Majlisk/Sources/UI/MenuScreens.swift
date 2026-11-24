@@ -121,10 +121,11 @@ struct CreateTableScreen: View {
                 GameTile(name: "دومينو", image: "domino_table") { picked = "domino"; variant = "classic" }
                 GameTile(name: "جاكارو", image: "jackaroo_table") { picked = "jackaroo"; variant = "classic" }
                 GameTile(name: "لودو", image: "ludo_table") { picked = "ludo"; variant = "classic" }
-                // الألعاب التجريبية: تطلع بس للحسابات اللي فتحها لها الخادم
-                ForEach(features.betaGames, id: \.self) { k in
-                    MButton("\(GAME_NAMES[k] ?? k) (تجريبي)") { picked = k; variant = "classic" }
-                }
+                // ألعاب الورق: نفس بطاقات الألعاب، وبدل الصورة مروحة أوراق
+                CardsGameTile(name: "طرنيب", cards: [("A", "S"), ("K", "H"), ("7", "D")]) { picked = "tarneeb"; variant = "classic" }
+                CardsGameTile(name: "تريكس", cards: [("K", "H"), ("Q", "S"), ("J", "D")]) { picked = "trix"; variant = "classic" }
+                CardsGameTile(name: "كنكان", cards: [("5", "C"), ("6", "C"), ("★", "X")]) { picked = "konkan"; variant = "classic" }
+                CardsGameTile(name: "شايب", cards: [("Q", "D"), ("Q", "C"), ("K", "H")]) { picked = "shayeb"; variant = "classic" }
             }
             .onAppear { features.refresh() }
             // ومن قائمة الألعاب للقائمة الرئيسية
@@ -206,6 +207,40 @@ struct JoinTableScreen: View {
 }
 
 /// مربع لعبة عريض: اسمها على اليمين وصورتها على اليسار، ويُقرأ زراً واحداً باسم اللعبة
+/// بطاقة لعبة ورق: نفس شكل بطاقات الألعاب، وبدل الصورة مروحة ثلاث أوراق
+struct CardsGameTile: View {
+    let name: String
+    let cards: [(String, String)]
+    let action: () -> Void
+    var body: some View {
+        Button(action: action) {
+            HStack {
+                Text(trSpoken(name)).font(.system(size: 30, weight: .bold)).frame(maxWidth: .infinity, alignment: .leading)
+                ZStack {
+                    ForEach(Array(cards.enumerated()), id: \.offset) { i, c in
+                        let red = c.1 == "H" || c.1 == "D"
+                        let sym = ["S": "♠", "H": "♥", "D": "♦", "C": "♣"][c.1] ?? ""
+                        Text(verbatim: "\(c.0)\(sym)")
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(c.1 == "X" ? Color(red: 0.42, green: 0.25, blue: 0.71) : red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
+                            .frame(width: 56, height: 82)
+                            .background(RoundedRectangle(cornerRadius: 8).fill(Color.white).shadow(radius: 3))
+                            .rotationEffect(.degrees(Double(i - 1) * 16), anchor: UnitPoint(x: 0.5, y: 1.2))
+                            .offset(x: CGFloat(i - 1) * 22, y: i == 1 ? -6 : 0)
+                    }
+                }
+                .frame(width: 130, height: 120)
+            }
+            .padding(.horizontal, 20)
+            .frame(maxWidth: .infinity, minHeight: 150)
+        }
+        .buttonStyle(RaisedStyle(base: Palette.gold, fg: Palette.green900))
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenText(name))
+        .accessibilityAddTraits(.isButton)
+    }
+}
+
 struct GameTile: View {
     let name: String
     let image: String
