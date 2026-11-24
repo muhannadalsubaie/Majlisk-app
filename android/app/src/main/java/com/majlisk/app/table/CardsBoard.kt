@@ -176,53 +176,88 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         val doneKey = if (c.centerDone) c.center.joinToString { "${it.first}:${it.second.id}" } else ""
         LaunchedEffect(doneKey) { doneHidden = false; if (doneKey.isNotEmpty()) { delay(850); doneHidden = true } }
         val centerShown = if (c.centerDone && doneHidden) emptyList() else c.center
-        // فيه مجموعات تحت الطاولة (صفوف التركس، تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
+        val board = c.board
+        val trixRows = board?.rows.orEmpty()
+        // فيه مجموعات تحت الطاولة (تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
         val hasRows = c.piles.any { it.id != "stack" }
         // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
         val watcher = myIdx < 0
+        // رأس اللوحة: اسم العقد بلونه، ووش تتجنب، وعقود المملكة
+        board?.let { CardsBoardHeader(it) }
         Column(
             Modifier.fillMaxWidth()
                 .background(androidx.compose.ui.graphics.Brush.radialGradient(listOf(Color(0x661B4D39), Color.Transparent)), RoundedCornerShape(24.dp))
                 .padding(vertical = 6.dp),
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
-            Box(Modifier.heightIn(min = if (hasRows) 0.dp else 92.dp), contentAlignment = Alignment.Center) { top?.let { CardsSeatTag(v, it) } }
-            Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Box(Modifier.width(76.dp), contentAlignment = Alignment.Center) { side1?.let { CardsSeatTag(v, it) } }
-                // وسط الطاولة: الأكلة الحالية، أو كومة الأزواج المرمية فوق بعض (الشايب)
+            if (trixRows.isNotEmpty()) {
+                // التركس: اللاعبين في صف واحد فوق، والطاولة كلها بعرض الشاشة لصفوف الأنواع الأربعة
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
+                    listOfNotNull(side1, top, side2).forEach { CardsSeatTag(v, it) }
+                }
                 Box(
-                    Modifier.weight(1f).height(if (hasRows) 104.dp else 150.dp)
-                        .background(Color(0xFF0F3B2A), RoundedCornerShape(70.dp))
-                        .border(3.dp, Color(0xFF6B4A2B), RoundedCornerShape(70.dp))
-                        .semantics(mergeDescendants = true) { contentDescription = tr(stack?.let { "${it.title}: ${it.text}" } ?: c.readLeft) },
-                    contentAlignment = Alignment.Center,
-                ) {
-                    if (stack != null) {
-                        stack.cards.forEachIndexed { i, f ->
-                            CardsFace(f, 40, 58, modifier = Modifier.graphicsLayer {
-                                rotationZ = ((i * 37) % 30 - 15).toFloat()
-                                translationX = (((i * 53) % 24) - 12).toFloat()
-                                translationY = (((i * 29) % 16) - 8).toFloat()
-                            })
-                        }
-                    } else Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-                        centerShown.forEach { (seat, face) ->
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                CardsFace(face, 40, 58)
-                                Text(if (seat < 0) "الأرض" else c.seats.firstOrNull { it.seat == seat }?.name.orEmpty(), color = Palette.textDim, fontSize = 10.sp, maxLines = 1,
-                                    modifier = Modifier.width(50.dp).clearAndSetSemantics { }, textAlign = TextAlign.Center)
+                    Modifier.fillMaxWidth()
+                        .background(Color(0xFF0F3B2A), RoundedCornerShape(22.dp))
+                        .border(3.dp, Color(0xFF6B4A2B), RoundedCornerShape(22.dp)),
+                ) { TrixRows(trixRows) }
+            } else {
+                Box(Modifier.heightIn(min = if (hasRows) 0.dp else 92.dp), contentAlignment = Alignment.Center) { top?.let { CardsSeatTag(v, it) } }
+                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Box(Modifier.width(76.dp), contentAlignment = Alignment.Center) { side1?.let { CardsSeatTag(v, it) } }
+                    // وسط الطاولة: الأكلة الحالية (وفوقها الأوراق الخطرة وعداد العقد)، أو السحب والأرض (الكنكان)، أو كومة الأزواج (الشايب)
+                    val heaps = board?.stock != null || board?.discard != null
+                    val marks = board?.marks.orEmpty()
+                    Box(
+                        Modifier.weight(1f).height(if (marks.isNotEmpty()) 176.dp else if (hasRows) 112.dp else 150.dp)
+                            .background(Color(0xFF0F3B2A), RoundedCornerShape(70.dp))
+                            .border(3.dp, Color(0xFF6B4A2B), RoundedCornerShape(70.dp))
+                            .then(if (heaps) Modifier else Modifier.semantics(mergeDescendants = true) {
+                                contentDescription = tr(stack?.let { "${it.title}: ${it.text}" }
+                                    ?: listOfNotNull(c.readLeft, board?.read?.takeIf { it.isNotEmpty() }).joinToString(". "))
+                            }),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        if (stack != null) {
+                            stack.cards.forEachIndexed { i, f ->
+                                CardsFace(f, 40, 58, modifier = Modifier.graphicsLayer {
+                                    rotationZ = ((i * 37) % 30 - 15).toFloat()
+                                    translationX = (((i * 53) % 24) - 12).toFloat()
+                                    translationY = (((i * 29) % 16) - 8).toFloat()
+                                })
+                            }
+                        } else if (heaps) {
+                            KonkanHeaps(board?.stock, board?.discard, { press("draw:stock", false) }, { press("draw:pile", false) })
+                        } else Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            if (marks.isNotEmpty()) CardsMarksRow(board!!)
+                            Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically, modifier = Modifier.heightIn(min = 70.dp)) {
+                                centerShown.forEach { (seat, face) ->
+                                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                        CardsFace(face, 40, 58)
+                                        Text(if (seat < 0) "الأرض" else c.seats.firstOrNull { it.seat == seat }?.name.orEmpty(), color = Palette.textDim, fontSize = 10.sp, maxLines = 1,
+                                            modifier = Modifier.width(50.dp).clearAndSetSemantics { }, textAlign = TextAlign.Center)
+                                    }
+                                }
+                            }
+                            board?.counter?.takeIf { it.isNotEmpty() }?.let {
+                                Text(it, color = boardTone(board?.tone.orEmpty()), fontSize = 11.sp, fontWeight = FontWeight.Bold, maxLines = 1, modifier = Modifier.clearAndSetSemantics { })
                             }
                         }
                     }
+                    Box(Modifier.width(76.dp), contentAlignment = Alignment.Center) { side2?.let { CardsSeatTag(v, it) } }
                 }
-                Box(Modifier.width(76.dp), contentAlignment = Alignment.Center) { side2?.let { CardsSeatTag(v, it) } }
             }
             // المشاهد: أول لاعب تحت الطاولة
             if (myIdx < 0) c.seats.firstOrNull()?.let { CardsSeatTag(v, it) }
         }
         // المجموعات (تنزيلات الكنكان، صفوف التركس): تنضغط في الكنكان للصق المحدد عليها
         Column(Modifier.fillMaxWidth().weight(1f).heightIn(min = if (hasRows) 120.dp else 0.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            var lastGroup = ""
             c.piles.filter { it.id != "stack" }.forEach { p ->
+                // الكنكان: تنزيلات كل لاعب تحت اسمه
+                if (p.group.isNotEmpty() && p.group != lastGroup) {
+                    lastGroup = p.group
+                    Text(p.group, color = Palette.gold, fontSize = 12.sp, fontWeight = FontWeight.Bold, modifier = Modifier.padding(top = 2.dp).clearAndSetSemantics { })
+                }
                 val canLay = c.select && c.myTurn && p.id.startsWith("meld:")
                 Row(
                     Modifier.fillMaxWidth().background(Color(0x18FFFFFF), RoundedCornerShape(10.dp))
@@ -237,6 +272,8 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                 }
             }
         }
+        // الكنكان: شريط الفتح (مجموع تنزيلك من الـ51)
+        board?.progress?.let { KonkanProgress(it) }
         // الأزرار: مكان محجوز دايماً
         FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher && !(c.over && isOwner)) 0.dp else 52.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             c.buttons.forEach { b ->
