@@ -170,13 +170,69 @@ func arabicDigits(_ s: Substring) -> String {
     })
 }
 
-/// نص للقراءة: كل قطعة بلغتها، والأرقام في القطع العربية بالأرقام العربية
+/// العدد بالكلمات العربية (٧ ← سبعة، ١٠ ← عشرة، ٢٥ ← خمسة وعشرين)
+func arabicNumberWords(_ n: Int) -> String {
+    let ones = ["صفر", "واحد", "اثنين", "ثلاثة", "أربعة", "خمسة", "ستة", "سبعة", "ثمانية", "تسعة", "عشرة",
+                "إحدى عشر", "اثنا عشر", "ثلاثة عشر", "أربعة عشر", "خمسة عشر", "ستة عشر", "سبعة عشر", "ثمانية عشر", "تسعة عشر"]
+    let tens = ["", "", "عشرين", "ثلاثين", "أربعين", "خمسين", "ستين", "سبعين", "ثمانين", "تسعين"]
+    let hundreds = ["", "مية", "ميتين", "ثلاثمية", "أربعمية", "خمسمية", "ستمية", "سبعمية", "ثمانمية", "تسعمية"]
+    func below1000(_ n: Int) -> String {
+        var parts: [String] = []
+        if n >= 100 { parts.append(hundreds[n / 100]) }
+        let r = n % 100
+        if r > 0 {
+            if r < 20 { parts.append(ones[r]) }
+            else if r % 10 == 0 { parts.append(tens[r / 10]) }
+            else { parts.append("\(ones[r % 10]) و\(tens[r / 10])") }
+        }
+        return parts.joined(separator: " و")
+    }
+    if n < 0 { return "سالب " + arabicNumberWords(-n) }
+    if n < 20 { return ones[n] }
+    if n < 1000 { return below1000(n) }
+    let th = n / 1000, rest = n % 1000
+    let thWord: String
+    switch th {
+    case 1: thWord = "ألف"
+    case 2: thWord = "ألفين"
+    case 3...10: thWord = "\(ones[th]) آلاف"
+    default: thWord = "\(below1000(th)) ألف"
+    }
+    return rest == 0 ? thWord : "\(thWord) و\(below1000(rest))"
+}
+
+/// الأرقام في الكلام العربي تنقال كلمات: الصوت العربي في الآيفون يتخطى الرقم (إنجليزي أو عربي)
+/// لما يجي بعد اسم إنجليزي («Mohanad: 7 ديمن» كان ينقرأ «Mohanad: ديمن»). الكلمة تنقرأ دايماً.
+/// الأرقام الطويلة أو الملتصقة بنقطة أو نقطتين (وقت، كسر) تبقى أرقام عربية
+func arabicSpokenNumbers(_ s: Substring) -> String {
+    var out = ""
+    let chars = Array(s)
+    var i = 0
+    func isDigit(_ c: Character) -> Bool { c.isASCII && c.isNumber }
+    while i < chars.count {
+        guard isDigit(chars[i]) else { out.append(chars[i]); i += 1; continue }
+        var j = i
+        while j < chars.count, isDigit(chars[j]) { j += 1 }
+        let digits = String(chars[i..<j])
+        let joinedBefore = i >= 2 && (chars[i - 1] == "." || chars[i - 1] == ":" || chars[i - 1] == "/") && isDigit(chars[i - 2])
+        let joinedAfter = j + 1 < chars.count && (chars[j] == "." || chars[j] == ":" || chars[j] == "/") && isDigit(chars[j + 1])
+        if digits.count <= 6, !joinedBefore, !joinedAfter, let n = Int(digits) {
+            out += arabicNumberWords(n)
+        } else {
+            out += arabicDigits(Substring(digits))
+        }
+        i = j
+    }
+    return out
+}
+
+/// نص للقراءة: كل قطعة بلغتها، والأرقام في القطع العربية تنقال كلمات عربية
 func spokenAttributed(_ s: String, _ base: [NSAttributedString.Key: Any] = [:]) -> NSAttributedString {
     let m = NSMutableAttributedString()
     for (r, l) in langRuns(s) where !r.isEmpty {
         var attrs = base
         attrs[.accessibilitySpeechLanguage] = l
-        m.append(NSAttributedString(string: l == "ar" ? arabicDigits(s[r]) : String(s[r]), attributes: attrs))
+        m.append(NSAttributedString(string: l == "ar" ? arabicSpokenNumbers(s[r]) : String(s[r]), attributes: attrs))
     }
     return m
 }
