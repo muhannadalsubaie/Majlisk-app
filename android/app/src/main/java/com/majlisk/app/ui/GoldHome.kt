@@ -165,7 +165,7 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                 GameCard("تريكس", "♥️", false, Modifier.weight(1f)) { play("trix") }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(14.dp)) {
-                GameCard("كنكان", "🃏", false, Modifier.weight(1f)) { play("konkan") }
+                GameCard("كنكان", "♦️", false, Modifier.weight(1f)) { play("konkan") }
                 GameCard("شايب", "👴", false, Modifier.weight(1f)) { play("shayeb") }
             }
         }

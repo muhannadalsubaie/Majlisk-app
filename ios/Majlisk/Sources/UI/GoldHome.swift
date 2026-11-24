@@ -133,7 +133,7 @@ struct GoldMenuScreen: View {
                         GameCard(name: "تريكس", icon: "♥️", featured: false) { play("trix") }
                     }
                     HStack(spacing: 14) {
-                        GameCard(name: "كنكان", icon: "🃏", featured: false) { play("konkan") }
+                        GameCard(name: "كنكان", icon: "♦️", featured: false) { play("konkan") }
                         GameCard(name: "شايب", icon: "👴", featured: false) { play("shayeb") }
                     }
                 }
