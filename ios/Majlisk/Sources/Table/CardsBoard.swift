@@ -124,6 +124,40 @@ struct CardsBoard: View {
         if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents() }
         conn.send(["type": "cards", "action": a])
     }
+    /// مجموعة أوراق من نفس النوع (أو نفس الرقم في الشايب)
+    private struct HandGroup: Identifiable { let id: Int; var slots: [CardsSlot] }
+    private var handGroups: [HandGroup] {
+        var out: [HandGroup] = []
+        let key = { (h: CardsView.HandCard) in c.game == "shayeb" ? h.face.r : h.face.s }
+        for (i, h) in c.hand.enumerated() {
+            if let last = out.last?.slots.last, key(last.h) == key(h) { out[out.count - 1].slots.append(CardsSlot(id: i, h: h)) }
+            else { out.append(HandGroup(id: i, slots: [CardsSlot(id: i, h: h)])) }
+        }
+        return out
+    }
+    /// ورقة في يدك: مربوطة بمكانها (المؤشر ما يقفز بعد ما تلعب)
+    @ViewBuilder private func handCard(_ slot: CardsSlot) -> some View {
+        let h = slot.h
+            let sel = selected.contains(h.face.id)
+            Button {
+                if c.select { if sel { selected.remove(h.face.id) } else { selected.insert(h.face.id) }; Announcer.announceNow(sel ? "شلت التحديد" : "محددة") }
+                else if !c.myTurn { Announcer.announceNow("ليس دورك") }
+                else if !h.legal { Sounds.shared.illegal() }
+                else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.cardsFx([(c.board?.rows ?? []).isEmpty ? "c-card" : "c-row"], won: nil); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
+            } label: {
+                CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal)
+                    .padding(2)
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(sel ? Palette.gold : (h.legal && !c.select ? Palette.gold.opacity(0.6) : .clear), lineWidth: 2))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel(spokenText(h.label + (sel ? "، محددة" : "")))
+            // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
+            .accessibilityActions {
+                if let d = c.board?.draw { ForEach(0..<d.count, id: \.self) { k in Button(tr("اسحب كرت \(k + 1)")) { press("draw:\(k)", false) } } }
+                ForEach(shownButtons, id: \.id) { b in Button(tr(b.label)) { press(b.id, b.needsSelection) } }
+            }
+            .accessibilityFocused($slotFocus, equals: slot.id)
+    }
     /// الأزرار الظاهرة: أوراق السحب في الشايب ترسم مقلوبة فوق بدل الأزرار
     private var shownButtons: [CardsView.Button] { c.buttons.filter { !(c.board?.draw != nil && $0.id.hasPrefix("draw:")) } }
     private func press(_ id: String, _ needs: Bool) {
@@ -224,28 +258,12 @@ struct CardsBoard: View {
             .frame(maxWidth: .infinity, minHeight: watcher && !(c.over && isOwner) ? 0 : 44)
             if !watcher { Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true) }
             // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
-            WrapLayout(spacing: 4) {
-                ForEach(c.hand.enumerated().map { CardsSlot(id: $0.offset, h: $0.element) }) { slot in
-                    let h = slot.h
-                    let sel = selected.contains(h.face.id)
-                    Button {
-                        if c.select { if sel { selected.remove(h.face.id) } else { selected.insert(h.face.id) }; Announcer.announceNow(sel ? "شلت التحديد" : "محددة") }
-                        else if !c.myTurn { Announcer.announceNow("ليس دورك") }
-                        else if !h.legal { Sounds.shared.illegal() }
-                        else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.cardsFx([(c.board?.rows ?? []).isEmpty ? "c-card" : "c-row"], won: nil); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
-                    } label: {
-                        CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal)
-                            .padding(2)
-                            .overlay(RoundedRectangle(cornerRadius: 8).stroke(sel ? Palette.gold : (h.legal && !c.select ? Palette.gold.opacity(0.6) : .clear), lineWidth: 2))
+            // كل نوع مع بعض (الشايب: كل رقم مع بعض عشان تبان الأزواج)، وبين المجموعات فراغ، والمجموعة ما تنقسم على سطرين
+            WrapLayout(spacing: 12) {
+                ForEach(handGroups) { g in
+                    HStack(spacing: g.slots.count > 6 ? -12 : 3) {
+                        ForEach(g.slots) { slot in handCard(slot) }
                     }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(spokenText(h.label + (sel ? "، محددة" : "")))
-                    // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
-                    .accessibilityActions {
-                        if let d = c.board?.draw { ForEach(0..<d.count, id: \.self) { k in Button(tr("اسحب كرت \(k + 1)")) { press("draw:\(k)", false) } } }
-                        ForEach(shownButtons, id: \.id) { b in Button(tr(b.label)) { press(b.id, b.needsSelection) } }
-                    }
-                    .accessibilityFocused($slotFocus, equals: slot.id)
                 }
             }
             .frame(maxWidth: .infinity, minHeight: watcher ? 0 : 76, alignment: .top)

@@ -304,8 +304,15 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             playedPos = null
             if (p >= handSize && handSize > 0 && Announcer.readerOn) { delay(50); runCatching { slotFocus[handSize - 1]?.requestFocus() } }
         }
-        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher) 0.dp else 76.dp), horizontalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            c.hand.forEachIndexed { i, h ->
+        // كل نوع مع بعض (الشايب: كل رقم مع بعض عشان تبان الأزواج)، وبين المجموعات فراغ، والمجموعة ما تنقسم على سطرين
+        val handGroups = c.hand.withIndex().fold(mutableListOf<MutableList<IndexedValue<com.majlisk.app.model.CardsHandCard>>>()) { acc, x ->
+            val k = { h: com.majlisk.app.model.CardsHandCard -> if (c.game == "shayeb") h.face.r else h.face.s }
+            if (acc.isNotEmpty() && k(acc.last().last().value) == k(x.value)) acc.last().add(x) else acc.add(mutableListOf(x)); acc
+        }
+        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher) 0.dp else 76.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+          handGroups.forEach { grp ->
+          Row(horizontalArrangement = Arrangement.spacedBy(if (grp.size > 6) (-12).dp else 3.dp)) {
+            grp.forEach { (i, h) ->
                 key(i) {
                     val fr = remember { FocusRequester() }
                     DisposableEffect(Unit) {
@@ -333,6 +340,8 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                     ) { CardsFace(h.face, 40, 58, dim = c.myTurn && !c.select && !h.legal) }
                 }
             }
+          }
+          }
         }
     }
 }
