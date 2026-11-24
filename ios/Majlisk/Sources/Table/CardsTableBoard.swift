@@ -8,6 +8,8 @@ struct CardsBoardInfo {
     struct RowInfo { let id: String, title: String, text: String, cards: [CardsCard], low: String?, high: String?, lowMine: Bool, highMine: Bool }
     struct Heap { let count: Int, can: Bool, text: String, card: CardsCard? }
     struct Progress { let value: Int, need: Int, text: String }
+    /// الشايب: أوراق اللي تسحب منه (مقلوبة)
+    struct Draw { let seat: Int, name: String, count: Int }
     let title: String, sub: String, tone: String
     let steps: [Step]
     let counter: String
@@ -16,6 +18,7 @@ struct CardsBoardInfo {
     let stock: Heap?, discard: Heap?
     let progress: Progress?
     let read: String
+    let draw: Draw?
 
     init(_ b: JSON) {
         func heap(_ o: JSON?) -> Heap? { o.map { Heap(count: $0.int("count"), can: $0.bool("can"), text: $0.str("text"), card: $0.obj("card").map { CardsCard($0) }) } }
@@ -30,6 +33,7 @@ struct CardsBoardInfo {
         stock = heap(b.obj("stock")); discard = heap(b.obj("discard"))
         progress = b.obj("progress").map { Progress(value: $0.int("value"), need: $0.int("need"), text: $0.str("text")) }
         read = b.str("read")
+        draw = b.obj("draw").map { Draw(seat: $0.int("seat"), name: $0.str("name"), count: $0.int("count")) }
     }
 }
 
@@ -188,5 +192,43 @@ struct KonkanProgress: View {
         }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(spokenText(p.text))
+    }
+}
+
+
+/// الشايب: أوراق اللي تسحب منه مقلوبة صغيرة فوق الطاولة. تضغط وحدة: تنقلب (3D) وتنزل لأوراقك وتنرسل الحركة.
+/// قارئ الشاشة: عنصر واحد «اسحب من فلان»، والإجراءات «كرت 1، كرت 2…».
+struct ShayebDrawRow: View {
+    let d: CardsBoardInfo.Draw
+    let onPick: (Int) -> Void
+    @State private var picked: Int?
+    private func pick(_ i: Int) {
+        guard picked == nil else { return }
+        withAnimation(.easeIn(duration: 0.3)) { picked = i }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.32) { onPick(i); picked = nil }
+    }
+    var body: some View {
+        VStack(spacing: 3) {
+            Text(trSpoken("اسحب من \(d.name)")).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.goldSoft)
+            HStack(spacing: d.count > 9 ? -8 : 4) {
+                ForEach(0..<d.count, id: \.self) { i in
+                    let on = picked == i
+                    RoundedRectangle(cornerRadius: 5)
+                        .fill(LinearGradient(colors: [Color(red: 0.48, green: 0.18, blue: 0.18), Color(red: 0.29, green: 0.10, blue: 0.10)], startPoint: .topLeading, endPoint: .bottomTrailing))
+                        .overlay(RoundedRectangle(cornerRadius: 5).stroke(on ? Palette.gold : Color(red: 0.91, green: 0.84, blue: 0.65), lineWidth: 1.5))
+                        .frame(width: 26, height: 38)
+                        .rotation3DEffect(.degrees(on ? 180 : 0), axis: (x: 0, y: 1, z: 0), perspective: 0.6)
+                        .scaleEffect(on ? 1.25 : 1)
+                        .offset(y: on ? 60 : 0)
+                        .onTapGesture { pick(i) }
+                }
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(spokenText("اسحب من \(d.name): معه \(d.count) \(d.count == 1 ? "ورقة" : "أوراق") مقلوبة. اختر كرت من الإجراءات"))
+        .accessibilityActions {
+            ForEach(0..<d.count, id: \.self) { i in Button(tr("كرت \(i + 1)")) { pick(i) } }
+        }
     }
 }

@@ -124,6 +124,8 @@ struct CardsBoard: View {
         if UIAccessibility.isVoiceOverRunning { Announcer.interruptNextEvents() }
         conn.send(["type": "cards", "action": a])
     }
+    /// الأزرار الظاهرة: أوراق السحب في الشايب ترسم مقلوبة فوق بدل الأزرار
+    private var shownButtons: [CardsView.Button] { c.buttons.filter { !(c.board?.draw != nil && $0.id.hasPrefix("draw:")) } }
     private func press(_ id: String, _ needs: Bool) {
         if needs && selected.isEmpty { Announcer.announceNow("حدد أوراق أول"); return }
         var a: JSON = ["op": "button", "id": id]
@@ -173,6 +175,8 @@ struct CardsBoard: View {
             let watcher = myIdx == nil
             // رأس اللوحة: اسم العقد بلونه، ووش تتجنب، وعقود المملكة
             if let b = c.board { CardsBoardHeader(b: b) }
+            // الشايب: أوراق اللي تسحب منه مقلوبة فوق الطاولة
+            if let d = c.board?.draw { ShayebDrawRow(d: d) { i in press("draw:\(i)", false) }.id("draw-\(d.seat)-\(d.count)") }
             CardsTableArea(v: v, c: c, top: top, side1: side1, side2: side2, stack: stack, hasRows: hasRows, watcher: watcher,
                            shownCenter: c.centerDone && doneHidden ? [] : c.center, press: press)
             // المجموعات: تنزيلات الكنكان، صفوف التركس (تنضغط في الكنكان للصق المحدد عليها)
@@ -208,12 +212,13 @@ struct CardsBoard: View {
             if let pr = c.board?.progress { KonkanProgress(p: pr) }
             // الأزرار: مكان محجوز دايماً
             WrapLayout(spacing: 6) {
-                ForEach(c.buttons, id: \.id) { b in
+                // أوراق السحب في الشايب ترسم مقلوبة فوق، ما تطلع أزرار
+                ForEach(shownButtons, id: \.id) { b in
                     SmallButton(b.label, primary: b.primary) { press(b.id, b.needsSelection) }
                 }
                 if c.over && isOwner { SmallButton("لعبة جديدة", primary: true) { conn.send("start") } }
             }
-            .frame(maxWidth: .infinity, minHeight: watcher && !(c.over && isOwner) ? 0 : 52)
+            .frame(maxWidth: .infinity, minHeight: watcher && !(c.over && isOwner) ? 0 : 44)
             if !watcher { Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true) }
             // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
             WrapLayout(spacing: 4) {
@@ -232,6 +237,11 @@ struct CardsBoard: View {
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel(spokenText(h.label + (sel ? "، محددة" : "")))
+                    // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
+                    .accessibilityActions {
+                        if let d = c.board?.draw { ForEach(0..<d.count, id: \.self) { k in Button(tr("اسحب كرت \(k + 1)")) { press("draw:\(k)", false) } } }
+                        ForEach(shownButtons, id: \.id) { b in Button(tr(b.label)) { press(b.id, b.needsSelection) } }
+                    }
                     .accessibilityFocused($slotFocus, equals: slot.id)
                 }
             }
