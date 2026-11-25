@@ -60,14 +60,21 @@ import org.json.JSONArray
 
 /** ورقة مرسومة: رقمها ونوعها (الأحمر للهاص والديمن)، والجوكر نجمة */
 @Composable
-fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modifier = Modifier) {
+fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modifier = Modifier, corner: Boolean = false) {
     Box(
         modifier.size(w.dp, h.dp)
             .background(if (dim) Color(0xFFCFCABB) else Color.White, RoundedCornerShape(7.dp))
             .border(1.dp, Color(0xFFB9B4A6), RoundedCornerShape(7.dp)),
-        contentAlignment = Alignment.Center,
+        // متراكبة: الرقم والنوع فوق بعض في الزاوية اللي تبان (بداية الورقة)
+        contentAlignment = if (corner) Alignment.TopStart else Alignment.Center,
     ) {
-        Text(
+        if (corner) {
+            Column(Modifier.padding(start = 3.dp, top = 2.dp).clearAndSetSemantics { }, horizontalAlignment = Alignment.CenterHorizontally) {
+                val col = if (c.joker) Color(0xFF6A3FB5) else if (c.red) Color(0xFFC62828) else Color(0xFF1A1A1A)
+                Text(c.short, color = col, fontSize = (w * 0.3f).sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                Text(c.symbol, color = col, fontSize = (w * 0.28f).sp, maxLines = 1)
+            }
+        } else Text(
             "${c.short}${c.symbol}",
             color = if (c.joker) Color(0xFF6A3FB5) else if (c.red) Color(0xFFC62828) else Color(0xFF1A1A1A),
             fontSize = (w * 0.36f).sp, fontWeight = FontWeight.Bold, maxLines = 1,
@@ -309,9 +316,28 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             val k = { h: com.majlisk.app.model.CardsHandCard -> if (c.game == "shayeb") h.face.r else h.face.s }
             if (acc.isNotEmpty() && k(acc.last().last().value) == k(x.value)) acc.last().add(x) else acc.add(mutableListOf(x)); acc
         }
-        FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher) 0.dp else 76.dp), horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(4.dp)) {
-          handGroups.forEach { grp ->
-          Row(horizontalArrangement = Arrangement.spacedBy(if (grp.size > 6) (-12).dp else 3.dp)) {
+        // الأوراق كلها تبان دايماً: سطر واحد (وسطرين لو أكثر من 16 ورقة)، والأوراق تتراكب على قد عرض الشاشة
+        // (كانت تنزل لسطر ثاني وثالث وينقص منها جزء تحت فتبان اليد ناقصة: 8 أو 5 أوراق بدل 13)
+        val handRows = if (c.hand.size > 16) {
+            val half = c.hand.size / 2
+            var count = 0
+            handGroups.partition { g -> val first = count < half; count += g.size; first }.toList().filter { it.isNotEmpty() }
+        } else listOf(handGroups.toList())
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().heightIn(min = if (watcher) 0.dp else 66.dp)) {
+          val cardW = 44.dp
+          val groupGap = 8.dp
+          Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+          handRows.forEach { rowGroups ->
+          val n = rowGroups.sumOf { it.size }
+          val gaps = (rowGroups.size - 1).coerceAtLeast(0)
+          // المسافة بين الأوراق: 3 لو فيه مكان، وإلا سالبة (تتراكب) بحيث السطر كله يدخل في العرض
+          val inner = n - rowGroups.size
+          val step = if (inner > 0) ((maxWidth - cardW * n - groupGap * gaps) / inner).coerceAtMost(3.dp) else 3.dp
+          // متراكبة: رقم الورقة ونوعها في زاويتها (الجزء اللي يبان منها)
+          val corner = step < 0.dp
+          Row(horizontalArrangement = Arrangement.spacedBy(groupGap)) {
+          rowGroups.forEach { grp ->
+          Row(horizontalArrangement = Arrangement.spacedBy(step)) {
             grp.forEach { (i, h) ->
                 key(i) {
                     val fr = remember { FocusRequester() }
@@ -337,9 +363,12 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                                 // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
                                 if (handActions.isNotEmpty()) customActions = handActions
                             },
-                    ) { CardsFace(h.face, 40, 58, dim = c.myTurn && !c.select && !h.legal) }
+                    ) { CardsFace(h.face, 40, 58, dim = c.myTurn && !c.select && !h.legal, corner = corner) }
                 }
             }
+          }
+          }
+          }
           }
           }
         }

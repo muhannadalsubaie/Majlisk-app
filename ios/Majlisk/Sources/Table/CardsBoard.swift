@@ -72,7 +72,22 @@ struct CardsFace: View {
     let c: CardsCard
     let w: CGFloat, h: CGFloat
     var dim = false
+    /// متراكبة: الرقم والنوع فوق بعض في الزاوية اللي تبان (بداية الورقة)
+    var corner = false
     var body: some View {
+        if corner {
+            VStack(spacing: 0) {
+                Text(verbatim: c.short).font(.system(size: w * 0.3, weight: .bold))
+                Text(verbatim: c.symbol).font(.system(size: w * 0.28))
+            }
+            .foregroundColor(c.joker ? Color(red: 0.42, green: 0.25, blue: 0.71) : c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
+            .padding(.leading, 3).padding(.top, 2)
+            .frame(width: w, height: h, alignment: .topLeading)
+            .background(dim ? Color(red: 0.81, green: 0.79, blue: 0.73) : .white)
+            .clipShape(RoundedRectangle(cornerRadius: 7))
+            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 1))
+            .accessibilityHidden(true)
+        } else {
         Text(verbatim: "\(c.short)\(c.symbol)")
             .font(.system(size: w * 0.36, weight: .bold))
             .foregroundColor(c.joker ? Color(red: 0.42, green: 0.25, blue: 0.71) : c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
@@ -82,6 +97,7 @@ struct CardsFace: View {
             .clipShape(RoundedRectangle(cornerRadius: 7))
             .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 1))
             .accessibilityHidden(true)
+        }
     }
 }
 
@@ -135,8 +151,17 @@ struct CardsBoard: View {
         }
         return out
     }
+    /// سطور اليد: سطر واحد، وسطرين لو أكثر من 16 ورقة (المجموعات ما تنقسم)
+    private var handRows: [[HandGroup]] {
+        let groups = handGroups
+        guard c.hand.count > 16 else { return [groups] }
+        var first: [HandGroup] = [], second: [HandGroup] = []
+        var count = 0
+        for g in groups { if count < c.hand.count / 2 { first.append(g) } else { second.append(g) }; count += g.slots.count }
+        return [first, second].filter { !$0.isEmpty }
+    }
     /// ورقة في يدك: مربوطة بمكانها (المؤشر ما يقفز بعد ما تلعب)
-    @ViewBuilder private func handCard(_ slot: CardsSlot) -> some View {
+    @ViewBuilder private func handCard(_ slot: CardsSlot, corner: Bool = false) -> some View {
         let h = slot.h
             let sel = selected.contains(h.face.id)
             Button {
@@ -145,7 +170,7 @@ struct CardsBoard: View {
                 else if !h.legal { Sounds.shared.illegal() }
                 else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.cardsFx([(c.board?.rows ?? []).isEmpty ? "c-card" : "c-row"], won: nil); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
             } label: {
-                CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal)
+                CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal, corner: corner)
                     .padding(2)
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(sel ? Palette.gold : (h.legal && !c.select ? Palette.gold.opacity(0.6) : .clear), lineWidth: 2))
             }
@@ -259,14 +284,25 @@ struct CardsBoard: View {
             if !watcher { Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true) }
             // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
             // كل نوع مع بعض (الشايب: كل رقم مع بعض عشان تبان الأزواج)، وبين المجموعات فراغ، والمجموعة ما تنقسم على سطرين
-            WrapLayout(spacing: 12) {
-                ForEach(handGroups) { g in
-                    HStack(spacing: g.slots.count > 6 ? -12 : 3) {
-                        ForEach(g.slots) { slot in handCard(slot) }
+            // الأوراق كلها تبان دايماً: سطر واحد (وسطرين لو أكثر من 16 ورقة)، والأوراق تتراكب على قد عرض الشاشة
+            // (كانت تنزل لسطر ثاني وثالث وينقص منها جزء تحت فتبان اليد ناقصة)
+            let rows = handRows
+            GeometryReader { geo in
+                VStack(spacing: 4) {
+                    ForEach(Array(rows.enumerated()), id: \.offset) { _, rowGroups in
+                        let n = rowGroups.reduce(0) { $0 + $1.slots.count }
+                        let inner = n - rowGroups.count
+                        let step: CGFloat = inner > 0 ? min(3, (geo.size.width - 44 * CGFloat(n) - 8 * CGFloat(max(rowGroups.count - 1, 0))) / CGFloat(inner)) : 3
+                        HStack(spacing: 8) {
+                            ForEach(rowGroups) { g in
+                                HStack(spacing: step) { ForEach(g.slots) { slot in handCard(slot, corner: step < 0) } }
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
                     }
                 }
             }
-            .frame(maxWidth: .infinity, minHeight: watcher ? 0 : 76, alignment: .top)
+            .frame(height: watcher && c.hand.isEmpty ? 0 : (rows.count > 1 ? 130 : 64))
         }
         .onChange(of: c.hand.count) { n in
             guard let p = playedPos else { return }
