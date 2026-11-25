@@ -130,7 +130,7 @@ fun CreateTableScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (
         TopBar("طاولة ${gameTitle(picked!!, variant)}", onBack = { picked = null })
         val variants = when (picked) {
             "jackaroo" -> listOf("classic" to "عادي", "complex" to "كمبلكس")
-            "ludo" -> listOf("classic" to "فردي", "teams" to "فرق")
+            "ludo", "trix" -> listOf("classic" to "فردي", "teams" to "فرق")
             "domino" -> listOf("classic" to "100", "t150" to "150", "t200" to "200")
             else -> emptyList()
         }

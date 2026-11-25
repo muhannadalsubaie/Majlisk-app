@@ -67,7 +67,7 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
             }
         }
     }
-    if (v.kind == "ludo" || v.kind == "domino") choice("فردي", "فرق", v.optTeams) { conn.send("setOptions", "teams" to it) }
+    if (v.kind == "ludo" || v.kind == "domino" || v.kind == "trix") choice("فردي", "فرق", v.optTeams) { conn.send("setOptions", "teams" to it) }
     if (v.kind == "jackaroo") choice("عادي", "كومبلكس", v.optComplex) { conn.send("setOptions", "complex" to it) }
     if (v.kind == "domino") {
         if (isOwner) {

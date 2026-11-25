@@ -88,7 +88,7 @@ struct SeatsLobby: View {
 
     /// خيارات اللعبة فوق المقاعد
     @ViewBuilder private var options: some View {
-        if v.kind == "ludo" || v.kind == "domino" {
+        if v.kind == "ludo" || v.kind == "domino" || v.kind == "trix" {
             choice("فردي", "فرق", second: v.optTeams) { conn.send("setOptions", ["teams": $0]) }
         }
         if v.kind == "jackaroo" {
