@@ -51,8 +51,12 @@ struct ChatSheet: View {
     @ObservedObject var conn: TableConnection
     let close: () -> Void
     @State private var text = ""
+    @AccessibilityFocusState private var inputFocus: Bool
     var body: some View {
         Sheet(title: "الدردشة") {
+          // أول ما تنفتح: تنزل لآخر الرسائل، ومؤشر VoiceOver يروح لخانة الكتابة (بعد أحدث رسالة على طول)
+          ScrollViewReader { proxy in
+            VStack(alignment: .leading, spacing: 12) {
             if conn.chat.isEmpty { Note("ما فيه رسائل بعد.") }
             ForEach(conn.chat) { m in
                 HStack {
@@ -80,10 +84,20 @@ struct ChatSheet: View {
                 .clipShape(RoundedRectangle(cornerRadius: 12))
                 .overlay(RoundedRectangle(cornerRadius: 12).stroke(Palette.green700, lineWidth: 1))
                 .accessibilityLabel(spokenText("اكتب رسالة"))
+                .accessibilityFocused($inputFocus)
+                .id("chat-input")
             MButton("إرسال", .primary, enabled: !text.trimmingCharacters(in: .whitespaces).isEmpty) {
                 conn.sendChat(text); text = ""
             }
             MButton("إغلاق", action: close)
+            }
+            .onAppear {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
+                    proxy.scrollTo("chat-input", anchor: .bottom)
+                    if UIAccessibility.isVoiceOverRunning { inputFocus = true }
+                }
+            }
+          }
         }
     }
 }

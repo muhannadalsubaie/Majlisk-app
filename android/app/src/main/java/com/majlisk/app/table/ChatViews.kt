@@ -23,6 +23,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
@@ -81,10 +83,19 @@ fun ChatToast(conn: TableConnection, modifier: Modifier) {
 }
 
 /** نافذة الدردشة: الرسائل، وخانة الكتابة وزر الإرسال */
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
     val messages by conn.chat.collectAsState()
     var text by remember { mutableStateOf("") }
+    // أول ما تنفتح: تنزل لآخر الرسائل، ومؤشر قارئ الشاشة يروح لخانة الكتابة (بعد أحدث رسالة على طول)
+    val inputFocus = remember { androidx.compose.ui.focus.FocusRequester() }
+    val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+    LaunchedEffect(Unit) {
+        delay(250)
+        runCatching { bring.bringIntoView() }
+        if (com.majlisk.app.a11y.Announcer.readerOn) runCatching { inputFocus.requestFocus() }
+    }
     MajliskDialog("الدردشة", onClose) {
         if (messages.isEmpty()) Note("ما فيه رسائل بعد.")
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
@@ -111,7 +122,8 @@ fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
             keyboardOptions = androidx.compose.foundation.text.KeyboardOptions(imeAction = androidx.compose.ui.text.input.ImeAction.Send),
             keyboardActions = androidx.compose.foundation.text.KeyboardActions(onSend = { if (text.isNotBlank()) { conn.sendChat(text); text = "" } }),
             colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, cursorColor = Palette.gold),
-            modifier = Modifier.fillMaxWidth().semantics { contentDescription = com.majlisk.app.i18n.tr("اكتب رسالة") },
+            modifier = Modifier.fillMaxWidth().focusRequester(inputFocus).bringIntoViewRequester(bring)
+                .semantics { contentDescription = com.majlisk.app.i18n.tr("اكتب رسالة") },
         )
         PrimaryButton("إرسال", { conn.sendChat(text); text = "" }, enabled = text.isNotBlank())
         SecondaryButton("إغلاق", onClose, fill = true)
