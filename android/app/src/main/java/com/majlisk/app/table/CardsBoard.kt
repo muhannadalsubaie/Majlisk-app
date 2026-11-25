@@ -329,13 +329,14 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(if (watcher && c.hand.isEmpty()) 0.dp else if (keptRows > 1) 136.dp else 66.dp)) {
           val cardW = 44.dp
           val groupGap = 8.dp
+          val avail = maxWidth
           Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
           handRows.forEach { rowGroups ->
           val n = rowGroups.sumOf { it.size }
           val gaps = (rowGroups.size - 1).coerceAtLeast(0)
           // المسافة بين الأوراق: 3 لو فيه مكان، وإلا سالبة (تتراكب) بحيث السطر كله يدخل في العرض
           val inner = n - rowGroups.size
-          val step = if (inner > 0) ((maxWidth - cardW * n - groupGap * gaps) / inner).coerceAtMost(3.dp) else 3.dp
+          val step = if (inner > 0) ((avail - cardW * n - groupGap * gaps) / inner).coerceAtMost(3.dp) else 3.dp
           // متراكبة: رقم الورقة ونوعها في زاويتها (الجزء اللي يبان منها)
           val corner = step < 0.dp
           Row(horizontalArrangement = Arrangement.spacedBy(groupGap)) {
