@@ -42,7 +42,7 @@ struct SettingsScreen: View {
             // أسماء الأوراق والأنواع في كل الألعاب (العرض وقارئ الشاشة)
             SectionTitle("تسميات الأوراق")
             SwitchRow(label: "تسميات خليجية (أكة، شايب، بنت، ولد…)", isOn: i18nNames.cardNames == "gulf", onChange: { if $0 { I18n.shared.setCardNames("gulf") } })
-            SwitchRow(label: "تسميات شامية (قص، كوبا، دينار، بستوني، سنك…)", isOn: i18nNames.cardNames == "levant", onChange: { if $0 { I18n.shared.setCardNames("levant") } })
+            SwitchRow(label: "تسميات شامية (قص، كبة، ديناري، بستوني، سنك…)", isOn: i18nNames.cardNames == "levant", onChange: { if $0 { I18n.shared.setCardNames("levant") } })
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
             ForEach(ChatMode.allCases, id: \.self) { m in

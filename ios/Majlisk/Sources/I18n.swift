@@ -4,10 +4,10 @@ import SwiftUI
 /// كل نص عربي (من التطبيق أو من الخادم) يتترجم وقت العرض أو القراءة من القاموس (i18n.json):
 /// نص مطابق، أو قالب فيه أماكن ({0}) تتعبى بأجزاء تتترجم هي بعد، وإلا نقسمه على الفواصل ونترجم كل جزء.
 /// تسميات الأوراق الشامية: النصوص (من التطبيق والخادم) بالتسميات الخليجية، ونبدلها وقت العرض والقراءة.
-/// الأنواع: سبيت ← بستوني، هاص ← كوبا، ديمن ← دينار، شريا ← سنك. والأكة ← قص (قبل اسم النوع أو لحالها).
+/// الأنواع: سبيت ← بستوني، هاص ← كبة، ديمن ← ديناري، شريا ← سنك. والأكة ← قص (قبل اسم النوع أو لحالها).
 /// الشايب والبنت والولد والأرقام نفسها.
 enum CardNames {
-    private static let suits = ["سبيت": "بستوني", "هاص": "كوبا", "ديمن": "دينار", "شريا": "سنك"]
+    private static let suits = ["سبيت": "بستوني", "هاص": "كبة", "ديمن": "ديناري", "شريا": "سنك"]
     private static let suitRe = try! NSRegularExpression(pattern: "(?<![\\p{L}])(ال|لل|بال|وال|لـ|بـ)?(سبيت|هاص|ديمن|شريا)(?![\\p{L}])")
     private static let aceRe = try! NSRegularExpression(pattern: "(?<![\\p{L}])أكة (سبيت|هاص|ديمن|شريا)(?![\\p{L}])")
     private static var cache: [String: String] = [:]
@@ -42,7 +42,7 @@ final class I18n: ObservableObject {
     static let shared = I18n()
     static let langs: [(code: String, name: String)] = [("ar", "العربية"), ("en", "English"), ("fr", "Français")]
     @Published private(set) var lang: String = UserDefaults.standard.string(forKey: "lang") ?? "ar"
-    /// تسميات الأوراق (تبقى لين يغيرها صاحب الجوال): gulf (أكة، هاص، شريا…) أو levant (قص، كوبا، سنك…)
+    /// تسميات الأوراق (تبقى لين يغيرها صاحب الجوال): gulf (أكة، هاص، شريا…) أو levant (قص، كبة، سنك…)
     @Published private(set) var cardNames: String = UserDefaults.standard.string(forKey: "cardNames") ?? "gulf"
     func setCardNames(_ v: String) { cardNames = v; UserDefaults.standard.set(v, forKey: "cardNames") }
 

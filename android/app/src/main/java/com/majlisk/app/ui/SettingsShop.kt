@@ -75,7 +75,7 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         // أسماء الأوراق والأنواع في كل الألعاب (العرض وقارئ الشاشة)
         SectionTitle("تسميات الأوراق")
         SwitchRow("تسميات خليجية (أكة، شايب، بنت، ولد…)", Prefs.cardNames.value == "gulf", { if (it) Prefs.setCardNames("gulf") })
-        SwitchRow("تسميات شامية (قص، كوبا، دينار، بستوني، سنك…)", Prefs.cardNames.value == "levant", { if (it) Prefs.setCardNames("levant") })
+        SwitchRow("تسميات شامية (قص، كبة، ديناري، بستوني، سنك…)", Prefs.cardNames.value == "levant", { if (it) Prefs.setCardNames("levant") })
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
         val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()
