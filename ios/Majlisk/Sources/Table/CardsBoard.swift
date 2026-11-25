@@ -234,7 +234,8 @@ struct CardsBoard: View {
             let topRow: [CardsView.Seat] = many ? Array(others[1..<(others.count - 1)]) : (top.map { [$0] } ?? [])
             let stack = c.piles.first { $0.id == "stack" }
             // فيه مجموعات تحت الطاولة (تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
-            let hasRows = c.piles.contains { $0.id != "stack" }
+            // الكنكان: مكان التنزيلات محجوز من أول اللعبة (والطاولة بحجمها الصغير)، فلما تزيد التنزيلات ما تنزل الطاولة ولا تتحرك
+            let hasRows = c.game == "konkan" || c.piles.contains { $0.id != "stack" }
             // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
             let watcher = myIdx == nil
             // رأس اللوحة: اسم العقد بلونه، ووش تتجنب، وعقود المملكة
@@ -271,7 +272,9 @@ struct CardsBoard: View {
                     }
                 }
             }
-            .frame(minHeight: hasRows ? 120 : 0, maxHeight: .infinity)
+            // التنزيلات تتمرر داخل مكانها (ما تكبر وتدفع الطاولة): ارتفاع ثابت في الكنكان
+            .frame(minHeight: hasRows ? 120 : 0, idealHeight: hasRows ? 150 : 0, maxHeight: c.game == "konkan" ? 170 : .infinity)
+            .layoutPriority(-1)
             // الكنكان: شريط الفتح (مجموع تنزيلك من الـ51)
             if let pr = c.board?.progress { KonkanProgress(p: pr) }
             // الأزرار: مكان محجوز دايماً

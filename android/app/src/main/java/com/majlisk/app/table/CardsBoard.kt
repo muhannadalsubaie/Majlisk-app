@@ -29,6 +29,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -190,7 +191,8 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         val board = c.board
         val trixRows = board?.rows.orEmpty()
         // فيه مجموعات تحت الطاولة (تنزيلات الكنكان): الطاولة أصغر عشان تبان كلها
-        val hasRows = c.piles.any { it.id != "stack" }
+        // الكنكان: مكان التنزيلات محجوز من أول اللعبة (والطاولة بحجمها الصغير)، فلما تزيد التنزيلات ما تنزل الطاولة ولا تتحرك
+        val hasRows = c.game == "konkan" || c.piles.any { it.id != "stack" }
         // المشاهد ما عنده أوراق ولا أزرار: ما نحجز لها مكان
         val watcher = myIdx < 0
         // رأس اللوحة: اسم العقد بلونه، ووش تتجنب، وعقود المملكة
@@ -265,7 +267,8 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             if (myIdx < 0) c.seats.firstOrNull()?.let { CardsSeatTag(v, it) }
         }
         // المجموعات (تنزيلات الكنكان، صفوف التركس): تنضغط في الكنكان للصق المحدد عليها
-        Column(Modifier.fillMaxWidth().weight(1f).heightIn(min = if (hasRows) 120.dp else 0.dp).verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        // التنزيلات تتمرر داخل مكانها الثابت (ما تكبر وتدفع الطاولة)
+        Column(Modifier.fillMaxWidth().weight(1f).heightIn(min = if (hasRows) 120.dp else 0.dp).clipToBounds().verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             var lastGroup = ""
             c.piles.filter { it.id != "stack" }.forEach { p ->
                 // الكنكان: تنزيلات كل لاعب تحت اسمه
