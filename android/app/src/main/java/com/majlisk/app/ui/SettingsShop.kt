@@ -93,15 +93,6 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
             }, enabled = annText.isNotBlank())
             SecondaryButton("مسح الإعلان الحالي", { scope.launch { annMsg = if (com.majlisk.app.data.Announce.send("")) "انمسح الإعلان، ما بيطلع لأحد بعد الحين" else "ما انمسح، جرّب مرة ثانية" } }, fill = true)
             if (annMsg.isNotEmpty()) Text(annMsg, color = Palette.goldSoft, fontSize = 13.sp)
-            // الأصدقاء: حساب المطور ما يستقبل طلبات صداقة (هو يضيف بس)، وهنا يلغي كل الصداقات مرة وحدة
-            SectionTitle("أصدقاء حساب المطور")
-            Text("ما أحد يقدر يرسل لك طلب صداقة. اللي تضيفه أنت من صفحة الأصدقاء يصير صديقك على طول، والأصدقاء بس يقدرون يدعونك.", color = Palette.textDim, fontSize = 12.sp)
-            var clearAsk by remember { mutableStateOf(false) }
-            DangerButton("إلغاء كل الصداقات", { clearAsk = true })
-            if (clearAsk) ConfirmDialog("إلغاء كل الصداقات", "بتنلغي صداقتك مع كل اللي في قائمتك، وتنحذف الطلبات اللي وصلتك. ما يرجعون إلا إذا أضفتهم أنت.", "إلغاء الكل", danger = true, onConfirm = {
-                clearAsk = false
-                scope.launch { annMsg = runCatching { com.majlisk.app.net.Api.post("/admin/clear-friends").optInt("removed") }.fold({ "انلغت $it صداقة" }, { "ما انلغت، جرّب مرة ثانية" }) }
-            }, onCancel = { clearAsk = false })
         }
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
