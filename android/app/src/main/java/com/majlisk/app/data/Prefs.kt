@@ -12,6 +12,9 @@ object Prefs {
     /** شكل أوراقك في البلوت: مروحة (fan) أو كروت جنب بعض (row) — يتحدث على الطاولة على طول */
     val handStyle: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("handStyle", "fan") ?: "fan") }
     fun setHandStyle(v: String) { handStyle.value = v; sp.edit().putString("handStyle", v).apply() }
+    /** تسميات الأوراق: gulf (أكة، شايب، ولد، هاص…) أو levant (آس، ملك، شب، كبة…) */
+    val cardNames: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("cardNames", "gulf") ?: "gulf") }
+    fun setCardNames(v: String) { cardNames.value = v; sp.edit().putString("cardNames", v).apply() }
     /** شكل الدردشة الكتابية: inline على الشاشة مباشرة، bubble فقاعة (زر الدردشة ونافذتها) */
     val chatStyle: androidx.compose.runtime.MutableState<String> by lazy { androidx.compose.runtime.mutableStateOf(sp.getString("chatStyle", "inline") ?: "inline") }
     fun setChatStyle(v: String) { chatStyle.value = v; sp.edit().putString("chatStyle", v).apply() }

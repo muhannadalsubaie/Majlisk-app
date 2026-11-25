@@ -8,6 +8,7 @@ struct SettingsScreen: View {
     @State private var muted = Prefs.muted
     @State private var effects = Double(Prefs.effectsVolume)
     @AppStorage("handStyle") private var handStyle = "fan"
+    @ObservedObject private var i18nNames = I18n.shared
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
@@ -38,6 +39,10 @@ struct SettingsScreen: View {
             // اختيارك أنت فقط ويتحفظ على جوالك
             SwitchRow(label: "مروحة (الأوراق فوق بعض)", isOn: handStyle == "fan", onChange: { if $0 { handStyle = "fan" } })
             SwitchRow(label: "كروت جنب بعض (مفصولة)", isOn: handStyle == "row", onChange: { if $0 { handStyle = "row" } })
+            // أسماء الأوراق والأنواع في كل الألعاب (العرض وقارئ الشاشة)
+            SectionTitle("تسميات الأوراق")
+            SwitchRow(label: "تسميات خليجية (أكة، شايب، ولد…)", isOn: i18nNames.cardNames == "gulf", onChange: { if $0 { I18n.shared.setCardNames("gulf") } })
+            SwitchRow(label: "تسميات شامية (آس، ملك، شب، كبة، سباتي…)", isOn: i18nNames.cardNames == "levant", onChange: { if $0 { I18n.shared.setCardNames("levant") } })
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
             ForEach(ChatMode.allCases, id: \.self) { m in

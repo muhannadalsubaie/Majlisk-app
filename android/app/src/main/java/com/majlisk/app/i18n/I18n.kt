@@ -30,6 +30,32 @@ import androidx.compose.ui.semantics.contentDescription
  * كل نص عربي (من التطبيق أو من الخادم) يتترجم وقت العرض أو القراءة من القاموس (assets/i18n.json):
  * نص مطابق، أو قالب فيه أماكن ({0}) تتعبى بأجزاء تتترجم هي بعد، وإلا نقسمه على الفواصل ونترجم كل جزء.
  */
+/**
+ * تسميات الأوراق الشامية: النصوص (من التطبيق والخادم) بالتسميات الخليجية، ونبدلها وقت العرض والقراءة.
+ * الأنواع: سبيت ← بستوني، هاص ← كبة، ديمن ← ديناري، شريا ← سباتي.
+ * الأوراق (قبل اسم النوع): أكة ← آس، شايب ← ملك، ولد ← شب (والبنت نفسها). وشايب الهاص ← شيخ الكبة.
+ */
+object CardNames {
+    private val SUITS = mapOf("سبيت" to "بستوني", "هاص" to "كبة", "ديمن" to "ديناري", "شريا" to "سباتي")
+    private val RANKS = mapOf("أكة" to "آس", "شايب" to "ملك", "ولد" to "شب", "بنت" to "بنت")
+    private val L = "\\p{L}"
+    private val suitRe = Regex("(?<![$L])(ال|لل|بال|وال|لـ|بـ)?(سبيت|هاص|ديمن|شريا)(?![$L])")
+    private val rankRe = Regex("(?<![$L])(أكة|شايب|ولد|بنت) (سبيت|هاص|ديمن|شريا)(?![$L])")
+    private val cache = HashMap<String, String>()
+
+    fun levant(s: String): String {
+        if (s.isEmpty() || !(s.contains("سبيت") || s.contains("هاص") || s.contains("ديمن") || s.contains("شريا") || s in RANKS)) return s
+        synchronized(cache) { cache[s]?.let { return it } }
+        // ورقة لحالها (خانة صف التركس): «ولد» ← «شب»
+        var r = RANKS[s] ?: s
+        r = r.replace("شايب الهاص", "شيخ الكبة")
+        r = rankRe.replace(r) { m -> "${RANKS[m.groupValues[1]]} ${m.groupValues[2]}" }
+        r = suitRe.replace(r) { m -> m.groupValues[1] + SUITS.getValue(m.groupValues[2]) }
+        synchronized(cache) { if (cache.size > 3000) cache.clear(); cache[s] = r }
+        return r
+    }
+}
+
 object I18n {
     const val AR = "ar"
     val LANGS = listOf("ar" to "العربية", "en" to "English", "fr" to "Français")
@@ -85,7 +111,8 @@ object I18n {
 
     fun tr(s: String): String {
         val l = lang.value
-        if (l == AR || s.isEmpty() || !arabic.containsMatchIn(s)) return s
+        if (l == AR) return if (Prefs.cardNames.value == "levant") CardNames.levant(s) else s
+        if (s.isEmpty() || !arabic.containsMatchIn(s)) return s
         init()
         synchronized(cache) { cache[s]?.let { return it } }
         val r = translate(s, if (l == "fr") 1 else 0, 0)

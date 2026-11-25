@@ -72,6 +72,10 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         // اختيارك أنت فقط ويتحفظ على جوالك
         SwitchRow("مروحة (الأوراق فوق بعض)", Prefs.handStyle.value == "fan", { if (it) Prefs.setHandStyle("fan") })
         SwitchRow("كروت جنب بعض (مفصولة)", Prefs.handStyle.value == "row", { if (it) Prefs.setHandStyle("row") })
+        // أسماء الأوراق والأنواع في كل الألعاب (العرض وقارئ الشاشة)
+        SectionTitle("تسميات الأوراق")
+        SwitchRow("تسميات خليجية (أكة، شايب، ولد…)", Prefs.cardNames.value == "gulf", { if (it) Prefs.setCardNames("gulf") })
+        SwitchRow("تسميات شامية (آس، ملك، شب، كبة، سباتي…)", Prefs.cardNames.value == "levant", { if (it) Prefs.setCardNames("levant") })
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
         val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()

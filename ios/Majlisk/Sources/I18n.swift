@@ -3,10 +3,50 @@ import SwiftUI
 /// لغة التطبيق: عربي (الأصل) أو إنجليزي أو فرنسي.
 /// كل نص عربي (من التطبيق أو من الخادم) يتترجم وقت العرض أو القراءة من القاموس (i18n.json):
 /// نص مطابق، أو قالب فيه أماكن ({0}) تتعبى بأجزاء تتترجم هي بعد، وإلا نقسمه على الفواصل ونترجم كل جزء.
+/// تسميات الأوراق الشامية: النصوص (من التطبيق والخادم) بالتسميات الخليجية، ونبدلها وقت العرض والقراءة.
+/// الأنواع: سبيت ← بستوني، هاص ← كبة، ديمن ← ديناري، شريا ← سباتي.
+/// الأوراق (قبل اسم النوع): أكة ← آس، شايب ← ملك، ولد ← شب (والبنت نفسها). وشايب الهاص ← شيخ الكبة.
+enum CardNames {
+    private static let suits = ["سبيت": "بستوني", "هاص": "كبة", "ديمن": "ديناري", "شريا": "سباتي"]
+    private static let ranks = ["أكة": "آس", "شايب": "ملك", "ولد": "شب", "بنت": "بنت"]
+    private static let suitRe = try! NSRegularExpression(pattern: "(?<![\\p{L}])(ال|لل|بال|وال|لـ|بـ)?(سبيت|هاص|ديمن|شريا)(?![\\p{L}])")
+    private static let rankRe = try! NSRegularExpression(pattern: "(?<![\\p{L}])(أكة|شايب|ولد|بنت) (سبيت|هاص|ديمن|شريا)(?![\\p{L}])")
+    private static var cache: [String: String] = [:]
+    private static let lock = NSLock()
+
+    private static func sub(_ re: NSRegularExpression, _ s: String, _ f: ([String]) -> String) -> String {
+        let ns = s as NSString
+        var out = ""
+        var last = 0
+        for m in re.matches(in: s, range: NSRange(location: 0, length: ns.length)) {
+            out += ns.substring(with: NSRange(location: last, length: m.range.location - last))
+            let groups = (0..<m.numberOfRanges).map { m.range(at: $0).location == NSNotFound ? "" : ns.substring(with: m.range(at: $0)) }
+            out += f(groups)
+            last = m.range.location + m.range.length
+        }
+        return out + ns.substring(from: last)
+    }
+
+    static func levant(_ s: String) -> String {
+        guard !s.isEmpty, suits.keys.contains(where: { s.contains($0) }) || ranks[s] != nil else { return s }
+        lock.lock(); if let c = cache[s] { lock.unlock(); return c }; lock.unlock()
+        // ورقة لحالها (خانة صف التركس): «ولد» ← «شب»
+        var r = ranks[s] ?? s
+        r = r.replacingOccurrences(of: "شايب الهاص", with: "شيخ الكبة")
+        r = sub(rankRe, r) { g in "\(ranks[g[1]] ?? g[1]) \(g[2])" }
+        r = sub(suitRe, r) { g in g[1] + (suits[g[2]] ?? g[2]) }
+        lock.lock(); if cache.count > 3000 { cache.removeAll() }; cache[s] = r; lock.unlock()
+        return r
+    }
+}
+
 final class I18n: ObservableObject {
     static let shared = I18n()
     static let langs: [(code: String, name: String)] = [("ar", "العربية"), ("en", "English"), ("fr", "Français")]
     @Published private(set) var lang: String = UserDefaults.standard.string(forKey: "lang") ?? "ar"
+    /// تسميات الأوراق: gulf (أكة، شايب، ولد، هاص…) أو levant (آس، ملك، شب، كبة…)
+    @Published private(set) var cardNames: String = UserDefaults.standard.string(forKey: "cardNames") ?? "gulf"
+    func setCardNames(_ v: String) { cardNames = v; UserDefaults.standard.set(v, forKey: "cardNames") }
 
     private struct Tpl { let re: NSRegularExpression; let out: [String]; let weight: Int }
     private var exact: [String: [String]] = [:]
@@ -63,7 +103,8 @@ final class I18n: ObservableObject {
 
     func tr(_ s: String) -> String {
         let l = lang
-        if l == "ar" || s.isEmpty || !I18n.hasArabic(s) { return s }
+        if l == "ar" { return cardNames == "levant" ? CardNames.levant(s) : s }
+        if s.isEmpty || !I18n.hasArabic(s) { return s }
         lock.lock(); if let c = cache[s] { lock.unlock(); return c }; lock.unlock()
         let r = translate(s, l == "fr" ? 1 : 0, 0)
         lock.lock(); if cache.count > 4000 { cache.removeAll() }; cache[s] = r; lock.unlock()
@@ -257,7 +298,7 @@ struct LangRoot<Content: View>: View {
     let content: () -> Content
     var body: some View {
         content()
-            .id(i18n.lang)
+            .id(i18n.lang + i18n.cardNames)
             .environment(\.layoutDirection, i18n.rtl ? .rightToLeft : .leftToRight)
             .environment(\.locale, Locale(identifier: i18n.lang))
     }
