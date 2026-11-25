@@ -88,13 +88,19 @@ fun ChatToast(conn: TableConnection, modifier: Modifier) {
 fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
     val messages by conn.chat.collectAsState()
     var text by remember { mutableStateOf("") }
-    // أول ما تنفتح: تنزل لآخر الرسائل، ومؤشر قارئ الشاشة يروح لخانة الكتابة (بعد أحدث رسالة على طول)
+    // أول ما تنفتح: تنزل لآخر الرسائل، ومؤشر قارئ الشاشة يروح لخانة الكتابة (بعد أحدث رسالة على طول) بدون لوحة المفاتيح
     val inputFocus = remember { androidx.compose.ui.focus.FocusRequester() }
     val bring = remember { androidx.compose.foundation.relocation.BringIntoViewRequester() }
+    val keyboard = androidx.compose.ui.platform.LocalSoftwareKeyboardController.current
     LaunchedEffect(Unit) {
         delay(250)
         runCatching { bring.bringIntoView() }
-        if (com.majlisk.app.a11y.Announcer.readerOn) runCatching { inputFocus.requestFocus() }
+        // المؤشر على الخانة بدون ما تطلع لوحة المفاتيح (تضغط ضغطتين على الخانة إذا تبغى تكتب)
+        if (com.majlisk.app.a11y.Announcer.readerOn) {
+            runCatching { inputFocus.requestFocus() }
+            delay(60)
+            keyboard?.hide()
+        }
     }
     MajliskDialog("الدردشة", onClose) {
         if (messages.isEmpty()) Note("ما فيه رسائل بعد.")
