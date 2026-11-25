@@ -336,7 +336,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
             Modifier.fillMaxWidth().height(36.dp)
                 .background(Color(0xFF173D2C), RoundedCornerShape(18.dp))
                 .border(1.dp, Color(0xFF2C5A44), RoundedCornerShape(18.dp))
-                .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr(d.scoreText) },
+                .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr(d.scoreText) },
             horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically,
         ) {
             d.scores.forEachIndexed { side, n ->

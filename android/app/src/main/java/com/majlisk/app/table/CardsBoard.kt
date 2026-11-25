@@ -156,7 +156,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             c.scores.forEach { (name, value) ->
                 Column(
                     Modifier.weight(1f).background(Color(0xFF173D2C), RoundedCornerShape(10.dp)).padding(vertical = 3.dp)
-                        .semantics(mergeDescendants = true) { contentDescription = tr("$name $value") },
+                        .clearAndSetSemantics { contentDescription = tr("$name $value") },
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Text(name, color = Palette.textDim, fontSize = 11.sp, maxLines = 1)
@@ -274,7 +274,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                         .semantics(mergeDescendants = true) { contentDescription = tr("${p.title}، ${p.text}${if (canLay) "، اضغط للصق الأوراق المحددة" else ""}") },
                     verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(3.dp),
                 ) {
-                    Text(p.title, color = Palette.goldSoft, fontSize = 12.sp, maxLines = 1, modifier = Modifier.width(56.dp))
+                    Text(p.title, color = Palette.goldSoft, fontSize = 12.sp, maxLines = 1, modifier = Modifier.width(56.dp).clearAndSetSemantics { })
                     // صف طويل (التركس يوصل 13 ورقة): الأوراق فوق بعض شوي عشان يبان الصف كامل
                     Row(horizontalArrangement = Arrangement.spacedBy(if (p.cards.size > 8) (-8).dp else 3.dp)) { p.cards.forEach { CardsFace(it, 24, 34) } }
                 }

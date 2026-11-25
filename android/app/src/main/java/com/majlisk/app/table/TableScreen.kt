@@ -344,7 +344,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         val themLabel = if (mySeat == null) teamName(1) else "لهم"
         Row(
             Modifier.fillMaxWidth().height(androidx.compose.foundation.layout.IntrinsicSize.Min)
-                .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("النقاط: $usLabel $us، $themLabel $them. الفوز عند 152") },
+                .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("النقاط: $usLabel $us، $themLabel $them. الفوز عند 152") },
             horizontalArrangement = Arrangement.spacedBy(10.dp), verticalAlignment = Alignment.CenterVertically,
         ) {
             ScoreBox(usLabel, us, mine = mySeat != null, modifier = Modifier.weight(1f).fillMaxHeight())

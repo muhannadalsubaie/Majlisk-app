@@ -94,7 +94,7 @@ fun ChatDialog(conn: TableConnection, onClose: () -> Unit) {
                         Modifier.widthIn(max = 300.dp)
                             .background(if (m.mine) androidx.compose.ui.graphics.Color(0xFF3B5E2E) else Palette.green700, RoundedCornerShape(12.dp))
                             .padding(horizontal = 10.dp, vertical = 6.dp)
-                            .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("${if (m.mine) "أنت" else m.name}: ${m.text}") },
+                            .clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("${if (m.mine) "أنت" else m.name}: ${m.text}") },
                     ) {
                         Text(if (m.mine) "أنت" else m.name, color = Palette.goldSoft, fontSize = 12.sp)
                         Text(m.text, color = Palette.text, fontSize = 15.sp)
@@ -146,7 +146,7 @@ fun ChatBar(conn: TableConnection, mic: @Composable () -> Unit) {
             ) {
                 items(messages.size) { i ->
                     val m = messages[i]
-                    Row(Modifier.fillMaxWidth().semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("${if (m.mine) "أنت" else m.name}: ${m.text}") }) {
+                    Row(Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = com.majlisk.app.i18n.tr("${if (m.mine) "أنت" else m.name}: ${m.text}") }) {
                         Text("${if (m.mine) "أنت" else m.name}: ", color = Palette.goldSoft, fontSize = 13.sp)
                         Text(m.text, color = Palette.text, fontSize = 13.sp)
                     }
