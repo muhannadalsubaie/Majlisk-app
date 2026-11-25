@@ -32,24 +32,22 @@ import androidx.compose.ui.semantics.contentDescription
  */
 /**
  * تسميات الأوراق الشامية: النصوص (من التطبيق والخادم) بالتسميات الخليجية، ونبدلها وقت العرض والقراءة.
- * الأنواع: سبيت ← بستوني، هاص ← كبة، ديمن ← ديناري، شريا ← سباتي.
- * الأوراق (قبل اسم النوع): أكة ← آس، شايب ← ملك، ولد ← شب (والبنت نفسها). وشايب الهاص ← شيخ الكبة.
+ * الأنواع: سبيت ← بستوني، هاص ← كوبا، ديمن ← دينار، شريا ← سنك. والأكة ← قص (قبل اسم النوع أو لحالها).
+ * الشايب والبنت والولد والأرقام نفسها.
  */
 object CardNames {
-    private val SUITS = mapOf("سبيت" to "بستوني", "هاص" to "كبة", "ديمن" to "ديناري", "شريا" to "سباتي")
-    private val RANKS = mapOf("أكة" to "آس", "شايب" to "ملك", "ولد" to "شب", "بنت" to "بنت")
+    private val SUITS = mapOf("سبيت" to "بستوني", "هاص" to "كوبا", "ديمن" to "دينار", "شريا" to "سنك")
     private val L = "\\p{L}"
     private val suitRe = Regex("(?<![$L])(ال|لل|بال|وال|لـ|بـ)?(سبيت|هاص|ديمن|شريا)(?![$L])")
-    private val rankRe = Regex("(?<![$L])(أكة|شايب|ولد|بنت) (سبيت|هاص|ديمن|شريا)(?![$L])")
+    private val aceRe = Regex("(?<![$L])أكة (سبيت|هاص|ديمن|شريا)(?![$L])")
     private val cache = HashMap<String, String>()
 
     fun levant(s: String): String {
-        if (s.isEmpty() || !(s.contains("سبيت") || s.contains("هاص") || s.contains("ديمن") || s.contains("شريا") || s in RANKS)) return s
+        if (s.isEmpty() || !(s.contains("سبيت") || s.contains("هاص") || s.contains("ديمن") || s.contains("شريا") || s == "أكة")) return s
         synchronized(cache) { cache[s]?.let { return it } }
-        // ورقة لحالها (خانة صف التركس): «ولد» ← «شب»
-        var r = RANKS[s] ?: s
-        r = r.replace("شايب الهاص", "شيخ الكبة")
-        r = rankRe.replace(r) { m -> "${RANKS[m.groupValues[1]]} ${m.groupValues[2]}" }
+        // ورقة لحالها (خانة صف التركس)
+        var r = if (s == "أكة") "قص" else s
+        r = aceRe.replace(r) { m -> "قص ${m.groupValues[1]}" }
         r = suitRe.replace(r) { m -> m.groupValues[1] + SUITS.getValue(m.groupValues[2]) }
         synchronized(cache) { if (cache.size > 3000) cache.clear(); cache[s] = r }
         return r
