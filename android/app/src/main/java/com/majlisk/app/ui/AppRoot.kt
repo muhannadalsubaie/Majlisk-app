@@ -162,6 +162,15 @@ fun AppRoot() {
         }
     }
 
+    // إعلان المطور: يطلع فوق أي شاشة مرة وحدة، وما فيه إلا زر إغلاق
+    val announce by com.majlisk.app.data.Announce.current.collectAsState()
+    announce?.let { (_, text) ->
+        MajliskDialog("📢 إعلان", { com.majlisk.app.data.Announce.seen() }) {
+            Body(text)
+            PrimaryButton("حسناً", { com.majlisk.app.data.Announce.seen() })
+        }
+    }
+
     // دعوة واردة لطاولة: تظهر فوق أي شاشة (إلا إن كنت في نفس الطاولة)
     val invite = hub.invites.firstOrNull { !(screen == Route.Table && tableId == it.tableId) }
     if (invite != null && !needsUsername && verified && user != null) {

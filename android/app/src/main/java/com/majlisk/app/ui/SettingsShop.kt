@@ -76,6 +76,24 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
         SectionTitle("تسميات الأوراق")
         SwitchRow("تسميات خليجية (أكة، شايب، بنت، ولد…)", Prefs.cardNames.value == "gulf", { if (it) Prefs.setCardNames("gulf") })
         SwitchRow("تسميات شامية (قص، كبة، ديناري، بستوني، سنك…)", Prefs.cardNames.value == "levant", { if (it) Prefs.setCardNames("levant") })
+        // المطور بس: إعلان يوصل لكل مستخدمي التطبيق مرة وحدة
+        val isDev = com.majlisk.app.data.Session.profile.collectAsState().value.let { it?.dev == true || it?.unlimited == true }
+        if (isDev) {
+            SectionTitle("إعلان المطور")
+            var annText by remember { mutableStateOf("") }
+            var annMsg by remember { mutableStateOf("") }
+            androidx.compose.material3.OutlinedTextField(
+                annText, { annText = it.take(1000) }, label = { Text("نص الإعلان") }, modifier = Modifier.fillMaxWidth(), minLines = 3,
+                colors = androidx.compose.material3.OutlinedTextFieldDefaults.colors(focusedTextColor = Palette.text, unfocusedTextColor = Palette.text, focusedBorderColor = Palette.gold, unfocusedBorderColor = Palette.green700, focusedLabelColor = Palette.goldSoft, unfocusedLabelColor = Palette.textDim),
+            )
+            Text("يوصل لكل اللي يفتحون التطبيق مرة وحدة (المتصلين الحين واللي يدخلون بعدين)، وما يقدرون يردون عليه.", color = Palette.textDim, fontSize = 12.sp)
+            PrimaryButton("إرسال للكل", {
+                val t = annText.trim()
+                scope.launch { annMsg = if (com.majlisk.app.data.Announce.send(t)) { annText = ""; "انرسل الإعلان" } else "ما انرسل، جرّب مرة ثانية" }
+            }, enabled = annText.isNotBlank())
+            SecondaryButton("مسح الإعلان الحالي", { scope.launch { annMsg = if (com.majlisk.app.data.Announce.send("")) "انمسح الإعلان، ما بيطلع لأحد بعد الحين" else "ما انمسح، جرّب مرة ثانية" } }, fill = true)
+            if (annMsg.isNotEmpty()) Text(annMsg, color = Palette.goldSoft, fontSize = 13.sp)
+        }
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
         val chatMode by com.majlisk.app.data.ChatSettings.mode.collectAsState()

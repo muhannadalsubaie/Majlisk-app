@@ -126,7 +126,11 @@ object Hub {
                 }
                 val closed = kotlinx.coroutines.CompletableDeferred<Unit>()
                 ws = Api.http.newWebSocket(Request.Builder().url(Api.wsUrl("/me/ws", token) + "&device=" + Prefs.deviceId).build(), object : WebSocketListener() {
-                    override fun onOpen(webSocket: WebSocket, response: Response) { retry = 0 }
+                    override fun onOpen(webSocket: WebSocket, response: Response) {
+                        retry = 0
+                        // فتحت التطبيق (أو رجع الاتصال): إعلان المطور اللي فاتك
+                        Session.scope.launch { Announce.refresh() }
+                    }
                     override fun onMessage(webSocket: WebSocket, text: String) {
                         if (text == "pong") return
                         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
@@ -204,6 +208,8 @@ object Online {
                         val msg = runCatching { JSONObject(text) }.getOrNull() ?: return
                         when (msg.optString("type")) {
                             "online" -> _count.value = msg.optInt("count")
+                            // إعلان المطور وصل الحين
+                            "announce" -> Announce.offer(msg.optLong("id"), msg.optString("text"))
                         }
                     }
                     override fun onClosed(webSocket: WebSocket, code: Int, reason: String) { closed.complete(Unit) }

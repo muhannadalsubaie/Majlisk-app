@@ -7,6 +7,7 @@ struct AppRoot: View {
     @StateObject private var session = Session.shared
     @StateObject private var hub = Hub.shared
     @ObservedObject private var push = Push.shared
+    @ObservedObject private var announce = Announce.shared
     @State private var route: Route = .splash
     @State private var tableId: String?
     @State private var busyInvite = false
@@ -55,6 +56,12 @@ struct AppRoot: View {
                 Button(tr("ليس الآن"), role: .cancel) { updateURL = nil }
             } message: {
                 Text(trSpoken("فيه نسخة جديدة من مجلسك. حدّث التطبيق عشان تحصل على آخر الإضافات والإصلاحات."))
+            }
+            // إعلان المطور: يطلع فوق أي شاشة مرة وحدة، وما فيه إلا زر إغلاق
+            .alert(tr("📢 إعلان"), isPresented: Binding(get: { announce.current != nil }, set: { if !$0 { announce.seen() } })) {
+                Button(tr("حسناً"), role: .cancel) { announce.seen() }
+            } message: {
+                Text(trSpoken(announce.current?.text ?? ""))
             }
             // نافذة عرض الباقة: أول ما يفتح التطبيق على القائمة، لغير المشتركين، ومرة كل يومين بالكثير
             .onChange(of: route) { _ in maybeOffer() }

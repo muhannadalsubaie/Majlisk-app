@@ -1,3 +1,4 @@
+import UIKit
 import Foundation
 import Combine
 import Network
@@ -110,6 +111,8 @@ final class Hub: ObservableObject {
                 let ws = URLSession.shared.webSocketTask(with: url)
                 self?.task = ws
                 ws.resume()
+                // فتحت التطبيق (أو رجع الاتصال): إعلان المطور اللي فاتك
+                Announce.shared.refresh()
                 // نبضة كل 15 ثانية: بها يعرف الخادم أنك متصل (وإذا انقطعت تصير "غير متصل" لأصدقائك)
                 let ping = Task { while !Task.isCancelled { try? await Task.sleep(nanoseconds: 15_000_000_000); try? await ws.send(.string("ping")) } }
                 while !Task.isCancelled {
@@ -204,6 +207,11 @@ final class Online: ObservableObject {
         case "online":
             let n = msg.int("count")
             DispatchQueue.main.async { self.count = n }
+        // إعلان المطور وصل الحين
+        case "announce":
+            let id = (msg["id"] as? NSNumber)?.int64Value ?? 0
+            let t = msg.str("text")
+            DispatchQueue.main.async { Announce.shared.offer(id, t) }
         default: break
         }
     }
@@ -235,6 +243,37 @@ let GAME_NAMES = ["baloot": "بلوت", "domino": "دومينو", "jackaroo": "�
 let BETA_GAMES = ["tarneeb", "trix", "konkan", "shayeb"]
 
 /// المزايا المفتوحة لهالحساب من الخادم: الألعاب التجريبية (تطلع في إنشاء الطاولة وتغيير اللعبة)
+/// إعلان المطور: رسالة توصل لكل مستخدمي التطبيق مرة وحدة (المتصل الحين، واللي يفتح التطبيق بعدين).
+/// بدون رد ولا تفاعل: تنقرأ وتنقفل بس.
+final class Announce: ObservableObject {
+    static let shared = Announce()
+    @Published private(set) var current: (id: Int64, text: String)?
+    private var seenId: Int64 { Int64(UserDefaults.standard.string(forKey: "announceSeen") ?? "0") ?? 0 }
+    func offer(_ id: Int64, _ text: String) {
+        guard id > 0, !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty, id > seenId, current?.id != id else { return }
+        current = (id, text)
+        Sounds.shared.notify()
+        if UIAccessibility.isVoiceOverRunning { Announcer.announce("إعلان: \(text)") }
+    }
+    func seen() {
+        if let c = current { UserDefaults.standard.set(String(c.id), forKey: "announceSeen") }
+        current = nil
+    }
+    func refresh() {
+        Task {
+            guard let o = try? await Api.get("/me/announce"), let a = o.obj("announce") else { return }
+            let id = (a["id"] as? NSNumber)?.int64Value ?? 0
+            let t = a.str("text")
+            await MainActor.run { self.offer(id, t) }
+        }
+    }
+    /// المطور بس (الخادم يرفض غيره). نص فاضي يمسح الإعلان
+    func send(_ text: String) async -> Bool {
+        guard let o = try? await Api.post("/admin/announce", ["text": text]) else { return false }
+        return o.bool("ok")
+    }
+}
+
 final class Features: ObservableObject {
     static let shared = Features()
     @Published private(set) var betaGames: [String] = []

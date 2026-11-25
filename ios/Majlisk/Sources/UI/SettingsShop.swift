@@ -9,6 +9,8 @@ struct SettingsScreen: View {
     @State private var effects = Double(Prefs.effectsVolume)
     @AppStorage("handStyle") private var handStyle = "fan"
     @ObservedObject private var i18nNames = I18n.shared
+    @State private var annText = ""
+    @State private var annMsg = ""
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
@@ -43,6 +45,26 @@ struct SettingsScreen: View {
             SectionTitle("تسميات الأوراق")
             SwitchRow(label: "تسميات خليجية (أكة، شايب، بنت، ولد…)", isOn: i18nNames.cardNames == "gulf", onChange: { if $0 { I18n.shared.setCardNames("gulf") } })
             SwitchRow(label: "تسميات شامية (قص، كبة، ديناري، بستوني، سنك…)", isOn: i18nNames.cardNames == "levant", onChange: { if $0 { I18n.shared.setCardNames("levant") } })
+            // المطور بس: إعلان يوصل لكل مستخدمي التطبيق مرة وحدة
+            if session.profile?.dev == true || session.profile?.unlimited == true {
+                SectionTitle("إعلان المطور")
+                TextEditor(text: $annText)
+                    .frame(minHeight: 110).padding(8)
+                    .scrollContentBackground(.hidden)
+                    .background(Palette.green800).clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.green700, lineWidth: 1))
+                    .foregroundColor(Palette.text)
+                    .accessibilityLabel(spokenText("نص الإعلان"))
+                Text(trSpoken("يوصل لكل اللي يفتحون التطبيق مرة وحدة (المتصلين الحين واللي يدخلون بعدين)، وما يقدرون يردون عليه.")).font(.system(size: 12)).foregroundColor(Palette.textDim)
+                MButton("إرسال للكل", .primary, enabled: !annText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty) {
+                    let t = String(annText.trimmingCharacters(in: .whitespacesAndNewlines).prefix(1000))
+                    Task { let ok = await Announce.shared.send(t); await MainActor.run { annMsg = ok ? "انرسل الإعلان" : "ما انرسل، جرّب مرة ثانية"; if ok { annText = "" } } }
+                }
+                MButton("مسح الإعلان الحالي") {
+                    Task { let ok = await Announce.shared.send(""); await MainActor.run { annMsg = ok ? "انمسح الإعلان، ما بيطلع لأحد بعد الحين" : "ما انمسح، جرّب مرة ثانية" } }
+                }
+                if !annMsg.isEmpty { Text(trSpoken(annMsg)).font(.system(size: 13)).foregroundColor(Palette.goldSoft) }
+            }
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
             ForEach(ChatMode.allCases, id: \.self) { m in

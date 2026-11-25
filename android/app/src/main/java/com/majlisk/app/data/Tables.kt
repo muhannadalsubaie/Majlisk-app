@@ -497,6 +497,34 @@ class TableConnection(val tableId: String) {
 }
 
 /** المزايا المفتوحة لهالحساب من الخادم: الألعاب التجريبية (تطلع في إنشاء الطاولة وتغيير اللعبة) */
+/**
+ * إعلان المطور: رسالة توصل لكل مستخدمي التطبيق مرة وحدة (المتصل الحين، واللي يفتح التطبيق بعدين).
+ * بدون رد ولا تفاعل: تنقرأ وتنقفل بس.
+ */
+object Announce {
+    val current = kotlinx.coroutines.flow.MutableStateFlow<Pair<Long, String>?>(null)
+    private val sp get() = Prefs.app.getSharedPreferences("majlisk", 0)
+    fun offer(id: Long, text: String) {
+        if (id <= 0 || text.isBlank() || id <= sp.getLong("announceSeen", 0)) return
+        if (current.value?.first == id) return
+        current.value = id to text
+        Sounds.notifyTone()
+    }
+    fun seen() {
+        current.value?.let { sp.edit().putLong("announceSeen", it.first).apply() }
+        current.value = null
+    }
+    suspend fun refresh() {
+        runCatching { com.majlisk.app.net.Api.get("/me/announce") }.onSuccess { o ->
+            o.optJSONObject("announce")?.let { offer(it.optLong("id"), it.optString("text")) }
+        }
+    }
+    /** المطور بس (الخادم يرفض غيره). نص فاضي يمسح الإعلان */
+    suspend fun send(text: String): Boolean = runCatching {
+        com.majlisk.app.net.Api.post("/admin/announce", org.json.JSONObject().put("text", text)).optBoolean("ok")
+    }.getOrDefault(false)
+}
+
 object Features {
     val betaGames = kotlinx.coroutines.flow.MutableStateFlow<List<String>>(emptyList())
     suspend fun refresh() {
