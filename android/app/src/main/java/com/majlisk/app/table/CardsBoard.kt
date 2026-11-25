@@ -323,7 +323,10 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             var count = 0
             handGroups.partition { g -> val first = count < half; count += g.size; first }.toList().filter { it.isNotEmpty() }
         } else listOf(handGroups.toList())
-        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().heightIn(min = if (watcher) 0.dp else 66.dp)) {
+        // مكان اليد ثابت: إذا صارت سطرين مرة (أول الشايب مثلاً) يبقى محجوز سطرين لين آخر اللعبة، فالشاشة ما تطلع وتنزل
+        var keptRows by remember(c.game) { mutableStateOf(1) }
+        if (handRows.size > keptRows) keptRows = handRows.size
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(if (watcher && c.hand.isEmpty()) 0.dp else if (keptRows > 1) 136.dp else 66.dp)) {
           val cardW = 44.dp
           val groupGap = 8.dp
           Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {

@@ -132,6 +132,8 @@ struct CardsBoard: View {
     @State private var selected: Set<Int> = []
     @AccessibilityFocusState private var slotFocus: Int?
     @State private var playedPos: Int?
+    /// أكثر عدد سطور وصلت له اليد في هاللعبة (عشان مكانها ما يصغر ويكبر)
+    @State private var keptRows = 1
     /// الأكلة المكتملة: تبقى لحظة (تشوف آخر ورقة) وتنشال مع صوت الأخذ، بدل ما تنتظر أول ورقة في الأكلة الجاية
     @State private var doneHidden = false
     private var doneKey: String { c.centerDone ? c.center.map { "\($0.0):\($0.1.id)" }.joined(separator: ",") : "" }
@@ -302,7 +304,11 @@ struct CardsBoard: View {
                     }
                 }
             }
-            .frame(height: watcher && c.hand.isEmpty ? 0 : (rows.count > 1 ? 130 : 64))
+            .frame(height: watcher && c.hand.isEmpty ? 0 : (max(rows.count, keptRows) > 1 ? 130 : 64))
+            // مكان اليد ثابت: إذا صارت سطرين مرة (أول الشايب مثلاً) يبقى محجوز سطرين لين آخر اللعبة، فالشاشة ما تطلع وتنزل
+            .onAppear { keptRows = max(keptRows, rows.count) }
+            .onChange(of: rows.count) { n in keptRows = max(keptRows, n) }
+            .onChange(of: c.game) { _ in keptRows = 1 }
         }
         .onChange(of: c.hand.count) { n in
             guard let p = playedPos else { return }
