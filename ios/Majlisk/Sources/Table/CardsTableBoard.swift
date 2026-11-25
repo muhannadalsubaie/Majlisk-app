@@ -4,7 +4,7 @@ import SwiftUI
 
 struct CardsBoardInfo {
     struct Step { let label: String, state: String }
-    struct Mark { let card: CardsCard, by: String? }
+    struct Mark { let card: CardsCard, by: String?, doubled: Bool }
     struct RowInfo { let id: String, title: String, text: String, cards: [CardsCard], low: String?, high: String?, lowMine: Bool, highMine: Bool }
     struct Heap { let count: Int, can: Bool, text: String, card: CardsCard? }
     struct Progress { let value: Int, need: Int, text: String }
@@ -25,7 +25,7 @@ struct CardsBoardInfo {
         title = b.str("title"); sub = b.str("sub"); tone = b.str("tone")
         steps = b.objs("steps").map { Step(label: $0.str("label"), state: $0.str("state")) }
         counter = b.str("counter")
-        marks = b.objs("marks").map { Mark(card: CardsCard($0.obj("card")), by: $0["by"] as? String) }
+        marks = b.objs("marks").map { Mark(card: CardsCard($0.obj("card")), by: $0["by"] as? String, doubled: $0.bool("doubled")) }
         rows = b.objs("rows").map { r in
             RowInfo(id: r.str("id"), title: r.str("title"), text: r.str("text"), cards: r.objs("cards").map { CardsCard($0) },
                     low: r["low"] as? String, high: r["high"] as? String, lowMine: r.bool("lowMine"), highMine: r.bool("highMine"))
@@ -88,6 +88,10 @@ struct CardsMarksRow: View {
             ForEach(Array(b.marks.enumerated()), id: \.offset) { _, m in
                 VStack(spacing: 1) {
                     CardsFace(c: m.card, w: 26, h: 38).opacity(m.by == nil ? 1 : 0.4)
+                        // مدبلة (الكمبلكس): علامة ×2
+                        .overlay(alignment: .topTrailing) {
+                            if m.doubled { Text(verbatim: "×2").font(.system(size: 9, weight: .bold)).foregroundColor(Color(red: 0.1, green: 0.08, blue: 0.02)).padding(.horizontal, 2).background(RoundedRectangle(cornerRadius: 4).fill(Palette.gold)) }
+                        }
                     Text(trSpoken(m.by ?? " ")).font(.system(size: 9)).foregroundColor(boardTone(b.tone)).lineLimit(1).frame(width: 44)
                 }
             }

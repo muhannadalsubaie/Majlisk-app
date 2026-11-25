@@ -97,7 +97,12 @@ fun CardsMarksRow(b: CardsBoardInfo) {
     Row(horizontalArrangement = Arrangement.spacedBy(6.dp), modifier = Modifier.clearAndSetSemantics { }) {
         b.marks.forEach { m ->
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                CardsFace(m.card, 26, 38, modifier = Modifier.alpha(if (m.by == null) 1f else 0.4f))
+                Box {
+                    CardsFace(m.card, 26, 38, modifier = Modifier.alpha(if (m.by == null) 1f else 0.4f))
+                    // مدبلة (الكمبلكس): علامة ×2
+                    if (m.doubled) Text("×2", color = Color(0xFF1A1406), fontSize = 9.sp, fontWeight = FontWeight.Bold,
+                        modifier = Modifier.align(Alignment.TopEnd).background(Palette.gold, RoundedCornerShape(4.dp)).padding(horizontal = 2.dp))
+                }
                 Text(m.by ?: " ", color = boardTone(b.tone), fontSize = 9.sp, maxLines = 1, modifier = Modifier.width(44.dp), textAlign = TextAlign.Center)
             }
         }

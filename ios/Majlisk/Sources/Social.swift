@@ -290,7 +290,8 @@ final class Features: ObservableObject {
 func gameTitle(_ kind: String, _ variant: String?) -> String {
     let base = GAME_NAMES[kind] ?? "بلوت"
     if kind == "jackaroo" && variant == "complex" { return base + " كمبلكس" }
-    if (kind == "ludo" || kind == "trix") && variant == "teams" { return base + " فرق" }
+    if kind == "trix" { return base + (variant == "complex" || variant == "cteams" ? " كمبلكس" : "") + (variant == "teams" || variant == "cteams" ? " فرق" : "") }
+    if kind == "ludo" && variant == "teams" { return base + " فرق" }
     if kind == "domino" { return base + (variant == "t150" ? " 150" : variant == "t200" ? " 200" : " 100") }
     return base
 }

@@ -25,7 +25,7 @@ data class CardsFx(val n: Int, val keys: List<String>, val win: List<Int>?, val 
 
 /** لوحة اللعبة على الطاولة (عقد التريكس، سحب وأرض الكنكان) */
 data class CardsBoardStep(val label: String, val state: String)
-data class CardsMark(val card: CardFace, val by: String?)
+data class CardsMark(val card: CardFace, val by: String?, val doubled: Boolean = false)
 data class CardsRowInfo(val id: String, val title: String, val text: String, val cards: List<CardFace>, val low: String?, val high: String?, val lowMine: Boolean, val highMine: Boolean)
 data class CardsHeap(val count: Int, val can: Boolean, val text: String, val card: CardFace?)
 data class CardsProgress(val value: Int, val need: Int, val text: String)
@@ -84,7 +84,7 @@ data class CardsView(
                         title = b.optString("title"), sub = b.optString("sub"), tone = b.optString("tone"),
                         steps = b.optJSONArray("steps").objs().map { CardsBoardStep(it.optString("label"), it.optString("state")) },
                         counter = b.optString("counter"),
-                        marks = b.optJSONArray("marks").objs().map { CardsMark(face(it.optJSONObject("card")), if (it.isNull("by")) null else it.optString("by")) },
+                        marks = b.optJSONArray("marks").objs().map { CardsMark(face(it.optJSONObject("card")), if (it.isNull("by")) null else it.optString("by"), it.optBoolean("doubled")) },
                         rows = b.optJSONArray("rows").objs().map { r ->
                             CardsRowInfo(r.optString("id"), r.optString("title"), r.optString("text"), r.optJSONArray("cards").objs().map { face(it) },
                                 if (r.isNull("low")) null else r.optString("low"), if (r.isNull("high")) null else r.optString("high"), r.optBoolean("lowMine"), r.optBoolean("highMine"))

@@ -78,7 +78,7 @@ struct CreateTableScreen: View {
             Screen {
                 TopBar("طاولة \(gameTitle(game, variant))", onBack: { picked = nil })
                 // الجاكارو: عادي أو كمبلكس — لودو: فردي أو فرق
-                let variants: [(String, String)] = game == "jackaroo" ? [("classic", "عادي"), ("complex", "كمبلكس")] : game == "ludo" || game == "trix" ? [("classic", "فردي"), ("teams", "فرق")] : game == "domino" ? [("classic", "100"), ("t150", "150"), ("t200", "200")] : []
+                let variants: [(String, String)] = game == "jackaroo" ? [("classic", "عادي"), ("complex", "كمبلكس")] : game == "ludo" ? [("classic", "فردي"), ("teams", "فرق")] : game == "trix" ? [("classic", "فردي"), ("teams", "فرق"), ("complex", "كمبلكس فردي"), ("cteams", "كمبلكس فرق")] : game == "domino" ? [("classic", "100"), ("t150", "150"), ("t200", "200")] : []
                 if !variants.isEmpty {
                     Text(trSpoken(game == "domino" ? "هدف المباراة (نقاط)" : "النسخة")).foregroundColor(Palette.textDim).accessibilityAddTraits(.isHeader)
                     HStack(spacing: 10) {

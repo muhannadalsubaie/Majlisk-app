@@ -91,7 +91,7 @@ struct SeatsLobby: View {
         if v.kind == "ludo" || v.kind == "domino" || v.kind == "trix" {
             choice("فردي", "فرق", second: v.optTeams) { conn.send("setOptions", ["teams": $0]) }
         }
-        if v.kind == "jackaroo" {
+        if v.kind == "jackaroo" || v.kind == "trix" {
             choice("عادي", "كومبلكس", second: v.optComplex) { conn.send("setOptions", ["complex": $0]) }
         }
         if v.kind == "domino" {
