@@ -11,6 +11,7 @@ struct SettingsScreen: View {
     @ObservedObject private var i18nNames = I18n.shared
     @State private var annText = ""
     @State private var annMsg = ""
+    @State private var clearAsk = false
     @ObservedObject private var chatSettings = ChatSettings.shared
     @State private var confirmDelete = false
     @State private var support = false
@@ -18,7 +19,20 @@ struct SettingsScreen: View {
     @ObservedObject private var session = Session.shared
 
     var body: some View {
-        if support { SupportScreen(dev: session.profile?.dev == true || session.profile?.unlimited == true) { support = false } } else { settings }
+        if support { SupportScreen(dev: session.profile?.dev == true || session.profile?.unlimited == true) { support = false } } else {
+            settings
+                .alert(tr("إلغاء كل الصداقات"), isPresented: $clearAsk) {
+                    Button(tr("إلغاء الكل"), role: .destructive) {
+                        Task {
+                            let n = (try? await Api.post("/admin/clear-friends"))?.int("removed")
+                            await MainActor.run { annMsg = n.map { "انلغت \($0) صداقة" } ?? "ما انلغت، جرّب مرة ثانية" }
+                        }
+                    }
+                    Button(tr("رجوع"), role: .cancel) {}
+                } message: {
+                    Text(trSpoken("بتنلغي صداقتك مع كل اللي في قائمتك، وتنحذف الطلبات اللي وصلتك. ما يرجعون إلا إذا أضفتهم أنت."))
+                }
+        }
     }
 
     @ViewBuilder private var settings: some View {
@@ -64,6 +78,10 @@ struct SettingsScreen: View {
                     Task { let ok = await Announce.shared.send(""); await MainActor.run { annMsg = ok ? "انمسح الإعلان، ما بيطلع لأحد بعد الحين" : "ما انمسح، جرّب مرة ثانية" } }
                 }
                 if !annMsg.isEmpty { Text(trSpoken(annMsg)).font(.system(size: 13)).foregroundColor(Palette.goldSoft) }
+                // الأصدقاء: حساب المطور ما يستقبل طلبات صداقة (هو يضيف بس)، وهنا يلغي كل الصداقات مرة وحدة
+                SectionTitle("أصدقاء حساب المطور")
+                Text(trSpoken("ما أحد يقدر يرسل لك طلب صداقة. اللي تضيفه أنت من صفحة الأصدقاء يصير صديقك على طول، والأصدقاء بس يقدرون يدعونك.")).font(.system(size: 12)).foregroundColor(Palette.textDim)
+                MButton("إلغاء كل الصداقات", .danger) { clearAsk = true }
             }
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين
