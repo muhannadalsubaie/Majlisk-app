@@ -23,6 +23,10 @@ on:
         description: نشر ملف APK على رابط التحميل (أطفئه للرفع على Google Play بس)
         type: boolean
         default: true
+      test:
+        description: نسخة تجريبية لك بس على رابط منفصل (android-test) — ما تنرفع لقوقل بلاي ولا لرابط الناس
+        type: boolean
+        default: false
 
 concurrency: android-build
 
@@ -75,6 +79,16 @@ jobs:
           files: |
             majlisk.apk
             majlisk.aab
+      # نسخة تجريبية لصاحب التطبيق: رابط منفصل، والناس يظلون على android-latest وقوقل بلاي
+      - name: Publish android-test
+        if: github.event_name == 'workflow_dispatch' && inputs.test
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: android-test
+          name: مجلسك — نسخة تجريبية (للمطور بس)
+          body: "نسخة تجريبية من (${{ github.sha }}) قبل نزولها للناس."
+          prerelease: true
+          files: majlisk.apk
       - name: Prepare Google Play key
         if: steps.key.outputs.signed == 'true' && env.HAS_PLAY == 'true' && (github.event_name != 'workflow_dispatch' || (inputs.publish && inputs.play))
         run: node .github/scripts/play-key.mjs /tmp/play-sa.json
