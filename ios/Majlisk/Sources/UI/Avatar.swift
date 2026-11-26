@@ -62,6 +62,26 @@ struct Avatar: View {
     }
 }
 
+/// ألوان صور نشاط المجلس الرمزية (نفس الترتيب في الأندرويد)
+private let SIM_TONES: [UInt32] = [0x1F5E46, 0x6A3FB5, 0x8E3B46, 0x2D5F8B, 0x7A5A1E, 0x3E6B2F, 0x5B3A6E, 0x2F6F6A, 0x8A4B2A, 0x44546A, 0x6E2F55, 0x355E3B]
+
+/// صورة رمزية لحساب من نشاط المجلس: رمز على لون، وإطار فضي بدل الذهبي
+struct SimAvatar: View {
+    let emoji: String
+    let tone: Int
+    var size: CGFloat = 36
+    var body: some View {
+        let c = SIM_TONES[((tone % SIM_TONES.count) + SIM_TONES.count) % SIM_TONES.count]
+        ZStack {
+            Circle().fill(Color(red: Double((c >> 16) & 0xFF) / 255, green: Double((c >> 8) & 0xFF) / 255, blue: Double(c & 0xFF) / 255))
+            Text(verbatim: emoji).font(.system(size: size * 0.5))
+        }
+        .frame(width: size, height: size)
+        .overlay(Circle().stroke(Palette.textDim, lineWidth: 1.5))
+        .accessibilityHidden(true)
+    }
+}
+
 /// الملف الشخصي: صورتك الدائرية واسمك، وتغيير الصورة أو حذفها
 struct ProfileScreen: View {
     let profile: Profile?

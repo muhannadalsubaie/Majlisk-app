@@ -155,8 +155,8 @@ struct JoinTableScreen: View {
         Screen {
             TopBar("الطاولات النشطة", onBack: { navigate(.menu) })
             if rows == nil { BodyText("جارٍ التحميل…") }
-            else if rows!.isEmpty { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
-            ForEach(rows ?? []) { r in
+            else if !rows!.contains(where: { !$0.sim }) { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
+            ForEach((rows ?? []).filter { !$0.sim }) { r in
                 let game = gameTitle(r.kind, r.variant)
                 let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : r.locked ? "ثابتة بكلمة مرور، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
                 MButton("\(r.isPrivate ? "🔒 " : r.locked ? "👑🔑 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
@@ -168,6 +168,19 @@ struct JoinTableScreen: View {
                         do { try await Tables.join(r.id); openTable(r.id) } catch { Announcer.announce(Tables.error(error, "تعذّر الانضمام")) }
                         busy = ""
                     }
+                }
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in longPressed = r.id; showing = r })
+                .accessibilityAction(named: tr("عرض الموجودين")) { showing = r }
+            }
+            // نشاط المجلس: طاولات تلقائية في قسم مستقل، عليها ✦ ومقفلة (الضغط يوضح وش هي)
+            let sims = (rows ?? []).filter(\.sim)
+            if !sims.isEmpty { SimHeader(title: "✦ طاولات نشاط المجلس (\(sims.count))", note: "طاولات تلقائية للمحاكاة، مقفلة ولا يمكن دخولها") }
+            ForEach(sims) { r in
+                let game = gameTitle(r.kind, r.variant)
+                MButton("✦ 🔒 طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
+                        label: "طاولة تلقائية من نشاط المجلس، \(r.ownerName)، \(game)، مقفلة، عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")") {
+                    if longPressed == r.id { longPressed = nil; return }
+                    Announcer.announce("✦ طاولة تلقائية من نشاط المجلس، مقفلة ولا يمكن دخولها")
                 }
                 .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in longPressed = r.id; showing = r })
                 .accessibilityAction(named: tr("عرض الموجودين")) { showing = r }
@@ -193,7 +206,7 @@ struct JoinTableScreen: View {
             Alert(title: Text(trSpoken("الموجودين في طاولة \(r.ownerName)")), message: Text(trSpoken(r.membersText)), dismissButton: .default(Text(trSpoken("تم"))))
         }
         // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
-        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list.filter { !$0.isPrivate }) } } }
+        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list.filter { !$0.isPrivate || $0.sim }) } } }
         .onDisappear { reg?.remove(); reg = nil }
     }
 

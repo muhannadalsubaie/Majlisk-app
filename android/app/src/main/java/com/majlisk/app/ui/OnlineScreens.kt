@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import com.majlisk.app.i18n.Text
@@ -27,6 +28,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -103,6 +105,7 @@ private fun joinTableOf(p: OnlinePlayer, scope: CoroutineScope, openTable: (Stri
 private fun OnlineDialog(onClose: () -> Unit, openTable: (String) -> Unit) {
     val list by Online.list.collectAsState()
     val count by Online.count.collectAsState()
+    val sim by Online.sim.collectAsState()
     val hub by Hub.state.collectAsState()
     val scope = rememberCoroutineScope()
     var player by remember { mutableStateOf<OnlinePlayer?>(null) }
@@ -130,8 +133,9 @@ private fun OnlineDialog(onClose: () -> Unit, openTable: (String) -> Unit) {
         val l = list
         when {
             l == null -> Body("جارٍ التحميل…")
-            l.isEmpty() -> Body("ما فيه أحد متصل الحين")
+            l.isEmpty() && sim.isEmpty() -> Body("ما فيه أحد متصل الحين")
             else -> LazyColumn(Modifier.fillMaxWidth().heightIn(max = 440.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                if (l.isEmpty()) item { Body("ما فيه أحد متصل الحين") }
                 items(l, key = { it.uid }) { p ->
                     val friend = hub.friends.any { it.uid == p.uid }
                     val asked = hub.requests.any { it.uid == p.uid }
@@ -166,6 +170,23 @@ private fun OnlineDialog(onClose: () -> Unit, openTable: (String) -> Unit) {
                         }
                     }
                 }
+                // نشاط المجلس: قسم مستقل وواضح، وكل حساب عليه ✦ (ما هم لاعبين حقيقيين ولا ينحسبون في العدد فوق)
+                if (sim.isNotEmpty()) {
+                    item(key = "sim-head") { SimHeader("✦ نشاط المجلس (${sim.size})", "حسابات تلقائية للمحاكاة، ليست لاعبين حقيقيين") }
+                    items(sim, key = { it.id }) { p ->
+                        val place = if (p.game.isEmpty()) "في الرئيسية" else "يلعب ${p.game}، طاولة مقفلة"
+                        ItemRow(
+                            Modifier.clickable(onClickLabel = com.majlisk.app.i18n.tr("ما هذا الحساب")) { Announcer.announce(com.majlisk.app.data.SIM_NOTE) }
+                                .semantics(mergeDescendants = true) { contentDescription = com.majlisk.app.i18n.tr("${p.name}، حساب تلقائي، $place") },
+                        ) {
+                            androidx.compose.foundation.layout.Box(Modifier.clearAndSetSemantics { }) { SimAvatar(p.avatar, p.tone, 38.dp) }
+                            Column(Modifier.weight(1f).clearAndSetSemantics { }) {
+                                Text("${p.name} ✦", color = Palette.text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                                Text(place, color = Palette.textDim, fontSize = 13.sp)
+                            }
+                        }
+                    }
+                }
             }
         }
         SecondaryButton("تحديث القائمة", { Online.requestList() }, fill = true)
@@ -186,5 +207,14 @@ private fun OnlineDialog(onClose: () -> Unit, openTable: (String) -> Unit) {
             }
             SecondaryButton("رجوع", { player = null }, fill = true)
         }
+    }
+}
+
+/** عنوان قسم نشاط المجلس: سطر بالعلامة ✦ وتحته توضيح أنها حسابات تلقائية */
+@Composable
+fun SimHeader(title: String, note: String) {
+    Column(Modifier.fillMaxWidth().padding(top = 10.dp).semantics(mergeDescendants = true) { heading() }) {
+        Text(title, color = Palette.gold, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        Text(note, color = Palette.textDim, fontSize = 12.sp)
     }
 }

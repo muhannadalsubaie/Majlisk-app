@@ -1,5 +1,6 @@
 package com.majlisk.app.data
 
+import com.majlisk.app.model.objects
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
@@ -52,6 +53,8 @@ data class TableRow(
     val score: String = "",
     /** طاولة ثابتة بكلمة مرور (الباقة الاحترافية) */
     val locked: Boolean = false,
+    /** طاولة من نشاط المجلس (محاكاة): تطلع في قسم مستقل وعليها ✦، ومقفلة ما أحد يدخلها */
+    val sim: Boolean = false,
 ) {
     /** قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين */
     val membersText: String get() {
@@ -126,12 +129,23 @@ object Tables {
     fun listen(onRows: (List<TableRow>) -> Unit): ListenerRegistration {
         var fire = emptyList<TableRow>()
         var hidden = emptyList<TableRow>()
-        val emit = { onRows(fire.filterNot { it.locked } + hidden) }
+        var sims = emptyList<TableRow>()
+        val emit = { onRows(fire.filterNot { it.locked } + hidden + sims) }
         val job = Session.scope.launch {
             while (true) {
                 runCatching {
-                    val a = Api.post("/tables/visible").optJSONArray("tables") ?: org.json.JSONArray()
+                    val r = Api.post("/tables/visible")
+                    val a = r.optJSONArray("tables") ?: org.json.JSONArray()
                     hidden = (0 until a.length()).map { i -> a.getJSONObject(i).let { o -> rowOf(o.optString("id")) { k -> if (o.has(k)) o.get(k) else null } } }
+                    sims = r.optJSONArray("simTables").objects().map { o ->
+                        TableRow(
+                            id = o.optString("id"), ownerName = o.optString("ownerName"), isPrivate = true,
+                            players = o.optInt("players"), people = o.optInt("people"), status = o.optString("status"),
+                            kind = o.optString("kind"), variant = o.optString("variant"),
+                            members = o.optJSONArray("members").objects().map { m -> m.optString("name") to m.optString("role") },
+                            sim = true,
+                        )
+                    }
                     kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Main) { emit() }
                 }
                 kotlinx.coroutines.delay(20_000)

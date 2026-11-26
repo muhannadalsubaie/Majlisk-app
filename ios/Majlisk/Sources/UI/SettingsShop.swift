@@ -66,6 +66,7 @@ struct SettingsScreen: View {
                     Task { let ok = await Announce.shared.send(""); await MainActor.run { annMsg = ok ? "انمسح الإعلان، ما بيطلع لأحد بعد الحين" : "ما انمسح، جرّب مرة ثانية" } }
                 }
                 if !annMsg.isEmpty { Text(trSpoken(annMsg)).font(.system(size: 13)).foregroundColor(Palette.goldSoft) }
+                SimPanel()
             }
             SectionTitle("الدردشة الكتابية")
             // اختيارك أنت فقط: ما يأثر على باقي اللاعبين

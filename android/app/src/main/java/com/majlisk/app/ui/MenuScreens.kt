@@ -187,7 +187,7 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         // حتى لا يعيد قارئ الشاشة قراءة الطاولة المحددة كل شوي
         // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
         val reg = Tables.listen { all ->
-            val new = all.filter { !it.isPrivate }
+            val new = all.filter { !it.isPrivate || it.sim }
             val old = rows
             val pos = old.orEmpty().withIndex().associate { it.value.id to it.index }
             val sorted = new.sortedBy { pos[it.id] ?: -1 }
@@ -199,9 +199,9 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         TopBar("الطاولات النشطة", onBack = { navigate(Route.Menu) })
         when {
             rows == null -> Text("جارٍ التحميل…", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
-            rows!!.isEmpty() -> Text("لا توجد طاولات الآن — أنشئ طاولة جديدة.", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+            rows!!.none { !it.sim } -> Text("لا توجد طاولات الآن — أنشئ طاولة جديدة.", color = Palette.text, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
         }
-        rows?.forEach { r -> androidx.compose.runtime.key(r.id) {
+        rows?.filter { !it.sim }?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
             val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else if (r.locked) "ثابتة بكلمة مرور، " else ""}عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}"
             SecondaryButton(
@@ -218,6 +218,20 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                 },
                 enabled = !r.isPrivate && busy != r.id,
                 description = spoken,
+                fill = true,
+                onLongClick = { showing = r },
+                longClickLabel = "عرض الموجودين",
+            )
+        } }
+        // نشاط المجلس: طاولات تلقائية في قسم مستقل، عليها ✦ ومقفلة (الضغط يوضح وش هي)
+        val sims = rows.orEmpty().filter { it.sim }
+        if (sims.isNotEmpty()) SimHeader("✦ طاولات نشاط المجلس (${sims.size})", "طاولات تلقائية للمحاكاة، مقفلة ولا يمكن دخولها")
+        sims.forEach { r -> androidx.compose.runtime.key(r.id) {
+            val game = gameTitle(r.kind, r.variant)
+            SecondaryButton(
+                "✦ 🔒 طاولة ${r.ownerName} · $game · الموجودين ${r.people} · ${STATUS[r.status].orEmpty()}",
+                { Announcer.announce("✦ طاولة تلقائية من نشاط المجلس، مقفلة ولا يمكن دخولها") },
+                description = "طاولة تلقائية من نشاط المجلس، ${r.ownerName}، $game، مقفلة، عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}",
                 fill = true,
                 onLongClick = { showing = r },
                 longClickLabel = "عرض الموجودين",
