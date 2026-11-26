@@ -69,7 +69,8 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     }
     if (v.kind == "ludo" || v.kind == "domino" || v.kind == "trix") choice("فردي", "فرق", v.optTeams) { conn.send("setOptions", "teams" to it) }
     if (v.kind == "jackaroo" || v.kind == "trix") choice("عادي", "كومبلكس", v.optComplex) { conn.send("setOptions", "complex" to it) }
-    if (v.kind == "domino") {
+    // الدومينو والطرنيب: المالك يكتب الرقم اللي تنتهي عنده المباراة
+    if (v.kind == "domino" || v.kind == "tarneeb") {
         if (isOwner) {
             var target by remember(v.optTarget) { mutableStateOf(v.optTarget.toString()) }
             androidx.compose.foundation.layout.Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(8.dp)) {

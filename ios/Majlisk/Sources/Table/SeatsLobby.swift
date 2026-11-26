@@ -94,7 +94,8 @@ struct SeatsLobby: View {
         if v.kind == "jackaroo" || v.kind == "trix" {
             choice("عادي", "كومبلكس", second: v.optComplex) { conn.send("setOptions", ["complex": $0]) }
         }
-        if v.kind == "domino" {
+        // الدومينو والطرنيب: المالك يكتب الرقم اللي تنتهي عنده المباراة
+        if v.kind == "domino" || v.kind == "tarneeb" {
             if isOwner {
                 HStack(spacing: 8) {
                     TextField(tr("نهاية المباراة"), text: $targetText)
