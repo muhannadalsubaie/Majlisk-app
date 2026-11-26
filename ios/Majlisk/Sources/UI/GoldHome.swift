@@ -108,11 +108,7 @@ struct GoldMenuScreen: View {
                         .buttonStyle(.plain)
                         .accessibilityLabel(spokenText("رصيدك \(profile?.coins.map(String.init) ?? "") عملة، الحصول على عملات"))
                     }
-                    // المتصلون
-                    OnlineLine(openTable: openTable)
-                        .frame(maxWidth: .infinity, alignment: .leading).padding(14)
-                        .background(Color(red: 0.078, green: 0.106, blue: 0.133)).clipShape(RoundedRectangle(cornerRadius: 16))
-                        .overlay(RoundedRectangle(cornerRadius: 16).stroke(Pro.goldLight.opacity(0.18), lineWidth: 1))
+                    // قائمة المتصلين ملغية (لا عدد ولا أسماء)
                     // الألعاب
                     HStack {
                         Text(trSpoken("الألعاب")).font(.system(size: 17, weight: .heavy)).foregroundColor(Pro.cream).accessibilityAddTraits(.isHeader)

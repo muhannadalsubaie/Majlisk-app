@@ -69,8 +69,7 @@ fun MainMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
             Column(Modifier.weight(1f)) {
                 Title("مجلسك")
                 if (!profile?.username.isNullOrEmpty()) Note("أهلاً ${profile?.username}")
-                // عدد المتصلين في التطبيق كله (يتحدث على طول)، والضغط يعرض أسماءهم
-                OnlineLine(openTable)
+                // قائمة المتصلين ملغية (لا عدد ولا أسماء)
             }
             CoinsBadge(profile)
         }

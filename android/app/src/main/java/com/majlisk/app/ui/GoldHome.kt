@@ -141,10 +141,7 @@ fun GoldMenuScreen(profile: Profile?, navigate: (Route) -> Unit, openTable: (Str
                         .semantics { contentDescription = com.majlisk.app.i18n.tr("رصيدك ${profile?.coins ?: ""} عملة، الحصول على عملات") },
                 )
             }
-            // المتصلون
-            Box(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0xFF141B22)).border(1.dp, Pro.goldLight.copy(alpha = 0.18f), RoundedCornerShape(16.dp)).padding(14.dp)) {
-                OnlineLine(openTable)
-            }
+            // قائمة المتصلين ملغية (لا عدد ولا أسماء)
             // الألعاب
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text("الألعاب", color = Color(0xFFF4EFE2), fontSize = 17.sp, fontWeight = FontWeight.ExtraBold, modifier = Modifier.weight(1f).semantics { heading() })
