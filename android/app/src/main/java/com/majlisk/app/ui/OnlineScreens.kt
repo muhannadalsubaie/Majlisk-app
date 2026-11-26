@@ -42,17 +42,20 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
-/** تحت اسمك في الشاشة الرئيسية: «المتصلون: ١٢» (يتحدث على طول)، والضغط يفتح قائمتهم */
+/**
+ * تحت اسمك في الشاشة الرئيسية: «المتصلون: ١٢» (يتحدث على طول). العدد بس: القائمة ما تنفتح لأحد
+ * (أسماء المتصلين ما تطلع)، إلا حساب المطور
+ */
 @Composable
 fun OnlineLine(openTable: (String) -> Unit) {
     val count by Online.count.collectAsState()
     var open by remember { mutableStateOf(false) }
+    val dev = com.majlisk.app.data.Session.profile.collectAsState().value.let { it?.dev == true || it?.unlimited == true }
     val n = count
     Text(
         if (n == null) "المتصلون: …" else "المتصلون: $n",
         color = Palette.goldSoft, fontSize = 14.sp, fontWeight = FontWeight.Bold,
-        modifier = Modifier
-            .clickable(role = Role.Button, onClickLabel = com.majlisk.app.i18n.tr("عرض المتصلين")) { open = true }
+        modifier = (if (dev) Modifier.clickable(role = Role.Button, onClickLabel = com.majlisk.app.i18n.tr("عرض المتصلين")) { open = true } else Modifier)
             .semantics { contentDescription = com.majlisk.app.i18n.tr(if (n == null) "المتصلون، جارٍ التحميل" else "المتصلون الآن $n") },
     )
     if (open) OnlineDialog({ open = false }, openTable)

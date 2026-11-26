@@ -158,19 +158,24 @@ struct JoinTableScreen: View {
             else if !rows!.contains(where: { !$0.sim }) { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
             ForEach((rows ?? []).filter { !$0.sim }) { r in
                 let game = gameTitle(r.kind, r.variant)
-                let spoken = "طاولة \(r.ownerName)، \(game)، \(r.isPrivate ? "مقفلة، " : r.locked ? "ثابتة بكلمة مرور، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
-                MButton("\(r.isPrivate ? "🔒 " : r.locked ? "👑🔑 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
-                        enabled: !r.isPrivate && busy != r.id, label: spoken) {
+                // الخاصة: اسم اللعبة وصاحبها وحالتها بس (بدون عدد ولا أسماء الموجودين)
+                let priv = r.isPrivate && !r.locked
+                let spoken = priv ? "طاولة \(r.ownerName)، \(game)، خاصة، \(STATUS[r.status] ?? "")"
+                    : "طاولة \(r.ownerName)، \(game)، \(r.locked ? "ثابتة بكلمة مرور، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
+                MButton(priv ? "🔒 طاولة \(r.ownerName) · \(game) · خاصة · \(STATUS[r.status] ?? "")"
+                        : "\(r.locked ? "👑🔑 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
+                        enabled: busy != r.id, label: spoken) {
                     if longPressed == r.id { longPressed = nil; return }
                     if r.locked { pass = ""; passError = ""; asking = r; return }
+                    if priv { Announcer.announce("طاولة خاصة، تحتاج دعوة من مالكها"); return }
                     busy = r.id
                     Task { @MainActor in
                         do { try await Tables.join(r.id); openTable(r.id) } catch { Announcer.announce(Tables.error(error, "تعذّر الانضمام")) }
                         busy = ""
                     }
                 }
-                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in longPressed = r.id; showing = r })
-                .accessibilityAction(named: tr("عرض الموجودين")) { showing = r }
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !priv { longPressed = r.id; showing = r } })
+                .accessibilityAction(named: tr("عرض الموجودين")) { if !priv { showing = r } }
             }
             // نشاط المجلس: طاولات تلقائية في قسم مستقل، عليها ✦ ومقفلة (الضغط يوضح وش هي)
             let sims = (rows ?? []).filter(\.sim)
@@ -205,8 +210,8 @@ struct JoinTableScreen: View {
         .alert(item: $showing) { r in
             Alert(title: Text(trSpoken("الموجودين في طاولة \(r.ownerName)")), message: Text(trSpoken(r.membersText)), dismissButton: .default(Text(trSpoken("تم"))))
         }
-        // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
-        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list.filter { !$0.isPrivate || $0.sim }) } } }
+        // كل الطاولات تطلع، والخاصة مكتوب عليها «خاصة» (بدون عدد ولا أسماء الموجودين)
+        .onAppear { reg = Tables.listen { list in DispatchQueue.main.async { update(list) } } }
         .onDisappear { reg?.remove(); reg = nil }
     }
 

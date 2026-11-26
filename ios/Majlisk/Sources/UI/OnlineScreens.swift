@@ -4,15 +4,19 @@ import SwiftUI
 struct OnlineLine: View {
     let openTable: (String) -> Void
     @ObservedObject private var online = Online.shared
+    @ObservedObject private var session = Session.shared
     @State private var open = false
+    /// العدد بس: القائمة ما تنفتح لأحد (أسماء المتصلين ما تطلع)، إلا حساب المطور
+    private var dev: Bool { session.profile?.dev == true || session.profile?.unlimited == true }
     var body: some View {
-        Button { open = true } label: {
+        Button { if dev { open = true } } label: {
             Text(trSpoken(online.count.map { "المتصلون: \($0)" } ?? "المتصلون: …"))
                 .font(.system(size: 14, weight: .bold)).foregroundColor(Palette.goldSoft)
         }
         .buttonStyle(.plain)
         .accessibilityLabel(spokenText(online.count.map { "المتصلون الآن \($0)" } ?? "المتصلون، جارٍ التحميل"))
-        .accessibilityHint(tr("يعرض أسماء المتصلين"))
+        .accessibilityHint(dev ? tr("يعرض أسماء المتصلين") : "")
+        .accessibilityRemoveTraits(dev ? [] : .isButton)
         .sheet(isPresented: $open) { OnlineSheet(close: { open = false }, openTable: { id in open = false; openTable(id) }) }
     }
 }

@@ -187,7 +187,8 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         // حتى لا يعيد قارئ الشاشة قراءة الطاولة المحددة كل شوي
         // الطاولات الخاصة ما تظهر في القائمة (ولا من فيها)، وترجع تظهر أول ما تصير عامة
         val reg = Tables.listen { all ->
-            val new = all.filter { !it.isPrivate || it.sim }
+            // كل الطاولات تطلع، والخاصة مكتوب عليها «خاصة» (بدون عدد ولا أسماء الموجودين)
+            val new = all
             val old = rows
             val pos = old.orEmpty().withIndex().associate { it.value.id to it.index }
             val sorted = new.sortedBy { pos[it.id] ?: -1 }
@@ -203,11 +204,15 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
         }
         rows?.filter { !it.sim }?.forEach { r -> androidx.compose.runtime.key(r.id) {
             val game = gameTitle(r.kind, r.variant)
-            val spoken = "طاولة ${r.ownerName}، $game، ${if (r.isPrivate) "مقفلة، " else if (r.locked) "ثابتة بكلمة مرور، " else ""}عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}"
+            // الخاصة: اسم اللعبة وصاحبها وحالتها بس
+            val spoken = if (r.isPrivate && !r.locked) "طاولة ${r.ownerName}، $game، خاصة، ${STATUS[r.status].orEmpty()}"
+                else "طاولة ${r.ownerName}، $game، ${if (r.locked) "ثابتة بكلمة مرور، " else ""}عدد الموجودين ${r.people}، ${STATUS[r.status].orEmpty()}"
             SecondaryButton(
-                "${if (r.isPrivate) "🔒 " else if (r.locked) "👑🔑 " else ""}طاولة ${r.ownerName} · $game · الموجودين ${r.people} · ${STATUS[r.status].orEmpty()}",
+                if (r.isPrivate && !r.locked) "🔒 طاولة ${r.ownerName} · $game · خاصة · ${STATUS[r.status].orEmpty()}"
+                else "${if (r.locked) "👑🔑 " else ""}طاولة ${r.ownerName} · $game · الموجودين ${r.people} · ${STATUS[r.status].orEmpty()}",
                 {
                     if (r.locked) { asking = r; pass = ""; passError = ""; return@SecondaryButton }
+                    if (r.isPrivate) { Announcer.announce("طاولة خاصة، تحتاج دعوة من مالكها"); return@SecondaryButton }
                     busy = r.id
                     scope.launch {
                         runCatching { Tables.join(r.id) }
@@ -216,10 +221,10 @@ fun JoinTableScreen(navigate: (Route) -> Unit, openTable: (String) -> Unit) {
                         busy = ""
                     }
                 },
-                enabled = !r.isPrivate && busy != r.id,
+                enabled = busy != r.id,
                 description = spoken,
                 fill = true,
-                onLongClick = { showing = r },
+                onLongClick = if (r.isPrivate && !r.locked) null else ({ showing = r }),
                 longClickLabel = "عرض الموجودين",
             )
         } }
