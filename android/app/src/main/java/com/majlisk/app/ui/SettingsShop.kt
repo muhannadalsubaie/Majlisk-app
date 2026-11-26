@@ -93,7 +93,6 @@ fun SettingsScreen(onBack: () -> Unit, embedded: Boolean) {
             }, enabled = annText.isNotBlank())
             SecondaryButton("مسح الإعلان الحالي", { scope.launch { annMsg = if (com.majlisk.app.data.Announce.send("")) "انمسح الإعلان، ما بيطلع لأحد بعد الحين" else "ما انمسح، جرّب مرة ثانية" } }, fill = true)
             if (annMsg.isNotEmpty()) Text(annMsg, color = Palette.goldSoft, fontSize = 13.sp)
-            SimPanel()
         }
         SectionTitle("الدردشة الكتابية")
         // اختيارك أنت فقط: ما يأثر على باقي اللاعبين

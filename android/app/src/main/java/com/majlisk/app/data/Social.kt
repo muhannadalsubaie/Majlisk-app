@@ -181,12 +181,6 @@ object Hub {
 /** لاعب متصل في التطبيق (me = أنت)، وطاولته لو هو جالس على طاولة: اللعبة، وخاصة أو عامة */
 data class OnlinePlayer(val uid: String, val username: String, val me: Boolean, val tableId: String? = null, val tablePrivate: Boolean = false, val tableGame: String = "")
 
-/** حساب تلقائي من «نشاط المجلس» (محاكاة): يطلع في قسم مستقل وعليه ✦، وما هو لاعب حقيقي ولا يتفاعل */
-data class SimPlayer(val id: String, val name: String, val avatar: String, val tone: Int, val game: String)
-
-/** الجملة اللي تطلع لما أحد يضغط على حساب أو طاولة من نشاط المجلس */
-const val SIM_NOTE = "✦ حساب تلقائي من نشاط المجلس، وليس لاعباً حقيقياً"
-
 /**
  * المتصلون في التطبيق كله: العدد يوصل من الخادم على طول مع كل دخول وطلوع،
  * وقائمة الأسماء تنطلب لما تفتحها
@@ -196,9 +190,6 @@ object Online {
     val count: StateFlow<Int?> = _count
     private val _list = MutableStateFlow<List<OnlinePlayer>?>(null)
     val list: StateFlow<List<OnlinePlayer>?> = _list
-    /** نشاط المجلس (المحاكاة): قائمة وعدد مستقلين عن المتصلين الحقيقيين */
-    private val _sim = MutableStateFlow<List<SimPlayer>>(emptyList())
-    val sim: StateFlow<List<SimPlayer>> = _sim
     private var ws: WebSocket? = null
     private var job: Job? = null
     private var enabled = false
@@ -245,10 +236,6 @@ object Online {
                 _list.value = r.optJSONArray("players").objects().map {
                     OnlinePlayer(it.optString("uid"), it.optString("username"), it.optBoolean("me"), it.optString("tableId").ifEmpty { null }, it.optBoolean("tablePrivate"),
                         if (it.has("tableKind")) gameTitle(it.optString("tableKind"), it.optString("tableVariant")) else "")
-                }
-                _sim.value = r.optJSONObject("sim")?.optJSONArray("players").objects().map {
-                    SimPlayer(it.optString("id"), it.optString("name"), it.optString("avatar"), it.optInt("tone"),
-                        if (it.has("kind")) gameTitle(it.optString("kind"), it.optString("variant")) else "")
                 }
             }.onFailure { _list.value = emptyList() }
         }

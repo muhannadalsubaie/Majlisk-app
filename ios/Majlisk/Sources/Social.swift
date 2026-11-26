@@ -172,19 +172,11 @@ struct OnlinePlayer: Identifiable, Equatable {
     var id: String { uid }
 }
 
-/// حساب تلقائي من «نشاط المجلس» (محاكاة): يطلع في قسم مستقل وعليه ✦، وما هو لاعب حقيقي ولا يتفاعل
-struct SimPlayer: Identifiable, Equatable { let id, name, avatar: String; let tone: Int; let game: String }
-
-/// الجملة اللي تطلع لما أحد يضغط على حساب أو طاولة من نشاط المجلس
-let SIM_NOTE = "✦ حساب تلقائي من نشاط المجلس، وليس لاعباً حقيقياً"
-
 /// المتصلون في التطبيق كله: العدد يوصل من الخادم على طول مع كل دخول وطلوع، وقائمة الأسماء تنطلب لما تفتحها
 final class Online: ObservableObject {
     static let shared = Online()
     @Published private(set) var count: Int?
     @Published private(set) var list: [OnlinePlayer]?
-    /// نشاط المجلس (المحاكاة): قائمة وعدد مستقلين عن المتصلين الحقيقيين
-    @Published private(set) var sim: [SimPlayer] = []
     private var task: URLSessionWebSocketTask?
     private var loop: Task<Void, Never>?
 
@@ -236,10 +228,6 @@ final class Online: ObservableObject {
                 OnlinePlayer(uid: $0.str("uid"), username: $0.str("username"), me: $0.bool("me"),
                              tableId: $0.strOrNil("tableId"), tablePrivate: $0.bool("tablePrivate"),
                              tableGame: $0["tableKind"] != nil ? gameTitle($0.str("tableKind"), $0.strOrNil("tableVariant")) : "")
-            }
-            sim = ((r["sim"] as? JSON)?.objs("players") ?? []).map {
-                SimPlayer(id: $0.str("id"), name: $0.str("name"), avatar: $0.str("avatar"), tone: $0.int("tone"),
-                          game: $0["kind"] != nil ? gameTitle($0.str("kind"), $0.strOrNil("variant")) : "")
             }
         }
     }
@@ -318,8 +306,6 @@ struct TableRow: Identifiable {
     var score: String = ""
     /// طاولة ثابتة بكلمة مرور (الباقة الاحترافية)
     var locked = false
-    /// طاولة من نشاط المجلس (محاكاة): تطلع في قسم مستقل وعليها ✦، ومقفلة ما أحد يدخلها
-    var sim = false
 
     /// قائمة الموجودين مقروءة: اللاعبين ثم المشاهدين
     var membersText: String {
@@ -394,16 +380,11 @@ enum Tables {
     /// تطلع بس لصاحبها ولأصدقائه اللي اختارهم (من الخادم، تتحدث كل ٢٠ ثانية)
     static func listen(_ onRows: @escaping ([TableRow]) -> Void) -> ListenerRegistration {
         let box = TablesListener()
-        let emit = { DispatchQueue.main.async { onRows(box.fire.filter { !$0.locked } + box.hidden + box.sims) } }
+        let emit = { DispatchQueue.main.async { onRows(box.fire.filter { !$0.locked } + box.hidden) } }
         box.task = Task {
             while !Task.isCancelled {
                 if let r = try? await Api.post("/tables/visible") {
                     box.hidden = r.objs("tables").map { row($0.str("id"), $0) }
-                    box.sims = r.objs("simTables").map {
-                        TableRow(id: $0.str("id"), ownerName: $0.str("ownerName"), isPrivate: true, players: $0.int("players"), people: $0.int("people"),
-                                 status: $0.str("status"), kind: $0.str("kind"), variant: $0.str("variant"),
-                                 members: $0.objs("members").map { (name: $0.str("name"), role: $0.str("role")) }, sim: true)
-                    }
                     emit()
                 }
                 try? await Task.sleep(nanoseconds: 20_000_000_000)
@@ -423,7 +404,6 @@ final class TablesListener: NSObject, ListenerRegistration {
     var task: Task<Void, Never>?
     var fire: [TableRow] = []
     var hidden: [TableRow] = []
-    var sims: [TableRow] = []
     func remove() { reg?.remove(); task?.cancel() }
 }
 

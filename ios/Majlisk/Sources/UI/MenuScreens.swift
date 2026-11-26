@@ -155,15 +155,17 @@ struct JoinTableScreen: View {
         Screen {
             TopBar("الطاولات النشطة", onBack: { navigate(.menu) })
             if rows == nil { BodyText("جارٍ التحميل…") }
-            else if !rows!.contains(where: { !$0.sim }) { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
-            ForEach((rows ?? []).filter { !$0.sim }) { r in
+            else if rows!.isEmpty { BodyText("لا توجد طاولات الآن — أنشئ طاولة جديدة.") }
+            ForEach(rows ?? []) { r in
                 let game = gameTitle(r.kind, r.variant)
-                // الخاصة: اسم اللعبة وصاحبها وحالتها بس (بدون عدد ولا أسماء الموجودين)
+                // الخاصة والمقفلة بكلمة مرور: اسم اللعبة وصاحبها وحالتها بس (بدون عدد ولا أسماء الموجودين)
+                let closed = r.isPrivate || r.locked
                 let priv = r.isPrivate && !r.locked
-                let spoken = priv ? "طاولة \(r.ownerName)، \(game)، خاصة، \(STATUS[r.status] ?? "")"
-                    : "طاولة \(r.ownerName)، \(game)، \(r.locked ? "ثابتة بكلمة مرور، " : "")عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
-                MButton(priv ? "🔒 طاولة \(r.ownerName) · \(game) · خاصة · \(STATUS[r.status] ?? "")"
-                        : "\(r.locked ? "👑🔑 " : "")طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
+                let tag = r.locked ? "مقفلة بكلمة مرور" : "خاصة"
+                let spoken = closed ? "طاولة \(r.ownerName)، \(game)، \(tag)، \(STATUS[r.status] ?? "")"
+                    : "طاولة \(r.ownerName)، \(game)، عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")"
+                MButton(closed ? "\(r.locked ? "👑🔑" : "🔒") طاولة \(r.ownerName) · \(game) · \(tag) · \(STATUS[r.status] ?? "")"
+                        : "طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
                         enabled: busy != r.id, label: spoken) {
                     if longPressed == r.id { longPressed = nil; return }
                     if r.locked { pass = ""; passError = ""; asking = r; return }
@@ -174,21 +176,8 @@ struct JoinTableScreen: View {
                         busy = ""
                     }
                 }
-                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !priv { longPressed = r.id; showing = r } })
-                .accessibilityAction(named: tr("عرض الموجودين")) { if !priv { showing = r } }
-            }
-            // نشاط المجلس: طاولات تلقائية في قسم مستقل، عليها ✦ ومقفلة (الضغط يوضح وش هي)
-            let sims = (rows ?? []).filter(\.sim)
-            if !sims.isEmpty { SimHeader(title: "✦ طاولات نشاط المجلس (\(sims.count))", note: "طاولات تلقائية للمحاكاة، مقفلة ولا يمكن دخولها") }
-            ForEach(sims) { r in
-                let game = gameTitle(r.kind, r.variant)
-                MButton("✦ 🔒 طاولة \(r.ownerName) · \(game) · الموجودين \(r.people) · \(STATUS[r.status] ?? "")",
-                        label: "طاولة تلقائية من نشاط المجلس، \(r.ownerName)، \(game)، مقفلة، عدد الموجودين \(r.people)، \(STATUS[r.status] ?? "")") {
-                    if longPressed == r.id { longPressed = nil; return }
-                    Announcer.announce("✦ طاولة تلقائية من نشاط المجلس، مقفلة ولا يمكن دخولها")
-                }
-                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in longPressed = r.id; showing = r })
-                .accessibilityAction(named: tr("عرض الموجودين")) { showing = r }
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.5).onEnded { _ in if !closed { longPressed = r.id; showing = r } })
+                .accessibilityAction(named: tr("عرض الموجودين")) { if !closed { showing = r } }
             }
         }
         .onChange(of: showing?.id) { id in if id == nil { longPressed = nil } }

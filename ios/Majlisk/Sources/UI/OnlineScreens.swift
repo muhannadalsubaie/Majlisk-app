@@ -93,11 +93,6 @@ private struct OnlineSheet: View {
             if let list = online.list {
                 if list.isEmpty { BodyText("ما فيه أحد متصل الحين") }
                 ForEach(list) { p in row(p) }
-                // نشاط المجلس: قسم مستقل وواضح، وكل حساب عليه ✦ (ما هم لاعبين حقيقيين ولا ينحسبون في العدد فوق)
-                if !online.sim.isEmpty {
-                    SimHeader(title: "✦ نشاط المجلس (\(online.sim.count))", note: "حسابات تلقائية للمحاكاة، ليست لاعبين حقيقيين")
-                    ForEach(online.sim) { p in simRow(p) }
-                }
             } else { BodyText("جارٍ التحميل…") }
             MButton("تحديث القائمة") { online.requestList() }
             MButton("إغلاق") { close() }
@@ -139,25 +134,6 @@ private struct OnlineSheet: View {
         }
     }
 
-    /// حساب من نشاط المجلس: بدون إضافة ولا دخول، والضغط يوضح إنه تلقائي
-    @ViewBuilder private func simRow(_ p: SimPlayer) -> some View {
-        let place = p.game.isEmpty ? "في الرئيسية" : "يلعب \(p.game)، طاولة مقفلة"
-        ItemRow {
-            SimAvatar(emoji: p.avatar, tone: p.tone, size: 38)
-            VStack(alignment: .leading, spacing: 2) {
-                Text(verbatim: "\(p.name) ✦").font(.system(size: 16, weight: .bold)).foregroundColor(Palette.text)
-                Text(trSpoken(place)).font(.system(size: 13)).foregroundColor(Palette.textDim)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
-        }
-        .contentShape(Rectangle())
-        .onTapGesture { say(SIM_NOTE) }
-        .accessibilityElement(children: .ignore)
-        .accessibilityLabel(spokenText("\(p.name)، حساب تلقائي، \(place)"))
-        .accessibilityAddTraits(.isButton)
-        .accessibilityAction { say(SIM_NOTE) }
-    }
-
     /// ملف اللاعب: صورته واسمه ووين هو، والدخول لطاولته، وإضافته صديق
     @ViewBuilder private func card(_ p: OnlinePlayer) -> some View {
         let friend = isFriend(p), req = asked(p)
@@ -172,21 +148,5 @@ private struct OnlineSheet: View {
             }
             MButton("رجوع") { player = nil }
         }
-    }
-}
-
-/// عنوان قسم نشاط المجلس: سطر بالعلامة ✦ وتحته توضيح أنها حسابات تلقائية
-struct SimHeader: View {
-    let title: String
-    let note: String
-    var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text(trSpoken(title)).font(.system(size: 15, weight: .bold)).foregroundColor(Palette.gold)
-            Text(trSpoken(note)).font(.system(size: 12)).foregroundColor(Palette.textDim)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.top, 10)
-        .accessibilityElement(children: .combine)
-        .accessibilityAddTraits(.isHeader)
     }
 }

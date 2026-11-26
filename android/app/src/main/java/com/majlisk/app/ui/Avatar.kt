@@ -90,18 +90,6 @@ fun Avatar(uid: String?, name: String, size: Dp = 36.dp, modifier: Modifier = Mo
     }
 }
 
-/** ألوان صور نشاط المجلس الرمزية (نفس الترتيب في الآيفون) */
-private val SIM_TONES = listOf(0xFF1F5E46, 0xFF6A3FB5, 0xFF8E3B46, 0xFF2D5F8B, 0xFF7A5A1E, 0xFF3E6B2F, 0xFF5B3A6E, 0xFF2F6F6A, 0xFF8A4B2A, 0xFF44546A, 0xFF6E2F55, 0xFF355E3B)
-
-/** صورة رمزية لحساب من نشاط المجلس: رمز على لون، وإطار فضي بدل الذهبي */
-@Composable
-fun SimAvatar(emoji: String, tone: Int, size: Dp = 36.dp) {
-    Box(
-        Modifier.size(size).clip(CircleShape).background(androidx.compose.ui.graphics.Color(SIM_TONES[Math.floorMod(tone, SIM_TONES.size)])).border(1.5.dp, Palette.textDim, CircleShape).clearAndSetSemantics { },
-        contentAlignment = Alignment.Center,
-    ) { Text(emoji, fontSize = (size.value * 0.5f).sp) }
-}
-
 /** الملف الشخصي: صورتك الدائرية واسمك، وتغيير الصورة أو حذفها */
 @Composable
 fun ProfileScreen(profile: com.majlisk.app.data.Profile?, onBack: () -> Unit) {
