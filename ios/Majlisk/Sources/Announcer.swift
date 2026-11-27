@@ -36,6 +36,9 @@ enum Announcer {
 
     /// اللودو: الإعلان يقطع قراءة VoiceOver لعنصر تغيّر (ما ينتظره)، بس ما يقطع إعلاناتنا نفسها
     private static var urgentQueue = false
+    /// بعد حركتك وإعلاننا لسا يُقرأ: الإعلان الجاي ينتظر إعلاننا (طابورنا)، بس يُرسل بدون «انتظر» عند VoiceOver
+    /// (كان يُرسل بـ«انتظر» فيعلق عند VoiceOver ورا قراءة العنصر وما ينقال إلا مع الإعلان اللي بعده)
+    private static var unqueuedNext = false
 
     private static func post(_ text: String, queued: Bool) {
         let s = spokenNS(text, queued: queued) // كل جزء بلغته
@@ -43,10 +46,19 @@ enum Announcer {
         current = s.string
         busyUntil = Date().addingTimeInterval(readTime(text))
         UIAccessibility.post(notification: .announcement, argument: s)
-        // احتياط: لو ما وصل بلاغ الانتهاء نكمل بعد الوقت التقريبي
         let mine = s.string
+        // احتياط: لو ما وصل بلاغ الانتهاء نكمل بعد الوقت التقريبي
         DispatchQueue.main.asyncAfter(deadline: .now() + readTime(text) + 0.6) {
-            if current == mine { current = nil; pump() }
+            guard current == mine else { return }
+            // المُرسل بـ«انتظر» وما انقال (VoiceOver أحياناً يحبسه لين يجي إعلان ثاني): نعيده بدون انتظار مرة وحدة
+            if queued && retries < 1 {
+                retries += 1
+                DispatchQueue.main.asyncAfter(deadline: .now() + 1.2) {
+                    if current == mine { post(text, queued: false) }
+                }
+                return
+            }
+            current = nil; pump()
         }
     }
 
@@ -55,7 +67,9 @@ enum Announcer {
         guard current == nil, Date() >= busyUntil, !queue.isEmpty else { return }
         retries = 0
         // إعلاناتنا ما تقطع بعضها (ننتظر انتهاء اللي قبله بأنفسنا)، فاللودو يُرسل بدون «انتظر دورك» عند VoiceOver
-        post(queue.removeFirst(), queued: !urgentQueue)
+        let q = !urgentQueue && !unqueuedNext
+        unqueuedNext = false
+        post(queue.removeFirst(), queued: q)
     }
 
     /**
@@ -95,7 +109,7 @@ enum Announcer {
             // ما نقطعه، كان يضيع باقيه (ينقال الاسم بس بدون الورقة)
             if Date() < interruptUntil {
                 interruptUntil = .distantPast
-                if current == nil && queue.isEmpty { announceNow(text) } else { announce(text) }
+                if current == nil && queue.isEmpty { announceNow(text) } else { unqueuedNext = true; announce(text) }
             } else { announce(text) }
         }
     }
