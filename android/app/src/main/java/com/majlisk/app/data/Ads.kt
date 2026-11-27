@@ -27,7 +27,12 @@ object Ads {
                 Announcer.announce("تعذّر عرض الإعلان الآن، حاول بعد قليل"); return@launch
             }
             if (left <= 0) { Announcer.announce("وصلت للحد اليومي من الإعلانات، جرّب غداً"); return@launch }
-            if (!initialized) { MobileAds.initialize(activity) {}; initialized = true }
+            if (!initialized) {
+                MobileAds.initialize(activity) {}
+                // صوت الإعلانات مكتوم تلقائياً (اللاعب يقدر يشغله من زر الصوت في الإعلان نفسه)
+                MobileAds.setAppMuted(true)
+                initialized = true
+            }
             Announcer.announce("جارٍ تحميل الإعلان")
             RewardedAd.load(activity, BuildConfig.ADMOB_REWARDED, AdRequest.Builder().build(), object : RewardedAdLoadCallback() {
                 override fun onAdFailedToLoad(error: LoadAdError) {

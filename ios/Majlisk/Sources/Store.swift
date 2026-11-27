@@ -202,7 +202,12 @@ enum Ads {
         Task { @MainActor in
             guard let status = try? await Api.post("/ads/status") else { Announcer.announce("تعذّر عرض الإعلان الآن، حاول بعد قليل"); return }
             if status.int("left", 1) <= 0 { Announcer.announce("وصلت للحد اليومي من الإعلانات، جرّب غداً"); return }
-            if !started { await MobileAds.shared.start(); started = true }
+            if !started {
+                await MobileAds.shared.start()
+                // صوت الإعلانات مكتوم تلقائياً (اللاعب يقدر يشغله من زر الصوت في الإعلان نفسه)
+                MobileAds.shared.isApplicationMuted = true
+                started = true
+            }
             Announcer.announce("جارٍ تحميل الإعلان")
             do {
                 let ad = try await RewardedAd.load(with: unit, request: Request())
