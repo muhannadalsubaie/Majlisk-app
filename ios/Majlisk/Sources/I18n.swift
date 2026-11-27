@@ -296,7 +296,9 @@ struct LangRoot<Content: View>: View {
     let content: () -> Content
     var body: some View {
         content()
-            .id(i18n.lang + i18n.cardNames)
+            // اللغة بس تعيد بناء التطبيق كله. تسميات الأوراق لا: كانت تعيد بناءه وأنت على الطاولة
+            // فينقطع الاتصال وتطلع من المحادثة الصوتية. التسميات الجديدة تطلع مع أول تحديث للشاشة والإعلانات
+            .id(i18n.lang)
             .environment(\.layoutDirection, i18n.rtl ? .rightToLeft : .leftToRight)
             .environment(\.locale, Locale(identifier: i18n.lang))
     }
