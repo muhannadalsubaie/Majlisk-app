@@ -1,4 +1,81 @@
 import UIKit
+import AVFoundation
+
+/**
+ * طريقة قراءة الإعلانات (تجربة، من الإعدادات):
+ * voiceover: VoiceOver يقرأ، والنص ينقسم قطع كل قطعة بلغتها (الافتراضي)
+ * single: VoiceOver يقرأ الجملة كاملة إعلان واحد، وكل جزء معلّم بلغته (بدون تقسيم)
+ * app: التطبيق يقرأ بنفسه بمحرك الكلام (صوت عربي للعربي وصوت إنجليزي للإنجليزي)، فيعرف متى يخلص كل جزء
+ */
+enum AnnounceMode: String, CaseIterable {
+    case voiceover, single, app
+    static var current: AnnounceMode {
+        get { AnnounceMode(rawValue: UserDefaults.standard.string(forKey: "announceMode") ?? "") ?? .voiceover }
+        set { UserDefaults.standard.set(newValue.rawValue, forKey: "announceMode"); if newValue != .app { AppSpeech.shared.stop() } }
+    }
+    var label: String {
+        switch self {
+        case .voiceover: return "VoiceOver (مقسّم حسب اللغة)"
+        case .single: return "VoiceOver جملة وحدة"
+        case .app: return "صوت التطبيق ثنائي اللغة"
+        }
+    }
+}
+
+/// صوت التطبيق: يقرأ كل قطعة بصوت لغتها ورا بعض (المحرك نفسه يصفّها بالترتيب)
+final class AppSpeech: NSObject, AVSpeechSynthesizerDelegate {
+    static let shared = AppSpeech()
+    private let synth = AVSpeechSynthesizer()
+    private var voices: [String: AVSpeechSynthesisVoice] = [:]
+    private var focusObserver: NSObjectProtocol?
+    /// السرعة (0.3 بطيء إلى 0.65 سريع)، من الإعدادات
+    static var rate: Float {
+        get { UserDefaults.standard.object(forKey: "appSpeechRate") as? Float ?? 0.55 }
+        set { UserDefaults.standard.set(min(0.65, max(0.3, newValue)), forKey: "appSpeechRate") }
+    }
+    var speaking: Bool { synth.isSpeaking }
+
+    override init() {
+        super.init()
+        synth.delegate = self
+        // يحرك المؤشر بإصبعه: VoiceOver بيقرأ العنصر، فنسكت عشان ما يتداخل الصوتين
+        focusObserver = NotificationCenter.default.addObserver(forName: UIAccessibility.elementFocusedNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let self, Date() >= self.ignoreFocusUntil else { return }
+            self.stop()
+        }
+    }
+    /// نقل المؤشر من التطبيق نفسه (بعد حركتك): ما نسكت بسببه
+    var ignoreFocusUntil = Date.distantPast
+
+    private func voice(_ lang: String) -> AVSpeechSynthesisVoice? {
+        if let v = voices[lang] { return v }
+        let all = AVSpeechSynthesisVoice.speechVoices().filter { $0.language.hasPrefix(lang) }
+        // الأفضل جودة، والعربي السعودي أول، والإنجليزي الأمريكي أول
+        let prefer = lang == "ar" ? "ar-SA" : lang == "en" ? "en-US" : "fr-FR"
+        let v = all.sorted { a, b in
+            if a.quality.rawValue != b.quality.rawValue { return a.quality.rawValue > b.quality.rawValue }
+            return (a.language == prefer ? 0 : 1) < (b.language == prefer ? 0 : 1)
+        }.first ?? AVSpeechSynthesisVoice(language: prefer)
+        voices[lang] = v
+        return v
+    }
+
+    /// يضيف النص للطابور (now = يقطع اللي يقرأه الحين)
+    func speak(_ text: String, now: Bool) {
+        if now { synth.stopSpeaking(at: .immediate) }
+        for (r, l) in langRuns(text) {
+            let piece = String(text[r]).trimmingCharacters(in: CharacterSet(charactersIn: ":،,").union(.whitespaces))
+            guard piece.contains(where: { $0.isLetter || $0.isNumber }) else { continue }
+            let u = AVSpeechUtterance(string: piece)
+            u.voice = voice(l)
+            u.rate = AppSpeech.rate
+            u.postUtteranceDelay = 0.05
+            synth.speak(u)
+        }
+    }
+
+    func stop() { synth.stopSpeaking(at: .immediate) }
+}
 
 /// إعلانات VoiceOver: أحداث اللعب تُصفّ وتُقرأ بالترتيب، وردود الإيماءات السريعة تُقرأ فوراً.
 enum Announcer {
@@ -77,6 +154,8 @@ enum Announcer {
      * فينقرأ الكرت بالإنجليزي. نقسمه قطع، كل قطعة بلغتها، وتنقرأ ورا بعض
      */
     private static func pieces(_ text: String) -> [String] {
+        // جملة وحدة: VoiceOver يقرأ الإعلان كامل، وكل جزء معلّم بلغته
+        if AnnounceMode.current == .single { return [text] }
         let runs = langRuns(text)
         guard runs.count > 1 else { return [text] }
         // القطعة تبدأ بالكلام نفسه: «10 هاص» بدل «: 10 هاص» (الاسم قطعة، والورقة برقمها قطعة)
@@ -88,6 +167,10 @@ enum Announcer {
     static func announce(_ text0: String) {
         guard !text0.isEmpty else { return }
         let text = tr(text0)
+        if AnnounceMode.current == .app {
+            DispatchQueue.main.async { if readerOn { AppSpeech.shared.speak(text, now: false) } }
+            return
+        }
         DispatchQueue.main.async {
             queue.append(contentsOf: pieces(text))
             pump()
@@ -99,10 +182,24 @@ enum Announcer {
 
     /// بعد ما تلعب وينتقل المؤشر لـ«أوراقك»: أول إعلان يجي بعدها (ورقة اللاعب اللي بعدك) يقطع القراءة على طول،
     /// حتى لو تأخر اللاعب (كانت المهلة ٣ ثواني بس فيروح الإعلان بالطابور ورا قراءة المؤشر)
-    static func interruptNextEvents() { interruptUntil = Date().addingTimeInterval(30) }
+    static func interruptNextEvents() {
+        interruptUntil = Date().addingTimeInterval(30)
+        // صوت التطبيق: المؤشر ينتقل لأوراقك بعد حركتك، وهذا مو تحريك منك فما نسكت بسببه
+        AppSpeech.shared.ignoreFocusUntil = Date().addingTimeInterval(1.5)
+    }
 
     /// إعلانات اللعب: تنتظر بعضها، إلا بعد نقل المؤشر بحركتك فتقطع قراءة العنصر الجديد
     static func announceEvent(_ text: String, urgent: Bool = false) {
+        if AnnounceMode.current == .app {
+            DispatchQueue.main.async {
+                guard readerOn else { return }
+                // بعد حركتك: أول إعلان يقطع (لو صوتنا ساكت)، وإلا ينتظر دوره ورا اللي يُقرأ
+                let cut = Date() < interruptUntil && !AppSpeech.shared.speaking
+                if Date() < interruptUntil { interruptUntil = .distantPast }
+                AppSpeech.shared.speak(tr(text), now: cut)
+            }
+            return
+        }
         DispatchQueue.main.async {
             urgentQueue = urgent
             // القطع للعنصر اللي انتقل له المؤشر بس: لو إعلاننا نفسه لسا يُقرأ (اسم إنجليزي ثم «عشرة هاص» قطعتين)
@@ -118,6 +215,10 @@ enum Announcer {
     static func announceNow(_ text0: String) {
         guard !text0.isEmpty else { return }
         let text = tr(text0)
+        if AnnounceMode.current == .app {
+            DispatchQueue.main.async { if readerOn { AppSpeech.shared.speak(text, now: true) } }
+            return
+        }
         DispatchQueue.main.async {
             listen()
             // لغتين: أول قطعة الحين (تقطع القديم)، والباقي ورا بعض بعدها
