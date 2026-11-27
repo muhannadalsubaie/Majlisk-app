@@ -301,9 +301,10 @@ struct BalootBoard: View {
             }
             .padding(.bottom, 6)
             .background(RadialGradient(colors: [Palette.green700.opacity(0.4), .clear], center: .center, startRadius: 0, endRadius: 220))
-            // مشروعك: في زاوية الطاولة اللي جهتك (فوقها)، بدل سطر جديد تحتها يطوّل الشاشة
+            // مشروعك: مكانه الخانة الفاضية بين الطاولة وأوراقك (ما يغطي الورق الملعوب).
+            // لو الخانة فيها أزرار هاللحظة: في زاوية الطاولة اللي جهتك
             .overlay(alignment: .bottomTrailing) {
-                if let mine = mySeat, !text.faces(mine).isEmpty {
+                if let mine = mySeat, !text.faces(mine).isEmpty, !actionsSlotFree(g) {
                     let myFaces = text.faces(mine)
                     VStack(spacing: 2) {
                         Text(trSpoken("مشروعك")).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.goldSoft)
@@ -322,6 +323,16 @@ struct BalootBoard: View {
                 // خانة ثابتة لكل الأزرار (الشراء، الدبل، التسجيلة، المشاريع، ورق، نتيجة المباراة):
                 // مكانها محجوز دائماً، تطلع فيها الأزرار وتختفي والشاشة ما تتحرك
                 VStack(spacing: 4) {
+                // مشروعك في الخانة الفاضية (سطر واحد بنفس ارتفاعها، فالشاشة ما تتحرك)
+                if let mine = mySeat, !text.faces(mine).isEmpty, actionsSlotFree(g) {
+                    let myFaces = text.faces(mine)
+                    HStack(spacing: 8) {
+                        Text(trSpoken("مشروعك")).font(.system(size: 12, weight: .bold)).foregroundColor(Palette.goldSoft)
+                        ProjectFaces(sorted: myFaces, maxWidth: 90, onTap: { ProjectSpot.shared.spot = Spot(title: "مشروعك", cards: myFaces) })
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: BALOOT_ACTIONS_SLOT)
+                    .accessibilityHidden(true)
+                }
                 if g.phase == "matchOver" && g.outcomeStatus == "won" {
                     // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
                     let w = g.outcomeWinner ?? 0
@@ -707,6 +718,13 @@ func seatNote(_ g: GameView, _ seat: Int) -> String? {
 
 /// ارتفاع خانة أزرار البلوت الثابتة: سطر أزرار (سطرين كانت تدف أوراقك تحت أزرار المايك والدردشة)
 let BALOOT_ACTIONS_SLOT: CGFloat = 52
+
+/// خانة الأزرار فاضية هاللحظة (ما فيه شراء ولا دبل ولا سوا ولا مشاريع ولا نتيجة)
+func actionsSlotFree(_ g: GameView) -> Bool {
+    let a = g.actions
+    return g.phase != "matchOver" && a.bids.isEmpty && !a.canPassDouble && a.doubleLabel == nil && !a.canSawa && !a.canProject
+        && a.declareKinds.isEmpty && !a.canShowProject && !a.waraqDecision && !a.canWaraq && !a.chooseLock
+}
 
 private struct PlayerTag: View {
     let v: TableView

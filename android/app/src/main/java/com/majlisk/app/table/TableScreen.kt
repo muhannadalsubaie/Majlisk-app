@@ -373,8 +373,9 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                 PlayerTag(v, g, seatOf(1), faces = g.sawaHands?.getOrNull(seatOf(1)) ?: text.faces(seatOf(1)), note = seatNote(g, seatOf(1)), modifier = Modifier.width(SIDE_TAG), conn = conn, me = uid)
                 Box(Modifier.weight(1f).zIndex(1f), contentAlignment = Alignment.Center) {
                     TrickArea(v, g, shownTrick, me, text, reads)
-                    // مشروعك: في زاوية الطاولة اللي جهتك (فوقها)، بدل سطر جديد تحتها يطوّل الشاشة
-                    mySeat?.let { ms -> text.faces(ms).takeIf { it.isNotEmpty() } }?.let { mine ->
+                    // مشروعك: مكانه الخانة الفاضية بين الطاولة وأوراقك (ما يغطي الورق الملعوب).
+                    // لو الخانة فيها أزرار هاللحظة: في زاوية الطاولة اللي جهتك
+                    mySeat?.let { ms -> text.faces(ms).takeIf { it.isNotEmpty() && !actionsSlotFree(g) } }?.let { mine ->
                         Column(Modifier.align(Alignment.BottomEnd).padding(end = 4.dp, bottom = 2.dp).clearAndSetSemantics { }, horizontalAlignment = Alignment.CenterHorizontally) {
                             Text("مشروعك", color = Palette.goldSoft, fontSize = 12.sp, fontWeight = FontWeight.Bold)
                             ProjectFaces(mine, 110f, onTap = { projectSpot.value = Spot("مشروعك", mine) })
@@ -459,6 +460,13 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
         // خانة ثابتة لكل الأزرار (الشراء، الدبل، التسجيلة، المشاريع، ورق، نتيجة المباراة):
         // مكانها محجوز دائماً، تطلع فيها الأزرار وتختفي والشاشة ما تتحرك
         Column(Modifier.fillMaxWidth().heightIn(min = BALOOT_ACTIONS_SLOT), verticalArrangement = Arrangement.spacedBy(4.dp, Alignment.CenterVertically)) {
+            // مشروعك في الخانة الفاضية (سطر واحد بنفس ارتفاعها، فالشاشة ما تتحرك)
+            mySeat?.let { ms -> text.faces(ms).takeIf { it.isNotEmpty() && actionsSlotFree(g) } }?.let { mine ->
+                Row(Modifier.fillMaxWidth().height(BALOOT_ACTIONS_SLOT).clearAndSetSemantics { }, horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalAlignment = Alignment.CenterVertically) {
+                    Text("مشروعك", color = Palette.goldSoft, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                    ProjectFaces(mine, 90f, onTap = { projectSpot.value = Spot("مشروعك", mine) })
+                }
+            }
             if (g.phase == "matchOver" && g.outcomeStatus == "won") {
                 // المشاهد: اسم الفريق الفائز بس (بلا «فريقك»)
                 Text(if (mySeat == null) "فاز فريق ${teamName(g.outcomeWinner ?: 0)}" else if (g.outcomeWinner == myTeam) "🎉 فاز فريقك!" else "فاز الفريق الآخر", color = Palette.goldSoft,
@@ -696,6 +704,12 @@ private object ProjectsShown {
 
 /** ارتفاع خانة أزرار البلوت الثابتة: سطر أزرار (سطرين كانت تدف أوراقك تحت أزرار المايك والدردشة) */
 private val BALOOT_ACTIONS_SLOT = 52.dp
+
+/** خانة الأزرار فاضية هاللحظة (ما فيه شراء ولا دبل ولا سوا ولا مشاريع ولا نتيجة) */
+private fun actionsSlotFree(g: com.majlisk.app.model.GameView): Boolean = with(g.actions) {
+    g.phase != "matchOver" && bids.isEmpty() && !canPassDouble && doubleLabel == null && !canSawa && !canProject &&
+        declareKinds.isEmpty() && !canShowProject && !waraqDecision && !canWaraq && !chooseLock
+}
 
 /** عرض اللاعب اللي على الجنب: ثابت (الصورة دائرة بحجمها الطبيعي والاسم كامل)، والطاولة تاخذ الباقي */
 private val SIDE_TAG = 70.dp
