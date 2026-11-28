@@ -386,7 +386,7 @@ struct DominoBoard: View {
                 if d.phase != "playing" {
                     VStack(spacing: 10) {
                         Text(trSpoken(dominoTurnText(v, d))).font(.system(size: 17, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
-                        if d.phase == "matchOver" && isOwner { MButton("مباراة جديدة", .primary) { conn.send("start") } }
+                        if d.phase == "matchOver" && isOwner { NewMatchButton(label: "مباراة جديدة", v: v, conn: conn) }
                     }
                     .padding(.horizontal, 16).padding(.vertical, 12)
                 .frame(maxWidth: 300)
@@ -676,7 +676,7 @@ struct JackarooBoard: View {
                         : mySeat == nil ? "فاز فريق \(names[w]) و\(names[w + 2])" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر"
                     VStack(spacing: 10) {
                         Text(trSpoken(wonText)).font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
-                        if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
+                        if isOwner { NewMatchButton(label: "لعبة جديدة", v: v, conn: conn) }
                     }
                     .padding(.horizontal, 16).padding(.vertical, 12)
                 .frame(maxWidth: 300)
@@ -1201,7 +1201,7 @@ struct LudoBoard: View {
             VStack(spacing: 10) {
                 Text(trSpoken(won ? "🎉 فزت!" : l.teams ? "فاز فريق \(names[w]) و\(names[(w + 2) % 4])" : "فاز \(w < names.count ? names[w] : "")"))
                     .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.goldSoft).multilineTextAlignment(.center)
-                if isOwner { MButton("لعبة جديدة", .primary) { conn.send("start") } }
+                if isOwner { NewMatchButton(label: "لعبة جديدة", v: v, conn: conn) }
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
             .frame(maxWidth: 300)

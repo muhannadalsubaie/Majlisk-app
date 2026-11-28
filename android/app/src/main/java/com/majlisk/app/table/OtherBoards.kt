@@ -402,7 +402,7 @@ fun DominoBoard(v: TableView, d: DominoView, conn: TableConnection, isOwner: Boo
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(dominoTurnText(v, d), color = Palette.goldSoft, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                    if (d.phase == "matchOver" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
+                    if (d.phase == "matchOver" && isOwner) NewMatchButton("مباراة جديدة", v, conn)
                 }
             }
         }
@@ -634,7 +634,7 @@ fun JackarooBoard(v: TableView, j: JackarooView, conn: TableConnection, isOwner:
                     horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp),
                 ) {
                     Text(wonText, color = Palette.goldSoft, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                    if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
+                    if (isOwner) NewMatchButton("لعبة جديدة", v, conn)
                 }
             }
         }
@@ -1188,7 +1188,7 @@ fun LudoBoard(v: TableView, l: LudoView, conn: TableConnection, isOwner: Boolean
                 Column(card.widthIn(max = 300.dp), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
                     Text(if (won) "🎉 فزت!" else if (l.teams) "فاز فريق ${names[w]} و${names[w + 2]}" else "فاز ${names.getOrElse(w) { "" }}",
                         color = Palette.goldSoft, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
-                    if (isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
+                    if (isOwner) NewMatchButton("لعبة جديدة", v, conn)
                 }
             }
         }

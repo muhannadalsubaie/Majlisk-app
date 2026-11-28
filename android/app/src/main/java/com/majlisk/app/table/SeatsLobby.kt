@@ -133,42 +133,9 @@ fun SeatsLobby(v: TableView, uid: String, conn: TableConnection) {
     val seated = v.seats.count { it != null }
     // «بدء المباراة» يفتح نافذة إعدادات المباراة: فيها وقت كل دور (قائمة منسدلة) وأي إعدادات تنضاف بعدين، ثم «ابدأ»
     if (isOwner) {
-        var limit by remember { mutableStateOf(0) }
-        var open by remember { mutableStateOf(false) }
         var setup by remember { mutableStateOf(false) }
-        // خيارات الباقة الاحترافية (البلوت، والمالك مشترك): تنضبط قبل البداية بس
-        val pro = com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true
-        var manual by remember { mutableStateOf(false) }
-        var qaid by remember { mutableStateOf(false) }
-        var sawa by remember { mutableStateOf(true) }
-        var autoLast by remember { mutableStateOf(true) }
         PrimaryButton("بدء المباراة", { setup = true }, enabled = seated in v.startCounts)
-        if (setup) MajliskDialog("إعدادات المباراة", { setup = false }) {
-        androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
-            SecondaryButton("وقت كل دور: ${turnLimitLabel(limit)} ▾", { open = true }, fill = true, description = "وقت كل دور، ${turnLimitLabel(limit)}، قائمة")
-            androidx.compose.material3.DropdownMenu(open, { open = false }, containerColor = Palette.green800) {
-                TURN_LIMITS.forEach { s ->
-                    androidx.compose.material3.DropdownMenuItem(
-                        text = { Text(if (s == limit) "✓ ${turnLimitLabel(s)}" else turnLimitLabel(s), color = Palette.text, fontSize = 17.sp) },
-                        onClick = { limit = s; open = false },
-                    )
-                }
-            }
-        }
-        Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-        if (v.kind == "baloot") {
-            if (pro) {
-                com.majlisk.app.ui.SwitchRow("إعلان المشاريع يدوي", manual, { manual = it }, description = "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى")
-                com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it }, description = "اللعب حر، واللي يغلط يتسجّل عليه بزر تسجيلة")
-                com.majlisk.app.ui.SwitchRow("زر سوا", sawa, { sawa = it }, description = "زر سوا يطلع للكل، ولو توقفه ما يطلع لأحد في هالمباراة")
-                com.majlisk.app.ui.SwitchRow("السحب التلقائي للورقة الأخيرة", autoLast, { autoLast = it }, description = "في آخر أكلة تنزل ورقة كل لاعب لحالها، ولو توقفه كل واحد يلعب ورقته الأخيرة بنفسه")
-                Note("🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
-            } else if (com.majlisk.app.data.Session.profile.collectAsState().value?.proAccess == true)
-                Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
-        }
-        PrimaryButton("ابدأ", { setup = false; conn.send("start", "turnLimit" to limit, "manualProjects" to (pro && manual), "qaid" to (pro && qaid), "sawa" to (!pro || sawa), "autoLast" to (!pro || autoLast)) }, enabled = seated in v.startCounts)
-        SecondaryButton("إلغاء", { setup = false }, fill = true)
-        }
+        if (setup) StartMatchDialog(v, conn) { setup = false }
     } else Body("بانتظار مالك الطاولة لبدء المباراة")
 
     // كل الموجودين الذين يمكن وضعهم في مقعد: الجالسون في مقاعد أخرى والمشاهدون
@@ -240,4 +207,55 @@ fun InviteFriendsDialog(tableId: String, seat: Int?, title: String, onClose: () 
         }
         SecondaryButton("رجوع", onClose, fill = true)
     }
+}
+
+/**
+ * إعدادات المباراة قبل ما تبدأ: وقت كل دور (قائمة منسدلة)، وخيارات الباقة الاحترافية في البلوت.
+ * نفس النافذة من «بدء المباراة» في صفحة المقاعد، ومن «مباراة جديدة» بعد ما تخلص المباراة
+ */
+@Composable
+fun StartMatchDialog(v: TableView, conn: TableConnection, onDismiss: () -> Unit) {
+    val seated = v.seats.count { it != null }
+    var limit by remember { mutableStateOf(0) }
+    var open by remember { mutableStateOf(false) }
+    val pro = com.majlisk.app.data.Session.profile.collectAsState().value?.isPro == true
+    // خيارات المباراة اللي قبلها تبقى محددة (يقدر يغيرها)
+    var manual by remember { mutableStateOf(v.manualProjects) }
+    var qaid by remember { mutableStateOf(v.qaid) }
+    var sawa by remember { mutableStateOf(true) }
+    var autoLast by remember { mutableStateOf(true) }
+    MajliskDialog("إعدادات المباراة", onDismiss) {
+        androidx.compose.foundation.layout.Box(Modifier.fillMaxWidth()) {
+            SecondaryButton("وقت كل دور: ${turnLimitLabel(limit)} ▾", { open = true }, fill = true, description = "وقت كل دور، ${turnLimitLabel(limit)}، قائمة")
+            androidx.compose.material3.DropdownMenu(open, { open = false }, containerColor = Palette.green800) {
+                TURN_LIMITS.forEach { s ->
+                    androidx.compose.material3.DropdownMenuItem(
+                        text = { Text(if (s == limit) "✓ ${turnLimitLabel(s)}" else turnLimitLabel(s), color = Palette.text, fontSize = 17.sp) },
+                        onClick = { limit = s; open = false },
+                    )
+                }
+            }
+        }
+        Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
+        if (v.kind == "baloot") {
+            if (pro) {
+                com.majlisk.app.ui.SwitchRow("إعلان المشاريع يدوي", manual, { manual = it }, description = "كل لاعب يعلن مشروعه بنفسه قبل ورقته الأولى")
+                com.majlisk.app.ui.SwitchRow("القيد والقطع", qaid, { qaid = it }, description = "اللعب حر، واللي يغلط يتسجّل عليه بزر تسجيلة")
+                com.majlisk.app.ui.SwitchRow("زر سوا", sawa, { sawa = it }, description = "زر سوا يطلع للكل، ولو توقفه ما يطلع لأحد في هالمباراة")
+                com.majlisk.app.ui.SwitchRow("السحب التلقائي للورقة الأخيرة", autoLast, { autoLast = it }, description = "في آخر أكلة تنزل ورقة كل لاعب لحالها، ولو توقفه كل واحد يلعب ورقته الأخيرة بنفسه")
+                Note("🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
+            } else if (com.majlisk.app.data.Session.profile.collectAsState().value?.proAccess == true)
+                Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
+        }
+        PrimaryButton("ابدأ", { onDismiss(); conn.send("start", "turnLimit" to limit, "manualProjects" to (pro && manual), "qaid" to (pro && qaid), "sawa" to (!pro || sawa), "autoLast" to (!pro || autoLast)) }, enabled = seated in v.startCounts)
+        SecondaryButton("إلغاء", onDismiss, fill = true)
+    }
+}
+
+/** زر «مباراة جديدة» بعد ما تخلص المباراة (لكل الألعاب): يفتح نفس نافذة إعدادات المباراة قبل البداية */
+@Composable
+fun NewMatchButton(label: String, v: TableView, conn: TableConnection) {
+    var setup by remember { mutableStateOf(false) }
+    PrimaryButton(label, { setup = true })
+    if (setup) StartMatchDialog(v, conn) { setup = false }
 }

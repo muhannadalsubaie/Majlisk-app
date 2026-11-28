@@ -48,16 +48,9 @@ struct SeatsLobby: View {
     let uid: String
     @ObservedObject var conn: TableConnection
     @State private var panel: SeatPanel?
-    /// وقت كل دور اللي اختاره المالك (٠ = بدون)
-    @State private var turnLimit = 0
     /// نافذة إعدادات المباراة (تفتح من «بدء المباراة»)
     @State private var setup = false
-    /// خيارات الباقة الاحترافية (البلوت، والمالك مشترك): تنضبط قبل البداية بس
     @ObservedObject private var session = Session.shared
-    @State private var manual = false
-    @State private var qaid = false
-    @State private var sawa = true
-    @State private var autoLast = true
     private var pro: Bool { session.profile?.isPro == true }
     private var isOwner: Bool { v.ownerUid == uid }
     @State private var daq = false
@@ -150,36 +143,7 @@ struct SeatsLobby: View {
         }
         // النافذة لها حالتها الخاصة: كانت تفتح على نسخة قديمة من الاختيار (الكل مطفي، والمفاتيح ما تتحرك)
         .sheet(isPresented: $daq) { DaqWaladSheet(people: daqPeople, conn: conn) { daq = false } }
-        .sheet(isPresented: $setup) {
-            Sheet(title: "إعدادات المباراة") {
-                Menu {
-                    ForEach(TURN_LIMITS, id: \.self) { s in
-                        Button(s == turnLimit ? "✓ \(turnLimitLabel(s))" : turnLimitLabel(s)) { turnLimit = s }
-                    }
-                } label: {
-                    Text(trSpoken("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾"))
-                        .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.text)
-                        .frame(maxWidth: .infinity, minHeight: 50)
-                        .background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 14))
-                        .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.gold.opacity(0.6), lineWidth: 1))
-                }
-                .accessibilityLabel(spokenText("وقت كل دور، \(turnLimitLabel(turnLimit))"))
-                Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
-                if v.kind == "baloot" {
-                    if pro {
-                        SwitchRow(label: "إعلان المشاريع يدوي", isOn: manual, onChange: { manual = $0 })
-                        SwitchRow(label: "القيد والقطع", isOn: qaid, onChange: { qaid = $0 })
-                        SwitchRow(label: "زر سوا", isOn: sawa, onChange: { sawa = $0 })
-                        SwitchRow(label: "السحب التلقائي للورقة الأخيرة", isOn: autoLast, onChange: { autoLast = $0 })
-                        Note("🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
-                    } else if session.profile?.proAccess == true {
-                        Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
-                    }
-                }
-                MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) { setup = false; conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": !pro || sawa, "autoLast": !pro || autoLast]) }
-                MButton("إلغاء") { setup = false }
-            }
-        }
+        .sheet(isPresented: $setup) { StartMatchSheet(v: v, conn: conn) { setup = false } }
         .sheet(item: $panel) { p in
             switch p {
             case .invite(let seat):
@@ -369,5 +333,78 @@ struct VoiceButton: View {
     private func toggleJoin() {
         guard !voice.busy else { return }
         if voice.joined { Voice.shared.leave() } else { Voice.shared.join(tableId, uid: uid) }
+    }
+}
+
+/// إعدادات المباراة قبل ما تبدأ: وقت كل دور، وخيارات الباقة الاحترافية في البلوت.
+/// نفس النافذة من «بدء المباراة» في صفحة المقاعد، ومن «مباراة جديدة» بعد ما تخلص المباراة.
+/// لها حالتها الخاصة (كانت تفتح على نسخة قديمة من الاختيار لما كانت حالتها في الصفحة)
+struct StartMatchSheet: View {
+    let v: TableView
+    @ObservedObject var conn: TableConnection
+    let close: () -> Void
+    @ObservedObject private var session = Session.shared
+    @State private var turnLimit = 0
+    @State private var manual: Bool
+    @State private var qaid: Bool
+    @State private var sawa = true
+    @State private var autoLast = true
+    private var pro: Bool { session.profile?.isPro == true }
+
+    init(v: TableView, conn: TableConnection, close: @escaping () -> Void) {
+        self.v = v; self.conn = conn; self.close = close
+        // خيارات المباراة اللي قبلها تبقى محددة (يقدر يغيرها)
+        _manual = State(initialValue: v.manualProjects)
+        _qaid = State(initialValue: v.qaid)
+    }
+
+    var body: some View {
+        Sheet(title: "إعدادات المباراة") {
+            Menu {
+                ForEach(TURN_LIMITS, id: \.self) { s in
+                    Button(s == turnLimit ? "✓ \(turnLimitLabel(s))" : turnLimitLabel(s)) { turnLimit = s }
+                }
+            } label: {
+                Text(trSpoken("وقت كل دور: \(turnLimitLabel(turnLimit)) ▾"))
+                    .font(.system(size: 18, weight: .bold)).foregroundColor(Palette.text)
+                    .frame(maxWidth: .infinity, minHeight: 50)
+                    .background(Palette.green900).clipShape(RoundedRectangle(cornerRadius: 14))
+                    .overlay(RoundedRectangle(cornerRadius: 14).stroke(Palette.gold.opacity(0.6), lineWidth: 1))
+            }
+            .accessibilityLabel(spokenText("وقت كل دور، \(turnLimitLabel(turnLimit))"))
+            Note("لو خلص وقت اللاعب، الروبوت يلعب عنه أفضل حركة.")
+            if v.kind == "baloot" {
+                if pro {
+                    SwitchRow(label: "إعلان المشاريع يدوي", isOn: manual, onChange: { manual = $0 })
+                    SwitchRow(label: "القيد والقطع", isOn: qaid, onChange: { qaid = $0 })
+                    SwitchRow(label: "زر سوا", isOn: sawa, onChange: { sawa = $0 })
+                    SwitchRow(label: "السحب التلقائي للورقة الأخيرة", isOn: autoLast, onChange: { autoLast = $0 })
+                    Note("🔒 هذي الخيارات تتفعل بس لو كل اللاعبين مشتركين في الباقة، وتنضبط قبل بداية المباراة بس. بعد ما تبدأ يتغير المؤقت فقط.")
+                } else if session.profile?.proAccess == true {
+                    Note("👑 إعلان المشاريع يدوي، والقيد والقطع، وتغيير المؤقت أثناء اللعب: للمشتركين في الباقة الاحترافية.")
+                }
+            }
+            MButton("ابدأ", .primary, enabled: v.startCounts.contains(v.seats.filter { $0 != nil }.count)) {
+                close()
+                conn.send("start", ["turnLimit": turnLimit, "manualProjects": pro && manual, "qaid": pro && qaid, "sawa": !pro || sawa, "autoLast": !pro || autoLast])
+            }
+            MButton("إلغاء") { close() }
+        }
+    }
+}
+
+/// زر «مباراة جديدة» بعد ما تخلص المباراة (لكل الألعاب): يفتح نفس نافذة إعدادات المباراة
+struct NewMatchButton: View {
+    let label: String
+    let v: TableView
+    @ObservedObject var conn: TableConnection
+    var small = false
+    @State private var setup = false
+    var body: some View {
+        Group {
+            if small { SmallButton(label, primary: true) { setup = true } }
+            else { MButton(label, .primary) { setup = true } }
+        }
+        .sheet(isPresented: $setup) { StartMatchSheet(v: v, conn: conn) { setup = false } }
     }
 }

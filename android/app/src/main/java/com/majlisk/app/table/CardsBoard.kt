@@ -290,7 +290,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         FlowRow(Modifier.fillMaxWidth().heightIn(min = if (watcher && !(c.over && isOwner)) 0.dp else 44.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
             // أزرار صغيرة مثل أزرار الشراء في البلوت (وأوراق السحب في الشايب ترسم مقلوبة فوق، ما تطلع أزرار)
             shownButtons.forEach { b -> com.majlisk.app.ui.SmallButton(b.label, { press(b.id, b.needsSelection) }, primary = b.primary) }
-            if (c.over && isOwner) PrimaryButton("لعبة جديدة", { conn.send("start") })
+            if (c.over && isOwner) NewMatchButton("لعبة جديدة", v, conn)
         }
         // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
         if (!watcher) Text(if (c.select && selected.isNotEmpty()) "محدد ${selected.size}" else " ", color = Palette.goldSoft, fontSize = 12.sp,

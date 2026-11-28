@@ -473,7 +473,7 @@ internal fun BalootBoard(v: TableView, g: GameView, uid: String, conn: TableConn
                     style = MaterialTheme.typography.titleLarge, modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center)
             }
             // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
-            if (g.phase == "matchOver" && g.outcomeStatus == "won" && isOwner) PrimaryButton("مباراة جديدة", { conn.send("start") })
+            if (g.phase == "matchOver" && g.outcomeStatus == "won" && isOwner) NewMatchButton("مباراة جديدة", v, conn)
         // أزرار المزايدة
             if (g.actions.bids.isNotEmpty()) {
                 FlowRow(

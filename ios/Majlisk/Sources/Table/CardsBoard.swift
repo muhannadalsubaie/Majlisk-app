@@ -277,7 +277,7 @@ struct CardsBoard: View {
                 ForEach(shownButtons, id: \.id) { b in
                     SmallButton(b.label, primary: b.primary) { press(b.id, b.needsSelection) }
                 }
-                if c.over && isOwner { SmallButton("لعبة جديدة", primary: true) { conn.send("start") } }
+                if c.over && isOwner { NewMatchButton(label: "لعبة جديدة", v: v, conn: conn, small: true) }
             }
             .frame(maxWidth: .infinity, minHeight: watcher && !(c.over && isOwner) ? 0 : 44)
             if !watcher { Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true) }

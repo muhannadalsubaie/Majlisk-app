@@ -339,7 +339,7 @@ struct BalootBoard: View {
                     Text(trSpoken(mySeat == nil ? "فاز فريق \(text.name(w)) و\(text.name(w + 2))" : w == myTeam ? "🎉 فاز فريقك!" : "فاز الفريق الآخر")).font(.system(size: 21, weight: .bold)).foregroundColor(Palette.goldSoft)
                 }
                 // (القيد: بعد آخر أكلة فيه مهلة للتسجيلة، والنتيجة وزر المباراة الجديدة بعدها)
-                if g.phase == "matchOver" && g.outcomeStatus == "won" && v.ownerUid == uid { MButton("مباراة جديدة", .primary) { conn.send("start") } }
+                if g.phase == "matchOver" && g.outcomeStatus == "won" && v.ownerUid == uid { NewMatchButton(label: "مباراة جديدة", v: v, conn: conn) }
                 // أزرار المزايدة
                 if !g.actions.bids.isEmpty {
                     FlowLayout(spacing: 8) {
