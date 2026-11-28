@@ -285,10 +285,6 @@ func spokenText(_ s0: String) -> Text {
     return Text((try? AttributedString(spokenAttributed(s), including: \.uiKit)) ?? AttributedString(s))
 }
 
-/// إعلان قارئ الشاشة معلّم بلغاته
-func spokenNS(_ s: String, queued: Bool, words: Bool? = nil) -> NSAttributedString {
-    spokenAttributed(s, [.accessibilitySpeechQueueAnnouncement: queued], words: words)
-}
 
 /// الجذر: اتجاه الشاشة من لغة التطبيق، ويعاد بناؤه كله لما تتغير اللغة
 struct LangRoot<Content: View>: View {

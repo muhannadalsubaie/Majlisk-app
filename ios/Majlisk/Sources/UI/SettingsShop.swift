@@ -9,8 +9,6 @@ struct SettingsScreen: View {
     @State private var effects = Double(Prefs.effectsVolume)
     @AppStorage("handStyle") private var handStyle = "fan"
     @ObservedObject private var i18nNames = I18n.shared
-    @State private var announceMode = AnnounceMode.current
-    @State private var speechRate = AppSpeech.rate
     @State private var annText = ""
     @State private var annMsg = ""
     @ObservedObject private var chatSettings = ChatSettings.shared
@@ -49,19 +47,6 @@ struct SettingsScreen: View {
             SectionTitle("تسميات الأوراق")
             SwitchRow(label: "تسميات خليجية (أكة، شايب، بنت، ولد…)", isOn: i18nNames.cardNames == "gulf", onChange: { if $0 { I18n.shared.setCardNames("gulf") } })
             SwitchRow(label: "تسميات شامية (قص، كبة، ديناري، بستوني، سنك…)", isOn: i18nNames.cardNames == "levant", onChange: { if $0 { I18n.shared.setCardNames("levant") } })
-            // طريقة قراءة الإعلانات مع VoiceOver (تجربة: ثلاث طرق للأسماء الإنجليزية وسط الكلام العربي)
-            SectionTitle("قراءة الإعلانات")
-            ForEach(AnnounceMode.allCases, id: \.self) { m in
-                SwitchRow(label: m.label, isOn: announceMode == m, onChange: { if $0 { announceMode = m; AnnounceMode.current = m } })
-            }
-            if announceMode == .app {
-                Text(trSpoken("سرعة صوت التطبيق")).font(.system(size: 14)).foregroundColor(Palette.text)
-                Slider(value: $speechRate, in: 0.3...0.65, step: 0.05)
-                    .accessibilityLabel(spokenText("سرعة صوت التطبيق"))
-                    .accessibilityValue("\(Int((speechRate - 0.3) / 0.35 * 100))%")
-                    .onChange(of: speechRate) { v in AppSpeech.rate = v }
-                MButton("تجربة الصوت") { Announcer.announceNow("Mohanad: 10 هاص") }
-            }
             // المطور بس: إعلان يوصل لكل مستخدمي التطبيق مرة وحدة
             if session.profile?.dev == true || session.profile?.unlimited == true {
                 SectionTitle("إعلان المطور")
