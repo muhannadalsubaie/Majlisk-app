@@ -25,7 +25,7 @@ final class Sounds {
         // تغيير اللعبة، وجلّة الدومينو، والتسجيلة صحيحة وغلط
         "game-change", "domino-pass", "qaid-right", "qaid-wrong", "domino-last", "domino-draw", "domino-lock", "domino-lock-normal", "domino-lock-double", "domino-ghashim",
         // ألعاب الورق الجديدة: الأصوات اللي اختارها صاحب التطبيق
-        "c-shuffle", "c-deal", "c-card", "c-collect", "c-round", "c-win", "c-lose", "c-bid", "c-pass", "c-cut", "c-kaboot", "c-contract", "c-row", "c-draw", "c-take", "c-meld", "c-layoff", "c-open", "c-hand", "c-pair", "c-shayeb", "c-trump", "c-undo",
+        "c-shuffle", "c-deal", "c-card", "c-collect", "c-round", "c-win", "c-lose", "c-bid", "c-pass", "c-cut", "c-kaboot", "c-contract", "c-row", "c-draw", "c-take", "c-meld", "c-layoff", "c-open", "c-hand", "c-pair", "c-shayeb", "c-trump", "c-undo", "c-trix-king", "c-trix-queen",
     ]
 
     func preload() {
