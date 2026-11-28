@@ -72,15 +72,20 @@ struct CardsFace: View {
     let c: CardsCard
     let w: CGFloat, h: CGFloat
     var dim = false
+    /// المحددة (الكونكان والشايب): خلفية ذهبية فاتحة وعلامة ✓، تبان واضحة بدون قارئ الشاشة
+    var selected = false
     var body: some View {
         Text(verbatim: "\(c.short)\(c.symbol)")
             .font(.system(size: w * 0.36, weight: .bold))
             .foregroundColor(c.joker ? Color(red: 0.42, green: 0.25, blue: 0.71) : c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
             .lineLimit(1).minimumScaleFactor(0.6)
             .frame(width: w, height: h)
-            .background(dim ? Color(red: 0.81, green: 0.79, blue: 0.73) : .white)
+            .background(selected ? Color(red: 0.96, green: 0.89, blue: 0.63) : dim ? Color(red: 0.81, green: 0.79, blue: 0.73) : .white)
             .clipShape(RoundedRectangle(cornerRadius: 7))
             .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 1))
+            .overlay(alignment: .topTrailing) {
+                if selected { Text(verbatim: "✓").font(.system(size: w * 0.28, weight: .bold)).foregroundColor(Color(red: 0.11, green: 0.37, blue: 0.13)).padding(.trailing, 2) }
+            }
             .accessibilityHidden(true)
     }
 }
@@ -120,6 +125,10 @@ struct CardsBoard: View {
     @State private var keptRows = 1
     @State private var slotW: CGFloat = HAND_SLOTS[0]
     @State private var handWidth: CGFloat = 0
+    /// سحبت ورقة (الكونكان والشايب): قارئ الشاشة يقول وش الورقة اللي جتك (الخادم يقول للكل «سحب ورقة» بس)
+    @State private var drawAt: Date?
+    @State private var drawFromPile = false
+    @State private var prevIds: Set<Int> = []
     /// الأكلة المكتملة: تبقى لحظة (تشوف آخر ورقة) وتنشال مع صوت الأخذ، بدل ما تنتظر أول ورقة في الأكلة الجاية
     @State private var doneHidden = false
     private var doneKey: String { c.centerDone ? c.center.map { "\($0.0):\($0.1.id)" }.joined(separator: ",") : "" }
@@ -166,9 +175,9 @@ struct CardsBoard: View {
                 else if !h.legal { Sounds.shared.illegal() }
                 else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.cardsFx([(c.board?.rows ?? []).isEmpty ? "c-card" : "c-row"], won: nil); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
             } label: {
-                CardsFace(c: h.face, w: slotW - 4, h: slotW * 1.4 - 4, dim: c.myTurn && !c.select && !h.legal)
+                CardsFace(c: h.face, w: slotW - 4, h: slotW * 1.4 - 4, dim: c.myTurn && !c.select && !h.legal, selected: sel)
                     .padding(2)
-                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(sel ? Palette.gold : (h.legal && !c.select ? Palette.gold.opacity(0.6) : .clear), lineWidth: 2))
+                    .overlay(RoundedRectangle(cornerRadius: 8).stroke(sel ? Palette.gold : (h.legal && !c.select ? Palette.gold.opacity(0.6) : .clear), lineWidth: sel ? 3 : 2))
             }
             .buttonStyle(.plain)
             .accessibilityLabel(spokenText(h.label + (sel ? "، محددة" : "")))
@@ -183,6 +192,7 @@ struct CardsBoard: View {
     private var shownButtons: [CardsView.Button] { c.buttons.filter { !(c.board?.draw != nil && $0.id.hasPrefix("draw:")) } }
     private func press(_ id: String, _ needs: Bool) {
         if needs && selected.isEmpty { Announcer.announceNow("حدد أوراق أول"); return }
+        if id.hasPrefix("draw:") { drawAt = Date(); drawFromPile = id == "draw:pile" }
         var a: JSON = ["op": "button", "id": id]
         if needs || id.hasPrefix("pile:") { a["cards"] = Array(selected); selected = [] }
         send(a)
@@ -303,6 +313,15 @@ struct CardsBoard: View {
                     .onChange(of: g.size.width) { w in handWidth = w; planHand() }
             })
             .onChange(of: c.hand.count) { _ in planHand() }
+            .onChange(of: c.hand.map { $0.face.id }) { ids in
+                let added = Set(ids).subtracting(prevIds)
+                prevIds = Set(ids)
+                if let t = drawAt, Date().timeIntervalSince(t) < 8, added.count == 1, let h = c.hand.first(where: { added.contains($0.face.id) }) {
+                    drawAt = nil
+                    Announcer.announce("\(drawFromPile ? "أخذت" : "سحبت") \(h.label)")
+                }
+            }
+            .onAppear { prevIds = Set(c.hand.map { $0.face.id }) }
             .onChange(of: c.game) { _ in keptRows = 1; slotW = HAND_SLOTS[0]; planHand() }
         }
         .onChange(of: c.hand.count) { n in

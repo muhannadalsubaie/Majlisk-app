@@ -61,10 +61,11 @@ import org.json.JSONArray
 
 /** ورقة مرسومة: رقمها ونوعها (الأحمر للهاص والديمن)، والجوكر نجمة */
 @Composable
-fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modifier = Modifier) {
+fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modifier = Modifier, selected: Boolean = false) {
     Box(
         modifier.size(w.dp, h.dp)
-            .background(if (dim) Color(0xFFCFCABB) else Color.White, RoundedCornerShape(7.dp))
+            // المحددة (الكونكان والشايب): خلفية ذهبية فاتحة وعلامة ✓، تبان واضحة بدون قارئ الشاشة
+            .background(if (selected) Color(0xFFF6E4A0) else if (dim) Color(0xFFCFCABB) else Color.White, RoundedCornerShape(7.dp))
             .border(1.dp, Color(0xFFB9B4A6), RoundedCornerShape(7.dp)),
         contentAlignment = Alignment.Center,
     ) {
@@ -74,6 +75,8 @@ fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modif
             fontSize = (w * 0.36f).sp, fontWeight = FontWeight.Bold, maxLines = 1,
             modifier = Modifier.clearAndSetSemantics { },
         )
+        if (selected) Text("✓", color = Color(0xFF1B5E20), fontSize = (w * 0.28f).sp, fontWeight = FontWeight.Bold,
+            modifier = Modifier.align(Alignment.TopEnd).padding(end = 2.dp).clearAndSetSemantics { })
     }
 }
 
@@ -110,7 +113,20 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
         if (Announcer.readerOn) Announcer.interruptNextEvents()
         conn.send(jsonOf("type" to "cards", "action" to action))
     }
+    // سحبت ورقة (الكونكان والشايب): قارئ الشاشة يقول وش الورقة اللي جتك (الخادم يقول للكل «سحب ورقة» بس)
+    var drawAt by remember { mutableStateOf(0L) }
+    var drawFromPile by remember { mutableStateOf(false) }
+    var prevIds by remember(c.game) { mutableStateOf(handIds) }
+    LaunchedEffect(handIds) {
+        val added = handIds - prevIds
+        prevIds = handIds
+        if (drawAt > 0 && System.currentTimeMillis() - drawAt < 8000 && added.size == 1) {
+            drawAt = 0
+            c.hand.firstOrNull { it.face.id in added }?.let { Announcer.announce("${if (drawFromPile) "أخذت" else "سحبت"} ${it.label}") }
+        }
+    }
     val press = { id: String, needs: Boolean ->
+        if (id.startsWith("draw:")) { drawAt = System.currentTimeMillis(); drawFromPile = id == "draw:pile" }
         when {
             needs && selected.isEmpty() -> Announcer.announceNow("حدد أوراق أول")
             else -> {
@@ -346,8 +362,8 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                                         Box(
                                             Modifier.focusRequester(fr)
                                                 .size(slotW, cardH)
-                                                .border(2.dp, if (sel) Palette.gold else if (h.legal && !c.select) Palette.gold.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(8.dp))
-                                                .padding(2.dp)
+                                                .border(if (sel) 3.dp else 2.dp, if (sel) Palette.gold else if (h.legal && !c.select) Palette.gold.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(8.dp))
+                                                .padding(if (sel) 1.dp else 2.dp)
                                                 .clickable(role = Role.Button) {
                                                     when {
                                                         c.select -> { selected = if (sel) selected - h.face.id else selected + h.face.id; Announcer.announceNow(if (sel) "شلت التحديد" else "محددة") }
@@ -361,7 +377,7 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
                                                     // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
                                                     if (handActions.isNotEmpty()) customActions = handActions
                                                 },
-                                        ) { CardsFace(h.face, (slotW.value - 4).toInt(), (cardH.value - 4).toInt(), dim = c.myTurn && !c.select && !h.legal) }
+                                        ) { CardsFace(h.face, (slotW.value - 4).toInt(), (cardH.value - 4).toInt(), dim = c.myTurn && !c.select && !h.legal, selected = sel) }
                                     }
                                 }
                             }
