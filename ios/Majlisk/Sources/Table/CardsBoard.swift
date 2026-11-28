@@ -72,22 +72,7 @@ struct CardsFace: View {
     let c: CardsCard
     let w: CGFloat, h: CGFloat
     var dim = false
-    /// متراكبة: الرقم والنوع فوق بعض في الزاوية اللي تبان (بداية الورقة)
-    var corner = false
     var body: some View {
-        if corner {
-            VStack(spacing: 0) {
-                Text(verbatim: c.short).font(.system(size: w * 0.3, weight: .bold))
-                Text(verbatim: c.symbol).font(.system(size: w * 0.28))
-            }
-            .foregroundColor(c.joker ? Color(red: 0.42, green: 0.25, blue: 0.71) : c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
-            .padding(.leading, 3).padding(.top, 2)
-            .frame(width: w, height: h, alignment: .topLeading)
-            .background(dim ? Color(red: 0.81, green: 0.79, blue: 0.73) : .white)
-            .clipShape(RoundedRectangle(cornerRadius: 7))
-            .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 1))
-            .accessibilityHidden(true)
-        } else {
         Text(verbatim: "\(c.short)\(c.symbol)")
             .font(.system(size: w * 0.36, weight: .bold))
             .foregroundColor(c.joker ? Color(red: 0.42, green: 0.25, blue: 0.71) : c.red ? Color(red: 0.78, green: 0.16, blue: 0.16) : Color(white: 0.1))
@@ -97,7 +82,6 @@ struct CardsFace: View {
             .clipShape(RoundedRectangle(cornerRadius: 7))
             .overlay(RoundedRectangle(cornerRadius: 7).stroke(Color(red: 0.73, green: 0.71, blue: 0.65), lineWidth: 1))
             .accessibilityHidden(true)
-        }
     }
 }
 
@@ -132,8 +116,10 @@ struct CardsBoard: View {
     @State private var selected: Set<Int> = []
     @AccessibilityFocusState private var slotFocus: Int?
     @State private var playedPos: Int?
-    /// أكثر عدد سطور وصلت له اليد في هاللعبة (عشان مكانها ما يصغر ويكبر)
+    /// مكان اليد ثابت طول اللعبة: أكثر عدد سطور وصلت له، وحجم الورقة (يصغر بس لو احتاج، وما يرجع يكبر)
     @State private var keptRows = 1
+    @State private var slotW: CGFloat = HAND_SLOTS[0]
+    @State private var handWidth: CGFloat = 0
     /// الأكلة المكتملة: تبقى لحظة (تشوف آخر ورقة) وتنشال مع صوت الأخذ، بدل ما تنتظر أول ورقة في الأكلة الجاية
     @State private var doneHidden = false
     private var doneKey: String { c.centerDone ? c.center.map { "\($0.0):\($0.1.id)" }.joined(separator: ",") : "" }
@@ -153,17 +139,25 @@ struct CardsBoard: View {
         }
         return out
     }
-    /// سطور اليد: سطر واحد، وسطرين لو أكثر من 16 ورقة (المجموعات ما تنقسم)
+    /// سطور اليد بعرض الشاشة وحجم الورقة الحالي (بدون تراكب، والمجموعة ما تنقسم إلا لو أطول من سطر)
     private var handRows: [[HandGroup]] {
         let groups = handGroups
-        guard c.hand.count > 16 else { return [groups] }
-        var first: [HandGroup] = [], second: [HandGroup] = []
-        var count = 0
-        for g in groups { if count < c.hand.count / 2 { first.append(g) } else { second.append(g) }; count += g.slots.count }
-        return [first, second].filter { !$0.isEmpty }
+        return packHand(groups, sizes: groups.map { $0.slots.count }, avail: handWidth, slot: slotW) { g, r in
+            HandGroup(id: g.slots[r.lowerBound].id, slots: Array(g.slots[r]))
+        }
+    }
+    /// يحدّث حجم الورقة وعدد السطور المحجوزة (يكبر المكان بس، وما يصغر لين تنتهي اللعبة)
+    private func planHand() {
+        guard handWidth > 0 else { return }
+        let sizes = handGroups.map { $0.slots.count }
+        // الكونكان: ورقة زيادة لما تسحب، فنحجز مكانها من البداية
+        let planned = c.hand.count + (c.game == "konkan" ? 1 : 0)
+        let fit = HAND_SLOTS.filter { $0 <= slotW }.first { handRowsCount(sizes, planned: planned, avail: handWidth, slot: $0) <= 3 } ?? HAND_SLOTS[HAND_SLOTS.count - 1]
+        if fit < slotW { slotW = fit }
+        keptRows = max(keptRows, handRowsCount(sizes, planned: planned, avail: handWidth, slot: slotW))
     }
     /// ورقة في يدك: مربوطة بمكانها (المؤشر ما يقفز بعد ما تلعب)
-    @ViewBuilder private func handCard(_ slot: CardsSlot, corner: Bool = false) -> some View {
+    @ViewBuilder private func handCard(_ slot: CardsSlot) -> some View {
         let h = slot.h
             let sel = selected.contains(h.face.id)
             Button {
@@ -172,7 +166,7 @@ struct CardsBoard: View {
                 else if !h.legal { Sounds.shared.illegal() }
                 else { if UIAccessibility.isVoiceOverRunning { playedPos = slot.id }; Sounds.shared.cardsFx([(c.board?.rows ?? []).isEmpty ? "c-card" : "c-row"], won: nil); Sounds.shared.markLocal("cards"); send(["op": "card", "id": h.face.id]) }
             } label: {
-                CardsFace(c: h.face, w: 40, h: 58, dim: c.myTurn && !c.select && !h.legal, corner: corner)
+                CardsFace(c: h.face, w: slotW - 4, h: slotW * 1.4 - 4, dim: c.myTurn && !c.select && !h.legal)
                     .padding(2)
                     .overlay(RoundedRectangle(cornerRadius: 8).stroke(sel ? Palette.gold : (h.legal && !c.select ? Palette.gold.opacity(0.6) : .clear), lineWidth: 2))
             }
@@ -288,30 +282,28 @@ struct CardsBoard: View {
             .frame(maxWidth: .infinity, minHeight: watcher && !(c.over && isOwner) ? 0 : 44)
             if !watcher { Text(trSpoken(c.select && !selected.isEmpty ? "محدد \(selected.count)" : " ")).font(.system(size: 12)).foregroundColor(Palette.goldSoft).accessibilityHidden(true) }
             // أوراقك: كل ورقة مربوطة بمكانها في اليد (مثل البلوت) فالمؤشر ما يقفز بعد ما تلعب
-            // كل نوع مع بعض (الشايب: كل رقم مع بعض عشان تبان الأزواج)، وبين المجموعات فراغ، والمجموعة ما تنقسم على سطرين
-            // الأوراق كلها تبان دايماً: سطر واحد (وسطرين لو أكثر من 16 ورقة)، والأوراق تتراكب على قد عرض الشاشة
-            // (كانت تنزل لسطر ثاني وثالث وينقص منها جزء تحت فتبان اليد ناقصة)
+            // اليد: الأوراق جنب بعض بدون تراكب (كل ورقة تنضغط بسهولة)، وكل مجموعة (نوع، أو رقم في الشايب) مع بعض.
+            // لو ما كفّى السطر تنزل لسطر تحته. المكان ثابت طول اللعبة فالشاشة ما تطلع وتنزل
             let rows = handRows
-            GeometryReader { geo in
-                VStack(spacing: 4) {
-                    ForEach(Array(rows.enumerated()), id: \.offset) { _, rowGroups in
-                        let n = rowGroups.reduce(0) { $0 + $1.slots.count }
-                        let inner = n - rowGroups.count
-                        let step: CGFloat = inner > 0 ? min(3, (geo.size.width - 44 * CGFloat(n) - 8 * CGFloat(max(rowGroups.count - 1, 0))) / CGFloat(inner)) : 3
-                        HStack(spacing: 8) {
-                            ForEach(rowGroups) { g in
-                                HStack(spacing: step) { ForEach(g.slots) { slot in handCard(slot, corner: step < 0) } }
-                            }
+            VStack(spacing: HAND_ROW_GAP) {
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, rowGroups in
+                    HStack(spacing: HAND_GROUP_GAP) {
+                        ForEach(rowGroups) { g in
+                            HStack(spacing: HAND_CARD_GAP) { ForEach(g.slots) { slot in handCard(slot) } }
                         }
-                        .frame(maxWidth: .infinity)
                     }
+                    .frame(maxWidth: .infinity)
                 }
             }
-            .frame(height: watcher && c.hand.isEmpty ? 0 : (max(rows.count, keptRows) > 1 ? 130 : 64))
-            // مكان اليد ثابت: إذا صارت سطرين مرة (أول الشايب مثلاً) يبقى محجوز سطرين لين آخر اللعبة، فالشاشة ما تطلع وتنزل
-            .onAppear { keptRows = max(keptRows, rows.count) }
-            .onChange(of: rows.count) { n in keptRows = max(keptRows, n) }
-            .onChange(of: c.game) { _ in keptRows = 1 }
+            .frame(maxWidth: .infinity, alignment: .top)
+            .frame(height: watcher && c.hand.isEmpty ? 0 : slotW * 1.4 * CGFloat(keptRows) + HAND_ROW_GAP * CGFloat(keptRows - 1), alignment: .top)
+            .background(GeometryReader { g in
+                Color.clear
+                    .onAppear { handWidth = g.size.width; planHand() }
+                    .onChange(of: g.size.width) { w in handWidth = w; planHand() }
+            })
+            .onChange(of: c.hand.count) { _ in planHand() }
+            .onChange(of: c.game) { _ in keptRows = 1; slotW = HAND_SLOTS[0]; planHand() }
         }
         .onChange(of: c.hand.count) { n in
             guard let p = playedPos else { return }
@@ -450,4 +442,47 @@ private struct FxEvent: Equatable {
 private struct TurnEvent: Equatable {
     let mine: Bool, prompt: String
     static func == (a: TurnEvent, b: TurnEvent) -> Bool { a.mine == b.mine }
+}
+
+/// عرض خانة الورقة في اليد (من الأكبر للأصغر): يصغر لين تدخل اليد في ٣ أسطر
+private let HAND_SLOTS: [CGFloat] = [46, 42, 38, 34]
+private let HAND_CARD_GAP: CGFloat = 4
+private let HAND_GROUP_GAP: CGFloat = 12
+private let HAND_ROW_GAP: CGFloat = 4
+
+/// مجموعات اليد في أسطر بدون تراكب: المجموعة كاملة في سطر لو تكفّى، وإلا تنزل لسطر جديد،
+/// والمجموعة الأطول من سطر كامل تنقسم
+private func packHand<G>(_ groups: [G], sizes: [Int], avail: CGFloat, slot: CGFloat, split: (G, Range<Int>) -> G) -> [[G]] {
+    guard avail > 0 else { return groups.isEmpty ? [] : [groups] }
+    func width(_ n: Int) -> CGFloat { slot * CGFloat(n) + HAND_CARD_GAP * CGFloat(max(n - 1, 0)) }
+    let cap = max(1, Int((avail + HAND_CARD_GAP) / (slot + HAND_CARD_GAP)))
+    var rows: [[G]] = []
+    var used: CGFloat = 0
+    for (g, n) in zip(groups, sizes) {
+        var from = 0
+        while from < n {
+            let rest = n - from
+            let inRow = !(rows.last?.isEmpty ?? true)
+            let start = inRow ? used + HAND_GROUP_GAP : 0
+            if inRow && start + width(rest) <= avail {
+                rows[rows.count - 1].append(split(g, from..<n)); used = start + width(rest); from = n
+            } else if rest <= cap || !inRow {
+                let take = min(rest, cap)
+                rows.append([split(g, from..<(from + take))]); used = width(take); from += take
+            } else {
+                // أطول من سطر كامل: يكمل في السطر الحالي لو فيه مكان لورقتين أو أكثر، والباقي ينزل
+                let room = Int((avail - start + HAND_CARD_GAP) / (slot + HAND_CARD_GAP))
+                if room >= 2 { rows[rows.count - 1].append(split(g, from..<(from + room))); used = start + width(room); from += room }
+                else { let take = min(rest, cap); rows.append([split(g, from..<(from + take))]); used = width(take); from += take }
+            }
+        }
+    }
+    return rows
+}
+
+/// كم سطر تحتاج اليد (ومعها ورقة زيادة متوقعة لو planned أكبر من الموجود: أسوأ حالة مجموعة لحالها)
+private func handRowsCount(_ sizes: [Int], planned: Int, avail: CGFloat, slot: CGFloat) -> Int {
+    let extra = max(0, planned - sizes.reduce(0, +))
+    let all = sizes + (extra > 0 ? [extra] : [])
+    return max(1, packHand(all, sizes: all, avail: avail, slot: slot) { n, _ in n }.count)
 }

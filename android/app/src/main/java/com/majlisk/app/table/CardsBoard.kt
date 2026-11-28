@@ -61,21 +61,14 @@ import org.json.JSONArray
 
 /** ورقة مرسومة: رقمها ونوعها (الأحمر للهاص والديمن)، والجوكر نجمة */
 @Composable
-fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modifier = Modifier, corner: Boolean = false) {
+fun CardsFace(c: CardFace, w: Int, h: Int, dim: Boolean = false, modifier: Modifier = Modifier) {
     Box(
         modifier.size(w.dp, h.dp)
             .background(if (dim) Color(0xFFCFCABB) else Color.White, RoundedCornerShape(7.dp))
             .border(1.dp, Color(0xFFB9B4A6), RoundedCornerShape(7.dp)),
-        // متراكبة: الرقم والنوع فوق بعض في الزاوية اللي تبان (بداية الورقة)
-        contentAlignment = if (corner) Alignment.TopStart else Alignment.Center,
+        contentAlignment = Alignment.Center,
     ) {
-        if (corner) {
-            Column(Modifier.padding(start = 3.dp, top = 2.dp).clearAndSetSemantics { }, horizontalAlignment = Alignment.CenterHorizontally) {
-                val col = if (c.joker) Color(0xFF6A3FB5) else if (c.red) Color(0xFFC62828) else Color(0xFF1A1A1A)
-                Text(c.short, color = col, fontSize = (w * 0.3f).sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                Text(c.symbol, color = col, fontSize = (w * 0.28f).sp, maxLines = 1)
-            }
-        } else Text(
+        Text(
             "${c.short}${c.symbol}",
             color = if (c.joker) Color(0xFF6A3FB5) else if (c.red) Color(0xFFC62828) else Color(0xFF1A1A1A),
             fontSize = (w * 0.36f).sp, fontWeight = FontWeight.Bold, maxLines = 1,
@@ -319,65 +312,107 @@ fun CardsBoard(v: TableView, c: CardsView, conn: TableConnection, isOwner: Boole
             val k = { h: com.majlisk.app.model.CardsHandCard -> if (c.game == "shayeb") h.face.r else h.face.s }
             if (acc.isNotEmpty() && k(acc.last().last().value) == k(x.value)) acc.last().add(x) else acc.add(mutableListOf(x)); acc
         }
-        // الأوراق كلها تبان دايماً: سطر واحد (وسطرين لو أكثر من 16 ورقة)، والأوراق تتراكب على قد عرض الشاشة
-        // (كانت تنزل لسطر ثاني وثالث وينقص منها جزء تحت فتبان اليد ناقصة: 8 أو 5 أوراق بدل 13)
-        val handRows = if (c.hand.size > 16) {
-            val half = c.hand.size / 2
-            var count = 0
-            handGroups.partition { g -> val first = count < half; count += g.size; first }.toList().filter { it.isNotEmpty() }
-        } else listOf(handGroups.toList())
-        // مكان اليد ثابت: إذا صارت سطرين مرة (أول الشايب مثلاً) يبقى محجوز سطرين لين آخر اللعبة، فالشاشة ما تطلع وتنزل
+        // اليد: الأوراق جنب بعض بدون تراكب (كل ورقة تنضغط بسهولة)، وكل مجموعة (نوع، أو رقم في الشايب) مع بعض.
+        // لو ما كفّى السطر تنزل الأوراق لسطر تحته. حجم الورقة ومكان اليد ثابتين طول اللعبة
+        // (المكان يكبر بس لو احتاج، وما يصغر)، فالشاشة ما تطلع وتنزل
         var keptRows by remember(c.game) { mutableStateOf(1) }
-        if (handRows.size > keptRows) keptRows = handRows.size
-        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(if (watcher && c.hand.isEmpty()) 0.dp else if (keptRows > 1) 136.dp else 66.dp)) {
-          val cardW = 44.dp
-          val groupGap = 8.dp
-          val avail = maxWidth
-          Column(Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-          handRows.forEach { rowGroups ->
-          val n = rowGroups.sumOf { it.size }
-          val gaps = (rowGroups.size - 1).coerceAtLeast(0)
-          // المسافة بين الأوراق: 3 لو فيه مكان، وإلا سالبة (تتراكب) بحيث السطر كله يدخل في العرض
-          val inner = n - rowGroups.size
-          val step = if (inner > 0) ((avail - cardW * n - groupGap * gaps) / inner).coerceAtMost(3.dp) else 3.dp
-          // متراكبة: رقم الورقة ونوعها في زاويتها (الجزء اللي يبان منها)
-          val corner = step < 0.dp
-          Row(horizontalArrangement = Arrangement.spacedBy(groupGap)) {
-          rowGroups.forEach { grp ->
-          Row(horizontalArrangement = Arrangement.spacedBy(step)) {
-            grp.forEach { (i, h) ->
-                key(i) {
-                    val fr = remember { FocusRequester() }
-                    DisposableEffect(Unit) {
-                        slotFocus[i] = fr
-                        onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
-                    }
-                    val sel = h.face.id in selected
-                    Box(
-                        Modifier.focusRequester(fr)
-                            .border(2.dp, if (sel) Palette.gold else if (h.legal && !c.select) Palette.gold.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(8.dp))
-                            .padding(2.dp)
-                            .clickable(role = Role.Button) {
-                                when {
-                                    c.select -> { selected = if (sel) selected - h.face.id else selected + h.face.id; Announcer.announceNow(if (sel) "شلت التحديد" else "محددة") }
-                                    !c.myTurn -> Announcer.announceNow("ليس دورك")
-                                    !h.legal -> Sounds.illegal()
-                                    else -> { playedPos = i; Sounds.cardsFx(listOf(if (c.board?.rows.isNullOrEmpty()) "c-card" else "c-row"), null); Sounds.markLocal("cards"); send(jsonOf("op" to "card", "id" to h.face.id)) }
+        var slotW by remember(c.game) { mutableStateOf(HAND_SLOTS.first()) }
+        androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth()) {
+            val avail = maxWidth
+            val sizes = handGroups.map { it.size }
+            // الكونكان: ورقة زيادة لما تسحب، فنحجز مكانها من البداية
+            val planned = c.hand.size + if (c.game == "konkan") 1 else 0
+            // أكبر حجم يخلي اليد في ٣ أسطر أو أقل (وما يرجع يكبر بعد ما صغر)
+            val fit = HAND_SLOTS.filter { it <= slotW }.firstOrNull { w -> handRowsCount(sizes, planned, avail, w) <= 3 } ?: HAND_SLOTS.last()
+            if (fit < slotW) slotW = fit
+            val rows = packHand(handGroups, avail, slotW)
+            val need = maxOf(rows.size, handRowsCount(sizes, planned, avail, slotW))
+            if (need > keptRows) keptRows = need
+            val cardH = slotW * 1.4f
+            val height = if (watcher && c.hand.isEmpty()) 0.dp else cardH * keptRows + HAND_ROW_GAP * (keptRows - 1)
+            Column(Modifier.fillMaxWidth().height(height), verticalArrangement = Arrangement.spacedBy(HAND_ROW_GAP), horizontalAlignment = Alignment.CenterHorizontally) {
+                rows.forEach { row ->
+                    Row(horizontalArrangement = Arrangement.spacedBy(HAND_GROUP_GAP)) {
+                        row.forEach { grp ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(HAND_CARD_GAP)) {
+                                grp.forEach { (i, h) ->
+                                    key(i) {
+                                        val fr = remember { FocusRequester() }
+                                        DisposableEffect(Unit) {
+                                            slotFocus[i] = fr
+                                            onDispose { if (slotFocus[i] === fr) slotFocus.remove(i) }
+                                        }
+                                        val sel = h.face.id in selected
+                                        Box(
+                                            Modifier.focusRequester(fr)
+                                                .size(slotW, cardH)
+                                                .border(2.dp, if (sel) Palette.gold else if (h.legal && !c.select) Palette.gold.copy(alpha = 0.6f) else Color.Transparent, RoundedCornerShape(8.dp))
+                                                .padding(2.dp)
+                                                .clickable(role = Role.Button) {
+                                                    when {
+                                                        c.select -> { selected = if (sel) selected - h.face.id else selected + h.face.id; Announcer.announceNow(if (sel) "شلت التحديد" else "محددة") }
+                                                        !c.myTurn -> Announcer.announceNow("ليس دورك")
+                                                        !h.legal -> Sounds.illegal()
+                                                        else -> { playedPos = i; Sounds.cardsFx(listOf(if (c.board?.rows.isNullOrEmpty()) "c-card" else "c-row"), null); Sounds.markLocal("cards"); send(jsonOf("op" to "card", "id" to h.face.id)) }
+                                                    }
+                                                }
+                                                .semantics(mergeDescendants = true) {
+                                                    contentDescription = tr(h.label + if (sel) "، محددة" else "")
+                                                    // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
+                                                    if (handActions.isNotEmpty()) customActions = handActions
+                                                },
+                                        ) { CardsFace(h.face, (slotW.value - 4).toInt(), (cardH.value - 4).toInt(), dim = c.myTurn && !c.select && !h.legal) }
+                                    }
                                 }
                             }
-                            .semantics(mergeDescendants = true) {
-                                contentDescription = tr(h.label + if (sel) "، محددة" else "")
-                                // الأزرار والسحب كإجراءات على الورقة (مثل الشراء في البلوت): الكفيف ما يحتاج يروح للأزرار
-                                if (handActions.isNotEmpty()) customActions = handActions
-                            },
-                    ) { CardsFace(h.face, 40, 58, dim = c.myTurn && !c.select && !h.legal, corner = corner) }
+                        }
+                    }
                 }
             }
-          }
-          }
-          }
-          }
-          }
         }
     }
+}
+
+/** عرض خانة الورقة في اليد (من الأكبر للأصغر): يصغر لين تدخل اليد في ٣ أسطر */
+private val HAND_SLOTS = listOf(46.dp, 42.dp, 38.dp, 34.dp)
+private val HAND_CARD_GAP = 4.dp
+private val HAND_GROUP_GAP = 12.dp
+private val HAND_ROW_GAP = 4.dp
+
+/**
+ * يرتّب المجموعات في أسطر بدون تراكب: المجموعة تبقى كاملة في سطر لو تكفّى، وإلا تنزل لسطر جديد،
+ * والمجموعة الأطول من سطر كامل تنقسم على أكثر من سطر
+ */
+private fun <T> packHand(groups: List<List<T>>, avail: androidx.compose.ui.unit.Dp, slot: androidx.compose.ui.unit.Dp): List<List<List<T>>> {
+    val rows = mutableListOf<MutableList<List<T>>>()
+    var used = 0.dp
+    // عرض مجموعة فيها n ورقة
+    fun width(n: Int) = slot * n + HAND_CARD_GAP * (n - 1).coerceAtLeast(0)
+    val cap = ((avail + HAND_CARD_GAP) / (slot + HAND_CARD_GAP)).toInt().coerceAtLeast(1)
+    for (g in groups) {
+        var rest = g
+        while (rest.isNotEmpty()) {
+            val inRow = rows.isNotEmpty() && rows.last().isNotEmpty()
+            val start = if (inRow) used + HAND_GROUP_GAP else 0.dp
+            if (inRow && start + width(rest.size) <= avail) {
+                rows.last().add(rest); used = start + width(rest.size); rest = emptyList()
+            } else if (rest.size <= cap || !inRow) {
+                val take = minOf(rest.size, cap)
+                rows.add(mutableListOf(rest.take(take))); used = width(take); rest = rest.drop(take)
+            } else {
+                // أطول من سطر كامل: يكمل في السطر الحالي لو فيه مكان لورقتين أو أكثر، والباقي ينزل
+                val room = ((avail - start + HAND_CARD_GAP) / (slot + HAND_CARD_GAP)).toInt()
+                if (room >= 2) { rows.last().add(rest.take(room)); used = start + width(room); rest = rest.drop(room) }
+                else { val take = minOf(rest.size, cap); rows.add(mutableListOf(rest.take(take))); used = width(take); rest = rest.drop(take) }
+            }
+        }
+    }
+    return rows
+}
+
+/** كم سطر تحتاج اليد بهالحجم (ومعها ورقة زيادة متوقعة لو planned أكبر من الموجود: أسوأ حالة مجموعة لحالها) */
+private fun handRowsCount(groupSizes: List<Int>, planned: Int, avail: androidx.compose.ui.unit.Dp, slot: androidx.compose.ui.unit.Dp): Int {
+    val extra = (planned - groupSizes.sum()).coerceAtLeast(0)
+    val groups = groupSizes.map { List(it) { 0 } } + if (extra > 0) listOf(List(extra) { 0 }) else emptyList()
+    return packHand(groups, avail, slot).size.coerceAtLeast(1)
 }
